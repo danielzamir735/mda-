@@ -20,7 +20,7 @@ export default function VitalsFeature() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
 
-  // Counters incremented to externally trigger timer reset on each VitalsCard
+  // Counters to externally trigger timer reset in each VitalsCard
   const [heartExternalReset, setHeartExternalReset] = useState(0);
   const [breathExternalReset, setBreathExternalReset] = useState(0);
 
@@ -39,12 +39,16 @@ export default function VitalsFeature() {
     else setLastResultBreath(value);
   }, [activeCard]);
 
-  // Called when the user taps "חזור / הפעל שוב" in the ResultPopup
-  const handleResultReset = useCallback(() => {
+  // Closes the result popup and resets the timer to idle — KEEPS lastResult in the card
+  const handleResultClose = useCallback(() => {
     setResult(null);
     if (activeCard === 'heart') setHeartExternalReset(n => n + 1);
     else setBreathExternalReset(n => n + 1);
   }, [activeCard]);
+
+  // Circular reset buttons inside each card clear only that card's lastResult
+  const handleResetLastHeart = useCallback(() => setLastResultHeart(null), []);
+  const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-emt-dark">
@@ -67,6 +71,7 @@ export default function VitalsFeature() {
           lastResult={lastResultHeart}
           externalReset={heartExternalReset}
           onOpenModal={openModal}
+          onResetLastResult={handleResetLastHeart}
         />
         <VitalsCard
           label="נשימות"
@@ -77,6 +82,7 @@ export default function VitalsFeature() {
           lastResult={lastResultBreath}
           externalReset={breathExternalReset}
           onOpenModal={openModal}
+          onResetLastResult={handleResetLastBreath}
         />
         <MetronomeCard />
         <QuickToolsCard />
@@ -98,7 +104,7 @@ export default function VitalsFeature() {
       <ResultPopup
         result={result}
         unit={activeUnit}
-        onClose={handleResultReset}
+        onClose={handleResultClose}
       />
 
       <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />

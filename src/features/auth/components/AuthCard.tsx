@@ -12,24 +12,30 @@ export default function AuthCard({ onGoogleSignIn, isLoading }: AuthCardProps) {
 
         {/* Brand */}
         <div className="flex flex-col items-center gap-3">
-          <div className="bg-emt-red rounded-full p-4">
+          <div className="bg-emt-red rounded-full p-4 shadow-lg shadow-red-600/30">
             <Heart className="text-white w-8 h-8" strokeWidth={2.5} aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-wide">עוזר חובש</h1>
-          <p className="text-gray-400 text-sm text-center">
+          <h1 className="text-2xl font-bold text-emt-light tracking-wide">עוזר חובש</h1>
+          <p className="text-emt-muted text-sm text-center">
             מערכת ניהול מטופלים לחובשים בשטח
           </p>
         </div>
 
         {/* Login card */}
-        <div className="bg-emt-gray border border-emt-border rounded-2xl p-6 space-y-5">
-          <h2 className="text-lg font-semibold text-white text-center">כניסה / הרשמה</h2>
+        <div className="bg-emt-gray border border-emt-border rounded-2xl p-6 space-y-5
+                        shadow-md shadow-slate-200">
+          <h2 className="text-lg font-semibold text-emt-light text-center">כניסה / הרשמה</h2>
 
           <button
             onClick={onGoogleSignIn}
             disabled={isLoading}
             aria-label="כניסה עם Google"
-            className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-medium py-3 px-4 rounded-xl min-h-12 hover:bg-gray-100 active:bg-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3
+                       bg-white border border-slate-200
+                       text-slate-800 font-medium py-3 px-4 rounded-xl min-h-12
+                       hover:bg-slate-50 active:bg-slate-100
+                       transition-colors disabled:opacity-60 disabled:cursor-not-allowed
+                       shadow-sm"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -41,7 +47,7 @@ export default function AuthCard({ onGoogleSignIn, isLoading }: AuthCardProps) {
           </button>
         </div>
 
-        <p className="text-gray-500 text-xs text-center leading-relaxed">
+        <p className="text-emt-muted text-xs text-center leading-relaxed">
           בכניסה לאפליקציה אתה מסכים לתנאי השימוש ולמדיניות הפרטיות
         </p>
       </div>

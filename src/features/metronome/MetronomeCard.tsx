@@ -20,14 +20,15 @@ export default function MetronomeCard() {
         'flex flex-col items-center gap-2',
         'rounded-3xl border p-3 h-full w-full',
         'transition-all duration-300',
-        isPlaying ? 'bg-emt-yellow/[0.07]' : 'bg-emt-gray',
+        isPlaying ? 'bg-amber-50' : 'bg-emt-gray',
       ].join(' ')}
       style={{
-        borderColor: isPlaying ? 'rgba(253,216,53,0.50)' : 'rgba(255,255,255,0.12)',
+        borderColor: isPlaying ? '#FCD34D' : '#E2E8F0',
         borderWidth: isPlaying ? '2px' : '1px',
+        boxShadow: '0 2px 12px rgba(15,23,42,0.08)',
       }}
     >
-      {/* Title — top-center, large & bold */}
+      {/* Title */}
       <p className="text-emt-light font-black text-lg tracking-wide text-center w-full">
         מטרונום
       </p>
@@ -38,12 +39,12 @@ export default function MetronomeCard() {
           className="font-mono font-black tabular-nums leading-none transition-colors duration-300"
           style={{
             fontSize: 'clamp(2.8rem, 11vw, 5rem)',
-            color: isPlaying ? '#FDD835' : '#F5F5F5',
+            color: isPlaying ? '#D97706' : '#0F172A',
           }}
         >
           {bpm}
         </span>
-        <p className="text-emt-light/30 text-xs">BPM</p>
+        <p className="text-emt-muted text-xs font-medium">BPM</p>
       </div>
 
       {/* Slider with +/- touch buttons */}
@@ -51,8 +52,8 @@ export default function MetronomeCard() {
         <button
           onClick={() => adjustBpm(-1)}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-white/10 border border-white/15
-                     text-emt-light active:scale-90 transition-transform"
+                     bg-slate-100 border border-slate-200
+                     text-slate-600 active:scale-90 transition-transform hover:bg-slate-200"
           aria-label="הפחת BPM"
         >
           <Minus size={16} />
@@ -67,10 +68,10 @@ export default function MetronomeCard() {
             value={bpm}
             onChange={e => setBpm(Number(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                       bg-emt-border accent-emt-yellow"
+                       bg-slate-200 accent-emt-yellow"
             aria-label="קצב לדקה"
           />
-          <div className="flex justify-between text-emt-light/20 text-xs px-0.5">
+          <div className="flex justify-between text-emt-muted text-xs px-0.5">
             <span>{MIN_BPM}</span>
             <span>{MAX_BPM}</span>
           </div>
@@ -79,8 +80,8 @@ export default function MetronomeCard() {
         <button
           onClick={() => adjustBpm(1)}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-white/10 border border-white/15
-                     text-emt-light active:scale-90 transition-transform"
+                     bg-slate-100 border border-slate-200
+                     text-slate-600 active:scale-90 transition-transform hover:bg-slate-200"
           aria-label="הגדל BPM"
         >
           <Plus size={16} />
@@ -93,10 +94,10 @@ export default function MetronomeCard() {
         className="w-14 h-14 rounded-full flex items-center justify-center
                    active:scale-90 transition-all duration-150"
         style={{
-          backgroundColor: isPlaying ? '#E53935' : '#43A047',
+          backgroundColor: isPlaying ? '#DC2626' : '#16A34A',
           boxShadow: isPlaying
-            ? '0 4px 16px rgba(229,57,53,0.45)'
-            : '0 4px 16px rgba(67,160,71,0.40)',
+            ? '0 4px 16px rgba(220,38,38,0.35)'
+            : '0 4px 16px rgba(22,163,74,0.35)',
         }}
         aria-label={isPlaying ? 'עצור' : 'הפעל'}
       >

@@ -11,25 +11,26 @@ export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
+    <div className="fixed inset-0 z-50 flex flex-col bg-white">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3
+                      border-b border-slate-200">
         <h2 className="text-emt-light font-bold text-xl">פתקים</h2>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white/10 border border-white/15
+          className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200
                      flex items-center justify-center
-                     active:scale-90 transition-transform"
+                     active:scale-90 transition-transform text-slate-500"
           aria-label="סגור"
         >
-          <X size={20} className="text-emt-light" />
+          <X size={20} />
         </button>
       </div>
 
       {/* Textarea */}
       <textarea
-        className="flex-1 bg-transparent text-emt-light text-base leading-relaxed
-                   p-4 resize-none focus:outline-none placeholder:text-emt-light/25"
+        className="flex-1 bg-white text-slate-800 text-base leading-relaxed
+                   p-4 resize-none focus:outline-none placeholder:text-slate-300"
         placeholder="כתוב פתק כאן..."
         value={noteText}
         onChange={e => onTextChange(e.target.value)}

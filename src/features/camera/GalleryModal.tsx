@@ -33,15 +33,15 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
   return (
     <>
       {/* ── Gallery grid ── */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
+      <div className="fixed inset-0 z-50 flex flex-col bg-white">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4
-                        border-b border-white/10 shrink-0">
+                        border-b border-slate-200 shrink-0">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 border border-white/15
+            className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200
                        flex items-center justify-center
-                       text-emt-light/70 hover:text-emt-light active:scale-90 transition-all"
+                       text-slate-500 hover:text-slate-800 active:scale-90 transition-all"
             aria-label="סגור"
           >
             <X size={18} />
@@ -52,9 +52,9 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
 
         {/* Content */}
         {photos.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-emt-light/30">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-300">
             <Images size={52} strokeWidth={1.2} />
-            <p className="text-sm">אין תמונות שמורות</p>
+            <p className="text-sm text-slate-400">אין תמונות שמורות</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto flex-1">
@@ -62,7 +62,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               <div
                 key={i}
                 className="relative rounded-2xl overflow-hidden aspect-[4/3]
-                           bg-white/5 border border-white/10 cursor-pointer
+                           bg-slate-100 border border-slate-200 cursor-pointer
                            active:scale-95 transition-transform duration-150"
                 onClick={() => setFullscreenIndex(i)}
               >
@@ -75,7 +75,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
                 <button
                   onClick={(e) => { e.stopPropagation(); removePhoto(i); }}
                   className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
-                             bg-black/70 border border-white/20
+                             bg-black/60 border border-white/20
                              flex items-center justify-center text-white
                              active:scale-90 transition-transform"
                   aria-label={`מחק תמונה ${i + 1}`}
@@ -108,11 +108,10 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               {fullscreenIndex + 1} / {photos.length}
             </span>
 
-            {/* Save to gallery */}
             <button
               onClick={() => handleSave(photos[fullscreenIndex], fullscreenIndex)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl
-                         bg-emt-green border border-emt-green/60
+                         bg-emt-green border border-green-600
                          text-white font-bold text-sm
                          active:scale-95 transition-transform"
               aria-label="שמור לגלריה"
@@ -130,7 +129,6 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               className="max-w-full max-h-full object-contain"
             />
 
-            {/* Prev / Next — only if more than one photo */}
             {photos.length > 1 && (
               <>
                 <button
@@ -169,8 +167,8 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
                 }
               }}
               className="flex items-center gap-2 px-6 py-3 rounded-xl
-                         bg-emt-red/20 border border-emt-red/40
-                         text-emt-red font-bold text-sm
+                         bg-red-600/20 border border-red-500/40
+                         text-red-400 font-bold text-sm
                          active:scale-95 transition-transform"
               aria-label="מחק תמונה"
             >

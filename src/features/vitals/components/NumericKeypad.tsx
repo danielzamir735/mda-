@@ -26,12 +26,12 @@ export default function NumericKeypad({
   return (
     <div className="flex flex-col gap-3 w-full" dir="ltr">
       {/* Display */}
-      <div className="bg-emt-dark rounded-2xl px-4 py-3 text-center">
-        <p className="text-emt-light/50 text-sm mb-0.5">
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-center">
+        <p className="text-slate-400 text-sm mb-0.5">
           {multiplier} ×
         </p>
         <p
-          className="text-white font-mono font-bold tabular-nums leading-none"
+          className="text-slate-900 font-mono font-bold tabular-nums leading-none"
           style={{ fontSize: 'clamp(2.5rem, 10vw, 4rem)' }}
         >
           {displayInput}
@@ -44,9 +44,9 @@ export default function NumericKeypad({
           <button
             key={d}
             onClick={() => onDigit(d)}
-            className="bg-emt-border hover:bg-emt-border/80 active:scale-90
-                       text-emt-light text-2xl font-semibold rounded-2xl py-4
-                       transition-all duration-100 shadow-sm"
+            className="bg-slate-100 hover:bg-slate-200 active:scale-90
+                       text-slate-800 text-2xl font-semibold rounded-2xl py-4
+                       transition-all duration-100 border border-slate-200"
           >
             {d}
           </button>
@@ -55,28 +55,28 @@ export default function NumericKeypad({
         {/* Bottom row: backspace | 0 | = */}
         <button
           onClick={onBackspace}
-          className="bg-emt-border hover:bg-emt-border/80 active:scale-90
-                     text-emt-light rounded-2xl py-4
+          className="bg-slate-100 hover:bg-slate-200 active:scale-90
+                     text-slate-600 rounded-2xl py-4
                      flex items-center justify-center
-                     transition-all duration-100"
+                     transition-all duration-100 border border-slate-200"
         >
           <Delete size={22} />
         </button>
 
         <button
           onClick={() => onDigit('0')}
-          className="bg-emt-border hover:bg-emt-border/80 active:scale-90
-                     text-emt-light text-2xl font-semibold rounded-2xl py-4
-                     transition-all duration-100"
+          className="bg-slate-100 hover:bg-slate-200 active:scale-90
+                     text-slate-800 text-2xl font-semibold rounded-2xl py-4
+                     transition-all duration-100 border border-slate-200"
         >
           0
         </button>
 
         <button
           onClick={handleCalculate}
-          className="bg-emt-green hover:bg-emt-green/90 active:scale-90
+          className="bg-emt-green hover:bg-green-700 active:scale-90
                      text-white text-2xl font-black rounded-2xl py-4
-                     transition-all duration-100 shadow-md shadow-emt-green/30"
+                     transition-all duration-100 shadow-md shadow-green-600/25"
         >
           =
         </button>

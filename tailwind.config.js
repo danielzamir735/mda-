@@ -8,13 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'emt-red':    '#E53935',
-        'emt-green':  '#43A047',
-        'emt-yellow': '#FDD835',
-        'emt-dark':   '#0D0D0D',
-        'emt-light':  '#F5F5F5',
-        'emt-gray':   '#1E1E1E',
-        'emt-border': '#2C2C2C',
+        'emt-red':    '#DC2626',   // red-600 — actions, running state
+        'emt-green':  '#16A34A',   // green-600 — success, results
+        'emt-yellow': '#D97706',   // amber-600 — metronome / torch
+        'emt-blue':   '#3B82F6',   // blue-500 — accent / O2 calc
+        'emt-dark':   '#F1F5F9',   // slate-100 — page background
+        'emt-light':  '#0F172A',   // slate-900 — primary text
+        'emt-gray':   '#FFFFFF',   // white — card background
+        'emt-border': '#CBD5E1',   // slate-300 — borders
+        'emt-muted':  '#64748B',   // slate-500 — secondary text
       },
       keyframes: {
         'fade-scale': {

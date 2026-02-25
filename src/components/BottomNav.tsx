@@ -9,8 +9,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
   return (
     <nav
       className="shrink-0 flex items-center
-                 bg-emt-gray/95 backdrop-blur-md
-                 border-t border-white/10
+                 bg-white border-t border-slate-200
                  safe-area-bottom"
       style={{ height: '4rem' }}
     >
@@ -18,7 +17,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
       <button
         onClick={onNotesOpen}
         className="flex-1 flex flex-col items-center justify-center gap-1
-                   text-emt-light/40 hover:text-emt-light/80
+                   text-slate-400 hover:text-slate-700
                    active:text-emt-light transition-colors duration-150
                    h-full"
         aria-label="פתקים"
@@ -28,13 +27,13 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
       </button>
 
       {/* Divider */}
-      <div className="w-px h-8 bg-white/10" />
+      <div className="w-px h-8 bg-slate-200" />
 
       {/* Gallery — left side in RTL */}
       <button
         onClick={onGalleryOpen}
         className="flex-1 flex flex-col items-center justify-center gap-1
-                   text-emt-light/40 hover:text-emt-light/80
+                   text-slate-400 hover:text-slate-700
                    active:text-emt-light transition-colors duration-150
                    h-full"
         aria-label="תמונות"
