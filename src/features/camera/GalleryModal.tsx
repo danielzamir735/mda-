@@ -1,4 +1,5 @@
-import { X, Trash2, Images } from 'lucide-react';
+import { useState } from 'react';
+import { X, Trash2, Images, Download, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useCameraStore } from '../../store/cameraStore';
 
 interface Props {
@@ -8,56 +9,177 @@ interface Props {
 
 export default function GalleryModal({ isOpen, onClose }: Props) {
   const { photos, removePhoto } = useCameraStore();
+  const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
+  const handleSave = (dataUrl: string, index: number) => {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `emt-photo-${index + 1}.jpg`;
+    link.click();
+  };
+
+  const goNext = () => {
+    if (fullscreenIndex === null) return;
+    setFullscreenIndex((fullscreenIndex + 1) % photos.length);
+  };
+
+  const goPrev = () => {
+    if (fullscreenIndex === null) return;
+    setFullscreenIndex((fullscreenIndex - 1 + photos.length) % photos.length);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark/95 backdrop-blur-md">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4
-                      border-b border-white/10 shrink-0">
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center
-                     text-emt-light/70 hover:text-emt-light active:scale-90 transition-all"
-          aria-label="סגור"
-        >
-          <X size={18} />
-        </button>
-        <h2 className="text-emt-light font-bold text-base">תמונות</h2>
-        <div className="w-9" />
+    <>
+      {/* ── Gallery grid ── */}
+      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4
+                        border-b border-white/10 shrink-0">
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-white/10 border border-white/15
+                       flex items-center justify-center
+                       text-emt-light/70 hover:text-emt-light active:scale-90 transition-all"
+            aria-label="סגור"
+          >
+            <X size={18} />
+          </button>
+          <h2 className="text-emt-light font-black text-lg">תמונות</h2>
+          <div className="w-9" />
+        </div>
+
+        {/* Content */}
+        {photos.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-emt-light/30">
+            <Images size={52} strokeWidth={1.2} />
+            <p className="text-sm">אין תמונות שמורות</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto flex-1">
+            {photos.map((photo, i) => (
+              <div
+                key={i}
+                className="relative rounded-2xl overflow-hidden aspect-[4/3]
+                           bg-white/5 border border-white/10 cursor-pointer
+                           active:scale-95 transition-transform duration-150"
+                onClick={() => setFullscreenIndex(i)}
+              >
+                <img
+                  src={photo}
+                  alt={`תמונה ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                {/* Delete button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); removePhoto(i); }}
+                  className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
+                             bg-black/70 border border-white/20
+                             flex items-center justify-center text-white
+                             active:scale-90 transition-transform"
+                  aria-label={`מחק תמונה ${i + 1}`}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      {photos.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-emt-light/30">
-          <Images size={52} strokeWidth={1.2} />
-          <p className="text-sm">אין תמונות שמורות</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto flex-1">
-          {photos.map((photo, i) => (
-            <div key={i} className="relative rounded-2xl overflow-hidden aspect-[4/3]
-                                   bg-white/5 border border-white/10">
-              <img
-                src={photo}
-                alt={`תמונה ${i + 1}`}
-                className="w-full h-full object-cover"
-              />
-              <button
-                onClick={() => removePhoto(i)}
-                className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
-                           bg-black/60 backdrop-blur-sm
-                           flex items-center justify-center text-white
-                           active:scale-90 transition-transform"
-                aria-label={`מחק תמונה ${i + 1}`}
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
+      {/* ── Fullscreen photo viewer ── */}
+      {fullscreenIndex !== null && photos[fullscreenIndex] && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+          {/* Top bar */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-3
+                          bg-black/80 border-b border-white/10">
+            <button
+              onClick={() => setFullscreenIndex(null)}
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20
+                         flex items-center justify-center text-white
+                         active:scale-90 transition-transform"
+              aria-label="חזור לגלריה"
+            >
+              <X size={20} />
+            </button>
+
+            <span className="text-white/60 text-sm font-medium">
+              {fullscreenIndex + 1} / {photos.length}
+            </span>
+
+            {/* Save to gallery */}
+            <button
+              onClick={() => handleSave(photos[fullscreenIndex], fullscreenIndex)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-emt-green border border-emt-green/60
+                         text-white font-bold text-sm
+                         active:scale-95 transition-transform"
+              aria-label="שמור לגלריה"
+            >
+              <Download size={16} />
+              שמור
+            </button>
+          </div>
+
+          {/* Photo */}
+          <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+            <img
+              src={photos[fullscreenIndex]}
+              alt={`תמונה ${fullscreenIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
+
+            {/* Prev / Next — only if more than one photo */}
+            {photos.length > 1 && (
+              <>
+                <button
+                  onClick={goPrev}
+                  className="absolute right-2 top-1/2 -translate-y-1/2
+                             w-10 h-10 rounded-full bg-black/60 border border-white/20
+                             flex items-center justify-center text-white
+                             active:scale-90 transition-transform"
+                  aria-label="תמונה קודמת"
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <button
+                  onClick={goNext}
+                  className="absolute left-2 top-1/2 -translate-y-1/2
+                             w-10 h-10 rounded-full bg-black/60 border border-white/20
+                             flex items-center justify-center text-white
+                             active:scale-90 transition-transform"
+                  aria-label="תמונה הבאה"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom bar — delete */}
+          <div className="shrink-0 flex justify-center px-4 py-4 bg-black/80 border-t border-white/10">
+            <button
+              onClick={() => {
+                removePhoto(fullscreenIndex);
+                if (photos.length <= 1) {
+                  setFullscreenIndex(null);
+                } else {
+                  setFullscreenIndex(Math.min(fullscreenIndex, photos.length - 2));
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl
+                         bg-emt-red/20 border border-emt-red/40
+                         text-emt-red font-bold text-sm
+                         active:scale-95 transition-transform"
+              aria-label="מחק תמונה"
+            >
+              <Trash2 size={16} />
+              מחק תמונה
+            </button>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

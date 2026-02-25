@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="white"/>
+  <!-- Star of David: two overlapping equilateral triangles, red -->
+  <!-- Triangle pointing up: top at (256,42), base at y=362 -->
+  <polygon points="256,42 438,362 74,362" fill="#E53935"/>
+  <!-- Triangle pointing down: bottom at (256,470), top edge at y=150 -->
+  <polygon points="256,470 74,150 438,150" fill="#E53935"/>
+</svg>

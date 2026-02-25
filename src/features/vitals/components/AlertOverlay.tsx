@@ -7,13 +7,17 @@ export default function AlertOverlay({ visible }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-40 flex items-end justify-center pointer-events-none pb-28"
       aria-live="assertive"
     >
-      <div className="bg-black/60 backdrop-blur-sm rounded-3xl px-10 py-8 flex items-center justify-center animate-pulse-once">
+      {/* Flat, high-contrast panel — no blur, no glow */}
+      <div
+        className="bg-emt-dark border-2 border-emt-red rounded-2xl px-8 py-5
+                   animate-pulse-once"
+      >
         <p
           className="text-emt-red font-black text-center leading-tight"
-          style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)' }}
+          style={{ fontSize: 'clamp(1.6rem, 6vw, 2.8rem)' }}
         >
           האם סדיר ונימוש?
         </p>

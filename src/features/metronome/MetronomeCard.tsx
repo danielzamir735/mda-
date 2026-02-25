@@ -17,22 +17,23 @@ export default function MetronomeCard() {
   return (
     <div
       className={[
-        'flex flex-col items-center justify-between gap-2',
+        'flex flex-col items-center gap-2',
         'rounded-3xl border p-3 h-full w-full',
-        'backdrop-blur-lg transition-all duration-300',
-        'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
-        isPlaying ? 'bg-emt-yellow/[0.07]' : 'bg-white/[0.06]',
+        'transition-all duration-300',
+        isPlaying ? 'bg-emt-yellow/[0.07]' : 'bg-emt-gray',
       ].join(' ')}
       style={{
-        borderColor: isPlaying ? 'rgba(253,216,53,0.40)' : 'rgba(255,255,255,0.10)',
+        borderColor: isPlaying ? 'rgba(253,216,53,0.50)' : 'rgba(255,255,255,0.12)',
+        borderWidth: isPlaying ? '2px' : '1px',
       }}
     >
-      <p className="text-emt-light/50 text-xs tracking-widest uppercase self-start">
+      {/* Title — top-center, large & bold */}
+      <p className="text-emt-light font-black text-lg tracking-wide text-center w-full">
         מטרונום
       </p>
 
       {/* BPM display */}
-      <div className="flex flex-col items-center gap-0">
+      <div className="flex flex-col items-center gap-0 flex-1 justify-center">
         <span
           className="font-mono font-black tabular-nums leading-none transition-colors duration-300"
           style={{
@@ -90,12 +91,12 @@ export default function MetronomeCard() {
       <button
         onClick={toggle}
         className="w-14 h-14 rounded-full flex items-center justify-center
-                   shadow-lg active:scale-90 transition-all duration-150"
+                   active:scale-90 transition-all duration-150"
         style={{
           backgroundColor: isPlaying ? '#E53935' : '#43A047',
           boxShadow: isPlaying
-            ? '0 0 20px rgba(229,57,53,0.4)'
-            : '0 0 20px rgba(67,160,71,0.35)',
+            ? '0 4px 16px rgba(229,57,53,0.45)'
+            : '0 4px 16px rgba(67,160,71,0.40)',
         }}
         aria-label={isPlaying ? 'עצור' : 'הפעל'}
       >

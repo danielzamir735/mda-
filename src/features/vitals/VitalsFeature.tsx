@@ -11,7 +11,7 @@ import NotesModal from '../notes/NotesModal';
 export default function VitalsFeature() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(4);
-  const [activeUnit, setActiveUnit] = useState('BPM');
+  const [activeUnit, setActiveUnit] = useState('פעימות בדקה');
   const [activeCard, setActiveCard] = useState<'heart' | 'breath'>('heart');
   const [result, setResult] = useState<number | null>(null);
   const [lastResultHeart, setLastResultHeart] = useState<number | null>(null);
@@ -19,6 +19,10 @@ export default function VitalsFeature() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+
+  // Counters incremented to externally trigger timer reset on each VitalsCard
+  const [heartExternalReset, setHeartExternalReset] = useState(0);
+  const [breathExternalReset, setBreathExternalReset] = useState(0);
 
   const openModal = useCallback((multiplier: number, unit: string, cardType: 'heart' | 'breath') => {
     setActiveMultiplier(multiplier);
@@ -33,6 +37,13 @@ export default function VitalsFeature() {
     setResult(value);
     if (activeCard === 'heart') setLastResultHeart(value);
     else setLastResultBreath(value);
+  }, [activeCard]);
+
+  // Called when the user taps "חזור / הפעל שוב" in the ResultPopup
+  const handleResultReset = useCallback(() => {
+    setResult(null);
+    if (activeCard === 'heart') setHeartExternalReset(n => n + 1);
+    else setBreathExternalReset(n => n + 1);
   }, [activeCard]);
 
   return (
@@ -51,9 +62,10 @@ export default function VitalsFeature() {
           sublabel="15 שניות"
           duration={15}
           multiplier={4}
-          unit="BPM"
+          unit="פעימות בדקה"
           isHeartRate
           lastResult={lastResultHeart}
+          externalReset={heartExternalReset}
           onOpenModal={openModal}
         />
         <VitalsCard
@@ -61,8 +73,9 @@ export default function VitalsFeature() {
           sublabel="30 שניות"
           duration={30}
           multiplier={2}
-          unit="נשימות/דקה"
+          unit="נשימות בדקה"
           lastResult={lastResultBreath}
+          externalReset={breathExternalReset}
           onOpenModal={openModal}
         />
         <MetronomeCard />
@@ -85,7 +98,7 @@ export default function VitalsFeature() {
       <ResultPopup
         result={result}
         unit={activeUnit}
-        onClose={() => setResult(null)}
+        onClose={handleResultReset}
       />
 
       <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />

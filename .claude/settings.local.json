@@ -12,7 +12,8 @@
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add .gitattributes 2>&1)",
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)",
       "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)",
-      "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npm run build 2>&1)"
+      "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npm run build 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npm run build 2>&1)"
     ]
   }
 }

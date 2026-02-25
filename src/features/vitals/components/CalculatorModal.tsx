@@ -17,7 +17,7 @@ export default function CalculatorModal({
 
   if (!isOpen) return null;
 
-  const label = unit === 'BPM' ? 'BPM' : 'נשימות';
+  const label = unit.includes('פעימות') ? 'דופק' : 'נשימות';
 
   const handleDigit = (d: string) => {
     if (input.length >= 3) return;

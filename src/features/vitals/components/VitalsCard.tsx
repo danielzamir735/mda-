@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Play, Square } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
@@ -11,21 +11,21 @@ interface Props {
   unit: string;
   isHeartRate?: boolean;
   lastResult?: number | null;
+  externalReset?: number;
   onOpenModal: (multiplier: number, unit: string, cardType: 'heart' | 'breath') => void;
 }
 
 export default function VitalsCard({
-  label, sublabel, duration, multiplier, unit, isHeartRate, lastResult, onOpenModal,
+  label, sublabel, duration, multiplier, unit, isHeartRate,
+  lastResult, externalReset, onOpenModal,
 }: Props) {
-  const { state, timeLeft, start, stop } = useVitalsTimer(duration);
-  const [alertVisible, setAlertVisible] = useState(false);
+  const { state, timeLeft, start, stop, reset } = useVitalsTimer(duration);
 
-  // Auto-dismiss alert after 7 seconds
+  // External reset signal from parent (after result is dismissed)
   useEffect(() => {
-    if (!alertVisible) return;
-    const t = setTimeout(() => setAlertVisible(false), 7000);
-    return () => clearTimeout(t);
-  }, [alertVisible]);
+    if (externalReset) reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalReset]);
 
   // Open modal when timer finishes
   useEffect(() => {
@@ -36,80 +36,83 @@ export default function VitalsCard({
 
   const handleStart = () => {
     start();
-    if (isHeartRate) setAlertVisible(true);
   };
 
   const hasLastResult = lastResult !== null && lastResult !== undefined;
 
   return (
     <>
-      {isHeartRate && <AlertOverlay visible={alertVisible} />}
+      {isHeartRate && <AlertOverlay visible={state === 'running'} />}
 
       <div
         className={[
           'relative flex flex-col items-center justify-center gap-2',
           'rounded-3xl border p-3 h-full w-full overflow-hidden',
-          'backdrop-blur-lg transition-all duration-300',
-          'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
-          state === 'running'  ? 'bg-emt-red/10'
+          'transition-all duration-300',
+          state === 'running'  ? 'bg-emt-red/15'
           : state === 'finished' ? 'bg-emt-green/10'
-          : 'bg-white/[0.06]',
+          : 'bg-emt-gray',
         ].join(' ')}
         style={{
           borderColor:
             state === 'running'
-              ? 'rgba(229,57,53,0.55)'
+              ? 'rgba(229,57,53,0.7)'
               : state === 'finished'
-              ? 'rgba(67,160,71,0.45)'
-              : 'rgba(255,255,255,0.10)',
+              ? 'rgba(67,160,71,0.55)'
+              : 'rgba(255,255,255,0.12)',
+          borderWidth: state === 'running' ? '2px' : '1px',
         }}
       >
-        {/* Subtle glow ring */}
-        {state === 'running' && (
-          <div className="absolute inset-0 rounded-3xl ring-1 ring-emt-red/20 pointer-events-none" />
-        )}
-
+        {/* ── IDLE ── */}
         {state === 'idle' && (
           <>
             {hasLastResult && (
               <p className="text-[11px] text-emt-light/40 leading-none">
-                תוצאה אחרונה:{' '}
+                אחרון:{' '}
                 <span className="text-emt-green font-bold">{lastResult}</span>
               </p>
             )}
+
+            {/* Play button */}
             <button
               onClick={handleStart}
               className="w-16 h-16 rounded-full bg-emt-red flex items-center justify-center
-                         shadow-lg shadow-emt-red/40 active:scale-90 transition-transform duration-150"
+                         active:scale-90 transition-transform duration-150"
+              style={{ boxShadow: '0 4px 16px rgba(229,57,53,0.5)' }}
               aria-label={`התחל ${label}`}
             >
               <Play size={30} className="text-white" fill="white" />
             </button>
-            <div className="text-center">
-              <p className="text-emt-light font-bold text-base leading-snug">{label}</p>
-              <p className="text-emt-light/40 text-xs mt-0.5">
+
+            <div className="text-center leading-snug">
+              <p className="text-emt-light font-black text-2xl">{label}</p>
+              <p className="text-emt-light/55 text-base mt-0.5">
                 {hasLastResult ? 'הפעל שוב' : sublabel}
               </p>
             </div>
           </>
         )}
 
+        {/* ── RUNNING ── */}
         {state === 'running' && (
           <>
-            <p className="text-emt-light/50 text-xs tracking-wide">{label}</p>
+            <p className="text-emt-light/40 text-xs tracking-wide">{label}</p>
+
+            {/* Dominant countdown */}
             <span
               className="text-emt-red font-mono font-black tabular-nums leading-none"
-              style={{ fontSize: 'clamp(5rem, 20vw, 7.5rem)' }}
+              style={{ fontSize: 'clamp(6rem, 26vw, 9.5rem)' }}
             >
               {timeLeft}
             </span>
-            <p className="text-emt-light/30 text-xs">שניות</p>
+
+            <p className="text-emt-light/30 text-sm">שניות</p>
+
             <button
               onClick={stop}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full
-                         border border-emt-border text-emt-light/50 text-xs
-                         hover:text-emt-light/80 hover:border-emt-light/30
-                         active:scale-95 transition-all duration-150"
+                         border border-white/20 text-emt-light/50 text-xs
+                         hover:text-emt-light/80 active:scale-95 transition-all"
             >
               <Square size={10} fill="currentColor" />
               בטל
@@ -117,15 +120,9 @@ export default function VitalsCard({
           </>
         )}
 
+        {/* ── FINISHED (modal is opening) ── */}
         {state === 'finished' && (
-          <>
-            <div className="w-12 h-12 rounded-full bg-emt-green/20 border border-emt-green/50
-                            flex items-center justify-center">
-              <Play size={20} className="text-emt-green" fill="currentColor" />
-            </div>
-            <p className="text-emt-light/60 text-xs text-center">{label}</p>
-            <p className="text-emt-green text-xs">מוכן לספירה</p>
-          </>
+          <p className="text-emt-green text-sm font-semibold">מוכן לספירה…</p>
         )}
       </div>
     </>
