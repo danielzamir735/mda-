@@ -70,7 +70,7 @@ export default function VitalsCard({
       {!isRunning && (
         <>
           {hasLastResult && (
-            <p className="absolute top-3 inset-x-0 text-center text-emt-muted text-xs font-bold tracking-wide">
+            <p className="absolute top-3 inset-x-0 text-center text-emt-light text-lg font-bold tracking-wide">
               מדידה אחרונה: {lastResult}
             </p>
           )}
@@ -100,7 +100,7 @@ export default function VitalsCard({
             >
               <Minus size={14} />
             </button>
-            <p className="text-emt-light/75 text-lg font-semibold min-w-[5ch] text-center">
+            <p className="text-white text-2xl font-bold min-w-[5ch] text-center">
               {duration} שניות
             </p>
             <button

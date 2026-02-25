@@ -63,25 +63,24 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
         {/* Blood Pressure */}
         <div className="flex flex-col gap-1.5">
           <label className="text-emt-muted text-sm font-bold">לחץ דם</label>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <input
               type="number"
               inputMode="numeric"
               placeholder="סיסטולי"
               value={sys}
               onChange={(e) => setSys(e.target.value)}
-              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
+              className="w-full bg-emt-gray border border-emt-border rounded-2xl px-3 py-2
                          text-emt-light text-center text-lg font-bold placeholder:text-emt-border
                          focus:outline-none focus:border-emt-red transition-colors"
             />
-            <span className="text-emt-muted font-black text-2xl select-none">/</span>
             <input
               type="number"
               inputMode="numeric"
               placeholder="דיאסטולי"
               value={dia}
               onChange={(e) => setDia(e.target.value)}
-              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
+              className="w-full bg-emt-gray border border-emt-border rounded-2xl px-3 py-2
                          text-emt-light text-center text-lg font-bold placeholder:text-emt-border
                          focus:outline-none focus:border-emt-red transition-colors"
             />

@@ -44,18 +44,18 @@ export default function CalculatorModal({
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-white
-                   shadow-2xl overflow-hidden animate-fade-scale"
+        className="w-full max-w-sm rounded-3xl bg-emt-gray/90 backdrop-blur-xl
+                   border border-emt-border shadow-2xl overflow-hidden animate-fade-scale"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="relative flex items-center justify-center px-5 pt-5 pb-3
-                        border-b border-slate-100">
+                        border-b border-emt-border">
           <button
             onClick={handleClose}
-            className="absolute right-4 w-9 h-9 rounded-full bg-slate-100
+            className="absolute right-4 w-9 h-9 rounded-full bg-white/10
                        flex items-center justify-center
-                       text-slate-400 hover:text-slate-700 hover:bg-slate-200
+                       text-emt-muted hover:text-emt-light hover:bg-white/20
                        active:scale-90 transition-all"
             aria-label="סגור"
           >

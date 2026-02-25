@@ -100,6 +100,10 @@ export default function VitalsFeature() {
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
       />
 
+      <footer className="shrink-0 text-center text-[10px] text-emt-muted pb-1 pt-1">
+        © כל הזכויות שמורות ל Daniel Zamir - Web Development
+      </footer>
+
       <CalculatorModal
         isOpen={modalOpen}
         multiplier={activeMultiplier}
