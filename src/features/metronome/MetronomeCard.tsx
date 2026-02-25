@@ -1,17 +1,24 @@
-import { Play, Square } from 'lucide-react';
+import { Minus, Plus, Play, Square } from 'lucide-react';
 import { useMetronomeStore } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
+
+const MIN_BPM = 100;
+const MAX_BPM = 120;
 
 export default function MetronomeCard() {
   useMetronome(); // drives audio ticks
 
   const { bpm, isPlaying, setBpm, toggle } = useMetronomeStore();
 
+  const adjustBpm = (delta: number) => {
+    setBpm(Math.min(MAX_BPM, Math.max(MIN_BPM, bpm + delta)));
+  };
+
   return (
     <div
       className={[
-        'flex flex-col items-center justify-between gap-3',
-        'rounded-3xl border p-4 h-full w-full',
+        'flex flex-col items-center justify-between gap-2',
+        'rounded-3xl border p-3 h-full w-full',
         'backdrop-blur-lg transition-all duration-300',
         'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
         isPlaying ? 'bg-emt-yellow/[0.07]' : 'bg-white/[0.06]',
@@ -38,23 +45,45 @@ export default function MetronomeCard() {
         <p className="text-emt-light/30 text-xs">BPM</p>
       </div>
 
-      {/* Slider */}
-      <div className="w-full px-1">
-        <input
-          type="range"
-          min={40}
-          max={200}
-          step={1}
-          value={bpm}
-          onChange={e => setBpm(Number(e.target.value))}
-          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                     bg-emt-border accent-emt-yellow"
-          aria-label="קצב לדקה"
-        />
-        <div className="flex justify-between text-emt-light/20 text-xs mt-1 px-0.5">
-          <span>40</span>
-          <span>200</span>
+      {/* Slider with +/- touch buttons */}
+      <div className="w-full flex items-center gap-2 px-1">
+        <button
+          onClick={() => adjustBpm(-1)}
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                     bg-white/10 border border-white/15
+                     text-emt-light active:scale-90 transition-transform"
+          aria-label="הפחת BPM"
+        >
+          <Minus size={16} />
+        </button>
+
+        <div className="flex-1 flex flex-col gap-1">
+          <input
+            type="range"
+            min={MIN_BPM}
+            max={MAX_BPM}
+            step={1}
+            value={bpm}
+            onChange={e => setBpm(Number(e.target.value))}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                       bg-emt-border accent-emt-yellow"
+            aria-label="קצב לדקה"
+          />
+          <div className="flex justify-between text-emt-light/20 text-xs px-0.5">
+            <span>{MIN_BPM}</span>
+            <span>{MAX_BPM}</span>
+          </div>
         </div>
+
+        <button
+          onClick={() => adjustBpm(1)}
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                     bg-white/10 border border-white/15
+                     text-emt-light active:scale-90 transition-transform"
+          aria-label="הגדל BPM"
+        >
+          <Plus size={16} />
+        </button>
       </div>
 
       {/* Play / Stop */}

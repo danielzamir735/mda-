@@ -6,17 +6,24 @@ import MetronomeCard from '../metronome/MetronomeCard';
 import QuickToolsCard from '../quicktools/QuickToolsCard';
 import BottomNav from '../../components/BottomNav';
 import GalleryModal from '../camera/GalleryModal';
+import NotesModal from '../notes/NotesModal';
 
 export default function VitalsFeature() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(4);
   const [activeUnit, setActiveUnit] = useState('BPM');
+  const [activeCard, setActiveCard] = useState<'heart' | 'breath'>('heart');
   const [result, setResult] = useState<number | null>(null);
+  const [lastResultHeart, setLastResultHeart] = useState<number | null>(null);
+  const [lastResultBreath, setLastResultBreath] = useState<number | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
-  const openModal = useCallback((multiplier: number, unit: string) => {
+  const openModal = useCallback((multiplier: number, unit: string, cardType: 'heart' | 'breath') => {
     setActiveMultiplier(multiplier);
     setActiveUnit(unit);
+    setActiveCard(cardType);
     setModalOpen(true);
   }, []);
 
@@ -24,7 +31,9 @@ export default function VitalsFeature() {
 
   const handleResult = useCallback((value: number) => {
     setResult(value);
-  }, []);
+    if (activeCard === 'heart') setLastResultHeart(value);
+    else setLastResultBreath(value);
+  }, [activeCard]);
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-emt-dark">
@@ -44,6 +53,7 @@ export default function VitalsFeature() {
           multiplier={4}
           unit="BPM"
           isHeartRate
+          lastResult={lastResultHeart}
           onOpenModal={openModal}
         />
         <VitalsCard
@@ -52,13 +62,17 @@ export default function VitalsFeature() {
           duration={30}
           multiplier={2}
           unit="נשימות/דקה"
+          lastResult={lastResultBreath}
           onOpenModal={openModal}
         />
         <MetronomeCard />
         <QuickToolsCard />
       </main>
 
-      <BottomNav onGalleryOpen={() => setGalleryOpen(true)} />
+      <BottomNav
+        onGalleryOpen={() => setGalleryOpen(true)}
+        onNotesOpen={() => setNotesOpen(true)}
+      />
 
       <CalculatorModal
         isOpen={modalOpen}
@@ -75,6 +89,13 @@ export default function VitalsFeature() {
       />
 
       <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
+
+      <NotesModal
+        isOpen={notesOpen}
+        noteText={noteText}
+        onTextChange={setNoteText}
+        onClose={() => setNotesOpen(false)}
+      />
     </div>
   );
 }

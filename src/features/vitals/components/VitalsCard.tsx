@@ -10,11 +10,12 @@ interface Props {
   multiplier: number;
   unit: string;
   isHeartRate?: boolean;
-  onOpenModal: (multiplier: number, unit: string) => void;
+  lastResult?: number | null;
+  onOpenModal: (multiplier: number, unit: string, cardType: 'heart' | 'breath') => void;
 }
 
 export default function VitalsCard({
-  label, sublabel, duration, multiplier, unit, isHeartRate, onOpenModal,
+  label, sublabel, duration, multiplier, unit, isHeartRate, lastResult, onOpenModal,
 }: Props) {
   const { state, timeLeft, start, stop } = useVitalsTimer(duration);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -29,14 +30,16 @@ export default function VitalsCard({
   // Open modal when timer finishes
   useEffect(() => {
     if (state === 'finished') {
-      onOpenModal(multiplier, unit);
+      onOpenModal(multiplier, unit, isHeartRate ? 'heart' : 'breath');
     }
-  }, [state, multiplier, unit, onOpenModal]);
+  }, [state, multiplier, unit, isHeartRate, onOpenModal]);
 
   const handleStart = () => {
     start();
     if (isHeartRate) setAlertVisible(true);
   };
+
+  const hasLastResult = lastResult !== null && lastResult !== undefined;
 
   return (
     <>
@@ -44,8 +47,8 @@ export default function VitalsCard({
 
       <div
         className={[
-          'relative flex flex-col items-center justify-center gap-3',
-          'rounded-3xl border p-4 h-full w-full overflow-hidden',
+          'relative flex flex-col items-center justify-center gap-2',
+          'rounded-3xl border p-3 h-full w-full overflow-hidden',
           'backdrop-blur-lg transition-all duration-300',
           'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
           state === 'running'  ? 'bg-emt-red/10'
@@ -68,6 +71,12 @@ export default function VitalsCard({
 
         {state === 'idle' && (
           <>
+            {hasLastResult && (
+              <p className="text-[11px] text-emt-light/40 leading-none">
+                תוצאה אחרונה:{' '}
+                <span className="text-emt-green font-bold">{lastResult}</span>
+              </p>
+            )}
             <button
               onClick={handleStart}
               className="w-16 h-16 rounded-full bg-emt-red flex items-center justify-center
@@ -78,7 +87,9 @@ export default function VitalsCard({
             </button>
             <div className="text-center">
               <p className="text-emt-light font-bold text-base leading-snug">{label}</p>
-              <p className="text-emt-light/40 text-xs mt-0.5">{sublabel}</p>
+              <p className="text-emt-light/40 text-xs mt-0.5">
+                {hasLastResult ? 'הפעל שוב' : sublabel}
+              </p>
             </div>
           </>
         )}
@@ -88,14 +99,14 @@ export default function VitalsCard({
             <p className="text-emt-light/50 text-xs tracking-wide">{label}</p>
             <span
               className="text-emt-red font-mono font-black tabular-nums leading-none"
-              style={{ fontSize: 'clamp(3.5rem, 14vw, 6rem)' }}
+              style={{ fontSize: 'clamp(5rem, 20vw, 7.5rem)' }}
             >
               {timeLeft}
             </span>
             <p className="text-emt-light/30 text-xs">שניות</p>
             <button
               onClick={stop}
-              className="mt-1 flex items-center gap-1.5 px-4 py-1.5 rounded-full
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full
                          border border-emt-border text-emt-light/50 text-xs
                          hover:text-emt-light/80 hover:border-emt-light/30
                          active:scale-95 transition-all duration-150"

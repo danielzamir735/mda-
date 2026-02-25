@@ -2,9 +2,10 @@ import { FileText, Images } from 'lucide-react';
 
 interface Props {
   onGalleryOpen: () => void;
+  onNotesOpen: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
   return (
     <nav
       className="shrink-0 flex items-center
@@ -15,6 +16,7 @@ export default function BottomNav({ onGalleryOpen }: Props) {
     >
       {/* Notes — right side in RTL */}
       <button
+        onClick={onNotesOpen}
         className="flex-1 flex flex-col items-center justify-center gap-1
                    text-emt-light/40 hover:text-emt-light/80
                    active:text-emt-light transition-colors duration-150
