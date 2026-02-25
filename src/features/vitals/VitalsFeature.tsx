@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import VitalsCard from './components/VitalsCard';
 import CalculatorModal from './components/CalculatorModal';
 import ResultPopup from './components/ResultPopup';
+import VitalsHistoryModal from './components/VitalsHistoryModal';
 import MetronomeCard from '../metronome/MetronomeCard';
 import QuickToolsCard from '../quicktools/QuickToolsCard';
 import BottomNav from '../../components/BottomNav';
@@ -18,6 +19,7 @@ export default function VitalsFeature() {
   const [lastResultBreath, setLastResultBreath] = useState<number | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
 
   // Counters to externally trigger timer reset in each VitalsCard
@@ -46,7 +48,6 @@ export default function VitalsFeature() {
     else setBreathExternalReset(n => n + 1);
   }, [activeCard]);
 
-  // Circular reset buttons inside each card clear only that card's lastResult
   const handleResetLastHeart = useCallback(() => setLastResultHeart(null), []);
   const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
@@ -91,6 +92,7 @@ export default function VitalsFeature() {
       <BottomNav
         onGalleryOpen={() => setGalleryOpen(true)}
         onNotesOpen={() => setNotesOpen(true)}
+        onVitalsOpen={() => setVitalsHistoryOpen(true)}
       />
 
       <CalculatorModal
@@ -114,6 +116,11 @@ export default function VitalsFeature() {
         noteText={noteText}
         onTextChange={setNoteText}
         onClose={() => setNotesOpen(false)}
+      />
+
+      <VitalsHistoryModal
+        isOpen={vitalsHistoryOpen}
+        onClose={() => setVitalsHistoryOpen(false)}
       />
     </div>
   );

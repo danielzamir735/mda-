@@ -1,11 +1,12 @@
-import { FileText, Images } from 'lucide-react';
+import { FileText, Images, Activity } from 'lucide-react';
 
 interface Props {
   onGalleryOpen: () => void;
   onNotesOpen: () => void;
+  onVitalsOpen: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen }: Props) {
   return (
     <nav
       className="shrink-0 flex items-center
@@ -37,6 +38,20 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen }: Props) {
       >
         <Images size={22} />
         <span className="text-xs font-medium">תמונות</span>
+      </button>
+
+      <div className="w-px h-8 bg-emt-border" />
+
+      <button
+        onClick={onVitalsOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1
+                   text-emt-muted hover:text-emt-light
+                   active:text-emt-light transition-colors duration-150
+                   h-full"
+        aria-label="מדדים"
+      >
+        <Activity size={22} />
+        <span className="text-xs font-medium">מדדים</span>
       </button>
     </nav>
   );

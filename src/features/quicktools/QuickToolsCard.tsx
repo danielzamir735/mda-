@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Camera, Calculator } from 'lucide-react';
+import { Camera, Calculator, Activity } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import OxygenCalculatorModal from './OxygenCalculatorModal';
+import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useCameraStore } from '../../store/cameraStore';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [o2CalcOpen, setO2CalcOpen] = useState(false);
+  const [addVitalsOpen, setAddVitalsOpen] = useState(false);
   const addPhoto = useCameraStore((s) => s.addPhoto);
 
   return (
@@ -25,15 +27,15 @@ export default function QuickToolsCard() {
           {/* Camera */}
           <button
             onClick={() => setCameraOpen(true)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl
+            className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label="מצלמה"
           >
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
                          bg-emt-border/30 border border-emt-border"
             >
-              <Camera size={20} className="text-emt-muted" />
+              <Camera size={18} className="text-emt-muted" />
             </div>
             <span className="text-emt-light text-sm font-bold">מצלמה</span>
           </button>
@@ -41,17 +43,33 @@ export default function QuickToolsCard() {
           {/* Oxygen Calculator */}
           <button
             onClick={() => setO2CalcOpen(true)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl
+            className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label="מחשבון חמצן"
           >
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
                          border border-emt-blue/40 bg-emt-blue/10"
             >
-              <Calculator size={20} className="text-emt-blue" />
+              <Calculator size={18} className="text-emt-blue" />
             </div>
             <span className="text-emt-blue text-sm font-bold">מחשבון חמצן</span>
+          </button>
+
+          {/* Add Vitals */}
+          <button
+            onClick={() => setAddVitalsOpen(true)}
+            className="flex items-center gap-3 px-3 py-2 rounded-2xl
+                       transition-all duration-200 active:scale-95"
+            aria-label="הוספת מדדים"
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+                         border border-emt-green/40 bg-emt-green/10"
+            >
+              <Activity size={18} className="text-emt-green" />
+            </div>
+            <span className="text-emt-green text-sm font-bold">הוספת מדדים</span>
           </button>
 
         </div>
@@ -67,6 +85,11 @@ export default function QuickToolsCard() {
       <OxygenCalculatorModal
         isOpen={o2CalcOpen}
         onClose={() => setO2CalcOpen(false)}
+      />
+
+      <AddVitalsModal
+        isOpen={addVitalsOpen}
+        onClose={() => setAddVitalsOpen(false)}
       />
     </>
   );

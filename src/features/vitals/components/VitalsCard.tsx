@@ -35,7 +35,6 @@ export default function VitalsCard({
   }, [state, multiplier, unit, isHeartRate, onOpenModal]);
 
   const hasLastResult = lastResult !== null && lastResult !== undefined;
-
   const isRunning  = state === 'running';
   const isFinished = state === 'finished';
 
@@ -66,40 +65,23 @@ export default function VitalsCard({
       {/* ── IDLE ── */}
       {state === 'idle' && (
         <>
-          {hasLastResult ? (
-            /* Last-result layout */
-            <div className="flex flex-col items-center gap-0.5 w-full">
-              <p className="text-emt-muted text-[0.65rem] font-bold tracking-widest uppercase">
-                תוצאה אחרונה
-              </p>
-              <span
-                className="font-mono font-black tabular-nums leading-none text-emt-light"
-                style={{ fontSize: 'clamp(4rem, 17vw, 6.5rem)' }}
-              >
-                {lastResult}
-              </span>
-              <p className="text-emt-muted text-xs font-medium">{label}</p>
-              <p className="text-emt-border text-[0.6rem] font-semibold tracking-wide mt-1 uppercase">
-                הקש לחזרה
-              </p>
-            </div>
-          ) : (
-            /* First-time play layout */
-            <>
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center
-                           border-2 border-emt-red/50 bg-emt-red/10"
-              >
-                <Play
-                  size={28}
-                  className="text-emt-red translate-x-0.5"
-                  fill="currentColor"
-                />
-              </div>
-              <p className="text-emt-light font-black text-xl">{label}</p>
-              <p className="text-emt-muted text-sm">{sublabel}</p>
-            </>
+          {hasLastResult && (
+            <p className="absolute top-3 inset-x-0 text-center text-emt-muted text-xs font-bold tracking-wide">
+              מדידה אחרונה: {lastResult}
+            </p>
           )}
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center
+                       border-2 border-emt-red/50 bg-emt-red/10"
+          >
+            <Play
+              size={28}
+              className="text-emt-red translate-x-0.5"
+              fill="currentColor"
+            />
+          </div>
+          <p className="text-emt-light font-black text-xl">{label}</p>
+          <p className="text-emt-light/75 text-xl font-semibold">{sublabel}</p>
         </>
       )}
 
@@ -131,10 +113,8 @@ export default function VitalsCard({
         </>
       )}
 
-      {/* ── FINISHED ── */}
-      {isFinished && (
-        <p className="text-emt-green text-sm font-semibold">מוכן לספירה…</p>
-      )}
+      {/* ── FINISHED — brief flash, modal opens immediately ── */}
+      {isFinished && null}
     </div>
   );
 }
