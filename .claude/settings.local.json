@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npm install 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npm install -D tailwindcss@3 postcss autoprefixer 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npx tailwindcss init -p 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npm install @supabase/supabase-js react-router-dom zustand lucide-react 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git init 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git remote add origin https://github.com/danielzamir735/mda-.git 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add index.html .gitignore .env.example tailwind.config.js postcss.config.js package.json package-lock.json tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts src/ public/ CLAUDE.md 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add index.html .gitignore .env.example tailwind.config.js postcss.config.js package.json package-lock.json tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts eslint.config.js README.md src/ public/ 2>&1 && git status 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add .gitattributes 2>&1)",
+      "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)"
+    ]
+  }
+}
