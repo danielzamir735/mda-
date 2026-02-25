@@ -8,15 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'emt-red':    '#DC2626',   // red-600 — actions, running state
-        'emt-green':  '#16A34A',   // green-600 — success, results
-        'emt-yellow': '#D97706',   // amber-600 — metronome / torch
-        'emt-blue':   '#3B82F6',   // blue-500 — accent / O2 calc
-        'emt-dark':   '#F1F5F9',   // slate-100 — page background
-        'emt-light':  '#0F172A',   // slate-900 — primary text
-        'emt-gray':   '#FFFFFF',   // white — card background
-        'emt-border': '#CBD5E1',   // slate-300 — borders
-        'emt-muted':  '#64748B',   // slate-500 — secondary text
+        'emt-red':    '#EF233C',   // vibrant medical red — actions, running
+        'emt-green':  '#22C55E',   // green-500 — success, results
+        'emt-yellow': '#F59E0B',   // amber-500 — metronome
+        'emt-blue':   '#60A5FA',   // blue-400 — O2 calc accent
+        'emt-dark':   '#09090B',   // zinc-950 — page background
+        'emt-light':  '#F4F4F5',   // zinc-100 — primary text
+        'emt-gray':   '#111114',   // deep dark — card background
+        'emt-border': '#3F3F46',   // zinc-700 — borders
+        'emt-muted':  '#71717A',   // zinc-500 — secondary text
       },
       keyframes: {
         'fade-scale': {
@@ -30,10 +30,15 @@ export default {
           '85%':  { opacity: '1' },
           '100%': { opacity: '1' },
         },
+        'slide-up': {
+          '0%':   { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
-        'fade-scale':  'fade-scale 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both',
-        'pulse-once':  'pulse-once 0.4s ease-out both',
+        'fade-scale': 'fade-scale 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        'pulse-once': 'pulse-once 0.4s ease-out both',
+        'slide-up':   'slide-up 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
     },
   },

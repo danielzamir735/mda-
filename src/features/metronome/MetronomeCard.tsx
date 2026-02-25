@@ -6,8 +6,7 @@ const MIN_BPM = 100;
 const MAX_BPM = 120;
 
 export default function MetronomeCard() {
-  useMetronome(); // drives audio ticks
-
+  useMetronome();
   const { bpm, isPlaying, setBpm, toggle } = useMetronomeStore();
 
   const adjustBpm = (delta: number) => {
@@ -18,28 +17,28 @@ export default function MetronomeCard() {
     <div
       className={[
         'flex flex-col items-center gap-2',
-        'rounded-3xl border p-3 h-full w-full',
+        'rounded-3xl p-3 h-full w-full',
         'transition-all duration-300',
-        isPlaying ? 'bg-amber-50' : 'bg-emt-gray',
+        isPlaying
+          ? 'bg-[#130F00] border-2 border-emt-yellow'
+          : 'bg-emt-gray border border-emt-border',
       ].join(' ')}
-      style={{
-        borderColor: isPlaying ? '#FCD34D' : '#E2E8F0',
-        borderWidth: isPlaying ? '2px' : '1px',
-        boxShadow: '0 2px 12px rgba(15,23,42,0.08)',
+      style={isPlaying ? {
+        boxShadow: '0 0 28px rgba(245,158,11,0.20), 0 2px 12px rgba(0,0,0,0.6)',
+      } : {
+        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
       }}
     >
-      {/* Title */}
       <p className="text-emt-light font-black text-lg tracking-wide text-center w-full">
         מטרונום
       </p>
 
-      {/* BPM display */}
-      <div className="flex flex-col items-center gap-0 flex-1 justify-center">
+      <div className="flex flex-col items-center flex-1 justify-center gap-0">
         <span
           className="font-mono font-black tabular-nums leading-none transition-colors duration-300"
           style={{
             fontSize: 'clamp(2.8rem, 11vw, 5rem)',
-            color: isPlaying ? '#D97706' : '#0F172A',
+            color: isPlaying ? '#F59E0B' : '#F4F4F5',
           }}
         >
           {bpm}
@@ -47,13 +46,13 @@ export default function MetronomeCard() {
         <p className="text-emt-muted text-xs font-medium">BPM</p>
       </div>
 
-      {/* Slider with +/- touch buttons */}
+      {/* Slider row */}
       <div className="w-full flex items-center gap-2 px-1">
         <button
           onClick={() => adjustBpm(-1)}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-slate-100 border border-slate-200
-                     text-slate-600 active:scale-90 transition-transform hover:bg-slate-200"
+                     bg-emt-border/30 border border-emt-border
+                     text-emt-muted active:scale-90 transition-transform"
           aria-label="הפחת BPM"
         >
           <Minus size={16} />
@@ -68,7 +67,7 @@ export default function MetronomeCard() {
             value={bpm}
             onChange={e => setBpm(Number(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                       bg-slate-200 accent-emt-yellow"
+                       bg-emt-border accent-emt-yellow"
             aria-label="קצב לדקה"
           />
           <div className="flex justify-between text-emt-muted text-xs px-0.5">
@@ -80,8 +79,8 @@ export default function MetronomeCard() {
         <button
           onClick={() => adjustBpm(1)}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-slate-100 border border-slate-200
-                     text-slate-600 active:scale-90 transition-transform hover:bg-slate-200"
+                     bg-emt-border/30 border border-emt-border
+                     text-emt-muted active:scale-90 transition-transform"
           aria-label="הגדל BPM"
         >
           <Plus size={16} />
@@ -94,10 +93,10 @@ export default function MetronomeCard() {
         className="w-14 h-14 rounded-full flex items-center justify-center
                    active:scale-90 transition-all duration-150"
         style={{
-          backgroundColor: isPlaying ? '#DC2626' : '#16A34A',
+          backgroundColor: isPlaying ? '#EF233C' : '#22C55E',
           boxShadow: isPlaying
-            ? '0 4px 16px rgba(220,38,38,0.35)'
-            : '0 4px 16px rgba(22,163,74,0.35)',
+            ? '0 4px 16px rgba(239,35,60,0.35)'
+            : '0 4px 16px rgba(34,197,94,0.35)',
         }}
         aria-label={isPlaying ? 'עצור' : 'הפעל'}
       >

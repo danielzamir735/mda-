@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, RotateCcw } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
 
@@ -19,17 +19,15 @@ interface Props {
 
 export default function VitalsCard({
   label, sublabel, duration, multiplier, unit, isHeartRate,
-  lastResult, externalReset, onOpenModal, onResetLastResult,
+  lastResult, externalReset, onOpenModal,
 }: Props) {
   const { state, timeLeft, start, stop, reset } = useVitalsTimer(duration);
 
-  // External reset signal from parent (after result popup closes)
   useEffect(() => {
     if (externalReset) reset();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalReset]);
 
-  // Open modal when timer finishes
   useEffect(() => {
     if (state === 'finished') {
       onOpenModal(multiplier, unit, isHeartRate ? 'heart' : 'breath');
@@ -38,104 +36,103 @@ export default function VitalsCard({
 
   const hasLastResult = lastResult !== null && lastResult !== undefined;
 
+  const isRunning  = state === 'running';
+  const isFinished = state === 'finished';
+
   return (
     <div
       className={[
         'relative flex flex-col items-center justify-center gap-2',
-        'rounded-3xl border p-3 h-full w-full overflow-hidden',
+        'rounded-3xl p-3 h-full w-full overflow-hidden',
         'transition-all duration-300',
-        state === 'running'  ? 'bg-red-50'
-        : state === 'finished' ? 'bg-green-50'
-        : 'bg-emt-gray',
+        state === 'idle' ? 'cursor-pointer select-none' : '',
+        isRunning
+          ? 'bg-[#180408] border-2 border-emt-red'
+          : 'bg-emt-gray border border-emt-border',
       ].join(' ')}
-      style={{
-        borderColor:
-          state === 'running'  ? '#FCA5A5'
-          : state === 'finished' ? '#86EFAC'
-          : '#E2E8F0',
-        borderWidth: state === 'running' ? '2px' : '1px',
-        boxShadow: '0 2px 12px rgba(15,23,42,0.08)',
+      style={isRunning ? {
+        boxShadow: '0 0 32px rgba(239,35,60,0.22), 0 2px 12px rgba(0,0,0,0.6)',
+      } : {
+        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
       }}
+      onClick={state === 'idle' ? start : undefined}
     >
-      {/* Portal AlertOverlay to body — keeps grid to exactly 4 items */}
+      {/* AlertOverlay portalled — heart rate only */}
       {isHeartRate && createPortal(
-        <AlertOverlay visible={state === 'running'} />,
+        <AlertOverlay visible={isRunning} />,
         document.body,
       )}
 
       {/* ── IDLE ── */}
       {state === 'idle' && (
         <>
-          {hasLastResult && (
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs text-emt-muted leading-none">
-                תוצאה אחרונה:{' '}
-                <span className="text-emt-green font-bold">{lastResult}</span>
+          {hasLastResult ? (
+            /* Last-result layout */
+            <div className="flex flex-col items-center gap-0.5 w-full">
+              <p className="text-emt-muted text-[0.65rem] font-bold tracking-widest uppercase">
+                תוצאה אחרונה
               </p>
-              <button
-                onClick={onResetLastResult}
-                className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200
-                           flex items-center justify-center
-                           text-slate-400 hover:text-emt-red
-                           active:scale-90 transition-all"
-                aria-label="נקה תוצאה אחרונה"
+              <span
+                className="font-mono font-black tabular-nums leading-none text-emt-light"
+                style={{ fontSize: 'clamp(4rem, 17vw, 6.5rem)' }}
               >
-                <RotateCcw size={10} />
-              </button>
+                {lastResult}
+              </span>
+              <p className="text-emt-muted text-xs font-medium">{label}</p>
+              <p className="text-emt-border text-[0.6rem] font-semibold tracking-wide mt-1 uppercase">
+                הקש לחזרה
+              </p>
             </div>
+          ) : (
+            /* First-time play layout */
+            <>
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center
+                           border-2 border-emt-red/50 bg-emt-red/10"
+              >
+                <Play
+                  size={28}
+                  className="text-emt-red translate-x-0.5"
+                  fill="currentColor"
+                />
+              </div>
+              <p className="text-emt-light font-black text-xl">{label}</p>
+              <p className="text-emt-muted text-sm">{sublabel}</p>
+            </>
           )}
-
-          {/* Play button */}
-          <button
-            onClick={start}
-            className="w-16 h-16 rounded-full bg-emt-red flex items-center justify-center
-                       active:scale-90 transition-transform duration-150"
-            style={{ boxShadow: '0 4px 16px rgba(220,38,38,0.35)' }}
-            aria-label={`התחל ${label}`}
-          >
-            <Play size={30} className="text-white" fill="white" />
-          </button>
-
-          <div className="text-center leading-snug">
-            <p className="text-emt-light font-black text-2xl">{label}</p>
-            <p className="text-emt-muted text-base mt-0.5">
-              {hasLastResult ? 'הפעל שוב' : sublabel}
-            </p>
-          </div>
         </>
       )}
 
       {/* ── RUNNING ── */}
-      {state === 'running' && (
+      {isRunning && (
         <>
-          <p className="text-emt-muted text-xs tracking-wide font-semibold uppercase">{label}</p>
+          <p className="text-emt-red/60 text-[0.6rem] tracking-widest font-bold uppercase">
+            {label}
+          </p>
 
-          {/* Dominant countdown */}
           <span
-            className="text-emt-red font-mono font-black tabular-nums leading-none"
+            className="font-mono font-black tabular-nums leading-none text-emt-red"
             style={{ fontSize: 'clamp(5rem, 22vw, 8rem)' }}
           >
             {timeLeft}
           </span>
 
-          <p className="text-emt-muted text-sm font-medium">שניות</p>
+          <p className="text-emt-muted text-sm font-medium -mt-1">שניות</p>
 
-          {/* MASSIVE cancel button */}
           <button
-            onClick={stop}
+            onClick={(e) => { e.stopPropagation(); stop(); }}
             className="w-full mt-1 py-4 rounded-2xl
-                       bg-red-600 text-white font-black text-xl tracking-wide
-                       active:scale-[0.97] transition-transform duration-150
-                       shadow-md"
-            style={{ boxShadow: '0 4px 16px rgba(220,38,38,0.4)' }}
+                       bg-emt-red text-white font-black text-xl tracking-wide
+                       active:scale-[0.97] transition-transform duration-150"
+            style={{ boxShadow: '0 4px 20px rgba(239,35,60,0.45)' }}
           >
             בטל
           </button>
         </>
       )}
 
-      {/* ── FINISHED (modal is opening) ── */}
-      {state === 'finished' && (
+      {/* ── FINISHED ── */}
+      {isFinished && (
         <p className="text-emt-green text-sm font-semibold">מוכן לספירה…</p>
       )}
     </div>

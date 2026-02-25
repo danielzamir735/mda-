@@ -1,8 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="white"/>
-  <!-- Star of David: two overlapping equilateral triangles, red -->
-  <!-- Triangle pointing up: top at (256,42), base at y=362 -->
-  <polygon points="256,42 438,362 74,362" fill="#E53935"/>
-  <!-- Triangle pointing down: bottom at (256,470), top edge at y=150 -->
-  <polygon points="256,470 74,150 438,150" fill="#E53935"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- White rounded-square background -->
+  <rect width="100" height="100" rx="22" fill="#FFFFFF"/>
+  <!-- Star of David: 12-vertex outer star minus inner hexagon (hollow center) using evenodd -->
+  <path
+    fill-rule="evenodd"
+    d="M50,10 L62,30 L85,30 L73,50 L85,70 L62,70 L50,90 L38,70 L15,70 L27,50 L15,30 L38,30 Z
+       M62,30 L73,50 L62,70 L38,70 L27,50 L38,30 Z"
+    fill="#DC2626"
+  />
 </svg>
