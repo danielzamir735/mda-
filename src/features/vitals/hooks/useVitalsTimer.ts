@@ -30,11 +30,17 @@ export function useVitalsTimer(duration: number) {
     setState('running');
   };
 
+  const stop = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeLeft(duration);
+    setState('idle');
+  };
+
   const reset = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setTimeLeft(duration);
     setState('idle');
   };
 
-  return { state, timeLeft, start, reset };
+  return { state, timeLeft, start, stop, reset };
 }
