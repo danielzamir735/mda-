@@ -123,7 +123,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose }: Props) {
           {/* Flow rate */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-emt-muted uppercase tracking-wide">
-              קצב זרימה (ל/דקה)
+              קצב זרימה (LPM)
             </label>
             <input
               type="number"
