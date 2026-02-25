@@ -7,6 +7,11 @@ export function useVitalsTimer(duration: number) {
   const [timeLeft, setTimeLeft] = useState(duration);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Sync displayed time when duration changes while idle
+  useEffect(() => {
+    if (state === 'idle') setTimeLeft(duration);
+  }, [duration, state]);
+
   useEffect(() => {
     if (state !== 'running') return;
 

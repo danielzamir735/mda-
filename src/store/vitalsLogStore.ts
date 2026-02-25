@@ -13,6 +13,7 @@ export interface VitalsLog {
 interface VitalsLogState {
   logs: VitalsLog[];
   addLog: (data: Omit<VitalsLog, 'id' | 'timestamp'>) => void;
+  deleteLog: (id: string) => void;
 }
 
 export const useVitalsLogStore = create<VitalsLogState>((set) => ({
@@ -24,4 +25,7 @@ export const useVitalsLogStore = create<VitalsLogState>((set) => ({
       logs: [...state.logs, { ...data, id: crypto.randomUUID(), timestamp }],
     }));
   },
+  deleteLog: (id) => set((state) => ({
+    logs: state.logs.filter((log) => log.id !== id),
+  })),
 }));

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
 
@@ -17,7 +17,7 @@ function LogRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LogCard({ log }: { log: VitalsLog }) {
+function LogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void }) {
   const bp = log.bloodPressureSys
     ? `${log.bloodPressureSys}/${log.bloodPressureDia}`
     : '';
@@ -27,7 +27,16 @@ function LogCard({ log }: { log: VitalsLog }) {
       className="bg-emt-gray border border-emt-border rounded-2xl p-4"
       style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
     >
-      <p className="text-emt-muted text-xs font-bold mb-3">{log.timestamp}</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-emt-muted text-xs font-bold">{log.timestamp}</p>
+        <button
+          onClick={onDelete}
+          className="p-1.5 text-emt-muted hover:text-emt-red transition-colors"
+          aria-label="מחק"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <LogRow label="לחץ דם" value={bp} />
         <LogRow label="דופק" value={log.heartRate} />
@@ -40,6 +49,7 @@ function LogCard({ log }: { log: VitalsLog }) {
 
 export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
   const logs = useVitalsLogStore((s) => s.logs);
+  const deleteLog = useVitalsLogStore((s) => s.deleteLog);
   if (!isOpen) return null;
 
   const reversed = [...logs].reverse();
@@ -66,7 +76,9 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
             <p className="text-emt-muted text-base font-medium">אין מדדים שמורים</p>
           </div>
         ) : (
-          reversed.map((log) => <LogCard key={log.id} log={log} />)
+          reversed.map((log) => (
+            <LogCard key={log.id} log={log} onDelete={() => deleteLog(log.id)} />
+          ))
         )}
       </div>
     </div>

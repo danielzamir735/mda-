@@ -21,7 +21,7 @@ export default function AlertOverlay({ visible }: Props) {
 
   return (
     <div
-      className="fixed inset-x-0 top-[25%] z-40 flex justify-center pointer-events-none"
+      className="fixed inset-x-0 top-8 z-40 flex justify-center pointer-events-none"
       aria-live="assertive"
     >
       <p

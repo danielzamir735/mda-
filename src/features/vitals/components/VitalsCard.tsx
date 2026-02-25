@@ -1,27 +1,28 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play } from 'lucide-react';
+import { Play, Plus, Minus } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
+import { VALID_DURATIONS } from '../../../store/settingsStore';
 
 interface Props {
   label: string;
-  sublabel: string;
   duration: number;
-  multiplier: number;
   unit: string;
   isHeartRate?: boolean;
   lastResult?: number | null;
   externalReset?: number;
   onOpenModal: (multiplier: number, unit: string, cardType: 'heart' | 'breath') => void;
   onResetLastResult: () => void;
+  onDurationChange: (d: number) => void;
 }
 
 export default function VitalsCard({
-  label, sublabel, duration, multiplier, unit, isHeartRate,
-  lastResult, externalReset, onOpenModal,
+  label, duration, unit, isHeartRate,
+  lastResult, externalReset, onOpenModal, onDurationChange,
 }: Props) {
   const { state, timeLeft, start, stop, reset } = useVitalsTimer(duration);
+  const multiplier = Math.round(60 / duration);
 
   useEffect(() => {
     if (externalReset) reset();
@@ -35,8 +36,11 @@ export default function VitalsCard({
   }, [state, multiplier, unit, isHeartRate, onOpenModal]);
 
   const hasLastResult = lastResult !== null && lastResult !== undefined;
-  const isRunning  = state === 'running';
-  const isFinished = state === 'finished';
+  const isRunning = state === 'running';
+
+  const idx = VALID_DURATIONS.indexOf(duration as typeof VALID_DURATIONS[number]);
+  const canDecrease = idx > 0;
+  const canIncrease = idx < VALID_DURATIONS.length - 1;
 
   return (
     <div
@@ -44,7 +48,7 @@ export default function VitalsCard({
         'relative flex flex-col items-center justify-center gap-2',
         'rounded-3xl p-3 h-full w-full overflow-hidden',
         'transition-all duration-300',
-        state === 'idle' ? 'cursor-pointer select-none' : '',
+        !isRunning ? 'cursor-pointer select-none' : '',
         isRunning
           ? 'bg-[#180408] border-2 border-emt-red'
           : 'bg-emt-gray border border-emt-border',
@@ -54,7 +58,7 @@ export default function VitalsCard({
       } : {
         boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
       }}
-      onClick={state === 'idle' ? start : undefined}
+      onClick={!isRunning ? start : undefined}
     >
       {/* AlertOverlay portalled — heart rate only */}
       {isHeartRate && createPortal(
@@ -62,8 +66,8 @@ export default function VitalsCard({
         document.body,
       )}
 
-      {/* ── IDLE ── */}
-      {state === 'idle' && (
+      {/* ── IDLE / FINISHED — always show the play UI ── */}
+      {!isRunning && (
         <>
           {hasLastResult && (
             <p className="absolute top-3 inset-x-0 text-center text-emt-muted text-xs font-bold tracking-wide">
@@ -81,7 +85,34 @@ export default function VitalsCard({
             />
           </div>
           <p className="text-emt-light font-black text-xl">{label}</p>
-          <p className="text-emt-light/75 text-xl font-semibold">{sublabel}</p>
+
+          {/* Duration row with +/- buttons */}
+          <div
+            className="flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => canDecrease && onDurationChange(VALID_DURATIONS[idx - 1])}
+              disabled={!canDecrease}
+              className="w-7 h-7 rounded-full flex items-center justify-center
+                         bg-emt-border/40 text-emt-muted active:scale-90
+                         disabled:opacity-30 transition-all duration-150"
+            >
+              <Minus size={14} />
+            </button>
+            <p className="text-emt-light/75 text-lg font-semibold min-w-[5ch] text-center">
+              {duration} שניות
+            </p>
+            <button
+              onClick={() => canIncrease && onDurationChange(VALID_DURATIONS[idx + 1])}
+              disabled={!canIncrease}
+              className="w-7 h-7 rounded-full flex items-center justify-center
+                         bg-emt-border/40 text-emt-muted active:scale-90
+                         disabled:opacity-30 transition-all duration-150"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
         </>
       )}
 
@@ -112,9 +143,6 @@ export default function VitalsCard({
           </button>
         </>
       )}
-
-      {/* ── FINISHED — brief flash, modal opens immediately ── */}
-      {isFinished && null}
     </div>
   );
 }

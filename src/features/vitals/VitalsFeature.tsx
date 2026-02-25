@@ -8,8 +8,15 @@ import QuickToolsCard from '../quicktools/QuickToolsCard';
 import BottomNav from '../../components/BottomNav';
 import GalleryModal from '../camera/GalleryModal';
 import NotesModal from '../notes/NotesModal';
+import { useSettingsStore } from '../../store/settingsStore';
+import type { ValidDuration } from '../../store/settingsStore';
 
 export default function VitalsFeature() {
+  const heartDuration = useSettingsStore((s) => s.heartDuration);
+  const breathDuration = useSettingsStore((s) => s.breathDuration);
+  const setHeartDuration = useSettingsStore((s) => s.setHeartDuration);
+  const setBreathDuration = useSettingsStore((s) => s.setBreathDuration);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(4);
   const [activeUnit, setActiveUnit] = useState('פעימות בדקה');
@@ -64,26 +71,24 @@ export default function VitalsFeature() {
       <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
         <VitalsCard
           label="דופק"
-          sublabel="15 שניות"
-          duration={15}
-          multiplier={4}
+          duration={heartDuration}
           unit="פעימות בדקה"
           isHeartRate
           lastResult={lastResultHeart}
           externalReset={heartExternalReset}
           onOpenModal={openModal}
           onResetLastResult={handleResetLastHeart}
+          onDurationChange={(d) => setHeartDuration(d as ValidDuration)}
         />
         <VitalsCard
           label="נשימות"
-          sublabel="30 שניות"
-          duration={30}
-          multiplier={2}
+          duration={breathDuration}
           unit="נשימות בדקה"
           lastResult={lastResultBreath}
           externalReset={breathExternalReset}
           onOpenModal={openModal}
           onResetLastResult={handleResetLastBreath}
+          onDurationChange={(d) => setBreathDuration(d as ValidDuration)}
         />
         <MetronomeCard />
         <QuickToolsCard />

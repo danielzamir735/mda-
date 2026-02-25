@@ -19,8 +19,8 @@ function InputField({
         placeholder={placeholder ?? '0'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-emt-gray border border-emt-border rounded-2xl px-4 py-3
-                   text-emt-light text-center text-lg font-bold placeholder:text-emt-border
+        className="w-full bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
+                   text-emt-light text-center text-base font-bold placeholder:text-emt-border
                    focus:outline-none focus:border-emt-red transition-colors"
       />
     </div>
@@ -46,7 +46,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-emt-dark flex flex-col animate-fade-scale">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-emt-border shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-emt-border shrink-0">
         <button
           onClick={onClose}
           className="p-2 text-emt-muted hover:text-emt-light transition-colors"
@@ -59,7 +59,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Form */}
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {/* Blood Pressure */}
         <div className="flex flex-col gap-1.5">
           <label className="text-emt-muted text-sm font-bold">לחץ דם</label>
@@ -70,7 +70,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
               placeholder="סיסטולי"
               value={sys}
               onChange={(e) => setSys(e.target.value)}
-              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-3
+              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
                          text-emt-light text-center text-lg font-bold placeholder:text-emt-border
                          focus:outline-none focus:border-emt-red transition-colors"
             />
@@ -81,7 +81,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
               placeholder="דיאסטולי"
               value={dia}
               onChange={(e) => setDia(e.target.value)}
-              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-3
+              className="flex-1 bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
                          text-emt-light text-center text-lg font-bold placeholder:text-emt-border
                          focus:outline-none focus:border-emt-red transition-colors"
             />
@@ -97,7 +97,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
       <div className="p-4 shrink-0">
         <button
           onClick={handleSave}
-          className="w-full py-4 rounded-2xl bg-emt-green text-white font-black text-xl
+          className="w-full py-3 rounded-2xl bg-emt-green text-white font-black text-xl
                      flex items-center justify-center gap-2
                      active:scale-[0.97] transition-transform duration-150"
           style={{ boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}
