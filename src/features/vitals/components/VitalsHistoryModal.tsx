@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
-import { useVitalsLogStore, VitalsLog } from '../../../store/vitalsLogStore';
+import { useVitalsLogStore } from '../../../store/vitalsLogStore';
+import type { VitalsLog } from '../../../store/vitalsLogStore';
 
 interface Props {
   isOpen: boolean;
