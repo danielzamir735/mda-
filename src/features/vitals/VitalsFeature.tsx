@@ -5,12 +5,14 @@ import ResultPopup from './components/ResultPopup';
 import MetronomeCard from '../metronome/MetronomeCard';
 import QuickToolsCard from '../quicktools/QuickToolsCard';
 import BottomNav from '../../components/BottomNav';
+import GalleryModal from '../camera/GalleryModal';
 
 export default function VitalsFeature() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(4);
   const [activeUnit, setActiveUnit] = useState('BPM');
   const [result, setResult] = useState<number | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   const openModal = useCallback((multiplier: number, unit: string) => {
     setActiveMultiplier(multiplier);
@@ -25,7 +27,7 @@ export default function VitalsFeature() {
   }, []);
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-emt-dark">
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-emt-dark">
       {/*
         2×2 grid — flex-1 fills all space above the bottom nav.
         In RTL layout, col-1 renders visually on the RIGHT.
@@ -56,7 +58,7 @@ export default function VitalsFeature() {
         <QuickToolsCard />
       </main>
 
-      <BottomNav />
+      <BottomNav onGalleryOpen={() => setGalleryOpen(true)} />
 
       <CalculatorModal
         isOpen={modalOpen}
@@ -71,6 +73,8 @@ export default function VitalsFeature() {
         unit={activeUnit}
         onClose={() => setResult(null)}
       />
+
+      <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
     </div>
   );
 }

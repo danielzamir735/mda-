@@ -17,12 +17,14 @@ export default function CalculatorModal({
 
   if (!isOpen) return null;
 
+  const label = unit === 'BPM' ? 'BPM' : 'נשימות';
+
   const handleDigit = (d: string) => {
     if (input.length >= 3) return;
-    setInput(prev => prev + d);
+    setInput((prev) => prev + d);
   };
 
-  const handleBackspace = () => setInput(prev => prev.slice(0, -1));
+  const handleBackspace = () => setInput((prev) => prev.slice(0, -1));
 
   const handleResult = (value: number) => {
     setInput('');
@@ -37,28 +39,31 @@ export default function CalculatorModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center
-                 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center
+                 bg-black/70 backdrop-blur-sm px-4"
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-sm mb-4 mx-3 rounded-3xl
-                   bg-emt-gray border border-emt-border
-                   shadow-2xl overflow-hidden"
-        onClick={e => e.stopPropagation()}
+        className="w-full max-w-sm rounded-3xl
+                   bg-white/[0.08] backdrop-blur-xl
+                   border border-white/20
+                   shadow-[0_16px_48px_rgba(0,0,0,0.6)]
+                   overflow-hidden animate-fade-scale"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        {/* Header — label centered, close button right */}
+        <div className="relative flex items-center justify-center px-5 pt-5 pb-3">
           <button
             onClick={handleClose}
-            className="w-9 h-9 rounded-full bg-emt-border flex items-center justify-center
-                       text-emt-light/60 hover:text-emt-light hover:bg-emt-border/80
+            className="absolute right-5 w-9 h-9 rounded-full bg-white/10
+                       flex items-center justify-center
+                       text-emt-light/60 hover:text-emt-light hover:bg-white/20
                        active:scale-90 transition-all"
             aria-label="סגור"
           >
             <X size={18} />
           </button>
-          <p className="text-emt-light/70 text-sm font-medium">{unit}</p>
+          <p className="text-emt-light font-bold text-lg tracking-wide">{label}</p>
         </div>
 
         {/* Keypad */}

@@ -43,22 +43,22 @@ export default function VitalsCard({
       {isHeartRate && <AlertOverlay visible={alertVisible} />}
 
       <div
-        className="relative flex flex-col items-center justify-center gap-3
-                   rounded-3xl border p-4 h-full w-full overflow-hidden
-                   transition-all duration-300"
+        className={[
+          'relative flex flex-col items-center justify-center gap-3',
+          'rounded-3xl border p-4 h-full w-full overflow-hidden',
+          'backdrop-blur-lg transition-all duration-300',
+          'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
+          state === 'running'  ? 'bg-emt-red/10'
+          : state === 'finished' ? 'bg-emt-green/10'
+          : 'bg-white/[0.06]',
+        ].join(' ')}
         style={{
-          background:
-            state === 'running'
-              ? 'linear-gradient(135deg, #1a0a0a 0%, #1E1E1E 100%)'
-              : state === 'finished'
-              ? 'linear-gradient(135deg, #0a1a0a 0%, #1E1E1E 100%)'
-              : 'linear-gradient(135deg, #141414 0%, #1E1E1E 100%)',
           borderColor:
             state === 'running'
-              ? 'rgba(229,57,53,0.6)'
+              ? 'rgba(229,57,53,0.55)'
               : state === 'finished'
-              ? 'rgba(67,160,71,0.5)'
-              : '#2C2C2C',
+              ? 'rgba(67,160,71,0.45)'
+              : 'rgba(255,255,255,0.10)',
         }}
       >
         {/* Subtle glow ring */}

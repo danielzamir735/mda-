@@ -11,7 +11,8 @@
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add index.html .gitignore .env.example tailwind.config.js postcss.config.js package.json package-lock.json tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts eslint.config.js README.md src/ public/ 2>&1 && git status 2>&1)",
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && git add .gitattributes 2>&1)",
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)",
-      "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)"
+      "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"/c/Users/User/Desktop/עוזר חובש\" && npm run build 2>&1)"
     ]
   }
 }

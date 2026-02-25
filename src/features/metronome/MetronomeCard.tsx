@@ -9,14 +9,15 @@ export default function MetronomeCard() {
 
   return (
     <div
-      className="flex flex-col items-center justify-between gap-3
-                 rounded-3xl border border-emt-border p-4 h-full w-full
-                 transition-all duration-300"
+      className={[
+        'flex flex-col items-center justify-between gap-3',
+        'rounded-3xl border p-4 h-full w-full',
+        'backdrop-blur-lg transition-all duration-300',
+        'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
+        isPlaying ? 'bg-emt-yellow/[0.07]' : 'bg-white/[0.06]',
+      ].join(' ')}
       style={{
-        background: isPlaying
-          ? 'linear-gradient(135deg, #0f0f1a 0%, #1E1E1E 100%)'
-          : 'linear-gradient(135deg, #141414 0%, #1E1E1E 100%)',
-        borderColor: isPlaying ? 'rgba(253,216,53,0.45)' : '#2C2C2C',
+        borderColor: isPlaying ? 'rgba(253,216,53,0.40)' : 'rgba(255,255,255,0.10)',
       }}
     >
       <p className="text-emt-light/50 text-xs tracking-widest uppercase self-start">
