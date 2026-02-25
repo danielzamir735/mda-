@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
+import { useVitalsDraftStore } from '../../../store/vitalsDraftStore';
 
 interface Props {
   isOpen: boolean;
@@ -29,17 +30,31 @@ function InputField({
 
 export default function AddVitalsModal({ isOpen, onClose }: Props) {
   const addLog = useVitalsLogStore((s) => s.addLog);
+  const draftHeartRate = useVitalsDraftStore((s) => s.draftHeartRate);
+  const draftBreathing = useVitalsDraftStore((s) => s.draftBreathing);
+  const clearDraft = useVitalsDraftStore((s) => s.clearDraft);
+
   const [sys, setSys] = useState('');
   const [dia, setDia] = useState('');
   const [heartRate, setHeartRate] = useState('');
   const [breathing, setBreathing] = useState('');
   const [bloodSugar, setBloodSugar] = useState('');
 
+  // Pre-fill from draft whenever the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (draftHeartRate) setHeartRate(draftHeartRate);
+      if (draftBreathing) setBreathing(draftBreathing);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSave = () => {
     addLog({ bloodPressureSys: sys, bloodPressureDia: dia, heartRate, breathing, bloodSugar });
     setSys(''); setDia(''); setHeartRate(''); setBreathing(''); setBloodSugar('');
+    clearDraft();
     onClose();
   };
 
@@ -87,7 +102,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
           </div>
         </div>
 
-        <InputField label="דופק (פעימות/דקה)" value={heartRate} onChange={setHeartRate} />
+        <InputField label="דופק (פעימות לדקה)" value={heartRate} onChange={setHeartRate} />
         <InputField label="נשימות (לדקה)" value={breathing} onChange={setBreathing} />
         <InputField label="סוכר בדם (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
       </div>

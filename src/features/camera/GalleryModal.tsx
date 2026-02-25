@@ -33,15 +33,15 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
   return (
     <>
       {/* ── Gallery grid ── */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-white">
+      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4
-                        border-b border-slate-200 shrink-0">
+                        border-b border-emt-border shrink-0">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200
+            className="w-9 h-9 rounded-full bg-emt-gray border border-emt-border
                        flex items-center justify-center
-                       text-slate-500 hover:text-slate-800 active:scale-90 transition-all"
+                       text-emt-muted hover:text-emt-light active:scale-90 transition-all"
             aria-label="סגור"
           >
             <X size={18} />
@@ -52,36 +52,44 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
 
         {/* Content */}
         {photos.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-300">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-emt-border">
             <Images size={52} strokeWidth={1.2} />
-            <p className="text-sm text-slate-400">אין תמונות שמורות</p>
+            <p className="text-sm text-emt-muted">אין תמונות שמורות</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto flex-1">
             {photos.map((photo, i) => (
               <div
                 key={i}
-                className="relative rounded-2xl overflow-hidden aspect-[4/3]
-                           bg-slate-100 border border-slate-200 cursor-pointer
-                           active:scale-95 transition-transform duration-150"
-                onClick={() => setFullscreenIndex(i)}
+                className="flex flex-col gap-1"
               >
-                <img
-                  src={photo}
-                  alt={`תמונה ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                {/* Delete button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); removePhoto(i); }}
-                  className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
-                             bg-black/60 border border-white/20
-                             flex items-center justify-center text-white
-                             active:scale-90 transition-transform"
-                  aria-label={`מחק תמונה ${i + 1}`}
+                <div
+                  className="relative rounded-2xl overflow-hidden aspect-[4/3]
+                             bg-emt-gray border border-emt-border cursor-pointer
+                             active:scale-95 transition-transform duration-150"
+                  onClick={() => setFullscreenIndex(i)}
                 >
-                  <Trash2 size={13} />
-                </button>
+                  <img
+                    src={photo.dataUrl}
+                    alt={`תמונה ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removePhoto(i); }}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
+                               bg-black/60 border border-white/20
+                               flex items-center justify-center text-white
+                               active:scale-90 transition-transform"
+                    aria-label={`מחק תמונה ${i + 1}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                {/* Timestamp */}
+                <p className="text-emt-muted text-[0.65rem] font-medium text-center px-1 leading-tight">
+                  {photo.timestamp}
+                </p>
               </div>
             ))}
           </div>
@@ -104,12 +112,17 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               <X size={20} />
             </button>
 
-            <span className="text-white/60 text-sm font-medium">
-              {fullscreenIndex + 1} / {photos.length}
-            </span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-white/60 text-sm font-medium">
+                {fullscreenIndex + 1} / {photos.length}
+              </span>
+              <span className="text-white/40 text-xs">
+                {photos[fullscreenIndex].timestamp}
+              </span>
+            </div>
 
             <button
-              onClick={() => handleSave(photos[fullscreenIndex], fullscreenIndex)}
+              onClick={() => handleSave(photos[fullscreenIndex].dataUrl, fullscreenIndex)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl
                          bg-emt-green border border-green-600
                          text-white font-bold text-sm
@@ -124,7 +137,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
           {/* Photo */}
           <div className="flex-1 flex items-center justify-center relative overflow-hidden">
             <img
-              src={photos[fullscreenIndex]}
+              src={photos[fullscreenIndex].dataUrl}
               alt={`תמונה ${fullscreenIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />

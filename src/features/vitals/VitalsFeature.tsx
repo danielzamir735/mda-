@@ -10,6 +10,7 @@ import GalleryModal from '../camera/GalleryModal';
 import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { ValidDuration } from '../../store/settingsStore';
+import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -33,6 +34,9 @@ export default function VitalsFeature() {
   const [heartExternalReset, setHeartExternalReset] = useState(0);
   const [breathExternalReset, setBreathExternalReset] = useState(0);
 
+  const setDraftHeartRate = useVitalsDraftStore((s) => s.setDraftHeartRate);
+  const setDraftBreathing = useVitalsDraftStore((s) => s.setDraftBreathing);
+
   const openModal = useCallback((multiplier: number, unit: string, cardType: 'heart' | 'breath') => {
     setActiveMultiplier(multiplier);
     setActiveUnit(unit);
@@ -44,9 +48,14 @@ export default function VitalsFeature() {
 
   const handleResult = useCallback((value: number) => {
     setResult(value);
-    if (activeCard === 'heart') setLastResultHeart(value);
-    else setLastResultBreath(value);
-  }, [activeCard]);
+    if (activeCard === 'heart') {
+      setLastResultHeart(value);
+      setDraftHeartRate(String(value));
+    } else {
+      setLastResultBreath(value);
+      setDraftBreathing(String(value));
+    }
+  }, [activeCard, setDraftHeartRate, setDraftBreathing]);
 
   // Closes the result popup and resets the timer to idle — KEEPS lastResult in the card
   const handleResultClose = useCallback(() => {
