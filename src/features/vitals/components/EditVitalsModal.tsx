@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
+import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 
 interface EditData {
@@ -38,6 +39,7 @@ function InputField({ label, value, onChange, placeholder }: {
 }
 
 export default function EditVitalsModal({ isOpen, onClose, logId, initialData }: Props) {
+  useModalBackHandler(isOpen, onClose);
   const updateLog = useVitalsLogStore((s) => s.updateLog);
 
   const [sys, setSys] = useState(initialData.sys);

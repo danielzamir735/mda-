@@ -1,4 +1,5 @@
 import { X, Trash2 } from 'lucide-react';
+import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 
 interface Props {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: Props) {
+  useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

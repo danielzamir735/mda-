@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Trash2, Pencil } from 'lucide-react';
+import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
 import EditVitalsModal from './EditVitalsModal';
@@ -47,6 +48,7 @@ function LogCard({ log, onDelete, onEdit }: {
 }
 
 export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
+  useModalBackHandler(isOpen, onClose);
   const logs = useVitalsLogStore((s) => s.logs);
   const deleteLog = useVitalsLogStore((s) => s.deleteLog);
   const [editingLog, setEditingLog] = useState<VitalsLog | null>(null);

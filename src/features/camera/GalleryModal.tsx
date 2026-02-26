@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Trash2, Images, Download, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useCameraStore } from '../../store/cameraStore';
 
 interface Props {
@@ -10,6 +11,10 @@ interface Props {
 export default function GalleryModal({ isOpen, onClose }: Props) {
   const { photos, removePhoto } = useCameraStore();
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
+
+  // Close fullscreen on back, then close gallery on a second back press.
+  useModalBackHandler(isOpen, onClose);
+  useModalBackHandler(fullscreenIndex !== null, () => setFullscreenIndex(null));
 
   if (!isOpen) return null;
 

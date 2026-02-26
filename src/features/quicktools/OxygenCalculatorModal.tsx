@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Wind } from 'lucide-react';
+import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 
 interface Props {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface Props {
 type PressureUnit = 'bar' | 'psi';
 
 export default function OxygenCalculatorModal({ isOpen, onClose }: Props) {
+  useModalBackHandler(isOpen, onClose);
   const [pressureUnit, setPressureUnit] = useState<PressureUnit>('bar');
   const [pressure, setPressure] = useState('');
   const [volume, setVolume] = useState('');

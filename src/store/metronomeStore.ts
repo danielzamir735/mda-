@@ -12,7 +12,7 @@ interface MetronomeStore {
 }
 
 export const useMetronomeStore = create<MetronomeStore>(set => ({
-  bpm: 100,
+  bpm: 110,
   isPlaying: false,
   setBpm: (bpm) => set({ bpm: Math.min(MAX_BPM, Math.max(MIN_BPM, bpm)) }),
   toggle: () => set(state => ({ isPlaying: !state.isPlaying })),

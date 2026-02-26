@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Eraser } from 'lucide-react';
+import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import { useVitalsDraftStore } from '../../../store/vitalsDraftStore';
 
@@ -29,6 +30,7 @@ function InputField({
 }
 
 export default function AddVitalsModal({ isOpen, onClose }: Props) {
+  useModalBackHandler(isOpen, onClose);
   const addLog = useVitalsLogStore((s) => s.addLog);
   const draftHeartRate = useVitalsDraftStore((s) => s.draftHeartRate);
   const draftBreathing = useVitalsDraftStore((s) => s.draftBreathing);
