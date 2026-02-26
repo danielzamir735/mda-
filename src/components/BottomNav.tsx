@@ -48,10 +48,10 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen }: 
                    text-emt-muted hover:text-emt-light
                    active:text-emt-light transition-colors duration-150
                    h-full"
-        aria-label="מדדים"
+        aria-label="היסטוריית מדדים"
       >
         <Activity size={22} />
-        <span className="text-xs font-medium">מדדים</span>
+        <span className="text-[0.6rem] font-medium leading-tight text-center">היסטוריית מדדים</span>
       </button>
     </nav>
   );

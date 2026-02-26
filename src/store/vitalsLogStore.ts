@@ -4,11 +4,13 @@ import { persist } from 'zustand/middleware';
 export interface VitalsLog {
   id: string;
   timestamp: string;
-  bloodPressureSys: string;
-  bloodPressureDia: string;
+  bloodPressure: string;
   heartRate: string;
   breathing: string;
   bloodSugar: string;
+  saturation: string;
+  fastTest: string;
+  notes: string;
 }
 
 interface VitalsLogState {

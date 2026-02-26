@@ -3,12 +3,14 @@ import { X, Save } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 
-interface EditData {
-  sys: string;
-  dia: string;
+export interface EditData {
+  bloodPressure: string;
   heartRate: string;
   breathing: string;
   bloodSugar: string;
+  saturation: string;
+  fastTest: string;
+  notes: string;
 }
 
 interface Props {
@@ -18,15 +20,16 @@ interface Props {
   initialData: EditData;
 }
 
-function InputField({ label, value, onChange, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+function InputField({ label, value, onChange, placeholder, inputMode = 'numeric' }: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-emt-muted text-sm font-bold">{label}</label>
       <input
-        type="number"
-        inputMode="numeric"
+        type="text"
+        inputMode={inputMode}
         placeholder={placeholder ?? '0'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -38,43 +41,40 @@ function InputField({ label, value, onChange, placeholder }: {
   );
 }
 
+function formatBP(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  const sysLen = digits[0] === '1' ? 3 : 2;
+  if (digits.length <= sysLen) return digits;
+  return `${digits.slice(0, sysLen)}/${digits.slice(sysLen, sysLen + 3)}`;
+}
+
 export default function EditVitalsModal({ isOpen, onClose, logId, initialData }: Props) {
   useModalBackHandler(isOpen, onClose);
   const updateLog = useVitalsLogStore((s) => s.updateLog);
 
-  const [sys, setSys] = useState(initialData.sys);
-  const [dia, setDia] = useState(initialData.dia);
+  const [bloodPressure, setBloodPressure] = useState(initialData.bloodPressure);
   const [heartRate, setHeartRate] = useState(initialData.heartRate);
   const [breathing, setBreathing] = useState(initialData.breathing);
   const [bloodSugar, setBloodSugar] = useState(initialData.bloodSugar);
+  const [saturation, setSaturation] = useState(initialData.saturation);
+  const [fastTest, setFastTest] = useState(initialData.fastTest);
+  const [notes, setNotes] = useState(initialData.notes);
   const [saved, setSaved] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    updateLog(logId, {
-      bloodPressureSys: sys,
-      bloodPressureDia: dia,
-      heartRate,
-      breathing,
-      bloodSugar,
-    });
+    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, fastTest, notes });
     setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      onClose();
-    }, 1500);
+    setTimeout(() => { setSaved(false); onClose(); }, 1500);
   };
 
   return (
     <div className="fixed inset-0 z-[60] bg-emt-dark flex flex-col animate-fade-scale">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-emt-border shrink-0">
-        <button
-          onClick={onClose}
-          className="p-2 text-emt-muted hover:text-emt-light transition-colors"
-          aria-label="סגור"
-        >
+        <button onClick={onClose} className="p-2 text-emt-muted hover:text-emt-light transition-colors" aria-label="סגור">
           <X size={24} />
         </button>
         <h1 className="text-emt-light font-black text-xl">עריכת מדדים</h1>
@@ -83,35 +83,53 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
 
       {/* Form */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-emt-muted text-sm font-bold">לחץ דם</label>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="סיסטולי"
-              value={sys}
-              onChange={(e) => setSys(e.target.value)}
-              className="w-full bg-emt-gray border border-emt-border rounded-2xl px-3 py-2
-                         text-emt-light text-center text-lg font-bold placeholder:text-emt-border
-                         focus:outline-none focus:border-emt-red transition-colors"
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="דיאסטולי"
-              value={dia}
-              onChange={(e) => setDia(e.target.value)}
-              className="w-full bg-emt-gray border border-emt-border rounded-2xl px-3 py-2
-                         text-emt-light text-center text-lg font-bold placeholder:text-emt-border
-                         focus:outline-none focus:border-emt-red transition-colors"
-            />
-          </div>
-        </div>
+        <InputField
+          label="לחץ דם"
+          value={bloodPressure}
+          onChange={(v) => setBloodPressure(formatBP(v))}
+          placeholder="120/80"
+          inputMode="numeric"
+        />
 
         <InputField label="דופק (פעימות לדקה)" value={heartRate} onChange={setHeartRate} />
         <InputField label="נשימות (לדקה)" value={breathing} onChange={setBreathing} />
         <InputField label="סוכר בדם (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
+
+        <InputField label="סטורציה (%)" value={saturation} onChange={setSaturation} placeholder="98" />
+
+        {/* FAST Test toggle */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-emt-muted text-sm font-bold">בדיקת FAST</label>
+          <div className="flex gap-2">
+            {(['תקין', 'לא תקין'] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setFastTest(fastTest === opt ? '' : opt)}
+                className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
+                  ${fastTest === opt
+                    ? opt === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
+                    : 'bg-emt-gray border border-emt-border text-emt-muted'}`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-emt-muted text-sm font-bold">הערות</label>
+          <textarea
+            placeholder="הערות נוספות..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            className="w-full bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
+                       text-emt-light text-sm font-medium placeholder:text-emt-border
+                       focus:outline-none focus:border-emt-red transition-colors resize-none"
+          />
+        </div>
       </div>
 
       {/* Save */}
