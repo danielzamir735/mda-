@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Eraser } from 'lucide-react';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import { useVitalsDraftStore } from '../../../store/vitalsDraftStore';
 
@@ -51,6 +51,11 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
+  const handleClearData = () => {
+    clearDraft();
+    setSys(''); setDia(''); setHeartRate(''); setBreathing(''); setBloodSugar('');
+  };
+
   const handleSave = () => {
     addLog({ bloodPressureSys: sys, bloodPressureDia: dia, heartRate, breathing, bloodSugar });
     setSys(''); setDia(''); setHeartRate(''); setBreathing(''); setBloodSugar('');
@@ -70,7 +75,14 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
           <X size={24} />
         </button>
         <h1 className="text-emt-light font-black text-xl">הוספת מדדים</h1>
-        <div className="w-10" />
+        <button
+          onClick={handleClearData}
+          className="flex items-center gap-1 text-emt-muted hover:text-emt-red text-xs font-medium transition-colors px-1"
+          aria-label="נקה נתונים"
+        >
+          <Eraser size={14} />
+          <span>נקה</span>
+        </button>
       </div>
 
       {/* Form */}

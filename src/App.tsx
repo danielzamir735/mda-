@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 
@@ -10,6 +11,7 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }

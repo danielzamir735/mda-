@@ -14,6 +14,7 @@ interface VitalsLogState {
   logs: VitalsLog[];
   addLog: (data: Omit<VitalsLog, 'id' | 'timestamp'>) => void;
   deleteLog: (id: string) => void;
+  updateLog: (id: string, data: Omit<VitalsLog, 'id' | 'timestamp'>) => void;
 }
 
 function formatTimestamp(date: Date): string {
@@ -35,5 +36,8 @@ export const useVitalsLogStore = create<VitalsLogState>((set) => ({
   },
   deleteLog: (id) => set((state) => ({
     logs: state.logs.filter((log) => log.id !== id),
+  })),
+  updateLog: (id, data) => set((state) => ({
+    logs: state.logs.map((log) => log.id === id ? { ...log, ...data } : log),
   })),
 }));
