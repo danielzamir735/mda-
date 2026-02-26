@@ -42,11 +42,11 @@ function InputField({ label, value, onChange, placeholder, inputMode = 'numeric'
 }
 
 function formatBP(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
+  const digits = raw.replace(/\D/g, '').slice(0, 6);
   if (digits.length === 0) return '';
-  const sysLen = digits[0] === '1' ? 3 : 2;
-  if (digits.length <= sysLen) return digits;
-  return `${digits.slice(0, sysLen)}/${digits.slice(sysLen, sysLen + 3)}`;
+  if (digits.length <= 3) return digits;
+  if (digits.length === 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 3)}/${digits.slice(3, 6)}`;
 }
 
 export default function EditVitalsModal({ isOpen, onClose, logId, initialData }: Props) {
@@ -93,7 +93,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
 
         <InputField label="דופק (פעימות לדקה)" value={heartRate} onChange={setHeartRate} />
         <InputField label="נשימות (לדקה)" value={breathing} onChange={setBreathing} />
-        <InputField label="סוכר בדם (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
+        <InputField label="סוכר (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
 
         <InputField label="סטורציה (%)" value={saturation} onChange={setSaturation} placeholder="98" />
 
