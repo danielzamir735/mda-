@@ -13,11 +13,13 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  const handleSave = (dataUrl: string, index: number) => {
+  const handleSave = (dataUrl: string) => {
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `emt-photo-${index + 1}.jpg`;
+    link.download = `mda-photo-${Date.now()}.jpg`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const goNext = () => {
@@ -122,7 +124,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
             </div>
 
             <button
-              onClick={() => handleSave(photos[fullscreenIndex].dataUrl, fullscreenIndex)}
+              onClick={() => handleSave(photos[fullscreenIndex].dataUrl)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl
                          bg-emt-green border border-green-600
                          text-white font-bold text-sm
@@ -130,7 +132,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               aria-label="שמור לגלריה"
             >
               <Download size={16} />
-              שמור
+              שמור לגלריה
             </button>
           </div>
 

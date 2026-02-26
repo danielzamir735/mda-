@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -28,6 +28,16 @@ export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: 
                       border-b border-emt-border">
         <h2 className="text-emt-light font-bold text-xl">פתקים</h2>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => onTextChange('')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                       bg-red-600/20 border border-red-500/40 text-red-400
+                       text-sm font-bold active:scale-95 transition-all duration-150"
+            aria-label="נקה נתונים"
+          >
+            <Trash2 size={14} />
+            נקה נתונים
+          </button>
           <button
             onClick={handleSave}
             disabled={saved}
