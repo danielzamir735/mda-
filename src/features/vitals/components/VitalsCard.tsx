@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Play, Plus, Minus } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
-import { VALID_DURATIONS } from '../../../store/settingsStore';
+import { HEART_DURATIONS, BREATH_DURATIONS } from '../../../store/settingsStore';
 
 interface Props {
   label: string;
@@ -38,9 +38,10 @@ export default function VitalsCard({
   const hasLastResult = lastResult !== null && lastResult !== undefined;
   const isRunning = state === 'running';
 
-  const idx = VALID_DURATIONS.indexOf(duration as typeof VALID_DURATIONS[number]);
+  const validDurations = (isHeartRate ? HEART_DURATIONS : BREATH_DURATIONS) as readonly number[];
+  const idx = validDurations.indexOf(duration);
   const canDecrease = idx > 0;
-  const canIncrease = idx < VALID_DURATIONS.length - 1;
+  const canIncrease = idx < validDurations.length - 1;
 
   return (
     <div
@@ -92,7 +93,7 @@ export default function VitalsCard({
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => canDecrease && onDurationChange(VALID_DURATIONS[idx - 1])}
+              onClick={() => canDecrease && onDurationChange(validDurations[idx - 1])}
               disabled={!canDecrease}
               className="w-7 h-7 rounded-full flex items-center justify-center
                          bg-emt-border/40 text-emt-muted active:scale-90
@@ -104,7 +105,7 @@ export default function VitalsCard({
               {duration} שניות
             </p>
             <button
-              onClick={() => canIncrease && onDurationChange(VALID_DURATIONS[idx + 1])}
+              onClick={() => canIncrease && onDurationChange(validDurations[idx + 1])}
               disabled={!canIncrease}
               className="w-7 h-7 rounded-full flex items-center justify-center
                          bg-emt-border/40 text-emt-muted active:scale-90

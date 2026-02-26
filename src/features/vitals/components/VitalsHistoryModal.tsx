@@ -1,75 +1,18 @@
 import { useState } from 'react';
-import { X, Trash2, Pencil, Check } from 'lucide-react';
+import { X, Trash2, Pencil } from 'lucide-react';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
+import EditVitalsModal from './EditVitalsModal';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type EditFields = { sys: string; dia: string; heartRate: string; breathing: string; bloodSugar: string };
-
-function EditInput({ value, onChange, placeholder }: {
-  value: string; onChange: (v: string) => void; placeholder: string;
+function LogCard({ log, onDelete, onEdit }: {
+  log: VitalsLog; onDelete: () => void; onEdit: () => void;
 }) {
-  return (
-    <input
-      type="number"
-      inputMode="numeric"
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-emt-dark border border-emt-border rounded-xl px-2 py-1.5
-                 text-emt-light text-center text-sm font-bold placeholder:text-emt-border
-                 focus:outline-none focus:border-emt-red transition-colors"
-    />
-  );
-}
-
-function LogCard({ log, onDelete, onSave }: {
-  log: VitalsLog; onDelete: () => void; onSave: (data: EditFields) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [f, setF] = useState<EditFields>({
-    sys: log.bloodPressureSys, dia: log.bloodPressureDia,
-    heartRate: log.heartRate, breathing: log.breathing, bloodSugar: log.bloodSugar,
-  });
-
-  const upd = (k: keyof EditFields) => (v: string) => setF(prev => ({ ...prev, [k]: v }));
   const bp = log.bloodPressureSys ? `${log.bloodPressureSys}/${log.bloodPressureDia}` : '';
-
-  if (editing) {
-    return (
-      <div className="bg-emt-gray border border-emt-red/50 rounded-2xl p-3"
-        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
-        <p className="text-emt-muted text-xs font-bold mb-2">{log.timestamp}</p>
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <EditInput value={f.sys} onChange={upd('sys')} placeholder="סיסטולי" />
-          <EditInput value={f.dia} onChange={upd('dia')} placeholder="דיאסטולי" />
-          <EditInput value={f.heartRate} onChange={upd('heartRate')} placeholder="דופק" />
-          <EditInput value={f.breathing} onChange={upd('breathing')} placeholder="נשימות" />
-          <EditInput value={f.bloodSugar} onChange={upd('bloodSugar')} placeholder="סוכר" />
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => { onSave(f); setEditing(false); }}
-            className="flex-1 py-2 rounded-xl bg-emt-green text-white font-bold text-sm
-                       flex items-center justify-center gap-1 active:scale-[0.97] transition-transform duration-150"
-          >
-            <Check size={14} /> שמור
-          </button>
-          <button
-            onClick={() => setEditing(false)}
-            className="flex-1 py-2 rounded-xl bg-emt-border/30 border border-emt-border
-                       text-emt-muted font-bold text-sm"
-          >
-            ביטול
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-emt-gray border border-emt-border rounded-2xl p-4"
@@ -78,10 +21,7 @@ function LogCard({ log, onDelete, onSave }: {
         <p className="text-emt-muted text-xs font-bold">{log.timestamp}</p>
         <div className="flex gap-1">
           <button
-            onClick={() => {
-              setF({ sys: log.bloodPressureSys, dia: log.bloodPressureDia, heartRate: log.heartRate, breathing: log.breathing, bloodSugar: log.bloodSugar });
-              setEditing(true);
-            }}
+            onClick={onEdit}
             className="p-1.5 text-emt-muted hover:text-emt-light transition-colors"
             aria-label="ערוך"
           >
@@ -109,7 +49,8 @@ function LogCard({ log, onDelete, onSave }: {
 export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
   const logs = useVitalsLogStore((s) => s.logs);
   const deleteLog = useVitalsLogStore((s) => s.deleteLog);
-  const updateLog = useVitalsLogStore((s) => s.updateLog);
+  const [editingLog, setEditingLog] = useState<VitalsLog | null>(null);
+
   if (!isOpen) return null;
 
   const reversed = [...logs].reverse();
@@ -134,14 +75,27 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
               key={log.id}
               log={log}
               onDelete={() => deleteLog(log.id)}
-              onSave={(fields) => updateLog(log.id, {
-                bloodPressureSys: fields.sys, bloodPressureDia: fields.dia,
-                heartRate: fields.heartRate, breathing: fields.breathing, bloodSugar: fields.bloodSugar,
-              })}
+              onEdit={() => setEditingLog(log)}
             />
           ))
         )}
       </div>
+
+      {editingLog && (
+        <EditVitalsModal
+          key={editingLog.id}
+          isOpen={true}
+          onClose={() => setEditingLog(null)}
+          logId={editingLog.id}
+          initialData={{
+            sys: editingLog.bloodPressureSys,
+            dia: editingLog.bloodPressureDia,
+            heartRate: editingLog.heartRate,
+            breathing: editingLog.breathing,
+            bloodSugar: editingLog.bloodSugar,
+          }}
+        />
+      )}
     </div>
   );
 }

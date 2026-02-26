@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 
 interface Props {
@@ -9,17 +8,7 @@ interface Props {
 }
 
 export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: Props) {
-  const [saved, setSaved] = useState(false);
-
   if (!isOpen) return null;
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      onClose();
-    }, 1500);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
@@ -37,14 +26,6 @@ export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: 
           >
             <Trash2 size={14} />
             נקה נתונים
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saved}
-            className="px-4 py-1.5 rounded-xl bg-emt-green text-white text-sm font-bold
-                       active:scale-95 transition-all duration-150 disabled:opacity-90"
-          >
-            {saved ? 'נשמר ✓' : 'שמור'}
           </button>
           <button
             onClick={onClose}

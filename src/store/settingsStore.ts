@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const VALID_DURATIONS = [6, 10, 15, 20, 30] as const;
-export type ValidDuration = typeof VALID_DURATIONS[number];
+export const HEART_DURATIONS = [10, 15, 20, 30, 60] as const;
+export const BREATH_DURATIONS = [15, 20, 30, 60] as const;
+export type HeartDuration = typeof HEART_DURATIONS[number];
+export type BreathDuration = typeof BREATH_DURATIONS[number];
 
 interface SettingsState {
-  heartDuration: ValidDuration;
-  breathDuration: ValidDuration;
-  setHeartDuration: (d: ValidDuration) => void;
-  setBreathDuration: (d: ValidDuration) => void;
+  heartDuration: HeartDuration;
+  breathDuration: BreathDuration;
+  setHeartDuration: (d: HeartDuration) => void;
+  setBreathDuration: (d: BreathDuration) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(

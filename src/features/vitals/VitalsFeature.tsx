@@ -9,7 +9,7 @@ import BottomNav from '../../components/BottomNav';
 import GalleryModal from '../camera/GalleryModal';
 import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
-import type { ValidDuration } from '../../store/settingsStore';
+import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useNotesStore } from '../../store/notesStore';
 
@@ -29,6 +29,7 @@ export default function VitalsFeature() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
+  const [contactPopupOpen, setContactPopupOpen] = useState(false);
 
   const noteText = useNotesStore((s) => s.noteText);
   const setNoteText = useNotesStore((s) => s.setNoteText);
@@ -90,7 +91,7 @@ export default function VitalsFeature() {
           externalReset={heartExternalReset}
           onOpenModal={openModal}
           onResetLastResult={handleResetLastHeart}
-          onDurationChange={(d) => setHeartDuration(d as ValidDuration)}
+          onDurationChange={(d) => setHeartDuration(d as HeartDuration)}
         />
         <VitalsCard
           label="נשימות"
@@ -100,7 +101,7 @@ export default function VitalsFeature() {
           externalReset={breathExternalReset}
           onOpenModal={openModal}
           onResetLastResult={handleResetLastBreath}
-          onDurationChange={(d) => setBreathDuration(d as ValidDuration)}
+          onDurationChange={(d) => setBreathDuration(d as BreathDuration)}
         />
         <MetronomeCard />
         <QuickToolsCard />
@@ -112,9 +113,55 @@ export default function VitalsFeature() {
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
       />
 
-      <footer className="shrink-0 text-center text-[10px] text-emt-muted pb-1 pt-1">
-        © כל הזכויות שמורות ל Daniel Zamir - Web Development
+      <footer className="shrink-0 text-center pb-1 pt-1">
+        <button
+          type="button"
+          onClick={() => setContactPopupOpen(true)}
+          className="text-[10px] text-emt-muted underline underline-offset-2 active:opacity-60 transition-opacity"
+        >
+          © כל הזכויות שמורות ל Daniel Zamir - Web Development
+        </button>
       </footer>
+
+      {contactPopupOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setContactPopupOpen(false)}
+        >
+          <div
+            className="bg-emt-gray border border-emt-border rounded-2xl p-6 mx-4 max-w-xs w-full text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-emt-light font-bold text-base mb-1">יצירת קשר</p>
+            <p className="text-emt-muted text-sm mb-5">
+              לחיצה על אישור תפתח את לקוח המייל שלך עם הכתובת:
+              <br />
+              <span className="text-white font-mono text-xs mt-1 inline-block">
+                ydbyd4723@gmail.com
+              </span>
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setContactPopupOpen(false)}
+                className="flex-1 py-2 rounded-xl border border-emt-border text-emt-muted text-sm font-semibold active:scale-95 transition-transform"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setContactPopupOpen(false);
+                  window.location.href = 'mailto:ydbyd4723@gmail.com';
+                }}
+                className="flex-1 py-2 rounded-xl bg-emt-red text-white text-sm font-bold active:scale-95 transition-transform"
+              >
+                אישור
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CalculatorModal
         isOpen={modalOpen}
