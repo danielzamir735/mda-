@@ -134,7 +134,7 @@ export default function VitalsFeature() {
           >
             <p className="text-emt-light font-bold text-base mb-1">יצירת קשר</p>
             <p className="text-emt-muted text-sm mb-5">
-              לחיצה על אישור תפתח את לקוח המייל שלך עם הכתובת:
+              להערות ולהצעות אפשר לפנות לכתובת המייל:
               <br />
               <span className="text-white font-mono text-xs mt-1 inline-block">
                 ydbyd4723@gmail.com
