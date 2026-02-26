@@ -11,6 +11,7 @@ import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { ValidDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
+import { useNotesStore } from '../../store/notesStore';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -28,7 +29,9 @@ export default function VitalsFeature() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
-  const [noteText, setNoteText] = useState('');
+
+  const noteText = useNotesStore((s) => s.noteText);
+  const setNoteText = useNotesStore((s) => s.setNoteText);
 
   // Counters to externally trigger timer reset in each VitalsCard
   const [heartExternalReset, setHeartExternalReset] = useState(0);

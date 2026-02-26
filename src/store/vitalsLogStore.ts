@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface VitalsLog {
   id: string;
@@ -26,18 +27,23 @@ function formatTimestamp(date: Date): string {
   return `${d}/${m}/${y} ${h}:${min}`;
 }
 
-export const useVitalsLogStore = create<VitalsLogState>((set) => ({
-  logs: [],
-  addLog: (data) => {
-    const timestamp = formatTimestamp(new Date());
-    set((state) => ({
-      logs: [...state.logs, { ...data, id: crypto.randomUUID(), timestamp }],
-    }));
-  },
-  deleteLog: (id) => set((state) => ({
-    logs: state.logs.filter((log) => log.id !== id),
-  })),
-  updateLog: (id, data) => set((state) => ({
-    logs: state.logs.map((log) => log.id === id ? { ...log, ...data } : log),
-  })),
-}));
+export const useVitalsLogStore = create<VitalsLogState>()(
+  persist(
+    (set) => ({
+      logs: [],
+      addLog: (data) => {
+        const timestamp = formatTimestamp(new Date());
+        set((state) => ({
+          logs: [...state.logs, { ...data, id: crypto.randomUUID(), timestamp }],
+        }));
+      },
+      deleteLog: (id) => set((state) => ({
+        logs: state.logs.filter((log) => log.id !== id),
+      })),
+      updateLog: (id, data) => set((state) => ({
+        logs: state.logs.map((log) => log.id === id ? { ...log, ...data } : log),
+      })),
+    }),
+    { name: 'vitals-storage' },
+  ),
+);

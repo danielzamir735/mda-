@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface Photo {
   dataUrl: string;
@@ -20,12 +21,17 @@ function formatTimestamp(date: Date): string {
   return `${d}/${m}/${y} ${h}:${min}`;
 }
 
-export const useCameraStore = create<CameraState>((set) => ({
-  photos: [],
-  addPhoto: (dataUrl) => {
-    const timestamp = formatTimestamp(new Date());
-    set((state) => ({ photos: [...state.photos, { dataUrl, timestamp }] }));
-  },
-  removePhoto: (index) =>
-    set((state) => ({ photos: state.photos.filter((_, i) => i !== index) })),
-}));
+export const useCameraStore = create<CameraState>()(
+  persist(
+    (set) => ({
+      photos: [],
+      addPhoto: (dataUrl) => {
+        const timestamp = formatTimestamp(new Date());
+        set((state) => ({ photos: [...state.photos, { dataUrl, timestamp }] }));
+      },
+      removePhoto: (index) =>
+        set((state) => ({ photos: state.photos.filter((_, i) => i !== index) })),
+    }),
+    { name: 'photos-storage' },
+  ),
+);

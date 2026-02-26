@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -8,7 +9,17 @@ interface Props {
 }
 
 export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: Props) {
+  const [saved, setSaved] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => {
+      setSaved(false);
+      onClose();
+    }, 1500);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
@@ -16,15 +27,25 @@ export default function NotesModal({ isOpen, noteText, onTextChange, onClose }: 
       <div className="shrink-0 flex items-center justify-between px-4 py-3
                       border-b border-emt-border">
         <h2 className="text-emt-light font-bold text-xl">פתקים</h2>
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
-                     flex items-center justify-center
-                     active:scale-90 transition-transform text-emt-muted hover:text-emt-light"
-          aria-label="סגור"
-        >
-          <X size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saved}
+            className="px-4 py-1.5 rounded-xl bg-emt-green text-white text-sm font-bold
+                       active:scale-95 transition-all duration-150 disabled:opacity-90"
+          >
+            {saved ? 'נשמר ✓' : 'שמור'}
+          </button>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+                       flex items-center justify-center
+                       active:scale-90 transition-transform text-emt-muted hover:text-emt-light"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Textarea */}

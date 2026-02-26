@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
@@ -11,6 +11,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captured, setCaptured] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -49,7 +50,10 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     onPhoto(dataUrl);
-    onClose();
+    setCaptured(true);
+    setTimeout(() => {
+      onClose();
+    }, 800);
   };
 
   return (
@@ -82,13 +86,19 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
       <div className="absolute bottom-10 inset-x-0 flex justify-center">
         <button
           onClick={capture}
-          disabled={!ready || !!error}
+          disabled={!ready || !!error || captured}
           className="w-20 h-20 rounded-full border-4 border-white
-                     bg-white/20 backdrop-blur-sm
-                     active:scale-90 transition-transform duration-150
-                     disabled:opacity-30 disabled:cursor-not-allowed"
+                     flex items-center justify-center
+                     active:scale-90 transition-all duration-150
+                     disabled:cursor-not-allowed"
+          style={{
+            background: captured ? 'rgba(34,197,94,0.85)' : 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(4px)',
+          }}
           aria-label="צלם תמונה"
-        />
+        >
+          {captured && <Check size={36} strokeWidth={3} className="text-white" />}
+        </button>
       </div>
     </div>
   );

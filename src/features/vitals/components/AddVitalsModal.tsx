@@ -39,6 +39,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   const [heartRate, setHeartRate] = useState('');
   const [breathing, setBreathing] = useState('');
   const [bloodSugar, setBloodSugar] = useState('');
+  const [saved, setSaved] = useState(false);
 
   // Pre-fill from draft whenever the modal opens
   useEffect(() => {
@@ -60,7 +61,11 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
     addLog({ bloodPressureSys: sys, bloodPressureDia: dia, heartRate, breathing, bloodSugar });
     setSys(''); setDia(''); setHeartRate(''); setBreathing(''); setBloodSugar('');
     clearDraft();
-    onClose();
+    setSaved(true);
+    setTimeout(() => {
+      setSaved(false);
+      onClose();
+    }, 1500);
   };
 
   return (
@@ -123,13 +128,21 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
       <div className="p-4 shrink-0">
         <button
           onClick={handleSave}
+          disabled={saved}
           className="w-full py-3 rounded-2xl bg-emt-green text-white font-black text-xl
                      flex items-center justify-center gap-2
-                     active:scale-[0.97] transition-transform duration-150"
+                     active:scale-[0.97] transition-all duration-150
+                     disabled:opacity-90 disabled:scale-100"
           style={{ boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}
         >
-          <Save size={22} />
-          שמירה
+          {saved ? (
+            'נשמר ✓'
+          ) : (
+            <>
+              <Save size={22} />
+              שמירה
+            </>
+          )}
         </button>
       </div>
     </div>
