@@ -11,7 +11,6 @@ interface Props {
 const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'he', label: 'עברית' },
   { value: 'en', label: 'English' },
-  { value: 'ar', label: 'العربية' },
 ];
 
 export default function SettingsModal({ isOpen, onClose }: Props) {
@@ -24,15 +23,15 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
-        <h2 className="text-emt-light font-bold text-xl">הגדרות</h2>
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">הגדרות</h2>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
-                     flex items-center justify-center
-                     active:scale-90 transition-transform text-emt-muted hover:text-emt-light"
+          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                     flex items-center justify-center active:scale-90 transition-transform
+                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
           aria-label="סגור"
         >
           <X size={20} />
@@ -43,7 +42,9 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
 
         {/* Theme */}
         <section className="flex flex-col gap-3">
-          <p className="text-emt-muted text-xs font-semibold uppercase tracking-wide">מראה</p>
+          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide">
+            מראה
+          </p>
           <div className="flex gap-3">
             {(['dark', 'light'] as Theme[]).map((t) => {
               const active = theme === t;
@@ -56,8 +57,8 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
                   className={[
                     'flex-1 flex flex-col items-center gap-2 py-4 rounded-2xl border transition-all duration-200',
                     active
-                      ? 'border-emt-light/60 bg-emt-light/10 text-emt-light'
-                      : 'border-emt-border bg-emt-gray text-emt-muted',
+                      ? 'border-gray-400 dark:border-emt-light/60 bg-gray-200 dark:bg-emt-light/10 text-gray-900 dark:text-emt-light'
+                      : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-400 dark:text-emt-muted',
                   ].join(' ')}
                 >
                   <Icon size={22} />
@@ -70,7 +71,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
 
         {/* Language */}
         <section className="flex flex-col gap-3">
-          <p className="text-emt-muted text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
+          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
             <Globe size={13} />
             שפה
           </p>
@@ -85,12 +86,12 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
                     'flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-200',
                     active
                       ? 'border-emt-green/50 bg-emt-green/10 text-emt-green'
-                      : 'border-emt-border bg-emt-gray text-emt-muted',
+                      : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
                   ].join(' ')}
                 >
                   <span className="font-bold text-base">{label}</span>
                   {active && (
-                    <span className="text-[11px] bg-emt-green text-emt-dark px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-[11px] bg-emt-green text-white px-2 py-0.5 rounded-full font-bold">
                       פעיל
                     </span>
                   )}

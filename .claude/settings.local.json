@@ -16,7 +16,8 @@
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npm run build 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npm i @vercel/analytics 2>&1)",
-      "Bash(find \"/c/Users/User/Desktop/עוזר חובש/src\" -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | head -50)"
+      "Bash(find \"/c/Users/User/Desktop/עוזר חובש/src\" -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | head -50)",
+      "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1 | head -40)"
     ]
   }
 }

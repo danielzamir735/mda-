@@ -4,6 +4,7 @@ import { Play, Plus, Minus } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
 import { HEART_DURATIONS, BREATH_DURATIONS } from '../../../store/settingsStore';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface Props {
   label: string;
@@ -23,6 +24,7 @@ export default function VitalsCard({
 }: Props) {
   const { state, timeLeft, start, stop, reset } = useVitalsTimer(duration);
   const multiplier = Math.round(60 / duration);
+  const t = useTranslation();
 
   useEffect(() => {
     if (externalReset) reset();
@@ -52,12 +54,12 @@ export default function VitalsCard({
         !isRunning ? 'cursor-pointer select-none' : '',
         isRunning
           ? 'bg-[#180408] border-2 border-emt-red'
-          : 'bg-emt-gray border border-emt-border',
+          : 'bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border',
       ].join(' ')}
       style={isRunning ? {
         boxShadow: '0 0 32px rgba(239,35,60,0.22), 0 2px 12px rgba(0,0,0,0.6)',
       } : {
-        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
       onClick={!isRunning ? start : undefined}
     >
@@ -71,8 +73,8 @@ export default function VitalsCard({
       {!isRunning && (
         <>
           {hasLastResult && (
-            <p className="absolute top-3 inset-x-0 text-center text-emt-light text-lg font-bold tracking-wide">
-              מדידה אחרונה: {lastResult}
+            <p className="absolute top-3 inset-x-0 text-center text-gray-900 dark:text-emt-light text-lg font-bold tracking-wide">
+              {t('lastMeasurement')}: {lastResult}
             </p>
           )}
           <div
@@ -85,7 +87,7 @@ export default function VitalsCard({
               fill="currentColor"
             />
           </div>
-          <p className="text-emt-light font-black text-xl">{label}</p>
+          <p className="text-gray-900 dark:text-emt-light font-black text-xl">{label}</p>
 
           {/* Duration row with +/- buttons */}
           <div
@@ -96,19 +98,19 @@ export default function VitalsCard({
               onClick={() => canDecrease && onDurationChange(validDurations[idx - 1])}
               disabled={!canDecrease}
               className="w-7 h-7 rounded-full flex items-center justify-center
-                         bg-emt-border/40 text-emt-muted active:scale-90
+                         bg-gray-200 dark:bg-emt-border/40 text-gray-500 dark:text-emt-muted active:scale-90
                          disabled:opacity-30 transition-all duration-150"
             >
               <Minus size={14} />
             </button>
-            <p className="text-white text-2xl font-bold min-w-[5ch] text-center">
-              {duration} שניות
+            <p className="text-gray-900 dark:text-white text-2xl font-bold min-w-[5ch] text-center">
+              {duration} {t('seconds')}
             </p>
             <button
               onClick={() => canIncrease && onDurationChange(validDurations[idx + 1])}
               disabled={!canIncrease}
               className="w-7 h-7 rounded-full flex items-center justify-center
-                         bg-emt-border/40 text-emt-muted active:scale-90
+                         bg-gray-200 dark:bg-emt-border/40 text-gray-500 dark:text-emt-muted active:scale-90
                          disabled:opacity-30 transition-all duration-150"
             >
               <Plus size={14} />
@@ -131,7 +133,7 @@ export default function VitalsCard({
             {timeLeft}
           </span>
 
-          <p className="text-emt-muted text-sm font-medium -mt-1">שניות</p>
+          <p className="text-emt-muted text-sm font-medium -mt-1">{t('seconds')}</p>
 
           <button
             onClick={(e) => { e.stopPropagation(); stop(); }}
@@ -140,7 +142,7 @@ export default function VitalsCard({
                        active:scale-[0.97] transition-transform duration-150"
             style={{ boxShadow: '0 4px 20px rgba(239,35,60,0.45)' }}
           >
-            בטל
+            {t('cancel')}
           </button>
         </>
       )}

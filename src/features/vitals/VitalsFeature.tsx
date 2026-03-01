@@ -12,6 +12,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useNotesStore } from '../../store/notesStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
 import CalculatorsModal from '../hub/components/CalculatorsModal';
@@ -22,10 +23,11 @@ export default function VitalsFeature() {
   const breathDuration = useSettingsStore((s) => s.breathDuration);
   const setHeartDuration = useSettingsStore((s) => s.setHeartDuration);
   const setBreathDuration = useSettingsStore((s) => s.setBreathDuration);
+  const t = useTranslation();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [activeMultiplier, setActiveMultiplier] = useState(4);
-  const [activeUnit, setActiveUnit] = useState('פעימות בדקה');
+  const [activeUnit, setActiveUnit] = useState('');
   const [activeCard, setActiveCard] = useState<'heart' | 'breath'>('heart');
   const [result, setResult] = useState<number | null>(null);
   const [lastResultHeart, setLastResultHeart] = useState<number | null>(null);
@@ -42,7 +44,6 @@ export default function VitalsFeature() {
   const noteText = useNotesStore((s) => s.noteText);
   const setNoteText = useNotesStore((s) => s.setNoteText);
 
-  // Counters to externally trigger timer reset in each VitalsCard
   const [heartExternalReset, setHeartExternalReset] = useState(0);
   const [breathExternalReset, setBreathExternalReset] = useState(0);
 
@@ -69,7 +70,6 @@ export default function VitalsFeature() {
     }
   }, [activeCard, setDraftHeartRate, setDraftBreathing]);
 
-  // Closes the result popup and resets the timer to idle — KEEPS lastResult in the card
   const handleResultClose = useCallback(() => {
     setResult(null);
     if (activeCard === 'heart') setHeartExternalReset(n => n + 1);
@@ -80,20 +80,12 @@ export default function VitalsFeature() {
   const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col bg-emt-dark">
-      {/*
-        2×2 grid — flex-1 fills all space above the bottom nav.
-        In RTL layout, col-1 renders visually on the RIGHT.
-          Row 1, col-1 (right) → Heart Rate
-          Row 1, col-2 (left)  → Breathing
-          Row 2, col-1 (right) → Metronome
-          Row 2, col-2 (left)  → Quick Tools
-      */}
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
       <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
         <VitalsCard
-          label="דופק"
+          label={t('heartRate')}
           duration={heartDuration}
-          unit="פעימות בדקה"
+          unit={t('bpmUnit')}
           isHeartRate
           lastResult={lastResultHeart}
           externalReset={heartExternalReset}
@@ -102,9 +94,9 @@ export default function VitalsFeature() {
           onDurationChange={(d) => setHeartDuration(d as HeartDuration)}
         />
         <VitalsCard
-          label="נשימות"
+          label={t('breathing')}
           duration={breathDuration}
-          unit="נשימות בדקה"
+          unit={t('breathUnit')}
           lastResult={lastResultBreath}
           externalReset={breathExternalReset}
           onOpenModal={openModal}
@@ -126,7 +118,7 @@ export default function VitalsFeature() {
         <button
           type="button"
           onClick={() => setContactPopupOpen(true)}
-          className="text-[10px] text-emt-muted underline underline-offset-2 active:opacity-60 transition-opacity"
+          className="text-[10px] text-gray-400 dark:text-emt-muted underline underline-offset-2 active:opacity-60 transition-opacity"
         >
           © כל הזכויות שמורות ל Daniel Zamir - Web Development
         </button>
@@ -138,14 +130,14 @@ export default function VitalsFeature() {
           onClick={() => setContactPopupOpen(false)}
         >
           <div
-            className="bg-emt-gray border border-emt-border rounded-2xl p-6 mx-4 max-w-xs w-full text-center shadow-2xl"
+            className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-6 mx-4 max-w-xs w-full text-center shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-emt-light font-bold text-base mb-1">יצירת קשר</p>
-            <p className="text-emt-muted text-sm mb-5">
+            <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-1">יצירת קשר</p>
+            <p className="text-gray-500 dark:text-emt-muted text-sm mb-5">
               להערות ולהצעות אפשר לפנות לכתובת המייל:
               <br />
-              <span className="text-white font-mono text-xs mt-1 inline-block">
+              <span className="text-gray-800 dark:text-white font-mono text-xs mt-1 inline-block">
                 ydbyd4723@gmail.com
               </span>
             </p>
@@ -153,7 +145,7 @@ export default function VitalsFeature() {
               <button
                 type="button"
                 onClick={() => setContactPopupOpen(false)}
-                className="flex-1 py-2 rounded-xl border border-emt-border text-emt-muted text-sm font-semibold active:scale-95 transition-transform"
+                className="flex-1 py-2 rounded-xl border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted text-sm font-semibold active:scale-95 transition-transform"
               >
                 ביטול
               </button>

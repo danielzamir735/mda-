@@ -6,7 +6,7 @@ export const BREATH_DURATIONS = [15, 20, 30, 60] as const;
 export type HeartDuration = typeof HEART_DURATIONS[number];
 export type BreathDuration = typeof BREATH_DURATIONS[number];
 export type Theme = 'dark' | 'light';
-export type Language = 'he' | 'en' | 'ar';
+export type Language = 'he' | 'en';
 
 interface SettingsState {
   heartDuration: HeartDuration;

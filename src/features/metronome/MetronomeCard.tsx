@@ -1,10 +1,12 @@
 import { Minus, Plus, Play, Square } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function MetronomeCard() {
   useMetronome();
   const { bpm, isPlaying, setBpm, toggle } = useMetronomeStore();
+  const t = useTranslation();
 
   const idx = BPM_VALUES.indexOf(bpm);
   const canDecrease = idx > 0;
@@ -23,29 +25,28 @@ export default function MetronomeCard() {
         'transition-all duration-300',
         isPlaying
           ? 'bg-[#130F00] border-2 border-emt-yellow'
-          : 'bg-emt-gray border border-emt-border',
+          : 'bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border',
       ].join(' ')}
       style={isPlaying ? {
         boxShadow: '0 0 28px rgba(245,158,11,0.20), 0 2px 12px rgba(0,0,0,0.6)',
       } : {
-        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
-      <p className="text-emt-light font-black text-lg tracking-wide text-center w-full">
-        מטרונום
+      <p className="text-gray-900 dark:text-emt-light font-black text-lg tracking-wide text-center w-full">
+        {t('metronome')}
       </p>
 
       <div className="flex flex-col items-center flex-1 justify-center gap-0">
         <span
-          className="font-mono font-black tabular-nums leading-none transition-colors duration-300"
-          style={{
-            fontSize: 'clamp(2.8rem, 11vw, 5rem)',
-            color: isPlaying ? '#F59E0B' : '#F4F4F5',
-          }}
+          className={`font-mono font-black tabular-nums leading-none transition-colors duration-300 ${
+            isPlaying ? 'text-emt-yellow' : 'text-gray-900 dark:text-emt-light'
+          }`}
+          style={{ fontSize: 'clamp(2.8rem, 11vw, 5rem)' }}
         >
           {bpm}
         </span>
-        <p className="text-emt-muted text-xs font-medium">BPM</p>
+        <p className="text-gray-400 dark:text-emt-muted text-xs font-medium">BPM</p>
       </div>
 
       {/* Slider row */}
@@ -54,8 +55,8 @@ export default function MetronomeCard() {
           onClick={() => stepBpm(-1)}
           disabled={!canDecrease}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-emt-border/30 border border-emt-border
-                     text-emt-muted active:scale-90 transition-transform
+                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הפחת BPM"
         >
@@ -71,10 +72,10 @@ export default function MetronomeCard() {
             value={bpm}
             onChange={e => setBpm(Number(e.target.value) as typeof BPM_VALUES[number])}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                       bg-emt-border accent-emt-yellow"
+                       bg-gray-200 dark:bg-emt-border accent-emt-yellow"
             aria-label="קצב לדקה"
           />
-          <div className="flex justify-between text-emt-muted text-xs px-0.5">
+          <div className="flex justify-between text-gray-400 dark:text-emt-muted text-xs px-0.5">
             <span>{BPM_VALUES[0]}</span>
             <span>{BPM_VALUES[BPM_VALUES.length - 1]}</span>
           </div>
@@ -84,8 +85,8 @@ export default function MetronomeCard() {
           onClick={() => stepBpm(1)}
           disabled={!canIncrease}
           className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-emt-border/30 border border-emt-border
-                     text-emt-muted active:scale-90 transition-transform
+                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הגדל BPM"
         >
@@ -104,7 +105,7 @@ export default function MetronomeCard() {
             ? '0 4px 16px rgba(239,35,60,0.35)'
             : '0 4px 16px rgba(34,197,94,0.35)',
         }}
-        aria-label={isPlaying ? 'עצור' : 'הפעל'}
+        aria-label={isPlaying ? t('cancel') : 'הפעל'}
       >
         {isPlaying
           ? <Square size={22} fill="white" className="text-white" />
