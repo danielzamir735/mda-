@@ -12,6 +12,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useNotesStore } from '../../store/notesStore';
+import HubModal from '../hub/HubModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -29,6 +30,7 @@ export default function VitalsFeature() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
   const [contactPopupOpen, setContactPopupOpen] = useState(false);
 
   const noteText = useNotesStore((s) => s.noteText);
@@ -111,6 +113,7 @@ export default function VitalsFeature() {
         onGalleryOpen={() => setGalleryOpen(true)}
         onNotesOpen={() => setNotesOpen(true)}
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
+        onHubOpen={() => setHubOpen(true)}
       />
 
       <footer className="shrink-0 text-center pb-1 pt-1">
@@ -190,6 +193,8 @@ export default function VitalsFeature() {
         isOpen={vitalsHistoryOpen}
         onClose={() => setVitalsHistoryOpen(false)}
       />
+
+      <HubModal isOpen={hubOpen} onClose={() => setHubOpen(false)} />
     </div>
   );
 }

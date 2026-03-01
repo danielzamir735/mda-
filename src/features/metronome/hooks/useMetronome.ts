@@ -15,13 +15,13 @@ export function useMetronome() {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(900, ctx.currentTime);
-    gain.gain.setValueAtTime(0.9, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+    gain.gain.setValueAtTime(1.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
 
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.12);
+    osc.stop(ctx.currentTime + 0.15);
   };
 
   useEffect(() => {

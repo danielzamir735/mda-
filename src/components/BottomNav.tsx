@@ -1,12 +1,13 @@
-import { FileText, Images, Activity } from 'lucide-react';
+import { FileText, Images, Activity, LayoutGrid } from 'lucide-react';
 
 interface Props {
   onGalleryOpen: () => void;
   onNotesOpen: () => void;
   onVitalsOpen: () => void;
+  onHubOpen: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
   return (
     <nav
       className="shrink-0 flex items-center
@@ -52,6 +53,20 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen }: 
       >
         <Activity size={22} />
         <span className="text-[0.6rem] font-medium leading-tight text-center">היסטוריית מדדים</span>
+      </button>
+
+      <div className="w-px h-8 bg-emt-border" />
+
+      <button
+        onClick={onHubOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1
+                   text-emt-muted hover:text-emt-light
+                   active:text-emt-light transition-colors duration-150
+                   h-full"
+        aria-label="עזרים"
+      >
+        <LayoutGrid size={22} />
+        <span className="text-xs font-medium">עזרים</span>
       </button>
     </nav>
   );
