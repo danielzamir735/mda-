@@ -7,6 +7,7 @@ interface Props {
   onChecklistOpen: () => void;
   onCalculatorsOpen: () => void;
   onSettingsOpen: () => void;
+  onVitalsReferenceOpen: () => void;
 }
 
 const HUB_ITEMS = [
@@ -52,7 +53,7 @@ const HUB_ITEMS = [
   },
 ] as const;
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings']);
+const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical']);
 
 export default function HubModal({
   isOpen,
@@ -60,14 +61,16 @@ export default function HubModal({
   onChecklistOpen,
   onCalculatorsOpen,
   onSettingsOpen,
+  onVitalsReferenceOpen,
 }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
-    if (id === 'checklist') onChecklistOpen();
+    if (id === 'checklist')  onChecklistOpen();
     if (id === 'calculators') onCalculatorsOpen();
-    if (id === 'settings') onSettingsOpen();
+    if (id === 'settings')   onSettingsOpen();
+    if (id === 'clinical')   onVitalsReferenceOpen();
   };
 
   return (

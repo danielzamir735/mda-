@@ -17,7 +17,9 @@ import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
 import CalculatorsModal from '../hub/components/CalculatorsModal';
 import SettingsModal from '../hub/components/SettingsModal';
+import VitalsReferenceModal from '../hub/components/VitalsReferenceModal';
 import WelcomeModal from '../../components/WelcomeModal';
+import FeedbackModal from '../../components/FeedbackModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -40,7 +42,8 @@ export default function VitalsFeature() {
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [calculatorsOpen, setCalculatorsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [contactPopupOpen, setContactPopupOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [vitalsRefOpen, setVitalsRefOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
@@ -130,52 +133,12 @@ export default function VitalsFeature() {
       <footer className="shrink-0 text-center pb-1 pt-1">
         <button
           type="button"
-          onClick={() => setContactPopupOpen(true)}
+          onClick={() => setFeedbackOpen(true)}
           className="text-[10px] text-gray-400 dark:text-emt-muted underline underline-offset-2 active:opacity-60 transition-opacity"
         >
           © כל הזכויות שמורות ל Daniel Zamir - Web Development
         </button>
       </footer>
-
-      {contactPopupOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          onClick={() => setContactPopupOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-6 mx-4 max-w-xs w-full text-center shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-1">יצירת קשר</p>
-            <p className="text-gray-500 dark:text-emt-muted text-sm mb-5">
-              להערות ולהצעות אפשר לפנות לכתובת המייל:
-              <br />
-              <span className="text-gray-800 dark:text-white font-mono text-xs mt-1 inline-block">
-                ydbyd4723@gmail.com
-              </span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setContactPopupOpen(false)}
-                className="flex-1 py-2 rounded-xl border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted text-sm font-semibold active:scale-95 transition-transform"
-              >
-                ביטול
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setContactPopupOpen(false);
-                  window.location.href = 'mailto:ydbyd4723@gmail.com';
-                }}
-                className="flex-1 py-2 rounded-xl bg-emt-red text-white text-sm font-bold active:scale-95 transition-transform"
-              >
-                אישור
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <CalculatorModal
         isOpen={modalOpen}
@@ -211,6 +174,7 @@ export default function VitalsFeature() {
         onChecklistOpen={() => setChecklistOpen(true)}
         onCalculatorsOpen={() => setCalculatorsOpen(true)}
         onSettingsOpen={() => setSettingsOpen(true)}
+        onVitalsReferenceOpen={() => setVitalsRefOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -228,6 +192,8 @@ export default function VitalsFeature() {
         onClose={() => setSettingsOpen(false)}
       />
 
+      <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => setVitalsRefOpen(false)} />
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
     </div>
   );
