@@ -84,55 +84,61 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
       </div>
 
       {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-        <InputField
-          label="לחץ דם"
-          value={bloodPressure}
-          onChange={(v) => setBloodPressure(formatBP(v))}
-          placeholder="120/80"
-          inputMode="numeric"
-        />
-
-        <InputField label="דופק (פעימות לדקה)" value={heartRate} onChange={setHeartRate} />
-        <InputField label="נשימות (לדקה)" value={breathing} onChange={setBreathing} />
-        <InputField label="סוכר (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
-
-        <InputField label="סטורציה (%)" value={saturation} onChange={setSaturation} placeholder="98" />
-
-        <InputField label="חום (°C)" value={temperature} onChange={setTemperature} placeholder="36.5" />
-
-        {/* FAST Test toggle */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-emt-muted text-sm font-bold">בדיקת FAST</label>
-          <div className="flex gap-2">
-            {(['תקין', 'לא תקין'] as const).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setFastTest(fastTest === opt ? '' : opt)}
-                className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
-                  ${fastTest === opt
-                    ? opt === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
-                    : 'bg-emt-gray border border-emt-border text-emt-muted'}`}
-              >
-                {opt}
-              </button>
-            ))}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Blood Pressure — full width */}
+          <div className="col-span-2">
+            <InputField
+              label="לחץ דם"
+              value={bloodPressure}
+              onChange={(v) => setBloodPressure(formatBP(v))}
+              placeholder="120/80"
+              inputMode="numeric"
+            />
           </div>
-        </div>
 
-        {/* Notes */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-emt-muted text-sm font-bold">הערות</label>
-          <textarea
-            placeholder="הערות נוספות..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="w-full bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
-                       text-emt-light text-sm font-medium placeholder:text-emt-border
-                       focus:outline-none focus:border-emt-red transition-colors resize-none"
-          />
+          <InputField label="דופק" value={heartRate} onChange={setHeartRate} placeholder="פ/דקה" />
+          <InputField label="נשימות" value={breathing} onChange={setBreathing} placeholder="נ/דקה" />
+          <InputField label="סטורציה %" value={saturation} onChange={setSaturation} placeholder="98" />
+          <InputField label="חום °C" value={temperature} onChange={setTemperature} placeholder="36.5" />
+
+          <div className="col-span-2">
+            <InputField label="סוכר (mg/dL)" value={bloodSugar} onChange={setBloodSugar} placeholder="100" />
+          </div>
+
+          {/* FAST Test toggle */}
+          <div className="col-span-2 flex flex-col gap-1.5">
+            <label className="text-emt-muted text-sm font-bold">בדיקת FAST</label>
+            <div className="flex gap-2">
+              {(['תקין', 'לא תקין'] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setFastTest(fastTest === opt ? '' : opt)}
+                  className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
+                    ${fastTest === opt
+                      ? opt === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
+                      : 'bg-emt-gray border border-emt-border text-emt-muted'}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="col-span-2 flex flex-col gap-1.5">
+            <label className="text-emt-muted text-sm font-bold">הערות</label>
+            <textarea
+              placeholder="הערות נוספות..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="w-full bg-emt-gray border border-emt-border rounded-2xl px-4 py-2
+                         text-emt-light text-sm font-medium placeholder:text-emt-border
+                         focus:outline-none focus:border-emt-red transition-colors resize-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -145,7 +151,6 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                      flex items-center justify-center gap-2
                      active:scale-[0.97] transition-all duration-150
                      disabled:opacity-90 disabled:scale-100"
-          style={{ boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}
         >
           {saved ? 'נשמר ✓' : (<><Save size={22} />שמירה</>)}
         </button>
