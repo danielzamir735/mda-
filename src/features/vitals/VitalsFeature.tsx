@@ -13,6 +13,7 @@ import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useNotesStore } from '../../store/notesStore';
 import HubModal from '../hub/HubModal';
+import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -31,6 +32,7 @@ export default function VitalsFeature() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
   const [hubOpen, setHubOpen] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const [contactPopupOpen, setContactPopupOpen] = useState(false);
 
   const noteText = useNotesStore((s) => s.noteText);
@@ -194,7 +196,16 @@ export default function VitalsFeature() {
         onClose={() => setVitalsHistoryOpen(false)}
       />
 
-      <HubModal isOpen={hubOpen} onClose={() => setHubOpen(false)} />
+      <HubModal
+        isOpen={hubOpen}
+        onClose={() => setHubOpen(false)}
+        onChecklistOpen={() => setChecklistOpen(true)}
+      />
+
+      <AmbulanceChecklistModal
+        isOpen={checklistOpen}
+        onClose={() => setChecklistOpen(false)}
+      />
     </div>
   );
 }

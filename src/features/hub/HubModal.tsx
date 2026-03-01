@@ -4,6 +4,7 @@ import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onChecklistOpen: () => void;
 }
 
 const HUB_ITEMS = [
@@ -41,9 +42,13 @@ const HUB_ITEMS = [
   },
 ] as const;
 
-export default function HubModal({ isOpen, onClose }: Props) {
+export default function HubModal({ isOpen, onClose, onChecklistOpen }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
+
+  const handleItemClick = (id: string) => {
+    if (id === 'checklist') onChecklistOpen();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
@@ -63,20 +68,27 @@ export default function HubModal({ isOpen, onClose }: Props) {
 
       {/* Grid */}
       <div className="flex-1 grid grid-cols-2 gap-3 p-4 content-start">
-        {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => (
-          <button
-            key={id}
-            disabled
-            className={`flex flex-col items-center justify-center gap-3
-                        rounded-2xl border ${border} ${bg}
-                        h-36 active:scale-95 transition-transform
-                        opacity-70 cursor-not-allowed`}
-          >
-            <Icon size={36} className={color} />
-            <span className={`text-sm font-bold ${color}`}>{label}</span>
-            <span className="text-[10px] text-emt-muted">בקרוב</span>
-          </button>
-        ))}
+        {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => {
+          const enabled = id === 'checklist';
+          return (
+            <button
+              key={id}
+              disabled={!enabled}
+              onClick={() => handleItemClick(id)}
+              className={`flex flex-col items-center justify-center gap-3
+                          rounded-2xl border ${border} ${bg}
+                          h-36 transition-transform
+                          ${enabled
+                            ? 'active:scale-95 cursor-pointer'
+                            : 'opacity-70 cursor-not-allowed'
+                          }`}
+            >
+              <Icon size={36} className={color} />
+              <span className={`text-sm font-bold ${color}`}>{label}</span>
+              {!enabled && <span className="text-[10px] text-emt-muted">בקרוב</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
