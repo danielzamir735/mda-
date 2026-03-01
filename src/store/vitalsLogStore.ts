@@ -9,6 +9,7 @@ export interface VitalsLog {
   breathing: string;
   bloodSugar: string;
   saturation: string;
+  temperature: string;
   fastTest: string;
   notes: string;
 }

@@ -9,6 +9,7 @@ export interface EditData {
   breathing: string;
   bloodSugar: string;
   saturation: string;
+  temperature: string;
   fastTest: string;
   notes: string;
 }
@@ -58,6 +59,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   const [breathing, setBreathing] = useState(initialData.breathing);
   const [bloodSugar, setBloodSugar] = useState(initialData.bloodSugar);
   const [saturation, setSaturation] = useState(initialData.saturation);
+  const [temperature, setTemperature] = useState(initialData.temperature);
   const [fastTest, setFastTest] = useState(initialData.fastTest);
   const [notes, setNotes] = useState(initialData.notes);
   const [saved, setSaved] = useState(false);
@@ -65,7 +67,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   if (!isOpen) return null;
 
   const handleSave = () => {
-    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, fastTest, notes });
+    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, notes });
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1500);
   };
@@ -96,6 +98,8 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
         <InputField label="סוכר (mg/dL)" value={bloodSugar} onChange={setBloodSugar} />
 
         <InputField label="סטורציה (%)" value={saturation} onChange={setSaturation} placeholder="98" />
+
+        <InputField label="חום (°C)" value={temperature} onChange={setTemperature} placeholder="36.5" />
 
         {/* FAST Test toggle */}
         <div className="flex flex-col gap-1.5">

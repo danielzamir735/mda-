@@ -61,6 +61,12 @@ function LogCard({ log, onDelete, onEdit }: {
             <p className="text-emt-light font-black text-lg leading-tight">{log.saturation}%</p>
           </div>
         )}
+        {log.temperature && (
+          <div>
+            <p className="text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">חום</p>
+            <p className="text-emt-light font-black text-lg leading-tight">{log.temperature}°C</p>
+          </div>
+        )}
         {log.fastTest && (
           <div>
             <p className="text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
@@ -131,6 +137,7 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
             breathing: editingLog.breathing,
             bloodSugar: editingLog.bloodSugar,
             saturation: editingLog.saturation ?? '',
+            temperature: editingLog.temperature ?? '',
             fastTest: editingLog.fastTest ?? '',
             notes: editingLog.notes ?? '',
           }}

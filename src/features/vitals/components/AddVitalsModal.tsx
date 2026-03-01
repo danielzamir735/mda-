@@ -52,6 +52,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   const [breathing, setBreathing] = useState('');
   const [bloodSugar, setBloodSugar] = useState('');
   const [saturation, setSaturation] = useState('');
+  const [temperature, setTemperature] = useState('');
   const [fastTest, setFastTest] = useState('');
   const [notes, setNotes] = useState('');
   const [saved, setSaved] = useState(false);
@@ -69,11 +70,11 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   const handleClearData = () => {
     clearDraft();
     setBloodPressure(''); setHeartRate(''); setBreathing('');
-    setBloodSugar(''); setSaturation(''); setFastTest(''); setNotes('');
+    setBloodSugar(''); setSaturation(''); setTemperature(''); setFastTest(''); setNotes('');
   };
 
   const handleSave = () => {
-    addLog({ bloodPressure, heartRate, breathing, bloodSugar, saturation, fastTest, notes });
+    addLog({ bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, notes });
     handleClearData();
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1500);
@@ -114,6 +115,8 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
 
         {/* Saturation */}
         <InputField label="סטורציה (%)" value={saturation} onChange={setSaturation} placeholder="98" />
+
+        <InputField label="חום (°C)" value={temperature} onChange={setTemperature} placeholder="36.5" />
 
         {/* FAST Test toggle */}
         <div className="flex flex-col gap-1.5">
