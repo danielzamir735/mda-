@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { Camera, Calculator, Activity } from 'lucide-react';
+import { Camera, Activity } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
-import OxygenCalculatorModal from './OxygenCalculatorModal';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useCameraStore } from '../../store/cameraStore';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [o2CalcOpen, setO2CalcOpen] = useState(false);
   const [addVitalsOpen, setAddVitalsOpen] = useState(false);
   const addPhoto = useCameraStore((s) => s.addPhoto);
 
@@ -40,22 +38,6 @@ export default function QuickToolsCard() {
             <span className="text-emt-light text-sm font-bold">מצלמה</span>
           </button>
 
-          {/* Oxygen Calculator */}
-          <button
-            onClick={() => setO2CalcOpen(true)}
-            className="flex items-center gap-3 px-3 py-2 rounded-2xl
-                       transition-all duration-200 active:scale-95"
-            aria-label="מחשבון חמצן"
-          >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
-                         border border-emt-blue/40 bg-emt-blue/10"
-            >
-              <Calculator size={18} className="text-emt-blue" />
-            </div>
-            <span className="text-emt-blue text-sm font-bold">מחשבון חמצן</span>
-          </button>
-
           {/* Add Vitals */}
           <button
             onClick={() => setAddVitalsOpen(true)}
@@ -81,11 +63,6 @@ export default function QuickToolsCard() {
           onPhoto={(dataUrl) => addPhoto(dataUrl)}
         />
       )}
-
-      <OxygenCalculatorModal
-        isOpen={o2CalcOpen}
-        onClose={() => setO2CalcOpen(false)}
-      />
 
       <AddVitalsModal
         isOpen={addVitalsOpen}

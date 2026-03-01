@@ -14,6 +14,8 @@ import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useNotesStore } from '../../store/notesStore';
 import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
+import CalculatorsModal from '../hub/components/CalculatorsModal';
+import SettingsModal from '../hub/components/SettingsModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -33,6 +35,8 @@ export default function VitalsFeature() {
   const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
   const [hubOpen, setHubOpen] = useState(false);
   const [checklistOpen, setChecklistOpen] = useState(false);
+  const [calculatorsOpen, setCalculatorsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [contactPopupOpen, setContactPopupOpen] = useState(false);
 
   const noteText = useNotesStore((s) => s.noteText);
@@ -200,11 +204,23 @@ export default function VitalsFeature() {
         isOpen={hubOpen}
         onClose={() => setHubOpen(false)}
         onChecklistOpen={() => setChecklistOpen(true)}
+        onCalculatorsOpen={() => setCalculatorsOpen(true)}
+        onSettingsOpen={() => setSettingsOpen(true)}
       />
 
       <AmbulanceChecklistModal
         isOpen={checklistOpen}
         onClose={() => setChecklistOpen(false)}
+      />
+
+      <CalculatorsModal
+        isOpen={calculatorsOpen}
+        onClose={() => setCalculatorsOpen(false)}
+      />
+
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );

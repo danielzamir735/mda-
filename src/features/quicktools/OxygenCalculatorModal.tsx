@@ -5,11 +5,12 @@ import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  zClass?: string;
 }
 
 type PressureUnit = 'bar' | 'psi';
 
-export default function OxygenCalculatorModal({ isOpen, onClose }: Props) {
+export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50' }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [pressureUnit, setPressureUnit] = useState<PressureUnit>('bar');
   const [pressure, setPressure] = useState('');
@@ -44,8 +45,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center
-                 bg-black/70 backdrop-blur-sm px-4"
+      className={`fixed inset-0 ${zClass} flex items-center justify-center bg-black/70 backdrop-blur-sm px-4`}
       onClick={onClose}
     >
       <div

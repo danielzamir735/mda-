@@ -13,7 +13,7 @@ export default function AlertOverlay({ visible }: Props) {
       return;
     }
     setShown(true);
-    const timer = setTimeout(() => setShown(false), 7000);
+    const timer = setTimeout(() => setShown(false), 5000);
     return () => clearTimeout(timer);
   }, [visible]);
 

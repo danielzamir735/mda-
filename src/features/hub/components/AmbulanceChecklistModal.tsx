@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, ChevronRight, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronRight, RotateCcw, Search } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useChecklistStore } from '../../../store/checklistStore';
 import { AMBULANCE_CHECKLIST } from '../data/ambulanceChecklistData';
@@ -17,8 +17,16 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
     () => Object.fromEntries(AMBULANCE_CHECKLIST.map((c) => [c.id, true])),
   );
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (!isOpen) return null;
+
+  const isSearching = searchQuery.trim().length > 0;
+  const filtered = isSearching
+    ? AMBULANCE_CHECKLIST
+        .map((cat) => ({ ...cat, items: cat.items.filter((item) => item.name.includes(searchQuery.trim())) }))
+        .filter((cat) => cat.items.length > 0)
+    : AMBULANCE_CHECKLIST;
 
   const totalItems = AMBULANCE_CHECKLIST.reduce((acc, cat) => acc + cat.items.length, 0);
   const checkedCount = AMBULANCE_CHECKLIST.reduce(
@@ -81,10 +89,32 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="shrink-0 px-4 py-2 border-b border-emt-border">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-emt-muted pointer-events-none"
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="חיפוש פריט..."
+            className="w-full bg-emt-gray border border-emt-border rounded-xl py-2.5 pr-9 pl-3
+                       text-emt-light text-sm placeholder:text-emt-muted
+                       focus:outline-none focus:border-emt-red transition-colors"
+          />
+        </div>
+      </div>
+
       {/* Accordion List */}
       <div className="flex-1 overflow-y-auto">
-        {AMBULANCE_CHECKLIST.map((category) => {
-          const expanded = expandedCategories[category.id];
+        {filtered.length === 0 && (
+          <p className="text-center text-emt-muted text-sm py-12">לא נמצאו תוצאות</p>
+        )}
+        {filtered.map((category) => {
+          const expanded = isSearching || expandedCategories[category.id];
           const categoryChecked = category.items.filter((item) => checkedItems[item.id]).length;
           const categoryTotal = category.items.length;
           const categoryComplete = categoryChecked === categoryTotal;

@@ -5,6 +5,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onChecklistOpen: () => void;
+  onCalculatorsOpen: () => void;
+  onSettingsOpen: () => void;
 }
 
 const HUB_ITEMS = [
@@ -42,12 +44,14 @@ const HUB_ITEMS = [
   },
 ] as const;
 
-export default function HubModal({ isOpen, onClose, onChecklistOpen }: Props) {
+export default function HubModal({ isOpen, onClose, onChecklistOpen, onCalculatorsOpen, onSettingsOpen }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
     if (id === 'checklist') onChecklistOpen();
+    if (id === 'calculators') onCalculatorsOpen();
+    if (id === 'settings') onSettingsOpen();
   };
 
   return (
@@ -69,7 +73,7 @@ export default function HubModal({ isOpen, onClose, onChecklistOpen }: Props) {
       {/* Grid */}
       <div className="flex-1 grid grid-cols-2 gap-3 p-4 content-start">
         {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => {
-          const enabled = id === 'checklist';
+          const enabled = id === 'checklist' || id === 'calculators' || id === 'settings';
           return (
             <button
               key={id}
