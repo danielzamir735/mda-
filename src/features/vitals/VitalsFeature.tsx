@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import VitalsCard from './components/VitalsCard';
 import CalculatorModal from './components/CalculatorModal';
 import ResultPopup from './components/ResultPopup';
@@ -17,6 +17,7 @@ import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
 import CalculatorsModal from '../hub/components/CalculatorsModal';
 import SettingsModal from '../hub/components/SettingsModal';
+import WelcomeModal from '../../components/WelcomeModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -40,6 +41,18 @@ export default function VitalsFeature() {
   const [calculatorsOpen, setCalculatorsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contactPopupOpen, setContactPopupOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('hasSeenWelcome')) {
+      setWelcomeOpen(true);
+    }
+  }, []);
+
+  const handleWelcomeClose = () => {
+    localStorage.setItem('hasSeenWelcome', '1');
+    setWelcomeOpen(false);
+  };
 
   const noteText = useNotesStore((s) => s.noteText);
   const setNoteText = useNotesStore((s) => s.setNoteText);
@@ -214,6 +227,8 @@ export default function VitalsFeature() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
     </div>
   );
 }
