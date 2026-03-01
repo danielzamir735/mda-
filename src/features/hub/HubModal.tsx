@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, ClipboardList, Settings, Languages } from 'lucide-react';
+import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   onCalculatorsOpen: () => void;
   onSettingsOpen: () => void;
   onVitalsReferenceOpen: () => void;
+  onFeedbackOpen: () => void;
 }
 
 const HUB_ITEMS = [
@@ -21,7 +22,7 @@ const HUB_ITEMS = [
   },
   {
     id: 'clinical',
-    label: 'מידע קליני',
+    label: 'טבלת מדדים',
     icon: BookOpen,
     color: 'text-blue-400',
     border: 'border-blue-400/30',
@@ -62,15 +63,16 @@ export default function HubModal({
   onCalculatorsOpen,
   onSettingsOpen,
   onVitalsReferenceOpen,
+  onFeedbackOpen,
 }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
-    if (id === 'checklist')  onChecklistOpen();
+    if (id === 'checklist')   onChecklistOpen();
     if (id === 'calculators') onCalculatorsOpen();
-    if (id === 'settings')   onSettingsOpen();
-    if (id === 'clinical')   onVitalsReferenceOpen();
+    if (id === 'settings')    onSettingsOpen();
+    if (id === 'clinical')    onVitalsReferenceOpen();
   };
 
   return (
@@ -90,27 +92,40 @@ export default function HubModal({
       </div>
 
       {/* Grid */}
-      <div className="flex-1 grid grid-cols-2 gap-3 p-4 content-start">
-        {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => {
-          const enabled = ENABLED.has(id);
-          return (
-            <button
-              key={id}
-              disabled={!enabled}
-              onClick={() => handleItemClick(id)}
-              className={`flex flex-col items-center justify-center gap-3
-                          rounded-2xl border ${border} ${bg}
-                          h-36 transition-transform
-                          ${enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
-            >
-              <Icon size={36} className={color} />
-              <span className={`text-sm font-bold ${color}`}>{label}</span>
-              {!enabled && (
-                <span className="text-[10px] text-gray-400 dark:text-emt-muted">בקרוב</span>
-              )}
-            </button>
-          );
-        })}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => {
+            const enabled = ENABLED.has(id);
+            return (
+              <button
+                key={id}
+                disabled={!enabled}
+                onClick={() => handleItemClick(id)}
+                className={`flex flex-col items-center justify-center gap-3
+                            rounded-2xl border ${border} ${bg}
+                            h-36 transition-transform
+                            ${enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              >
+                <Icon size={36} className={color} />
+                <span className={`text-sm font-bold ${color}`}>{label}</span>
+                {!enabled && (
+                  <span className="text-[10px] text-gray-400 dark:text-emt-muted">בקרוב</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Feedback button */}
+        <button
+          onClick={onFeedbackOpen}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
+                     border border-emt-red/30 bg-emt-red/10
+                     text-emt-red font-bold text-base active:scale-95 transition-transform"
+        >
+          <MessageSquare size={22} />
+          שליחת משוב
+        </button>
       </div>
     </div>
   );

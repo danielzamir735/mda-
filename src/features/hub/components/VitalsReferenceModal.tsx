@@ -26,7 +26,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
-          <BookOpen size={20} className="text-blue-400" />
+          <BookOpen size={22} className="text-blue-400" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">טבלת מדדים</h2>
         </div>
         <button
@@ -42,12 +42,12 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
 
       {/* Table */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
+        <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
 
           {/* Column headers */}
-          <div className="grid grid-cols-4 bg-gray-100 dark:bg-emt-gray border-b border-gray-200 dark:border-emt-border">
+          <div className="grid grid-cols-4 bg-gray-200 dark:bg-emt-gray border-b-2 border-gray-300 dark:border-emt-border">
             {HEADERS.map((h) => (
-              <div key={h} className="px-2 py-2.5 text-xs font-bold text-gray-500 dark:text-emt-muted text-center">
+              <div key={h} className="px-3 py-4 text-base font-black text-gray-700 dark:text-emt-light text-center">
                 {h}
               </div>
             ))}
@@ -58,13 +58,15 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
             <div
               key={row.label}
               className={[
-                'grid grid-cols-4 items-center',
-                i % 2 === 1 ? 'bg-gray-50/80 dark:bg-white/[0.02]' : '',
+                'grid grid-cols-4 items-stretch',
+                i % 2 === 0
+                  ? 'bg-white dark:bg-emt-dark'
+                  : 'bg-blue-50 dark:bg-white/[0.05]',
                 i < ROWS.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : '',
               ].join(' ')}
             >
               {/* Vital name cell */}
-              <div className="px-3 py-3 text-xs font-semibold text-gray-800 dark:text-emt-light text-right">
+              <div className="px-4 py-4 text-base font-bold text-gray-900 dark:text-emt-light text-right flex items-center border-l border-gray-200 dark:border-emt-border">
                 {row.label}
               </div>
 
@@ -72,7 +74,11 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
               {[row.adult, row.child, row.infant].map((val, j) => (
                 <div
                   key={j}
-                  className="px-2 py-3 text-xs tabular-nums font-medium text-gray-600 dark:text-emt-muted text-center"
+                  className={[
+                    'px-3 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
+                    'text-gray-700 dark:text-emt-muted',
+                    j < 2 ? 'border-l border-gray-200 dark:border-emt-border' : '',
+                  ].join(' ')}
                 >
                   {val}
                 </div>
@@ -81,7 +87,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
           ))}
         </div>
 
-        <p className="text-[10px] text-gray-400 dark:text-emt-border text-center mt-3 leading-relaxed">
+        <p className="text-xs text-gray-400 dark:text-emt-border text-center mt-4 leading-relaxed">
           * ערכי ייחוס בלבד — אין להחליף שיקול דעת קליני
         </p>
       </div>

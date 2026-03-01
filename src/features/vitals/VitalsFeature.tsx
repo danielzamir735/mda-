@@ -175,24 +175,25 @@ export default function VitalsFeature() {
         onCalculatorsOpen={() => setCalculatorsOpen(true)}
         onSettingsOpen={() => setSettingsOpen(true)}
         onVitalsReferenceOpen={() => setVitalsRefOpen(true)}
+        onFeedbackOpen={() => setFeedbackOpen(true)}
       />
 
       <AmbulanceChecklistModal
         isOpen={checklistOpen}
-        onClose={() => setChecklistOpen(false)}
+        onClose={() => { setChecklistOpen(false); setHubOpen(true); }}
       />
 
       <CalculatorsModal
         isOpen={calculatorsOpen}
-        onClose={() => setCalculatorsOpen(false)}
+        onClose={() => { setCalculatorsOpen(false); setHubOpen(true); }}
       />
 
       <SettingsModal
         isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => { setSettingsOpen(false); setHubOpen(true); }}
       />
 
-      <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => setVitalsRefOpen(false)} />
+      <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
     </div>

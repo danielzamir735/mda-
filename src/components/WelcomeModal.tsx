@@ -29,6 +29,11 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
           תודה רבה לכל מי שעוזר, בודק ומשתמש!
         </p>
 
+        {/* Share call-to-action */}
+        <p className="text-emt-red font-black text-lg text-center tracking-tight">
+          שתפו בכל הכוח! 💪
+        </p>
+
         {/* Feedback line */}
         <p className="text-gray-500 dark:text-emt-muted text-xs text-center leading-relaxed">
           להערות והצעות לשיפור, ניתן לפנות למייל:{' '}
