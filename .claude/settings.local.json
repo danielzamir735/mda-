@@ -19,7 +19,8 @@
       "Bash(find \"/c/Users/User/Desktop/עוזר חובש/src\" -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | head -50)",
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1 | head -40)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
