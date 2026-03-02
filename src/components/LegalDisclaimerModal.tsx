@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldAlert } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -17,17 +17,17 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
 
         {/* Icon + Title */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="w-16 h-16 rounded-full bg-emt-red/10 flex items-center justify-center">
-            <ShieldAlert size={32} className="text-emt-red" />
+          <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
+            <Info size={32} className="text-blue-500" />
           </div>
           <h2 className="text-gray-900 dark:text-emt-light font-black text-xl leading-snug">
-            כתב ויתור ותנאי שימוש
+            הצהרה חשובה לפני השימוש באפליקציה
           </h2>
         </div>
 
         {/* Disclaimer text */}
         <div className="text-right text-gray-700 dark:text-emt-light text-sm leading-relaxed space-y-3 border border-gray-200 dark:border-emt-border rounded-xl p-4 bg-gray-50 dark:bg-emt-dark/50">
-          <p className="font-bold text-emt-red">⚠️ הצהרה חשובה לפני השימוש באפליקציה</p>
+          <p className="font-bold text-gray-800 dark:text-emt-light">הצהרה חשובה לפני השימוש באפליקציה</p>
           <p>
             אפליקציה זו פותחה ככלי עזר בלבד עבור אנשי רפואה ומתנדבים בשירותי חירום.{' '}
             <strong>היא אינה מחליפה שיקול דעת רפואי מקצועי</strong>, הכשרה רפואית, או את
@@ -51,7 +51,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-1 h-5 w-5 shrink-0 accent-emt-red cursor-pointer"
+            className="mt-1 h-5 w-5 shrink-0 accent-blue-500 cursor-pointer"
           />
           <span className="text-gray-800 dark:text-emt-light text-sm font-semibold leading-relaxed text-right">
             קראתי, הבנתי ואני מאשר את תנאי השימוש.
@@ -62,7 +62,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
         <button
           onClick={onAccept}
           disabled={!checked}
-          className="w-full py-3.5 rounded-xl bg-emt-red text-white font-bold text-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="w-full py-3.5 rounded-xl bg-emt-green text-white font-bold text-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           המשך
         </button>

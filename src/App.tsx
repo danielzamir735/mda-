@@ -24,13 +24,13 @@ export default function App() {
   }, [language]);
 
   useEffect(() => {
-    if (!localStorage.getItem('hasAcceptedLegal_v1')) {
+    if (!localStorage.getItem('hasAcceptedLegal_v2')) {
       setLegalOpen(true);
     }
   }, []);
 
   const handleLegalAccept = () => {
-    localStorage.setItem('hasAcceptedLegal_v1', '1');
+    localStorage.setItem('hasAcceptedLegal_v2', '1');
     setLegalOpen(false);
   };
 
