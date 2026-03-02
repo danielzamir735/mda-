@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   ChevronDown, ChevronUp, ChevronRight, RotateCcw,
-  Settings, Eye, EyeOff, Trash2, Plus, Check, X,
+  Eye, Trash2, Plus, Check, X,
 } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useChecklistStore } from '../../../store/checklistStore';
@@ -93,14 +93,13 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => (isCustomizeMode ? exitCustomize() : setIsCustomizeMode(true))}
-            className={`w-10 h-10 rounded-full border flex items-center justify-center active:scale-90 transition-all ${
+            className={`px-3 py-1.5 rounded-lg border text-sm font-bold active:scale-95 transition-all ${
               isCustomizeMode
                 ? 'bg-emt-yellow/10 border-emt-yellow text-emt-yellow'
                 : 'bg-emt-gray border-emt-border text-emt-muted hover:text-emt-light'
             }`}
-            aria-label="התאמה אישית"
           >
-            <Settings size={16} />
+            {isCustomizeMode ? 'סיום' : 'התאמה אישית'}
           </button>
           <button
             onClick={clearChecklist}
@@ -182,6 +181,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                           className={`flex items-center gap-3 px-6 py-3 transition-opacity ${isHidden ? 'opacity-40' : 'opacity-100'}`}
                         >
                           {item.isCustom ? (
+                            /* Custom item — red trash = permanent delete */
                             <button
                               onClick={() => removeCustomItem(item.id)}
                               className="w-8 h-8 rounded-full bg-emt-red/10 border border-emt-red/30
@@ -191,17 +191,27 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                             >
                               <Trash2 size={15} />
                             </button>
-                          ) : (
+                          ) : isHidden ? (
+                            /* Built-in hidden — green eye = restore */
                             <button
                               onClick={() => toggleItemVisibility(item.id)}
-                              className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 active:scale-90 transition-all ${
-                                isHidden
-                                  ? 'bg-emt-border/20 border-emt-border text-emt-muted'
-                                  : 'bg-emt-green/10 border-emt-green/30 text-emt-green'
-                              }`}
-                              aria-label={isHidden ? 'הצג פריט' : 'הסתר פריט'}
+                              className="w-8 h-8 rounded-full bg-emt-green/10 border border-emt-green/30
+                                         flex items-center justify-center shrink-0
+                                         active:scale-90 transition-transform text-emt-green"
+                              aria-label="הצג פריט"
                             >
-                              {isHidden ? <EyeOff size={15} /> : <Eye size={15} />}
+                              <Eye size={15} />
+                            </button>
+                          ) : (
+                            /* Built-in visible — red trash = hide */
+                            <button
+                              onClick={() => toggleItemVisibility(item.id)}
+                              className="w-8 h-8 rounded-full bg-emt-red/10 border border-emt-red/30
+                                         flex items-center justify-center shrink-0
+                                         active:scale-90 transition-transform text-emt-red"
+                              aria-label="הסתר פריט"
+                            >
+                              <Trash2 size={15} />
                             </button>
                           )}
                           <span className="flex-1 text-right text-sm text-emt-light">{item.name}</span>
@@ -280,12 +290,14 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                     ) : (
                       <button
                         onClick={() => { setAddingToCategory(category.id); setNewItemName(''); }}
-                        className="w-full flex items-center justify-end gap-1.5 px-6 py-2.5
-                                   text-emt-muted hover:text-emt-yellow active:opacity-70
-                                   transition-colors text-sm"
+                        className="mx-4 mb-2 mt-1 flex items-center justify-center gap-2 py-3
+                                   rounded-xl border-2 border-dashed border-emt-green/40
+                                   bg-emt-green/5 text-emt-green font-bold text-sm
+                                   active:bg-emt-green/10 active:opacity-80 transition-colors"
+                        style={{ width: 'calc(100% - 2rem)' }}
                       >
-                        <span>+ הוסף פריט</span>
-                        <Plus size={14} />
+                        <Plus size={16} />
+                        <span>הוסף פריט</span>
                       </button>
                     )
                   )}
