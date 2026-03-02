@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { X, Wind, RefreshCw, Flame } from 'lucide-react';
+import { X, Wind, RefreshCw, Flame, Activity, Timer } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
 import BarPsiConverterModal from './BarPsiConverterModal';
 import BurnsCalculatorModal from './BurnsCalculatorModal';
+import ApgarCalculatorModal from './ApgarCalculatorModal';
+import ContractionTimerModal from './ContractionTimerModal';
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +17,8 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [o2Open, setO2Open] = useState(false);
   const [barPsiOpen, setBarPsiOpen] = useState(false);
   const [burnsOpen, setBurnsOpen] = useState(false);
+  const [apgarOpen, setApgarOpen] = useState(false);
+  const [contractionOpen, setContractionOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -86,12 +90,48 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               </p>
             </div>
           </button>
+
+          {/* Contraction Timer */}
+          <button
+            onClick={() => setContractionOpen(true)}
+            className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
+                       bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-purple-400/20 border border-purple-400/40">
+              <Timer size={22} className="text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-purple-400 font-bold text-base">מחשבון צירים</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                מדידת משך וזמן בין צירים
+              </p>
+            </div>
+          </button>
+
+          {/* APGAR Calculator */}
+          <button
+            onClick={() => setApgarOpen(true)}
+            className="flex items-center gap-4 w-full rounded-2xl border border-pink-400/30
+                       bg-pink-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-pink-400/20 border border-pink-400/40">
+              <Activity size={22} className="text-pink-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-pink-400 font-bold text-base">מחשבון APGAR</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                הערכת מצב יילוד — ציון 0–10
+              </p>
+            </div>
+          </button>
         </div>
       </div>
 
       <OxygenCalculatorModal isOpen={o2Open} onClose={() => setO2Open(false)} zClass="z-[70]" />
       <BarPsiConverterModal isOpen={barPsiOpen} onClose={() => setBarPsiOpen(false)} />
       <BurnsCalculatorModal isOpen={burnsOpen} onClose={() => setBurnsOpen(false)} />
+      <ContractionTimerModal isOpen={contractionOpen} onClose={() => setContractionOpen(false)} />
+      <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />
     </>
   );
 }
