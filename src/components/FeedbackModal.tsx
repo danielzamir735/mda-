@@ -69,10 +69,11 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
         />
         <input
           type="tel"
+          dir="rtl"
           placeholder="טלפון (אופציונלי)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className={inputCls}
+          className={`${inputCls} text-right`}
         />
 
         {/* Message — required */}

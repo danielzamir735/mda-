@@ -1,4 +1,4 @@
-import { X, Phone, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { LEVEL_A, LEVEL_B, type Hospital } from '../data/hospitalsData';
