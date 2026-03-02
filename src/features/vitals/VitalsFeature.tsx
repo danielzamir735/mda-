@@ -47,13 +47,13 @@ export default function VitalsFeature() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('hasSeenWelcome')) {
+    if (!localStorage.getItem('hasSeenWelcome_v2')) {
       setWelcomeOpen(true);
     }
   }, []);
 
   const handleWelcomeClose = () => {
-    localStorage.setItem('hasSeenWelcome', '1');
+    localStorage.setItem('hasSeenWelcome_v2', '1');
     setWelcomeOpen(false);
   };
 

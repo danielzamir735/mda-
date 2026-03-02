@@ -1,4 +1,4 @@
-import { Stethoscope, WifiOff, Home, Mail } from 'lucide-react';
+import { Stethoscope, WifiOff, Home, Mail, Smartphone } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -39,6 +39,13 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
             <p className="text-gray-700 dark:text-emt-light text-base leading-relaxed">
               <span className="font-bold">הוסף למסך הבית (Add to Home Screen)</span>{' '}
               לשליפה מהירה בזמן חירום — מומלץ מאוד!
+            </p>
+          </li>
+          <li className="flex items-start gap-3">
+            <Smartphone size={20} className="text-purple-400 shrink-0 mt-0.5" />
+            <p className="text-gray-700 dark:text-emt-light text-base leading-relaxed">
+              <span className="font-bold">שימו לב:</span>{' '}
+              כרגע האפליקציה פועלת בגרסת דפדפן (Web) בלבד. בהמשך תצא גם כאפליקציה רשמית להורדה.
             </p>
           </li>
           <li className="flex items-start gap-3">
