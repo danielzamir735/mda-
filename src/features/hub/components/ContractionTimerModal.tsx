@@ -1,67 +1,42 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, Timer } from 'lucide-react';
+import { useContractionStore } from '../../../store/contractionStore';
 
 interface Props { isOpen: boolean; onClose: () => void; }
-
-interface Contraction {
-  id: number;
-  duration: number;       // seconds — how long the contraction lasted
-  interval: number | null; // seconds from previous contraction's START to this one's START
-}
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}ש'`;
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s} ש'`;
 }
 
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
-  const [active, setActive] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [contractions, setContractions] = useState<Contraction[]>([]);
+  const { contractions, active, startMs, startContraction, endContraction, reset } = useContractionStore();
 
-  const startRef = useRef<number | null>(null);      // ms — start of current contraction
-  const lastStartRef = useRef<number | null>(null);  // ms — start of previous contraction
+  // elapsed is local — computed from startMs so it survives remounts correctly
+  const [elapsed, setElapsed] = useState(() =>
+    active && startMs ? Math.floor((Date.now() - startMs) / 1000) : 0,
+  );
 
-  // tick every second while a contraction is active
   useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setElapsed(prev => prev + 1), 1000);
+    if (!active || startMs === null) {
+      setElapsed(0);
+      return;
+    }
+    // Sync immediately on mount/activation then tick every second
+    setElapsed(Math.floor((Date.now() - startMs) / 1000));
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startMs) / 1000)), 1000);
     return () => clearInterval(id);
-  }, [active]);
+  }, [active, startMs]);
 
   if (!isOpen) return null;
 
   const handlePress = () => {
-    const now = Date.now();
-
     if (!active) {
-      // ── Start contraction ──
-      startRef.current = now;
-      setElapsed(0);
-      setActive(true);
+      startContraction();
     } else {
-      // ── End contraction ──
-      const duration = Math.round((now - (startRef.current ?? now)) / 1000);
-      const interval = lastStartRef.current
-        ? Math.round((now - lastStartRef.current) / 1000)
-        : null;
-
-      lastStartRef.current = startRef.current;
-      startRef.current = null;
-
-      setContractions(prev => [{ id: now, duration, interval }, ...prev].slice(0, 10));
-      setActive(false);
-      setElapsed(0);
+      endContraction();
     }
-  };
-
-  const reset = () => {
-    setActive(false);
-    setElapsed(0);
-    setContractions([]);
-    startRef.current = null;
-    lastStartRef.current = null;
   };
 
   const avgDuration = contractions.length
@@ -98,7 +73,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
       <div className="flex-1 overflow-y-auto flex flex-col p-4 gap-5">
 
         {/* ── Instruction text ── */}
-        <p className="text-lg font-medium text-gray-900 dark:text-gray-100 text-center pt-2">
+        <p className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center pt-2">
           {active ? 'ציר פעיל — לחץ לסיום' : 'לחץ כשמתחיל ציר'}
         </p>
 
@@ -107,13 +82,13 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           <div className="flex gap-3 w-full">
             {avgDuration !== null && (
               <div className="flex-1 rounded-2xl border border-emt-green/30 bg-emt-green/5 p-3 text-center">
-                <p className="text-emt-muted text-xs mb-0.5">משך ממוצע</p>
+                <p className="text-gray-700 dark:text-gray-200 text-sm font-bold mb-0.5">משך ממוצע</p>
                 <p className="text-emt-green font-black text-xl">{fmt(avgDuration)}</p>
               </div>
             )}
             {avgInterval !== null && (
               <div className="flex-1 rounded-2xl border border-emt-blue/30 bg-emt-blue/5 p-3 text-center">
-                <p className="text-emt-muted text-xs mb-0.5">מרווח ממוצע</p>
+                <p className="text-gray-700 dark:text-gray-200 text-sm font-bold mb-0.5">מרווח ממוצע</p>
                 <p className="text-emt-blue font-black text-xl">{fmt(avgInterval)}</p>
               </div>
             )}
@@ -124,10 +99,10 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         {contractions.length > 0 && (
           <div className="w-full flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-sm">צירים אחרונים</p>
+              <p className="text-gray-900 dark:text-emt-light font-bold text-base">צירים אחרונים</p>
               <button
                 onClick={reset}
-                className="text-emt-muted text-xs underline active:opacity-70"
+                className="text-gray-600 dark:text-gray-300 text-sm underline active:opacity-70"
               >
                 אפס
               </button>
@@ -135,7 +110,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
             <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
               {/* Column headers */}
-              <div className="grid grid-cols-3 bg-gray-100 dark:bg-emt-gray px-4 py-2 text-xs font-bold text-gray-500 dark:text-emt-muted">
+              <div className="grid grid-cols-3 bg-gray-100 dark:bg-emt-gray px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-200">
                 <span>#</span>
                 <span className="text-center">משך</span>
                 <span className="text-center">מרווח</span>
@@ -144,9 +119,9 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               {contractions.map((c, i) => (
                 <div
                   key={c.id}
-                  className="grid grid-cols-3 px-4 py-2.5 border-t border-gray-200 dark:border-emt-border text-sm"
+                  className="grid grid-cols-3 px-4 py-2.5 border-t border-gray-200 dark:border-emt-border text-base"
                 >
-                  <span className="text-gray-400 dark:text-emt-muted">{contractions.length - i}</span>
+                  <span className="text-gray-600 dark:text-gray-300">{contractions.length - i}</span>
                   <span className="text-center font-bold text-emt-green">{fmt(c.duration)}</span>
                   <span className="text-center font-bold text-emt-blue">
                     {c.interval !== null ? fmt(c.interval) : '—'}
@@ -166,7 +141,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             'w-48 h-48 rounded-full flex flex-col items-center justify-center select-none',
             'border-4 font-black transition-all duration-300 active:scale-95',
             active
-              ? 'border-emt-red bg-emt-red/20 text-emt-red animate-pulse'
+              ? 'border-emt-red bg-emt-red text-white'
               : 'border-emt-green bg-emt-green/10 text-emt-green',
           ].join(' ')}
           aria-label={active ? 'סיים ציר' : 'התחל ציר'}

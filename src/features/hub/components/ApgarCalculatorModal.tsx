@@ -87,7 +87,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
             key={cat.id}
             className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4"
           >
-            <p className="text-gray-900 dark:text-emt-light font-bold text-sm mb-3">{cat.label}</p>
+            <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-3">{cat.label}</p>
             <div className="flex gap-2">
               {cat.options.map((opt, i) => {
                 const active = scores[cat.id] === i;
@@ -117,7 +117,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
           'w-full rounded-2xl border p-4 flex flex-col items-center gap-1 transition-all duration-300',
           sev ? sev.card : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray',
         ].join(' ')}>
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide">
+          <p className="text-gray-500 dark:text-emt-muted text-sm font-semibold uppercase tracking-wide">
             ציון APGAR
           </p>
           <span
@@ -135,7 +135,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
             </span>
           )}
           {answered < 5 && (
-            <p className="text-gray-400 dark:text-emt-border text-sm">
+            <p className="text-gray-600 dark:text-gray-300 text-base">
               {answered === 0 ? 'בחר ציון לכל 5 הקטגוריות' : `נותרו ${5 - answered} קטגוריות`}
             </p>
           )}

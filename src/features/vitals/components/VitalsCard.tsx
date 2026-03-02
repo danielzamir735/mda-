@@ -124,18 +124,18 @@ export default function VitalsCard({
       {/* ── RUNNING ── */}
       {isRunning && (
         <>
-          <p className="text-emt-red/60 text-[0.6rem] tracking-widest font-bold uppercase">
+          <p className="text-emt-red/80 text-xl font-bold tracking-wide">
             {label}
           </p>
 
           <span
             className="font-mono font-black tabular-nums leading-none text-emt-red"
-            style={{ fontSize: 'clamp(5rem, 22vw, 8rem)' }}
+            style={{ fontSize: 'clamp(6rem, 28vw, 11rem)' }}
           >
             {timeLeft}
           </span>
 
-          <p className="text-emt-muted text-sm font-medium -mt-1">{t('seconds')}</p>
+          <p className="text-emt-muted text-sm font-medium">{t('seconds')}</p>
 
           <button
             onClick={(e) => { e.stopPropagation(); stop(); }}

@@ -75,7 +75,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Pressure + Bar/PSI toggle */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-emt-muted uppercase tracking-wide">
+            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
               לחץ בבלון
             </label>
             <div className="flex gap-2">
@@ -109,7 +109,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Volume */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-emt-muted uppercase tracking-wide">
+            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
               נפח הבלון (ליטר)
             </label>
             <input
@@ -124,7 +124,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Flow rate */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-emt-muted uppercase tracking-wide">
+            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
               קצב זרימה (LPM)
             </label>
             <input
@@ -160,7 +160,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
                 <p className="text-emt-muted text-sm font-medium mt-1">דקות</p>
               </>
             ) : (
-              <p className="text-emt-muted text-sm font-medium py-2">
+              <p className="text-gray-600 dark:text-gray-200 text-base font-medium py-2">
                 מלא את כל השדות לחישוב
               </p>
             )}

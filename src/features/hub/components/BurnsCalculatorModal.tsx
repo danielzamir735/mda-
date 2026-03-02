@@ -155,7 +155,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
         <div className={['w-full rounded-2xl border p-4 flex flex-col items-center gap-1 transition-all duration-300',
           total > 0 ? 'border-emt-red/30 bg-emt-red/5' : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray',
         ].join(' ')}>
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide">סה"כ כוויות</p>
+          <p className="text-gray-500 dark:text-emt-muted text-sm font-semibold uppercase tracking-wide">סה"כ כוויות</p>
           <div className="flex items-baseline gap-1">
             <span
               className={`font-black tabular-nums transition-colors duration-300 ${total > 0 ? sevColor : 'text-gray-300 dark:text-emt-border'}`}
@@ -165,7 +165,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
             <span className={`text-xl font-bold ${total > 0 ? sevColor : 'text-gray-300 dark:text-emt-border'}`}>%</span>
           </div>
           {severity && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sevBadge}`}>{severity}</span>}
-          {total === 0 && <p className="text-gray-400 dark:text-emt-border text-sm">גע באזורי הגוף הפגועים</p>}
+          {total === 0 && <p className="text-gray-600 dark:text-gray-300 text-base">גע באזורי הגוף הפגועים</p>}
         </div>
 
       </div>
