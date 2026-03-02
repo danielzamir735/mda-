@@ -22,8 +22,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'עוזר חובש',
-        short_name: 'עוזר חובש',
+        name: 'חובש+',
+        short_name: 'חובש+',
         description: 'כלי עזר לחובשים ואנשי רפואה',
         theme_color: '#09090B',
         background_color: '#09090B',

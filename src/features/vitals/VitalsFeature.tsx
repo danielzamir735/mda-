@@ -99,6 +99,9 @@ export default function VitalsFeature() {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
+      <header className="shrink-0 flex items-center justify-center px-4 py-2 border-b border-gray-200 dark:border-emt-border">
+        <span className="text-gray-900 dark:text-emt-light font-black text-xl tracking-tight">חובש+</span>
+      </header>
       <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
         <VitalsCard
           label={t('heartRate')}

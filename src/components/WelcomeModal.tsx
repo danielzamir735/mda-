@@ -18,7 +18,7 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
             <Stethoscope size={32} className="text-emt-red" />
           </div>
           <h2 className="text-gray-900 dark:text-emt-light font-black text-2xl leading-snug">
-            ברוכים הבאים לעוזר חובש
+            ברוכים הבאים לאפליקציית חובש+
           </h2>
           <span className="inline-block bg-emt-red/10 text-emt-red font-bold text-sm px-3 py-1 rounded-full">
             גרסת בטא
