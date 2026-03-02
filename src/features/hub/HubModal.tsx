@@ -120,7 +120,7 @@ export default function HubModal({
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color}`}>{label}</span>
                 {!enabled && (
-                  <span className="text-[10px] text-gray-400 dark:text-emt-muted">בקרוב</span>
+                  <span className="text-sm font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">בקרוב</span>
                 )}
               </button>
             );
