@@ -87,7 +87,7 @@ export default function VitalsCard({
               fill="currentColor"
             />
           </div>
-          <p className="text-gray-900 dark:text-emt-light font-black text-xl">{label}</p>
+          <p className="text-gray-900 dark:text-emt-light font-black text-2xl">{label}</p>
 
           {/* Duration row with +/- buttons */}
           <div

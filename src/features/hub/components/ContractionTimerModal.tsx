@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Timer } from 'lucide-react';
-import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { ChevronRight, Timer } from 'lucide-react';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -17,8 +16,6 @@ function fmt(sec: number): string {
 }
 
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
-  useModalBackHandler(isOpen, onClose);
-
   const [active, setActive] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [contractions, setContractions] = useState<Contraction[]>([]);
@@ -81,53 +78,29 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
-        <div className="flex items-center gap-2">
-          <Timer size={20} className="text-purple-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבון צירים</h2>
-        </div>
         <button
           onClick={onClose}
           className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                      flex items-center justify-center active:scale-90 transition-transform
                      text-gray-500 dark:text-emt-muted"
-          aria-label="סגור"
+          aria-label="חזור"
         >
-          <X size={20} />
+          <ChevronRight size={20} />
         </button>
+        <div className="flex items-center gap-2">
+          <Timer size={20} className="text-purple-400" />
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבון צירים</h2>
+        </div>
+        <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 gap-5">
+      {/* Scrollable content — instruction, stats, history */}
+      <div className="flex-1 overflow-y-auto flex flex-col p-4 gap-5">
 
-        {/* ── Big circular button ── */}
-        <div className="flex flex-col items-center gap-3 pt-4">
-          <button
-            onClick={handlePress}
-            className={[
-              'w-48 h-48 rounded-full flex flex-col items-center justify-center select-none',
-              'border-4 font-black transition-all duration-300 active:scale-95',
-              active
-                ? 'border-emt-red bg-emt-red/20 text-emt-red animate-pulse'
-                : 'border-emt-green bg-emt-green/10 text-emt-green',
-            ].join(' ')}
-            aria-label={active ? 'סיים ציר' : 'התחל ציר'}
-          >
-            {active ? (
-              <>
-                <span className="text-4xl tabular-nums">{fmt(elapsed)}</span>
-                <span className="text-base font-bold mt-1">סיים ציר</span>
-              </>
-            ) : (
-              <>
-                <Timer size={48} strokeWidth={1.5} />
-                <span className="text-base font-bold mt-2">התחל ציר</span>
-              </>
-            )}
-          </button>
-
-          <p className="text-gray-400 dark:text-emt-muted text-sm">
-            {active ? 'ציר פעיל — לחץ לסיום' : 'לחץ כשמתחיל ציר'}
-          </p>
-        </div>
+        {/* ── Instruction text ── */}
+        <p className="text-lg font-medium text-gray-900 dark:text-gray-100 text-center pt-2">
+          {active ? 'ציר פעיל — לחץ לסיום' : 'לחץ כשמתחיל ציר'}
+        </p>
 
         {/* ── Stats row ── */}
         {contractions.length > 0 && (
@@ -183,6 +156,33 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Pinned bottom — big circular button ── */}
+      <div className="shrink-0 flex flex-col items-center pb-8 pt-4 border-t border-gray-200 dark:border-emt-border">
+        <button
+          onClick={handlePress}
+          className={[
+            'w-48 h-48 rounded-full flex flex-col items-center justify-center select-none',
+            'border-4 font-black transition-all duration-300 active:scale-95',
+            active
+              ? 'border-emt-red bg-emt-red/20 text-emt-red animate-pulse'
+              : 'border-emt-green bg-emt-green/10 text-emt-green',
+          ].join(' ')}
+          aria-label={active ? 'סיים ציר' : 'התחל ציר'}
+        >
+          {active ? (
+            <>
+              <span className="text-4xl tabular-nums">{fmt(elapsed)}</span>
+              <span className="text-base font-bold mt-1">סיים ציר</span>
+            </>
+          ) : (
+            <>
+              <Timer size={48} strokeWidth={1.5} />
+              <span className="text-base font-bold mt-2">התחל ציר</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

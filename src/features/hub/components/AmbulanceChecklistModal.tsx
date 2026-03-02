@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  ChevronDown, ChevronUp, ChevronRight, RotateCcw, Search,
+  ChevronDown, ChevronUp, ChevronRight, RotateCcw,
   Settings, Eye, EyeOff, Trash2, Plus, Check, X,
 } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -24,7 +24,6 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
     () => Object.fromEntries(AMBULANCE_CHECKLIST.map((c) => [c.id, true])),
   );
-  const [searchQuery, setSearchQuery] = useState('');
   const [isCustomizeMode, setIsCustomizeMode] = useState(false);
   const [addingToCategory, setAddingToCategory] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
@@ -46,17 +45,11 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   // Display set: customize mode shows everything; normal mode filters hidden & empty categories
-  const isSearching = !isCustomizeMode && searchQuery.trim().length > 0;
   const displayCategories = isCustomizeMode
     ? mergedCategories
     : mergedCategories
         .map((cat) => ({ ...cat, items: cat.items.filter((item) => !hiddenItems[item.id]) }))
-        .filter((cat) => cat.items.length > 0)
-        .map((cat) => ({
-          ...cat,
-          items: isSearching ? cat.items.filter((i) => i.name.includes(searchQuery.trim())) : cat.items,
-        }))
-        .filter((cat) => !isSearching || cat.items.length > 0);
+        .filter((cat) => cat.items.length > 0);
 
   // Progress counts only visible (non-hidden) items
   const allVisible = mergedCategories.flatMap((cat) => cat.items.filter((i) => !hiddenItems[i.id]));
@@ -140,24 +133,6 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
         </div>
       </div>
 
-      {/* Search — hidden in customize mode */}
-      {!isCustomizeMode && (
-        <div className="shrink-0 px-4 py-2 border-b border-emt-border">
-          <div className="relative">
-            <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emt-muted pointer-events-none" />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="חיפוש פריט..."
-              className="w-full bg-emt-gray border border-emt-border rounded-xl py-2.5 pr-9 pl-3
-                         text-emt-light text-sm placeholder:text-emt-muted
-                         focus:outline-none focus:border-emt-red transition-colors"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Accordion List */}
       <div className="flex-1 overflow-y-auto">
         {displayCategories.length === 0 && (
@@ -165,7 +140,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
         )}
 
         {displayCategories.map((category) => {
-          const expanded = isSearching || isCustomizeMode || expandedCategories[category.id];
+          const expanded = isCustomizeMode || expandedCategories[category.id];
           const catChecked = category.items.filter((i) => checkedItems[i.id]).length;
           const catTotal = category.items.length;
           const catComplete = catTotal > 0 && catChecked === catTotal;
