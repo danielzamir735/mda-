@@ -97,11 +97,12 @@ export default function VitalsCard({
             <button
               onClick={() => canDecrease && onDurationChange(validDurations[idx - 1])}
               disabled={!canDecrease}
-              className="w-7 h-7 rounded-full flex items-center justify-center
-                         bg-gray-200 dark:bg-emt-border/40 text-gray-500 dark:text-emt-muted active:scale-90
-                         disabled:opacity-30 transition-all duration-150"
+              className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                         bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                         text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                         disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              <Minus size={14} />
+              <Minus size={16} />
             </button>
             <p className="text-gray-900 dark:text-white text-2xl font-bold min-w-[5ch] text-center">
               {duration} {t('seconds')}
@@ -109,11 +110,12 @@ export default function VitalsCard({
             <button
               onClick={() => canIncrease && onDurationChange(validDurations[idx + 1])}
               disabled={!canIncrease}
-              className="w-7 h-7 rounded-full flex items-center justify-center
-                         bg-gray-200 dark:bg-emt-border/40 text-gray-500 dark:text-emt-muted active:scale-90
-                         disabled:opacity-30 transition-all duration-150"
+              className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                         bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                         text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                         disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              <Plus size={14} />
+              <Plus size={16} />
             </button>
           </div>
         </>

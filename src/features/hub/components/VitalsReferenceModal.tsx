@@ -45,9 +45,9 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
         <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
 
           {/* Column headers */}
-          <div className="grid grid-cols-4 bg-gray-200 dark:bg-emt-gray border-b-2 border-gray-300 dark:border-emt-border">
+          <div className="grid grid-cols-4 bg-blue-600 dark:bg-blue-900 border-b-2 border-blue-700 dark:border-blue-800">
             {HEADERS.map((h) => (
-              <div key={h} className="px-3 py-4 text-base font-black text-gray-700 dark:text-emt-light text-center">
+              <div key={h} className="px-3 py-4 text-base font-black text-white text-center">
                 {h}
               </div>
             ))}
@@ -61,12 +61,12 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                 'grid grid-cols-4 items-stretch',
                 i % 2 === 0
                   ? 'bg-white dark:bg-emt-dark'
-                  : 'bg-blue-50 dark:bg-white/[0.05]',
+                  : 'bg-blue-50 dark:bg-blue-950/40',
                 i < ROWS.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : '',
               ].join(' ')}
             >
-              {/* Vital name cell */}
-              <div className="px-4 py-4 text-base font-bold text-gray-900 dark:text-emt-light text-right flex items-center border-l border-gray-200 dark:border-emt-border">
+              {/* Vital name cell — tinted & bold to stand out */}
+              <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-right flex items-center border-l border-gray-200 dark:border-emt-border bg-blue-50/60 dark:bg-blue-950/30">
                 {row.label}
               </div>
 
@@ -76,7 +76,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                   key={j}
                   className={[
                     'px-3 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
-                    'text-gray-700 dark:text-emt-muted',
+                    'text-gray-800 dark:text-emt-light',
                     j < 2 ? 'border-l border-gray-200 dark:border-emt-border' : '',
                   ].join(' ')}
                 >
