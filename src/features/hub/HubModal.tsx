@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare, Building2 } from 'lucide-react';
+import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 
 interface Props {
@@ -9,7 +9,6 @@ interface Props {
   onSettingsOpen: () => void;
   onVitalsReferenceOpen: () => void;
   onFeedbackOpen: () => void;
-  onHospitalsOpen: () => void;
 }
 
 const HUB_ITEMS = [
@@ -38,14 +37,6 @@ const HUB_ITEMS = [
     bg: 'bg-emt-yellow/10',
   },
   {
-    id: 'hospitals',
-    label: 'בתי חולים',
-    icon: Building2,
-    color: 'text-emt-red',
-    border: 'border-emt-red/30',
-    bg: 'bg-emt-red/10',
-  },
-  {
     id: 'translation',
     label: 'תרגום בזמן אמת',
     icon: Languages,
@@ -63,7 +54,7 @@ const HUB_ITEMS = [
   },
 ] as const;
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'hospitals']);
+const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical']);
 
 export default function HubModal({
   isOpen,
@@ -73,7 +64,6 @@ export default function HubModal({
   onSettingsOpen,
   onVitalsReferenceOpen,
   onFeedbackOpen,
-  onHospitalsOpen,
 }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
@@ -83,7 +73,6 @@ export default function HubModal({
     if (id === 'calculators') onCalculatorsOpen();
     if (id === 'settings')    onSettingsOpen();
     if (id === 'clinical')    onVitalsReferenceOpen();
-    if (id === 'hospitals')   onHospitalsOpen();
   };
 
   return (

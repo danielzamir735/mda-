@@ -20,7 +20,6 @@ import SettingsModal from '../hub/components/SettingsModal';
 import VitalsReferenceModal from '../hub/components/VitalsReferenceModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
-import HospitalsModal from '../hub/components/HospitalsModal';
 
 export default function VitalsFeature() {
   const heartDuration = useSettingsStore((s) => s.heartDuration);
@@ -45,7 +44,6 @@ export default function VitalsFeature() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [vitalsRefOpen, setVitalsRefOpen] = useState(false);
-  const [hospitalsOpen, setHospitalsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
@@ -99,9 +97,6 @@ export default function VitalsFeature() {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
-      <header className="shrink-0 flex items-center justify-center px-4 py-2 border-b border-gray-200 dark:border-emt-border">
-        <span className="text-gray-900 dark:text-emt-light font-black text-xl tracking-tight">חובש+</span>
-      </header>
       <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
         <VitalsCard
           label={t('heartRate')}
@@ -181,7 +176,6 @@ export default function VitalsFeature() {
         onSettingsOpen={() => setSettingsOpen(true)}
         onVitalsReferenceOpen={() => setVitalsRefOpen(true)}
         onFeedbackOpen={() => setFeedbackOpen(true)}
-        onHospitalsOpen={() => { setHubOpen(false); setHospitalsOpen(true); }}
       />
 
       <AmbulanceChecklistModal
@@ -200,7 +194,6 @@ export default function VitalsFeature() {
       />
 
       <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
-      <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
     </div>
