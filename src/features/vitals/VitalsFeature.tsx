@@ -11,7 +11,6 @@ import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
-import { useNotesStore } from '../../store/notesStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
@@ -58,9 +57,6 @@ export default function VitalsFeature() {
     localStorage.setItem('hasSeenWelcome_v2', '1');
     setWelcomeOpen(false);
   };
-
-  const noteText = useNotesStore((s) => s.noteText);
-  const setNoteText = useNotesStore((s) => s.setNoteText);
 
   const [heartExternalReset, setHeartExternalReset] = useState(0);
   const [breathExternalReset, setBreathExternalReset] = useState(0);
@@ -160,8 +156,6 @@ export default function VitalsFeature() {
 
       <NotesModal
         isOpen={notesOpen}
-        noteText={noteText}
-        onTextChange={setNoteText}
         onClose={() => setNotesOpen(false)}
       />
 

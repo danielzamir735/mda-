@@ -40,6 +40,23 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          {/* Contraction Timer — FIRST */}
+          <button
+            onClick={() => setContractionOpen(true)}
+            className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
+                       bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-purple-400/20 border border-purple-400/40">
+              <Timer size={22} className="text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-purple-400 font-bold text-base">מחשבון צירי לידה</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                מדידת משך וזמן בין צירים
+              </p>
+            </div>
+          </button>
+
           {/* O2 Calculator */}
           <button
             onClick={() => setO2Open(true)}
@@ -87,23 +104,6 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <p className="text-emt-red font-bold text-base">מחשבון כוויות</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 כלל תשעיות — שטח גוף עם כוויות
-              </p>
-            </div>
-          </button>
-
-          {/* Contraction Timer */}
-          <button
-            onClick={() => setContractionOpen(true)}
-            className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
-                       bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-purple-400/20 border border-purple-400/40">
-              <Timer size={22} className="text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-purple-400 font-bold text-base">מחשבון צירים</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                מדידת משך וזמן בין צירים
               </p>
             </div>
           </button>

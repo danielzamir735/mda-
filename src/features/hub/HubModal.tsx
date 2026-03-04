@@ -50,7 +50,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'medhistory',
-    label: 'תרגום מחלות רקע',
+    label: 'מחלות רקע נפוצות',
     icon: Languages,
     color: 'text-purple-400',
     border: 'border-purple-400/30',
