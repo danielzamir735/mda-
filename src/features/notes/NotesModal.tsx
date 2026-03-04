@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus, ChevronRight, Trash2 } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useNotesStore } from '../../store/notesStore';
@@ -9,9 +9,25 @@ interface Props {
 }
 
 export default function NotesModal({ isOpen, onClose }: Props) {
-  useModalBackHandler(isOpen, onClose);
   const { notes, addNote, updateNote, deleteNote } = useNotesStore();
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Back button closes the whole modal from list view, or exits edit view from note view.
+  useModalBackHandler(isOpen, editingId !== null ? () => setEditingId(null) : onClose);
+
+  // Push an extra history entry each time a note is opened so back goes list → not app-exit.
+  useEffect(() => {
+    if (!isOpen || editingId === null) return;
+    let usedBack = false;
+    window.history.pushState({ noteEdit: true }, '');
+    const handlePop = () => { usedBack = true; setEditingId(null); };
+    window.addEventListener('popstate', handlePop);
+    return () => {
+      window.removeEventListener('popstate', handlePop);
+      if (!usedBack) window.history.back();
+    };
+  }, [isOpen, editingId]);
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 

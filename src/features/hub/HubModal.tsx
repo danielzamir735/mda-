@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare, MapPin, Pill } from 'lucide-react';
+import { X, Calculator, BookOpen, ClipboardList, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2 } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import type { LucideIcon } from 'lucide-react';
 
@@ -11,6 +11,7 @@ interface Props {
   onVitalsReferenceOpen: () => void;
   onFeedbackOpen: () => void;
   onMedicalHistoryOpen: () => void;
+  onHospitalsOpen: () => void;
 }
 
 type HubItem = {
@@ -51,10 +52,26 @@ const HUB_ITEMS: HubItem[] = [
   {
     id: 'medhistory',
     label: 'מחלות רקע נפוצות',
-    icon: Languages,
+    icon: Stethoscope,
     color: 'text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
+  },
+  {
+    id: 'hospitals',
+    label: 'מידע בתי חולים',
+    icon: Building2,
+    color: 'text-cyan-400',
+    border: 'border-cyan-400/30',
+    bg: 'bg-cyan-400/10',
+  },
+  {
+    id: 'realtime-translate',
+    label: 'תרגום רפואי בזמן אמת',
+    icon: Mic,
+    color: 'text-orange-400',
+    border: 'border-orange-400/30',
+    bg: 'bg-orange-400/10',
   },
   {
     id: 'defibrillator',
@@ -83,7 +100,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator']);
+const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals']);
 
 export default function HubModal({
   isOpen,
@@ -94,6 +111,7 @@ export default function HubModal({
   onVitalsReferenceOpen,
   onFeedbackOpen,
   onMedicalHistoryOpen,
+  onHospitalsOpen,
 }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
@@ -104,6 +122,7 @@ export default function HubModal({
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
     if (id === 'medhistory')   onMedicalHistoryOpen();
+    if (id === 'hospitals')    onHospitalsOpen();
   };
 
   return (
