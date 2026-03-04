@@ -1,5 +1,6 @@
-import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare } from 'lucide-react';
+import { X, Calculator, BookOpen, ClipboardList, Settings, Languages, MessageSquare, MapPin, Pill } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
+import type { LucideIcon } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -9,9 +10,20 @@ interface Props {
   onSettingsOpen: () => void;
   onVitalsReferenceOpen: () => void;
   onFeedbackOpen: () => void;
+  onMedicalHistoryOpen: () => void;
 }
 
-const HUB_ITEMS = [
+type HubItem = {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  border: string;
+  bg: string;
+  href?: string;
+};
+
+const HUB_ITEMS: HubItem[] = [
   {
     id: 'calculators',
     label: 'מחשבונים',
@@ -37,12 +49,29 @@ const HUB_ITEMS = [
     bg: 'bg-emt-yellow/10',
   },
   {
-    id: 'translation',
-    label: 'תרגום בזמן אמת',
+    id: 'medhistory',
+    label: 'תרגום מחלות רקע',
     icon: Languages,
     color: 'text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
+  },
+  {
+    id: 'defibrillator',
+    label: 'מצא דפיברילטור קרוב',
+    icon: MapPin,
+    color: 'text-emt-red',
+    border: 'border-emt-red/30',
+    bg: 'bg-emt-red/10',
+    href: 'https://defi.co.il/#/map',
+  },
+  {
+    id: 'pharmacy',
+    label: 'מילון תרופות',
+    icon: Pill,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
   },
   {
     id: 'settings',
@@ -52,9 +81,9 @@ const HUB_ITEMS = [
     border: 'border-gray-200 dark:border-emt-border',
     bg: 'bg-gray-100 dark:bg-emt-gray',
   },
-] as const;
+];
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical']);
+const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator']);
 
 export default function HubModal({
   isOpen,
@@ -64,15 +93,17 @@ export default function HubModal({
   onSettingsOpen,
   onVitalsReferenceOpen,
   onFeedbackOpen,
+  onMedicalHistoryOpen,
 }: Props) {
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
-    if (id === 'checklist')   onChecklistOpen();
-    if (id === 'calculators') onCalculatorsOpen();
-    if (id === 'settings')    onSettingsOpen();
-    if (id === 'clinical')    onVitalsReferenceOpen();
+    if (id === 'checklist')    onChecklistOpen();
+    if (id === 'calculators')  onCalculatorsOpen();
+    if (id === 'settings')     onSettingsOpen();
+    if (id === 'clinical')     onVitalsReferenceOpen();
+    if (id === 'medhistory')   onMedicalHistoryOpen();
   };
 
   return (
@@ -94,23 +125,49 @@ export default function HubModal({
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
-          {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg }) => {
+          {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg, href }) => {
             const enabled = ENABLED.has(id);
+            const sharedClass = [
+              'flex flex-col items-center justify-center gap-2',
+              'rounded-2xl border', border, bg,
+              'h-36 transition-transform px-2',
+              enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed',
+            ].join(' ');
+
+            const content = (
+              <>
+                <Icon size={36} className={color} />
+                <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
+                {!enabled && (
+                  <span className="text-xs font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">
+                    בקרוב
+                  </span>
+                )}
+              </>
+            );
+
+            if (href) {
+              return (
+                <a
+                  key={id}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={sharedClass}
+                >
+                  {content}
+                </a>
+              );
+            }
+
             return (
               <button
                 key={id}
                 disabled={!enabled}
                 onClick={() => handleItemClick(id)}
-                className={`flex flex-col items-center justify-center gap-3
-                            rounded-2xl border ${border} ${bg}
-                            h-36 transition-transform
-                            ${enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                className={sharedClass}
               >
-                <Icon size={36} className={color} />
-                <span className={`text-sm font-bold ${color}`}>{label}</span>
-                {!enabled && (
-                  <span className="text-sm font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">בקרוב</span>
-                )}
+                {content}
               </button>
             );
           })}

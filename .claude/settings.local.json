@@ -20,7 +20,8 @@
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1 | head -40)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -name \"DashboardPage.tsx\" | xargs cat)"
     ]
   }
 }
