@@ -4,7 +4,9 @@ import CalculatorModal from './components/CalculatorModal';
 import ResultPopup from './components/ResultPopup';
 import VitalsHistoryModal from './components/VitalsHistoryModal';
 import MetronomeCard from '../metronome/MetronomeCard';
+import CPRTimerOverlay from '../metronome/CPRTimerOverlay';
 import QuickToolsCard from '../quicktools/QuickToolsCard';
+import { useMetronomeStore } from '../../store/metronomeStore';
 import BottomNav from '../../components/BottomNav';
 import GalleryModal from '../camera/GalleryModal';
 import NotesModal from '../notes/NotesModal';
@@ -23,6 +25,7 @@ import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 
 export default function VitalsFeature() {
+  const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
   const heartDuration = useSettingsStore((s) => s.heartDuration);
   const breathDuration = useSettingsStore((s) => s.breathDuration);
   const setHeartDuration = useSettingsStore((s) => s.setHeartDuration);
@@ -98,27 +101,33 @@ export default function VitalsFeature() {
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
       <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
-        <VitalsCard
-          label={t('heartRate')}
-          duration={heartDuration}
-          unit={t('bpmUnit')}
-          isHeartRate
-          lastResult={lastResultHeart}
-          externalReset={heartExternalReset}
-          onOpenModal={openModal}
-          onResetLastResult={handleResetLastHeart}
-          onDurationChange={(d) => setHeartDuration(d as HeartDuration)}
-        />
-        <VitalsCard
-          label={t('breathing')}
-          duration={breathDuration}
-          unit={t('breathUnit')}
-          lastResult={lastResultBreath}
-          externalReset={breathExternalReset}
-          onOpenModal={openModal}
-          onResetLastResult={handleResetLastBreath}
-          onDurationChange={(d) => setBreathDuration(d as BreathDuration)}
-        />
+        {isMetronomePlaying ? (
+          <CPRTimerOverlay />
+        ) : (
+          <>
+            <VitalsCard
+              label={t('heartRate')}
+              duration={heartDuration}
+              unit={t('bpmUnit')}
+              isHeartRate
+              lastResult={lastResultHeart}
+              externalReset={heartExternalReset}
+              onOpenModal={openModal}
+              onResetLastResult={handleResetLastHeart}
+              onDurationChange={(d) => setHeartDuration(d as HeartDuration)}
+            />
+            <VitalsCard
+              label={t('breathing')}
+              duration={breathDuration}
+              unit={t('breathUnit')}
+              lastResult={lastResultBreath}
+              externalReset={breathExternalReset}
+              onOpenModal={openModal}
+              onResetLastResult={handleResetLastBreath}
+              onDurationChange={(d) => setBreathDuration(d as BreathDuration)}
+            />
+          </>
+        )}
         <MetronomeCard />
         <QuickToolsCard />
       </main>
