@@ -8,46 +8,60 @@ interface Props {
   onHubOpen: () => void;
 }
 
-const btnCls =
-  'flex-1 flex flex-col items-center justify-center gap-1 h-full ' +
-  'text-gray-400 dark:text-emt-muted ' +
-  'hover:text-blue-400 active:text-blue-500 ' +
-  'transition-colors duration-150';
-
 export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
   const t = useTranslation();
 
   return (
     <nav
-      className="shrink-0 flex items-center bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
-      style={{ height: '4rem' }}
+      className="shrink-0 flex items-center gap-2 px-2 bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
+      style={{ height: '4.5rem' }}
     >
-      <button onClick={onNotesOpen} className={btnCls} aria-label={t('notes')}>
-        <FileText size={22} />
-        <span className="text-xs font-medium">{t('notes')}</span>
+      <button
+        onClick={onNotesOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl
+                   bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25
+                   text-blue-600 dark:text-blue-400
+                   active:scale-95 transition-all duration-150"
+        aria-label={t('notes')}
+      >
+        <FileText size={20} />
+        <span className="text-[0.65rem] font-semibold">{t('notes')}</span>
       </button>
 
-      <div className="w-px h-8 bg-gray-200 dark:bg-emt-border" />
-
-      <button onClick={onGalleryOpen} className={btnCls} aria-label={t('photos')}>
-        <Images size={22} />
-        <span className="text-xs font-medium">{t('photos')}</span>
+      <button
+        onClick={onGalleryOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl
+                   bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/25
+                   text-purple-600 dark:text-purple-400
+                   active:scale-95 transition-all duration-150"
+        aria-label={t('photos')}
+      >
+        <Images size={20} />
+        <span className="text-[0.65rem] font-semibold">{t('photos')}</span>
       </button>
 
-      <div className="w-px h-8 bg-gray-200 dark:bg-emt-border" />
-
-      <button onClick={onVitalsOpen} className={btnCls} aria-label={t('vitalsHistory')}>
-        <Activity size={22} />
-        <span className="text-[0.6rem] font-medium leading-tight text-center">
-          {t('vitalsHistory')}
-        </span>
+      <button
+        onClick={onVitalsOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl
+                   bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/25
+                   text-green-600 dark:text-green-400
+                   active:scale-95 transition-all duration-150"
+        aria-label={t('vitalsHistory')}
+      >
+        <Activity size={20} />
+        <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('vitalsHistory')}</span>
       </button>
 
-      <div className="w-px h-8 bg-gray-200 dark:bg-emt-border" />
-
-      <button onClick={onHubOpen} className={btnCls} aria-label={t('hub')}>
-        <LayoutGrid size={22} />
-        <span className="text-xs font-medium">{t('hub')}</span>
+      <button
+        onClick={onHubOpen}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl
+                   bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25
+                   text-amber-600 dark:text-amber-400
+                   active:scale-95 transition-all duration-150"
+        aria-label={t('hub')}
+      >
+        <LayoutGrid size={20} />
+        <span className="text-[0.65rem] font-semibold">{t('hub')}</span>
       </button>
     </nav>
   );

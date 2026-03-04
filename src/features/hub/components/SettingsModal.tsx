@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Coffee, Scale, ChevronRight } from 'lucide-react';
+import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Scale, ChevronRight } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../../store/settingsStore';
 import type { Theme, Language } from '../../../store/settingsStore';
@@ -181,21 +181,6 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
         <section>
           <SectionLabel>אודות ותמיכה</SectionLabel>
           <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl overflow-hidden divide-y divide-gray-100 dark:divide-emt-border">
-            <a
-              href="https://buymeacoffee.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3.5 active:bg-yellow-50 dark:active:bg-yellow-900/10 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-xl bg-yellow-400/15 flex items-center justify-center">
-                <Coffee size={18} className="text-yellow-500" />
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-900 dark:text-emt-light font-medium text-sm">תמכו בפיתוח</p>
-                <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">Buy Me a Coffee ☕</p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 dark:text-emt-muted" />
-            </a>
             <button
               onClick={handleDisclaimer}
               className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 dark:active:bg-emt-dark/50 transition-colors"

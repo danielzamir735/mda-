@@ -135,9 +135,6 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
           color="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300"
         />
 
-        <p className="text-center text-gray-400 dark:text-emt-muted text-xs mt-2 mb-4">
-          לחץ על מספר טלפון להתקשרות ישירה
-        </p>
       </div>
     </div>
   );
