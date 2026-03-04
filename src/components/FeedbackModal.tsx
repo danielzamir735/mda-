@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MessageSquare } from 'lucide-react';
+import { X, MessageSquare, Info } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -57,6 +57,14 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
           >
             <X size={18} />
           </button>
+        </div>
+
+        {/* Beta notice */}
+        <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-4 py-3">
+          <Info size={16} className="text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+          <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
+            האפליקציה עדיין בשלבי פיתוח ושיפור. נשמח מאוד לשמוע מכם כל הערה, הצעת ייעול, או דיווח על תקלה כדי שנוכל להמשיך להשתפר!
+          </p>
         </div>
 
         {/* Optional fields */}

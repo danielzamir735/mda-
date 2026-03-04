@@ -5,6 +5,7 @@ import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
 import { HEART_DURATIONS, BREATH_DURATIONS } from '../../../store/settingsStore';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useHaptics } from '../../../hooks/useHaptics';
 
 interface Props {
   label: string;
@@ -25,6 +26,7 @@ export default function VitalsCard({
   const { state, timeLeft, start, stop, reset } = useVitalsTimer(duration);
   const multiplier = Math.round(60 / duration);
   const t = useTranslation();
+  const vibrate = useHaptics();
 
   useEffect(() => {
     if (externalReset) reset();
@@ -95,7 +97,7 @@ export default function VitalsCard({
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => canDecrease && onDurationChange(validDurations[idx - 1])}
+              onClick={() => { if (canDecrease) { vibrate(20); onDurationChange(validDurations[idx - 1]); } }}
               disabled={!canDecrease}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
                          bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
@@ -108,7 +110,7 @@ export default function VitalsCard({
               {duration} {t('seconds')}
             </p>
             <button
-              onClick={() => canIncrease && onDurationChange(validDurations[idx + 1])}
+              onClick={() => { if (canIncrease) { vibrate(20); onDurationChange(validDurations[idx + 1]); } }}
               disabled={!canIncrease}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
                          bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
