@@ -15,12 +15,14 @@ interface SettingsState {
   language: Language;
   hapticsEnabled: boolean;
   wakeLockEnabled: boolean;
+  hasSeenLatestUpdate: boolean;
   setHeartDuration: (d: HeartDuration) => void;
   setBreathDuration: (d: BreathDuration) => void;
   setTheme: (t: Theme) => void;
   setLanguage: (l: Language) => void;
   setHapticsEnabled: (v: boolean) => void;
   setWakeLockEnabled: (v: boolean) => void;
+  setHasSeenLatestUpdate: (v: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -32,12 +34,14 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'he',
       hapticsEnabled: true,
       wakeLockEnabled: false,
+      hasSeenLatestUpdate: false,
       setHeartDuration: (d) => set({ heartDuration: d }),
       setBreathDuration: (d) => set({ breathDuration: d }),
       setTheme: (t) => set({ theme: t }),
       setLanguage: (l) => set({ language: l }),
       setHapticsEnabled: (v) => set({ hapticsEnabled: v }),
       setWakeLockEnabled: (v) => set({ wakeLockEnabled: v }),
+      setHasSeenLatestUpdate: (v) => set({ hasSeenLatestUpdate: v }),
     }),
     { name: 'emt-settings' },
   ),

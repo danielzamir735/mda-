@@ -29,7 +29,8 @@ const LEVEL_B: Hospital[] = [
   { name: 'פוריה', city: 'טבריה', central: '04-665-2211', er: '04-665-2850' },
   { name: 'העמק', city: 'עפולה', central: '04-649-4000', er: '04-649-4166' },
   { name: 'בני ציון', city: 'חיפה', central: '04-835-9359', er: '04-835-9210' },
-  { name: 'כרמל', city: 'טירת הכרמל', central: '04-825-0211', er: '04-825-0240' },
+  { name: 'כרמל', city: 'חיפה (רחוב מיכל 7)', central: '04-825-0211', er: '04-825-0240' },
+  { name: 'מעלה הכרמל (פסיכיאטרי)', city: 'טירת הכרמל', central: '-', er: '-' },
   { name: 'הלל יפה', city: 'חדרה', central: '04-774-4477', er: '04-774-4277' },
   { name: 'מאיר', city: 'כפר סבא', central: '09-747-2555', er: '09-747-2322' },
   { name: 'לניאדו', city: 'נתניה', central: '09-860-4666', er: '09-860-4624' },
@@ -38,6 +39,7 @@ const LEVEL_B: Hospital[] = [
 ];
 
 function PhoneLink({ number }: { number: string }) {
+  if (number === '-') return <span className="text-gray-400 dark:text-emt-muted">-</span>;
   const digits = number.replace(/\D/g, '');
   return (
     <a

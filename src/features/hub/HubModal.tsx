@@ -1,5 +1,6 @@
-import { X, Calculator, BookOpen, ClipboardList, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2 } from 'lucide-react';
+import { X, Calculator, BookOpen, ClipboardList, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
+import { useSettingsStore } from '../../store/settingsStore';
 import type { LucideIcon } from 'lucide-react';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   onFeedbackOpen: () => void;
   onMedicalHistoryOpen: () => void;
   onHospitalsOpen: () => void;
+  onUpdatesOpen: () => void;
 }
 
 type HubItem = {
@@ -91,6 +93,14 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-teal-400/10',
   },
   {
+    id: 'updates',
+    label: 'מה חדש?',
+    icon: Sparkles,
+    color: 'text-emt-yellow',
+    border: 'border-emt-yellow/30',
+    bg: 'bg-emt-yellow/10',
+  },
+  {
     id: 'settings',
     label: 'הגדרות',
     icon: Settings,
@@ -100,7 +110,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals']);
+const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates']);
 
 export default function HubModal({
   isOpen,
@@ -112,7 +122,9 @@ export default function HubModal({
   onFeedbackOpen,
   onMedicalHistoryOpen,
   onHospitalsOpen,
+  onUpdatesOpen,
 }: Props) {
+  const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -123,6 +135,7 @@ export default function HubModal({
     if (id === 'clinical')     onVitalsReferenceOpen();
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
+    if (id === 'updates')      onUpdatesOpen();
   };
 
   return (
@@ -154,7 +167,10 @@ export default function HubModal({
             ].join(' ');
 
             const content = (
-              <>
+              <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full">
+                {id === 'updates' && !hasSeenLatestUpdate && (
+                  <span className="absolute top-2 left-2 w-3 h-3 rounded-full bg-emt-red shadow-md" />
+                )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
                 {!enabled && (
@@ -162,7 +178,7 @@ export default function HubModal({
                     בקרוב
                   </span>
                 )}
-              </>
+              </div>
             );
 
             if (href) {

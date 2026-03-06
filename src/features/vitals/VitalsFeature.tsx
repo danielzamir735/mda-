@@ -21,6 +21,7 @@ import SettingsModal from '../hub/components/SettingsModal';
 import VitalsReferenceModal from '../hub/components/VitalsReferenceModal';
 import MedicalHistoryModal from '../hub/components/MedicalHistoryModal';
 import HospitalsModal from '../hub/components/HospitalsModal';
+import WhatsNewModal from '../hub/components/WhatsNewModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 
@@ -50,6 +51,7 @@ export default function VitalsFeature() {
   const [vitalsRefOpen, setVitalsRefOpen] = useState(false);
   const [medicalHistoryOpen, setMedicalHistoryOpen] = useState(false);
   const [hospitalsOpen, setHospitalsOpen] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
@@ -185,6 +187,7 @@ export default function VitalsFeature() {
         onFeedbackOpen={() => setFeedbackOpen(true)}
         onMedicalHistoryOpen={() => setMedicalHistoryOpen(true)}
         onHospitalsOpen={() => setHospitalsOpen(true)}
+        onUpdatesOpen={() => setUpdatesOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -205,6 +208,7 @@ export default function VitalsFeature() {
       <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
       <MedicalHistoryModal isOpen={medicalHistoryOpen} onClose={() => { setMedicalHistoryOpen(false); setHubOpen(true); }} />
       <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
+      <WhatsNewModal isOpen={updatesOpen} onClose={() => { setUpdatesOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
     </div>

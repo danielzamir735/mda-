@@ -12,9 +12,9 @@ function playBeep() {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(800, ctx.currentTime);
     gain.gain.setValueAtTime(1.5, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 1.0);
+    osc.stop(ctx.currentTime + 2.0);
     osc.onended = () => ctx.close();
   } catch {
     // AudioContext unavailable — silent fallback
