@@ -21,7 +21,9 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -name \"DashboardPage.tsx\" | xargs cat)"
+      "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -name \"DashboardPage.tsx\" | xargs cat)",
+      "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -type f -name \"*etronome*\" -o -name \"*itals*\" 2>/dev/null | head -20)",
+      "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -type f -name \"*store*\" 2>/dev/null | head -20)"
     ]
   }
 }

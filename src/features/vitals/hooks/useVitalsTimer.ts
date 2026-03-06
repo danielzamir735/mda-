@@ -2,6 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 
 export type TimerState = 'idle' | 'running' | 'finished';
 
+function playBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    gain.gain.setValueAtTime(1.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.0);
+    osc.onended = () => ctx.close();
+  } catch {
+    // AudioContext unavailable — silent fallback
+  }
+}
+
 export function useVitalsTimer(duration: number) {
   const [state, setState] = useState<TimerState>('idle');
   const [timeLeft, setTimeLeft] = useState(duration);
@@ -11,6 +30,11 @@ export function useVitalsTimer(duration: number) {
   useEffect(() => {
     if (state === 'idle') setTimeLeft(duration);
   }, [duration, state]);
+
+  // Beep when timer finishes
+  useEffect(() => {
+    if (state === 'finished') playBeep();
+  }, [state]);
 
   useEffect(() => {
     if (state !== 'running') return;

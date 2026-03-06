@@ -5,7 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 export default function MetronomeCard() {
   useMetronome();
-  const { bpm, isPlaying, setBpm, toggle } = useMetronomeStore();
+  const { bpm, isPlaying, lastCPRTime, setBpm, toggle } = useMetronomeStore();
   const t = useTranslation();
 
   const idx = BPM_VALUES.indexOf(bpm);
@@ -47,6 +47,11 @@ export default function MetronomeCard() {
           {bpm}
         </span>
         <p className="text-gray-400 dark:text-emt-muted text-xs font-medium">BPM</p>
+        {!isPlaying && lastCPRTime && (
+          <p className="text-gray-400 dark:text-emt-muted text-xs mt-1 font-medium">
+            סשן אחרון: {lastCPRTime}
+          </p>
+        )}
       </div>
 
       {/* Slider row */}
