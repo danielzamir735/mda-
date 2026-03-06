@@ -1,36 +1,52 @@
 import { useState } from 'react';
-import { X, MessageSquare, Info } from 'lucide-react';
+import { X, MessageSquare, Info, Send, Loader2, CheckCircle } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
+type Status = 'idle' | 'sending' | 'success' | 'error';
+
 export default function FeedbackModal({ isOpen, onClose }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<Status>('idle');
 
   if (!isOpen) return null;
 
   const handleClose = () => {
+    if (status === 'sending') return;
     setName('');
     setPhone('');
     setMessage('');
+    setStatus('idle');
     onClose();
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (!message.trim() || status === 'sending') return;
+
     const lines: string[] = [];
-    if (name.trim())    lines.push(`שם: ${name.trim()}`);
-    if (phone.trim())   lines.push(`טלפון: ${phone.trim()}`);
-    if (lines.length)   lines.push('');
+    if (name.trim()) lines.push(`שם: ${name.trim()}`);
+    if (phone.trim()) lines.push(`טלפון: ${phone.trim()}`);
+    if (lines.length) lines.push('');
     lines.push(message.trim());
 
-    const subject = encodeURIComponent('משוב מעוזר חובש');
-    const body    = encodeURIComponent(lines.join('\n'));
-    window.location.href = `mailto:ydbyd4723@gmail.com?subject=${subject}&body=${body}`;
-    handleClose();
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: lines.join('\n') }),
+      });
+      if (!res.ok) throw new Error('send failed');
+      setStatus('success');
+      setTimeout(handleClose, 1800);
+    } catch {
+      setStatus('error');
+    }
   };
 
   const inputCls =
@@ -50,9 +66,10 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
           </div>
           <button
             onClick={handleClose}
+            disabled={status === 'sending'}
             className="w-9 h-9 rounded-full bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted"
+                       text-gray-500 dark:text-emt-muted disabled:opacity-40"
             aria-label="סגור"
           >
             <X size={18} />
@@ -67,50 +84,76 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
           </p>
         </div>
 
-        {/* Optional fields */}
-        <input
-          type="text"
-          placeholder="שם (אופציונלי)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={inputCls}
-        />
-        <input
-          type="tel"
-          dir="rtl"
-          placeholder="טלפון (אופציונלי)"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className={`${inputCls} text-right`}
-        />
+        {status === 'success' ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <CheckCircle size={44} className="text-emt-green" />
+            <p className="text-gray-900 dark:text-emt-light font-semibold text-base">המשוב נשלח בהצלחה!</p>
+            <p className="text-gray-500 dark:text-emt-muted text-sm">תודה רבה על הפידבק 🙏</p>
+          </div>
+        ) : (
+          <>
+            {/* Optional fields */}
+            <input
+              type="text"
+              placeholder="שם (אופציונלי)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={status === 'sending'}
+              className={inputCls}
+            />
+            <input
+              type="tel"
+              dir="rtl"
+              placeholder="טלפון (אופציונלי)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={status === 'sending'}
+              className={`${inputCls} text-right`}
+            />
 
-        {/* Message — required */}
-        <textarea
-          placeholder="הערה / הצעה לשיפור..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows={4}
-          className={`${inputCls} resize-none`}
-        />
+            {/* Message — required */}
+            <textarea
+              placeholder="הערה / הצעה לשיפור..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              disabled={status === 'sending'}
+              className={`${inputCls} resize-none`}
+            />
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleClose}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-emt-border
-                       text-gray-500 dark:text-emt-muted text-sm font-semibold active:scale-95 transition-transform"
-          >
-            ביטול
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={!message.trim()}
-            className="flex-1 py-2.5 rounded-xl bg-emt-red text-white text-sm font-bold
-                       active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            שלח משוב
-          </button>
-        </div>
+            {/* Error */}
+            {status === 'error' && (
+              <p className="text-red-500 text-sm text-center">שליחה נכשלה. נסה שוב.</p>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleClose}
+                disabled={status === 'sending'}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-emt-border
+                           text-gray-500 dark:text-emt-muted text-sm font-semibold active:scale-95
+                           transition-transform disabled:opacity-40"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={!message.trim() || status === 'sending'}
+                className="flex-1 py-2.5 rounded-xl bg-emt-red text-white text-sm font-bold
+                           active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
+                           flex items-center justify-center gap-2"
+              >
+                {status === 'sending' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={15} />
+                )}
+                {status === 'sending' ? 'שולח...' : 'שלח משוב'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
