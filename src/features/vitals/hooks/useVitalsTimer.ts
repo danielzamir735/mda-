@@ -10,11 +10,17 @@ function playBeep() {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    gain.gain.setValueAtTime(1.5, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 2.0);
+    osc.frequency.setValueAtTime(900, ctx.currentTime);
+    const t = ctx.currentTime;
+    // First beep (0–0.4s)
+    gain.gain.setValueAtTime(1.5, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.4);
+    // Gap (0.4–0.6s) — gain stays at 0
+    // Second beep (0.6–1.0s)
+    gain.gain.setValueAtTime(1.5, t + 0.6);
+    gain.gain.linearRampToValueAtTime(0, t + 1.0);
+    osc.start(t);
+    osc.stop(t + 1.0);
     osc.onended = () => ctx.close();
   } catch {
     // AudioContext unavailable — silent fallback
