@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useVitalsLogStore } from './vitalsLogStore';
 
 export const BPM_VALUES = [100, 110, 120] as const;
 export type BpmValue = typeof BPM_VALUES[number];
@@ -10,9 +11,12 @@ interface MetronomeStore {
   isAudioMuted: boolean;
   cprStartTime: number | null;
   lastCPRTime: string;
+  lastCPRShocks: number;
+  shockCount: number;
   setBpm: (bpm: BpmValue) => void;
   start: () => void;
   toggleAudio: () => void;
+  incrementShock: () => void;
   endCPR: () => void;
   /** @deprecated use start() / endCPR() */
   toggle: () => void;
@@ -35,42 +39,55 @@ export const useMetronomeStore = create<MetronomeStore>()(
       isAudioMuted: false,
       cprStartTime: null,
       lastCPRTime: '',
+      lastCPRShocks: 0,
+      shockCount: 0,
       setBpm: (bpm) => set({ bpm }),
       start: () =>
-        set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now() }),
+        set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockCount: 0 }),
       toggleAudio: () =>
         set((state) => ({ isAudioMuted: !state.isAudioMuted })),
-      endCPR: () =>
-        set((state) => ({
+      incrementShock: () =>
+        set((state) => ({ shockCount: state.shockCount + 1 })),
+      endCPR: () => {
+        const state = get();
+        const duration = elapsedToMMSS(state.cprStartTime);
+        if (state.cprStartTime) {
+          useVitalsLogStore.getState().addLog({
+            type: 'cpr',
+            bloodPressure: '',
+            heartRate: '',
+            breathing: '',
+            bloodSugar: '',
+            saturation: '',
+            temperature: '',
+            fastTest: '',
+            notes: '',
+            cprDuration: duration,
+            cprShocks: state.shockCount,
+          });
+        }
+        set({
           isPlaying: false,
           isAudioMuted: false,
           cprStartTime: null,
-          lastCPRTime: elapsedToMMSS(state.cprStartTime),
-        })),
+          lastCPRTime: duration,
+          lastCPRShocks: state.shockCount,
+          shockCount: 0,
+        });
+      },
       toggle: () => {
         const state = get();
         if (state.isPlaying) {
-          set({
-            isPlaying: false,
-            isAudioMuted: false,
-            cprStartTime: null,
-            lastCPRTime: elapsedToMMSS(state.cprStartTime),
-          });
+          get().endCPR();
         } else {
-          set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now() });
+          set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockCount: 0 });
         }
       },
-      stop: () =>
-        set((state) => ({
-          isPlaying: false,
-          isAudioMuted: false,
-          cprStartTime: null,
-          lastCPRTime: elapsedToMMSS(state.cprStartTime),
-        })),
+      stop: () => get().endCPR(),
     }),
     {
       name: 'metronome-store',
-      partialize: (state) => ({ lastCPRTime: state.lastCPRTime }),
+      partialize: (state) => ({ lastCPRTime: state.lastCPRTime, lastCPRShocks: state.lastCPRShocks }),
     },
   ),
 );

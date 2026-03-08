@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 export interface VitalsLog {
   id: string;
   timestamp: string;
+  type?: string;          // 'cpr' for CPR session records
   bloodPressure: string;
   heartRate: string;
   breathing: string;
@@ -12,6 +13,8 @@ export interface VitalsLog {
   temperature: string;
   fastTest: string;
   notes: string;
+  cprDuration?: string;   // for type === 'cpr'
+  cprShocks?: number;     // for type === 'cpr'
 }
 
 interface VitalsLogState {

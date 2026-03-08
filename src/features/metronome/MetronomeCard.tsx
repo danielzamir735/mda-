@@ -5,7 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 export default function MetronomeCard() {
   useMetronome();
-  const { bpm, isPlaying, isAudioMuted, lastCPRTime, setBpm, start, toggleAudio, endCPR } =
+  const { bpm, isPlaying, isAudioMuted, lastCPRTime, lastCPRShocks, setBpm, start, toggleAudio, endCPR } =
     useMetronomeStore();
   const t = useTranslation();
 
@@ -53,6 +53,9 @@ export default function MetronomeCard() {
             <p className="text-sm text-gray-400/80 dark:text-gray-500">
               סשן אחרון{' '}
               <span className="text-lg font-medium text-blue-400/90 tabular-nums">{lastCPRTime}</span>
+              {lastCPRShocks > 0 && (
+                <span className="mr-1 text-yellow-400 font-bold"> · ⚡{lastCPRShocks}</span>
+              )}
             </p>
           </div>
         )}

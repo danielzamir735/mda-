@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Square } from 'lucide-react';
+import { Square, Zap } from 'lucide-react';
 import { useMetronomeStore } from '../../store/metronomeStore';
 
 function formatElapsed(ms: number): string {
@@ -10,7 +10,7 @@ function formatElapsed(ms: number): string {
 }
 
 export default function CPRTimerOverlay() {
-  const { cprStartTime, lastCPRTime, endCPR } = useMetronomeStore();
+  const { cprStartTime, lastCPRTime, shockCount, incrementShock, endCPR } = useMetronomeStore();
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function CPRTimerOverlay() {
 
   return (
     <div
-      className="col-span-2 rounded-3xl flex flex-col items-center justify-center gap-1 relative overflow-hidden"
+      className="col-span-2 rounded-3xl flex flex-col items-center justify-center gap-2 relative overflow-hidden"
       style={{
         background: 'linear-gradient(160deg, #6b0000 0%, #9b0000 50%, #6b0000 100%)',
         boxShadow: '0 0 40px rgba(200,0,0,0.45), inset 0 0 50px rgba(0,0,0,0.4)',
@@ -57,18 +57,42 @@ export default function CPRTimerOverlay() {
         </p>
       )}
 
+      {/* Electric Shock button */}
+      <button
+        onClick={incrementShock}
+        className="z-10 flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-base active:scale-95 transition-all duration-150"
+        style={{
+          backgroundColor: shockCount > 0 ? 'rgba(251,146,60,0.35)' : 'rgba(245,158,11,0.2)',
+          border: shockCount > 0 ? '2px solid rgba(251,146,60,0.9)' : '2px solid rgba(245,158,11,0.6)',
+          color: shockCount > 0 ? '#fb923c' : '#fbbf24',
+          boxShadow: shockCount > 0 ? '0 0 16px rgba(251,146,60,0.5)' : 'none',
+        }}
+        aria-label="שוק חשמלי"
+      >
+        <Zap size={20} fill="currentColor" />
+        שוק חשמלי
+        {shockCount > 0 && (
+          <span
+            className="rounded-full w-7 h-7 flex items-center justify-center text-sm font-black"
+            style={{ backgroundColor: '#fb923c', color: '#1a0a00' }}
+          >
+            {shockCount}
+          </span>
+        )}
+      </button>
+
       <button
         onClick={endCPR}
-        className="mt-2 flex items-center gap-2 px-5 py-2 rounded-full z-10 font-bold text-sm active:scale-95 transition-transform"
+        className="flex items-center gap-2 px-5 py-2 rounded-full z-10 font-bold text-sm active:scale-95 transition-transform"
         style={{
           backgroundColor: 'rgba(255,255,255,0.15)',
           border: '1px solid rgba(255,255,255,0.3)',
           color: 'white',
         }}
-        aria-label="עצור החייאה"
+        aria-label="סיים החייאה"
       >
         <Square size={14} fill="white" />
-        עצור החייאה
+        סיים החייאה
       </button>
     </div>
   );

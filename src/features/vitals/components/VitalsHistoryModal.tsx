@@ -1,9 +1,44 @@
 import { useState } from 'react';
-import { X, Trash2, Pencil } from 'lucide-react';
+import { X, Trash2, Pencil, Zap } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
 import EditVitalsModal from './EditVitalsModal';
+
+function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void }) {
+  return (
+    <div
+      className="bg-emt-gray border rounded-2xl p-4"
+      style={{
+        borderColor: 'rgba(245,158,11,0.35)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4), 0 0 12px rgba(245,158,11,0.08)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <Zap size={13} className="text-yellow-400" fill="currentColor" />
+          <p className="text-yellow-400/80 text-xs font-black uppercase tracking-wide">החייאה</p>
+          <p className="text-emt-muted text-xs">· {log.timestamp}</p>
+        </div>
+        <button onClick={onDelete} className="p-1.5 text-emt-muted hover:text-emt-red transition-colors" aria-label="מחק">
+          <Trash2 size={16} />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div>
+          <p className="text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">משך סשן</p>
+          <p className="text-emt-light font-black text-xl leading-tight tabular-nums">{log.cprDuration || '—'}</p>
+        </div>
+        <div>
+          <p className="text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">שוקים חשמליים</p>
+          <p className="font-black text-xl leading-tight" style={{ color: (log.cprShocks ?? 0) > 0 ? '#fb923c' : '#6b7280' }}>
+            {log.cprShocks ?? 0}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   isOpen: boolean;
@@ -114,14 +149,18 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
             <p className="text-emt-muted text-base font-medium">אין מדדים שמורים</p>
           </div>
         ) : (
-          reversed.map((log) => (
-            <LogCard
-              key={log.id}
-              log={log}
-              onDelete={() => deleteLog(log.id)}
-              onEdit={() => setEditingLog(log)}
-            />
-          ))
+          reversed.map((log) =>
+            log.type === 'cpr' ? (
+              <CPRLogCard key={log.id} log={log} onDelete={() => deleteLog(log.id)} />
+            ) : (
+              <LogCard
+                key={log.id}
+                log={log}
+                onDelete={() => deleteLog(log.id)}
+                onEdit={() => setEditingLog(log)}
+              />
+            )
+          )
         )}
       </div>
 
