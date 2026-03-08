@@ -16,7 +16,10 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   useEffect(() => {
     let mounted = true;
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 4096 }, height: { ideal: 2160 } },
+        audio: false,
+      })
       .then((s) => {
         if (!mounted) { s.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = s;
@@ -46,7 +49,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     onPhoto(dataUrl);
