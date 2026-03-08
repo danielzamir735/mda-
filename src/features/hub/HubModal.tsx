@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { X, Calculator, BookOpen, ClipboardList, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { LucideIcon } from 'lucide-react';
@@ -7,7 +6,6 @@ import type { LucideIcon } from 'lucide-react';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onChecklistOpen: () => void;
   onCalculatorsOpen: () => void;
   onSettingsOpen: () => void;
   onVitalsReferenceOpen: () => void;
@@ -43,14 +41,6 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
-  },
-  {
-    id: 'checklist',
-    label: 'בדיקת אמבולנס',
-    icon: ClipboardList,
-    color: 'text-emt-yellow',
-    border: 'border-emt-yellow/30',
-    bg: 'bg-emt-yellow/10',
   },
   {
     id: 'medhistory',
@@ -111,12 +101,11 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['checklist', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates']);
 
 export default function HubModal({
   isOpen,
   onClose,
-  onChecklistOpen,
   onCalculatorsOpen,
   onSettingsOpen,
   onVitalsReferenceOpen,
@@ -126,12 +115,10 @@ export default function HubModal({
   onUpdatesOpen,
 }: Props) {
   const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
-  const [showAmbulanceChoice, setShowAmbulanceChoice] = useState(false);
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
-    if (id === 'checklist')    { setShowAmbulanceChoice(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -155,33 +142,6 @@ export default function HubModal({
           <X size={20} />
         </button>
       </div>
-
-      {/* Ambulance type choice overlay */}
-      {showAmbulanceChoice && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-emt-gray rounded-3xl p-6 mx-6 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
-            <h3 className="text-gray-900 dark:text-emt-light font-black text-xl text-center">בחר סוג אמבולנס</h3>
-            <button
-              onClick={() => { setShowAmbulanceChoice(false); onChecklistOpen(); }}
-              className="w-full py-5 rounded-2xl bg-emt-yellow/10 border-2 border-emt-yellow/40 text-emt-yellow font-black text-xl active:scale-95 transition-transform"
-            >
-              אמבולנס לבן
-            </button>
-            <button
-              onClick={() => { setShowAmbulanceChoice(false); alert('יועלה קובץ אט״ן בהמשך'); }}
-              className="w-full py-5 rounded-2xl bg-blue-500/10 border-2 border-blue-400/40 text-blue-400 font-black text-xl active:scale-95 transition-transform"
-            >
-              אט״ן
-            </button>
-            <button
-              onClick={() => setShowAmbulanceChoice(false)}
-              className="text-gray-400 dark:text-emt-muted text-sm font-medium active:opacity-70"
-            >
-              ביטול
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">

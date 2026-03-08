@@ -180,7 +180,6 @@ export default function VitalsFeature() {
       <HubModal
         isOpen={hubOpen}
         onClose={() => setHubOpen(false)}
-        onChecklistOpen={() => setChecklistOpen(true)}
         onCalculatorsOpen={() => setCalculatorsOpen(true)}
         onSettingsOpen={() => setSettingsOpen(true)}
         onVitalsReferenceOpen={() => setVitalsRefOpen(true)}

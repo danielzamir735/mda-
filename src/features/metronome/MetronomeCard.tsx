@@ -48,9 +48,8 @@ export default function MetronomeCard() {
         </span>
         <p className="text-gray-400 dark:text-emt-muted text-xs font-medium">BPM</p>
         {!isPlaying && lastCPRTime && (
-          <div className="mt-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 p-4 rounded-xl shadow-sm text-center w-full">
-            <p className="text-gray-500 dark:text-emt-muted text-xs font-medium mb-0.5">סשן אחרון</p>
-            <p className="text-blue-600 dark:text-blue-400 text-2xl font-bold tabular-nums">{lastCPRTime}</p>
+          <div className="mt-1.5 text-center">
+            <p className="text-sm text-gray-400/80 dark:text-gray-500">סשן אחרון <span className="text-lg font-medium text-blue-400/90 tabular-nums">{lastCPRTime}</span></p>
           </div>
         )}
       </div>
