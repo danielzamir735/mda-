@@ -66,7 +66,16 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           <Timer size={20} className="text-purple-400" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבון צירים</h2>
         </div>
-        <div className="w-10" />
+        {contractions.length > 0 ? (
+          <button
+            onClick={reset}
+            className="bg-red-100/10 text-red-500 border border-red-500/50 px-3 py-1 text-sm font-semibold rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"
+          >
+            איפוס
+          </button>
+        ) : (
+          <div className="w-10" />
+        )}
       </div>
 
       {/* Scrollable content — instruction, stats, history */}
@@ -153,14 +162,6 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           )}
         </button>
 
-        {contractions.length > 0 && (
-          <button
-            onClick={reset}
-            className="w-full max-w-xs bg-red-500 text-white font-bold p-4 text-xl rounded-lg active:opacity-80 transition-opacity"
-          >
-            איפוס
-          </button>
-        )}
       </div>
     </div>
   );
