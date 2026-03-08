@@ -1,11 +1,12 @@
-import { Minus, Plus, Play, Square } from 'lucide-react';
+import { Minus, Plus, Play, VolumeX, Volume2 } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export default function MetronomeCard() {
   useMetronome();
-  const { bpm, isPlaying, lastCPRTime, setBpm, toggle } = useMetronomeStore();
+  const { bpm, isPlaying, isAudioMuted, lastCPRTime, setBpm, start, toggleAudio, endCPR } =
+    useMetronomeStore();
   const t = useTranslation();
 
   const idx = BPM_VALUES.indexOf(bpm);
@@ -49,12 +50,15 @@ export default function MetronomeCard() {
         <p className="text-gray-400 dark:text-emt-muted text-xs font-medium">BPM</p>
         {!isPlaying && lastCPRTime && (
           <div className="mt-1.5 text-center">
-            <p className="text-sm text-gray-400/80 dark:text-gray-500">סשן אחרון <span className="text-lg font-medium text-blue-400/90 tabular-nums">{lastCPRTime}</span></p>
+            <p className="text-sm text-gray-400/80 dark:text-gray-500">
+              סשן אחרון{' '}
+              <span className="text-lg font-medium text-blue-400/90 tabular-nums">{lastCPRTime}</span>
+            </p>
           </div>
         )}
       </div>
 
-      {/* Slider row */}
+      {/* BPM slider */}
       <div className="w-full flex items-center gap-2 px-1">
         <button
           onClick={() => stepBpm(-1)}
@@ -99,24 +103,55 @@ export default function MetronomeCard() {
         </button>
       </div>
 
-      {/* Play / Stop */}
-      <button
-        onClick={toggle}
-        className="w-14 h-14 rounded-full flex items-center justify-center
-                   active:scale-90 transition-all duration-150"
-        style={{
-          backgroundColor: isPlaying ? '#EF233C' : '#22C55E',
-          boxShadow: isPlaying
-            ? '0 4px 16px rgba(239,35,60,0.35)'
-            : '0 4px 16px rgba(34,197,94,0.35)',
-        }}
-        aria-label={isPlaying ? t('cancel') : 'הפעל'}
-      >
-        {isPlaying
-          ? <Square size={22} fill="white" className="text-white" />
-          : <Play size={24} fill="white" className="text-white" />
-        }
-      </button>
+      {/* Action buttons */}
+      {!isPlaying ? (
+        /* Start CPR */
+        <button
+          onClick={start}
+          className="w-14 h-14 rounded-full flex items-center justify-center
+                     active:scale-90 transition-all duration-150"
+          style={{
+            backgroundColor: '#22C55E',
+            boxShadow: '0 4px 16px rgba(34,197,94,0.35)',
+          }}
+          aria-label="הפעל"
+        >
+          <Play size={24} fill="white" className="text-white" />
+        </button>
+      ) : (
+        <div className="w-full flex flex-col items-center gap-2">
+          {/* Audio toggle */}
+          <button
+            onClick={toggleAudio}
+            className="w-full py-2 rounded-2xl flex items-center justify-center gap-2
+                       font-bold text-sm active:scale-95 transition-all duration-150"
+            style={{
+              backgroundColor: isAudioMuted ? 'rgba(100,100,120,0.25)' : 'rgba(245,158,11,0.18)',
+              border: isAudioMuted ? '1px solid rgba(150,150,180,0.4)' : '1px solid rgba(245,158,11,0.5)',
+              color: isAudioMuted ? '#aaa' : '#f5c842',
+            }}
+            aria-label={isAudioMuted ? 'הפעל מטרונום' : 'הפסק מטרונום'}
+          >
+            {isAudioMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isAudioMuted ? 'הפעל מטרונום' : 'הפסק מטרונום'}
+          </button>
+
+          {/* End CPR */}
+          <button
+            onClick={endCPR}
+            className="w-full py-2.5 rounded-2xl flex items-center justify-center gap-2
+                       font-black text-base active:scale-95 transition-all duration-150"
+            style={{
+              backgroundColor: '#EF233C',
+              boxShadow: '0 4px 16px rgba(239,35,60,0.45)',
+              color: 'white',
+            }}
+            aria-label="סיים החייאה"
+          >
+            סיים החייאה
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ function formatElapsed(ms: number): string {
 }
 
 export default function CPRTimerOverlay() {
-  const { cprStartTime, lastCPRTime, toggle } = useMetronomeStore();
+  const { cprStartTime, lastCPRTime, endCPR } = useMetronomeStore();
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function CPRTimerOverlay() {
       )}
 
       <button
-        onClick={toggle}
+        onClick={endCPR}
         className="mt-2 flex items-center gap-2 px-5 py-2 rounded-full z-10 font-bold text-sm active:scale-95 transition-transform"
         style={{
           backgroundColor: 'rgba(255,255,255,0.15)',

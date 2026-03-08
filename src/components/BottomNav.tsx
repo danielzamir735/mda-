@@ -18,10 +18,20 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
       className="shrink-0 flex items-center gap-2 px-2 bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
       style={{ height: '4.5rem' }}
     >
+      <style>{`
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.18); }
+        }
+        .animate-breathe {
+          animation: breathe 2.2s ease-in-out infinite;
+          display: inline-flex;
+        }
+      `}</style>
+
       <button
         onClick={() => { vibrate(); onNotesOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-3xl
-                   bg-blue-50 dark:bg-blue-500/10 border-none
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
                    text-blue-600 dark:text-blue-400
                    active:scale-95 transition-all duration-150"
         aria-label={t('notes')}
@@ -32,8 +42,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
       <button
         onClick={() => { vibrate(); onGalleryOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-3xl
-                   bg-purple-50 dark:bg-purple-500/10 border-none
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
                    text-purple-600 dark:text-purple-400
                    active:scale-95 transition-all duration-150"
         aria-label={t('photos')}
@@ -44,8 +53,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
       <button
         onClick={() => { vibrate(); onVitalsOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-3xl
-                   bg-green-50 dark:bg-green-500/10 border-none
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
                    text-green-600 dark:text-green-400
                    active:scale-95 transition-all duration-150"
         aria-label={t('vitalsHistory')}
@@ -56,13 +64,14 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
       <button
         onClick={() => { vibrate(); onHubOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-3xl
-                   bg-amber-50 dark:bg-amber-500/10 border-none
-                   text-amber-600 dark:text-amber-400
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
+                   text-amber-500 dark:text-amber-400
                    active:scale-95 transition-all duration-150"
         aria-label={t('hub')}
       >
-        <LayoutGrid size={20} />
+        <span className="animate-breathe">
+          <LayoutGrid size={20} />
+        </span>
         <span className="text-[0.65rem] font-semibold">{t('hub')}</span>
       </button>
     </nav>

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useMetronomeStore } from '../../../store/metronomeStore';
 
 export function useMetronome() {
-  const { bpm, isPlaying } = useMetronomeStore();
+  const { bpm, isPlaying, isAudioMuted } = useMetronomeStore();
   const audioCtxRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -13,7 +13,7 @@ export function useMetronome() {
     const gain = ctx.createGain();
 
     const masterGain = ctx.createGain();
-    masterGain.gain.value = 1.0; // maximize output volume
+    masterGain.gain.value = 1.0;
     osc.connect(gain);
     gain.connect(masterGain);
     masterGain.connect(ctx.destination);
@@ -27,18 +27,17 @@ export function useMetronome() {
     osc.stop(ctx.currentTime + 0.15);
   };
 
+  const shouldTick = isPlaying && !isAudioMuted;
+
   useEffect(() => {
-    if (isPlaying) {
-      // Lazily create AudioContext on first play (browser policy)
+    if (shouldTick) {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new AudioContext();
       }
-      // Resume if suspended
       if (audioCtxRef.current.state === 'suspended') {
         audioCtxRef.current.resume();
       }
-
-      playTick(); // immediate first tick
+      playTick();
       intervalRef.current = setInterval(playTick, 60000 / bpm);
     } else {
       if (intervalRef.current) {
@@ -53,5 +52,5 @@ export function useMetronome() {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, bpm]);
+  }, [shouldTick, bpm]);
 }

@@ -16,7 +16,7 @@ const dict = {
     notes: 'פתקים',
     photos: 'תמונות',
     vitalsHistory: 'היסטוריית מדדים',
-    hub: 'עזרים',
+    hub: 'כלים',
     close: 'סגור',
   },
   en: {
