@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useVitalsLogStore } from './vitalsLogStore';
+import { useVitalsLogStore, type ShockLog } from './vitalsLogStore';
 
 export const BPM_VALUES = [100, 110, 120] as const;
 export type BpmValue = typeof BPM_VALUES[number];
@@ -10,9 +10,10 @@ interface MetronomeStore {
   isPlaying: boolean;
   isAudioMuted: boolean;
   cprStartTime: number | null;
+  lastShockTimestamp: number | null;
   lastCPRTime: string;
   lastCPRShocks: number;
-  shockCount: number;
+  shockLogs: ShockLog[];
   setBpm: (bpm: BpmValue) => void;
   start: () => void;
   toggleAudio: () => void;
@@ -31,6 +32,12 @@ function elapsedToMMSS(startTime: number | null): string {
   return `${mm}:${ss}`;
 }
 
+function msToMMSS(ms: number): string {
+  const mm = Math.floor(ms / 60000).toString().padStart(2, '0');
+  const ss = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
 export const useMetronomeStore = create<MetronomeStore>()(
   persist(
     (set, get) => ({
@@ -38,16 +45,29 @@ export const useMetronomeStore = create<MetronomeStore>()(
       isPlaying: false,
       isAudioMuted: false,
       cprStartTime: null,
+      lastShockTimestamp: null,
       lastCPRTime: '',
       lastCPRShocks: 0,
-      shockCount: 0,
+      shockLogs: [],
       setBpm: (bpm) => set({ bpm }),
       start: () =>
-        set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockCount: 0 }),
+        set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockLogs: [], lastShockTimestamp: null }),
       toggleAudio: () =>
         set((state) => ({ isAudioMuted: !state.isAudioMuted })),
-      incrementShock: () =>
-        set((state) => ({ shockCount: state.shockCount + 1 })),
+      incrementShock: () => {
+        const state = get();
+        const now = Date.now();
+        const date = new Date(now);
+        const time = [date.getHours(), date.getMinutes(), date.getSeconds()]
+          .map((n) => String(n).padStart(2, '0'))
+          .join(':');
+        const elapsed = elapsedToMMSS(state.cprStartTime);
+        const gap = state.lastShockTimestamp !== null
+          ? msToMMSS(now - state.lastShockTimestamp)
+          : '—';
+        const shock: ShockLog = { time, elapsed, gap };
+        set((prev) => ({ shockLogs: [...prev.shockLogs, shock], lastShockTimestamp: now }));
+      },
       endCPR: () => {
         const state = get();
         const duration = elapsedToMMSS(state.cprStartTime);
@@ -63,16 +83,18 @@ export const useMetronomeStore = create<MetronomeStore>()(
             fastTest: '',
             notes: '',
             cprDuration: duration,
-            cprShocks: state.shockCount,
+            cprShocks: state.shockLogs.length,
+            cprShockLogs: state.shockLogs,
           });
         }
         set({
           isPlaying: false,
           isAudioMuted: false,
           cprStartTime: null,
+          lastShockTimestamp: null,
           lastCPRTime: duration,
-          lastCPRShocks: state.shockCount,
-          shockCount: 0,
+          lastCPRShocks: state.shockLogs.length,
+          shockLogs: [],
         });
       },
       toggle: () => {
@@ -80,7 +102,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
         if (state.isPlaying) {
           get().endCPR();
         } else {
-          set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockCount: 0 });
+          set({ isPlaying: true, isAudioMuted: false, cprStartTime: Date.now(), shockLogs: [], lastShockTimestamp: null });
         }
       },
       stop: () => get().endCPR(),

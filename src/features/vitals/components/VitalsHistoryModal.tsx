@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { X, Trash2, Pencil, Zap } from 'lucide-react';
+import { X, Trash2, Pencil, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
 import EditVitalsModal from './EditVitalsModal';
 
 function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasShocks = (log.cprShockLogs?.length ?? 0) > 0;
+
   return (
     <div
       className="bg-emt-gray border rounded-2xl p-4"
@@ -20,10 +23,22 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
           <p className="text-yellow-400/80 text-xs font-black uppercase tracking-wide">החייאה</p>
           <p className="text-emt-muted text-xs">· {log.timestamp}</p>
         </div>
-        <button onClick={onDelete} className="p-1.5 text-emt-muted hover:text-emt-red transition-colors" aria-label="מחק">
-          <Trash2 size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          {hasShocks && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="p-1.5 text-yellow-400/60 hover:text-yellow-400 transition-colors"
+              aria-label={expanded ? 'כווץ' : 'הרחב'}
+            >
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          )}
+          <button onClick={onDelete} className="p-1.5 text-emt-muted hover:text-emt-red transition-colors" aria-label="מחק">
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <div>
           <p className="text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">משך סשן</p>
@@ -36,6 +51,24 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
           </p>
         </div>
       </div>
+
+      {expanded && hasShocks && (
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.2)' }}>
+          <p className="text-yellow-400/50 text-[0.62rem] font-bold uppercase tracking-wide mb-2">יומן שוקים</p>
+          <div className="flex flex-col gap-2">
+            {log.cprShockLogs!.map((shock, i) => (
+              <div key={i} className="flex items-center justify-between text-xs bg-black/20 rounded-xl px-3 py-2">
+                <span className="text-orange-400 font-black w-12">שוק {i + 1}</span>
+                <span className="text-emt-light font-mono">{shock.time}</span>
+                <span className="text-emt-muted font-mono">{shock.elapsed} מהתחלה</span>
+                <span className="text-emt-muted/60 font-mono tabular-nums">
+                  {shock.gap !== '—' ? `+${shock.gap}` : '—'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

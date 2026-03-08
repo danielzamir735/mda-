@@ -10,7 +10,8 @@ function formatElapsed(ms: number): string {
 }
 
 export default function CPRTimerOverlay() {
-  const { cprStartTime, lastCPRTime, shockCount, incrementShock, endCPR } = useMetronomeStore();
+  const { cprStartTime, lastCPRTime, shockLogs, incrementShock, endCPR } = useMetronomeStore();
+  const shockCount = shockLogs.length;
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {

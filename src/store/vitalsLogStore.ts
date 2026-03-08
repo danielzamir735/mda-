@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface ShockLog {
+  time: string;     // HH:mm:ss at moment of shock
+  elapsed: string;  // MM:SS elapsed since CPR start
+  gap: string;      // MM:SS gap from previous shock, or '—' for first
+}
+
 export interface VitalsLog {
   id: string;
   timestamp: string;
-  type?: string;          // 'cpr' for CPR session records
+  type?: string;             // 'cpr' for CPR session records
   bloodPressure: string;
   heartRate: string;
   breathing: string;
@@ -13,8 +19,9 @@ export interface VitalsLog {
   temperature: string;
   fastTest: string;
   notes: string;
-  cprDuration?: string;   // for type === 'cpr'
-  cprShocks?: number;     // for type === 'cpr'
+  cprDuration?: string;      // for type === 'cpr'
+  cprShocks?: number;        // for type === 'cpr'
+  cprShockLogs?: ShockLog[]; // detailed shock timestamps
 }
 
 interface VitalsLogState {
