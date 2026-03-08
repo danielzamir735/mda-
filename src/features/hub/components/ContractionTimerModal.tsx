@@ -100,12 +100,6 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           <div className="w-full flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <p className="text-gray-900 dark:text-emt-light font-bold text-base">צירים אחרונים</p>
-              <button
-                onClick={reset}
-                className="text-gray-600 dark:text-gray-300 text-sm underline active:opacity-70"
-              >
-                אפס
-              </button>
             </div>
 
             <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
@@ -134,7 +128,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* ── Pinned bottom — big circular button ── */}
-      <div className="shrink-0 flex flex-col items-center pb-8 pt-4 border-t border-gray-200 dark:border-emt-border">
+      <div className="shrink-0 flex flex-col items-center pb-8 pt-4 gap-4 border-t border-gray-200 dark:border-emt-border">
         <button
           onClick={handlePress}
           className={[
@@ -158,6 +152,15 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             </>
           )}
         </button>
+
+        {contractions.length > 0 && (
+          <button
+            onClick={reset}
+            className="w-full max-w-xs bg-red-500 text-white font-bold p-4 text-xl rounded-lg active:opacity-80 transition-opacity"
+          >
+            איפוס
+          </button>
+        )}
       </div>
     </div>
   );

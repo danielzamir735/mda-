@@ -12,8 +12,11 @@ export function useMetronome() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = 1.0; // maximize output volume
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(masterGain);
+    masterGain.connect(ctx.destination);
 
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(1000, ctx.currentTime);
