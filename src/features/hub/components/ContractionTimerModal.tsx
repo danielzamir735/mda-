@@ -69,7 +69,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         {contractions.length > 0 ? (
           <button
             onClick={reset}
-            className="bg-red-100/10 text-red-500 border border-red-500/50 px-3 py-1 text-sm font-semibold rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"
+            className="bg-red-500/10 text-red-500 border border-red-500/50 px-4 py-1 text-sm font-semibold rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"
           >
             איפוס
           </button>

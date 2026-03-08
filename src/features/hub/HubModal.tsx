@@ -141,7 +141,7 @@ export default function HubModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden">
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכז עזרים</h2>
@@ -158,7 +158,7 @@ export default function HubModal({
 
       {/* Ambulance type choice overlay */}
       {showAmbulanceChoice && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-emt-gray rounded-3xl p-6 mx-6 w-full max-w-sm flex flex-col gap-4 shadow-2xl">
             <h3 className="text-gray-900 dark:text-emt-light font-black text-xl text-center">בחר סוג אמבולנס</h3>
             <button
