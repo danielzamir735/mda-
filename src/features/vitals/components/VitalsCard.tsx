@@ -51,7 +51,7 @@ export default function VitalsCard({
     <div
       className={[
         'relative flex flex-col items-center justify-center gap-2',
-        'rounded-3xl p-3 h-full w-full overflow-hidden',
+        'rounded-3xl p-2 h-full w-full overflow-hidden',
         'transition-all duration-300',
         !isRunning ? 'cursor-pointer select-none' : '',
         isRunning

@@ -22,7 +22,7 @@ export default function MetronomeCard() {
     <div
       className={[
         'flex flex-col items-center gap-2',
-        'rounded-3xl p-3 h-full w-full',
+        'rounded-3xl p-2 h-full w-full',
         'transition-all duration-300',
         isPlaying
           ? 'bg-[#130F00] border-2 border-emt-yellow'

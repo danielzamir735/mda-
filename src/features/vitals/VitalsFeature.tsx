@@ -102,7 +102,7 @@ export default function VitalsFeature() {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
-      <main className="flex-1 grid grid-cols-2 gap-2 p-2 min-h-0">
+      <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
         {!isMetronomePlaying && (
           <>
             <VitalsCard

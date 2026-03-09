@@ -15,8 +15,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
   return (
     <nav
-      className="shrink-0 flex items-center gap-2 px-2 bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
-      style={{ height: '4.5rem' }}
+      className="shrink-0 flex items-center gap-2 px-2 min-h-[4rem] bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
     >
       <style>{`
         @keyframes breathe {

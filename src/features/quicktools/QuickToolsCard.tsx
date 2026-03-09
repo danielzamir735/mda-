@@ -15,7 +15,7 @@ export default function QuickToolsCard() {
     <>
       <div
         className="flex flex-col items-center gap-2 rounded-3xl border border-gray-200 dark:border-emt-border
-                   p-3 h-full w-full bg-white dark:bg-emt-gray"
+                   p-2 h-full w-full bg-white dark:bg-emt-gray"
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
         <p className="text-gray-900 dark:text-emt-light font-black text-lg tracking-wide text-center w-full">
