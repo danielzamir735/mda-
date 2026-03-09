@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { LucideIcon } from 'lucide-react';
@@ -92,6 +92,14 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-emt-yellow/10',
   },
   {
+    id: 'kit-standards',
+    label: 'תקנים לתיקי כונן',
+    icon: ClipboardList,
+    color: 'text-indigo-400',
+    border: 'border-indigo-400/30',
+    bg: 'bg-indigo-400/10',
+  },
+  {
     id: 'settings',
     label: 'הגדרות',
     icon: Settings,
@@ -101,7 +109,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards']);
 
 export default function HubModal({
   isOpen,
@@ -125,6 +133,7 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates')      onUpdatesOpen();
+    if (id === 'kit-standards') alert('יועלה בהמשך');
   };
 
   return (

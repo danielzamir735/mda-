@@ -240,7 +240,7 @@ export default function CPRTimerOverlay() {
             textShadow: '0 0 48px rgba(255,80,80,0.55)',
           }}
         >
-          {formatElapsed(elapsed)}
+          {formatElapsed(showSummary ? snapElapsed : elapsed)}
         </span>
 
         <button
