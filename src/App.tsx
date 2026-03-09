@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
@@ -10,6 +11,11 @@ export default function App() {
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const [legalOpen, setLegalOpen] = useState(false);
+
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW();
 
   useEffect(() => {
     const html = document.documentElement;
@@ -43,6 +49,17 @@ export default function App() {
       </Routes>
       <Analytics />
       <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
+      {needRefresh && (
+        <div className="fixed z-[100] bottom-20 left-4 right-4 bg-blue-600 text-white p-4 rounded-2xl shadow-xl flex justify-between items-center gap-3">
+          <span className="text-sm font-medium">גרסה חדשה זמינה!</span>
+          <button
+            onClick={() => updateServiceWorker(true)}
+            className="shrink-0 bg-white text-blue-600 text-sm font-bold px-4 py-1.5 rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            רענן לעדכון
+          </button>
+        </div>
+      )}
     </BrowserRouter>
   );
 }
