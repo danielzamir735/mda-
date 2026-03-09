@@ -189,7 +189,7 @@ export default function VitalsFeature() {
         onMedicalHistoryOpen={() => setMedicalHistoryOpen(true)}
         onHospitalsOpen={() => setHospitalsOpen(true)}
         onUpdatesOpen={() => setUpdatesOpen(true)}
-        onBagStandardsOpen={() => { setHubOpen(false); setBagStandardsOpen(true); }}
+        onBagStandardsOpen={() => setBagStandardsOpen(true)}
       />
 
       <AmbulanceChecklistModal

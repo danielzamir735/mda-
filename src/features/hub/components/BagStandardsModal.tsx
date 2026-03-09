@@ -34,19 +34,19 @@ const BAGS: Bag[] = [
       { name: 'תחבושת בינונית', qty: '1' },
       { name: 'חוסם עורקים', qty: '1' },
       { name: 'אגד (תחבושת)', qty: '10' },
-      { name: 'איספלנית ניילון (מיקרופור)', qty: '2' },
-      { name: 'אגד מידבק (פלסטר)', qty: '200' },
+      { name: 'מיקרופור', qty: '2' },
+      { name: 'פלסטר', qty: '200' },
       { name: 'מלע״כ (מספריים)', qty: '1' },
       { name: 'פד גזה סטרילי', qty: '20' },
-      { name: 'סד קשיח לקיבוע', qty: '1' },
+      { name: 'סד קשיח', qty: '1' },
       { name: 'סביעור / חיטוי', qty: '2' },
       { name: 'מסכת כיס להנשמה', qty: '1' },
-      { name: 'תחבושת לכוויות (ברנשילד)', qty: '1' },
-      { name: 'שמיכה היפותרמית', qty: '3' },
-      { name: 'כפפות חד-פעמיות (זוגות)', qty: '20' },
+      { name: 'תחבושת לכוויות (ברנשילד)', qty: '3' },
+      { name: 'שמיכה היפותרמית', qty: '2' },
+      { name: 'כפפות ח״פ (זוגות)', qty: '20' },
       { name: 'פנס ראש', qty: '1' },
       { name: 'תחבושות אלסטיות', qty: '5' },
-      { name: 'מזרק אפיפן', qty: '1' },
+      { name: 'מזרק אפיפן (במקרה אלרגיה)', qty: '1' },
     ],
   },
   {
@@ -64,24 +64,24 @@ const BAGS: Bag[] = [
       { name: 'תחבושת בינונית', qty: '1' },
       { name: 'חוסם עורקים', qty: '2' },
       { name: 'אגד (תחבושת)', qty: '10' },
-      { name: 'איספלנית ניילון (מיקרופור)', qty: '3' },
-      { name: 'אגד מידבק (פלסטר)', qty: '200' },
-      { name: 'מלע״כ (מספריים)', qty: '1' },
-      { name: 'פד גזה סטרילי', qty: '20' },
-      { name: 'סד קשיח לקיבוע', qty: '1' },
-      { name: 'תמיסה לחיטוי עור', qty: '1' },
+      { name: 'מיקרופור', qty: '3' },
+      { name: 'פלסטר', qty: '200' },
+      { name: 'מלע״כ', qty: '1' },
+      { name: 'פד גזה', qty: '20' },
+      { name: 'סד קשיח', qty: '1' },
+      { name: 'חיטוי עור', qty: '1' },
       { name: 'תחבושת לכוויות', qty: '3' },
       { name: 'אשרמן', qty: '1' },
       { name: 'שמיכה היפותרמית', qty: '1' },
       { name: 'מנתב אוויר 3,4,5', qty: '1 כ״א' },
-      { name: 'כפפות חד-פעמיות (זוגות)', qty: '20' },
+      { name: 'כפפות', qty: '20' },
       { name: 'צווארון מתכוונן', qty: '1' },
-      { name: 'מד לחץ דם + סטטוסקופ', qty: '1 כ״א' },
+      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
       { name: 'מד סטורציה', qty: '1' },
       { name: 'ערכת עירוי NaCl 0.9%', qty: '4' },
       { name: 'מסכת כיס', qty: '1' },
-      { name: 'קטטר לסקשן (אדום)', qty: '2' },
-      { name: 'מכשיר סקשן ידני', qty: '1' },
+      { name: 'קטטר סקשן', qty: '2' },
+      { name: 'סקשן', qty: '1' },
       { name: 'פנס ראש', qty: '1' },
       { name: 'תחבושות אלסטיות', qty: '5' },
       { name: "גלוקוג'ל", qty: '1' },
@@ -105,17 +105,76 @@ const BAGS: Bag[] = [
       { name: 'ערכת עירוי NaCl 0.9% 500cc', qty: '4' },
       { name: 'מפוח הנשמה + מסכות + מסנן', qty: '1' },
       { name: 'מכשיר סקשן + קטטרים', qty: '1' },
-      { name: 'ערכת אינטובציה קומפלט', qty: '1' },
+      { name: 'ערכת אינטובציה קומפלט + LMA', qty: '1' },
       { name: 'מזרק תוך גרמי (BIG) ילד+מבוגר', qty: '2' },
       { name: 'אשרמן', qty: '1' },
       { name: 'מחט וויגון לניקוז חזה + סקלפל', qty: '2' },
       { name: 'מד ל״ד, סטטוסקופ, סטורציה, מד חום', qty: '1 כ״א' },
       { name: 'גלוקומטר + סטיקים', qty: '1' },
-      { name: 'תרופות חירום (אדרנלין, מידזולם, ניטרו)', qty: 'לפי פרוטוקול' },
+      { name: 'צווארון מתכוונן + סד קשיח', qty: '1 כ״א' },
+      { name: 'מיכל חמצן נייד + וסת + מסכות', qty: '1' },
+      { name: 'אדרנלין 1mg', qty: '5' },
+      { name: 'אטרופין 1mg', qty: '4' },
+      { name: 'פרוקור 150mg', qty: '2' },
+      { name: 'דורמיקום 5mg', qty: '5' },
+      { name: 'סוכר מרוכז Dextrose 50%', qty: '1' },
+      { name: 'איזוקט ספריי', qty: '1' },
+      { name: 'אספירין 300mg', qty: '10' },
+      { name: 'ונטולין + אירוונט', qty: '1 כ״א' },
+      { name: 'אקמול + אופטלגין', qty: '20 כ״א' },
+    ],
+  },
+  {
+    id: 'doctor_camp',
+    title: 'תיק רופא חניון',
+    subtitle: 'רופא חניון',
+    color: 'text-purple-400',
+    border: 'border-purple-400/30',
+    bg: 'bg-purple-400/10',
+    iconColor: 'text-purple-400',
+    items: [
+      { name: 'ציוד החייאה וטראומה מלא (זהה לפראמדיק)', qty: '1' },
+      { name: 'Lidocaine 2%', qty: '1' },
+      { name: 'Diazapam (Assival) 1mg/5mg', qty: '2' },
+      { name: 'Furosemide 40mg', qty: '4' },
+      { name: 'Prednisone 20mg', qty: '8' },
+      { name: 'Diclofenac (Voltaren) 25mg', qty: '20' },
+      { name: 'Pramin 10mg', qty: '10' },
+      { name: 'Amoxicillin 250mg', qty: '20' },
+      { name: 'Cephalexin 250mg', qty: '6' },
+      { name: 'Penicillin 250mg', qty: '20' },
+      { name: 'Fenistil Drops', qty: '1' },
+      { name: 'Synthomycine 5%', qty: '1' },
+      { name: 'Zofran 4mg', qty: '20' },
+    ],
+  },
+  {
+    id: 'doctor_walk',
+    title: 'תיק רופא הליכה',
+    subtitle: 'רופא הליכה',
+    color: 'text-amber-400',
+    border: 'border-amber-400/30',
+    bg: 'bg-amber-400/10',
+    iconColor: 'text-amber-400',
+    items: [
+      { name: 'ציוד טראומה בסיסי (כמו חובש)', qty: '1 סט' },
+      { name: 'מפוח הנשמה + מסכות', qty: '1' },
+      { name: 'ערכת עירוי NaCl 0.9% 500cc', qty: '2' },
+      { name: 'אדרנלין 1mg', qty: '3' },
+      { name: 'אטרופין 1mg', qty: '2' },
+      { name: 'Diazepam (Assival) 10mg', qty: '2' },
+      { name: 'Furosemide 40mg', qty: '2' },
+      { name: 'Prednisone 20mg', qty: '4' },
+      { name: 'Diclofenac (Voltaren) 25mg', qty: '10' },
+      { name: 'Lidocaine 2%', qty: '1' },
+      { name: 'Amoxicillin 250mg', qty: '10' },
+      { name: 'Pramin 10mg', qty: '5' },
+      { name: 'Zofran 4mg', qty: '10' },
+      { name: 'אספירין 300mg', qty: '5' },
       { name: 'מזרקים + מחטים', qty: 'מגוון' },
-      { name: 'כפפות חד-פעמיות (זוגות)', qty: '20' },
-      { name: 'תחבושת המוסטטית', qty: '5' },
-      { name: 'מסכת חמצן + טובינג', qty: '1' },
+      { name: 'כפפות חד-פעמיות (זוגות)', qty: '10' },
+      { name: 'גלוקומטר + סטיקים', qty: '1' },
+      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
     ],
   },
 ];
@@ -192,21 +251,20 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Bag selection cards */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 justify-center">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {BAGS.map((bag) => (
           <button
             key={bag.id}
             onClick={() => setSelectedBag(bag)}
-            className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-6
+            className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
                         flex items-center gap-4 active:scale-[0.98] transition-transform`}
           >
-            <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
-              <Backpack size={28} className={bag.iconColor} />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
+              <Backpack size={24} className={bag.iconColor} />
             </div>
             <div className="flex-1 text-right">
-              <p className={`text-xl font-bold ${bag.color}`}>{bag.title}</p>
-              <p className="text-sm text-emt-muted mt-0.5">{bag.subtitle}</p>
-              <p className="text-xs text-emt-muted mt-1">{bag.items.length} פריטים</p>
+              <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
+              <p className="text-xs text-emt-muted mt-0.5">{bag.items.length} פריטים</p>
             </div>
           </button>
         ))}
