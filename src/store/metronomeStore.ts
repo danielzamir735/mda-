@@ -19,6 +19,7 @@ interface MetronomeStore {
   toggleAudio: () => void;
   incrementShock: () => void;
   endCPR: () => void;
+  discardCPR: () => void;
   /** @deprecated use start() / endCPR() */
   toggle: () => void;
   stop: () => void;
@@ -94,6 +95,15 @@ export const useMetronomeStore = create<MetronomeStore>()(
           lastShockTimestamp: null,
           lastCPRTime: duration,
           lastCPRShocks: state.shockLogs.length,
+          shockLogs: [],
+        });
+      },
+      discardCPR: () => {
+        set({
+          isPlaying: false,
+          isAudioMuted: false,
+          cprStartTime: null,
+          lastShockTimestamp: null,
           shockLogs: [],
         });
       },

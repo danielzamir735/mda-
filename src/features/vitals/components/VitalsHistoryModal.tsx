@@ -53,15 +53,36 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
       </div>
 
       {expanded && hasShocks && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.2)' }}>
-          <p className="text-yellow-400/50 text-[0.62rem] font-bold uppercase tracking-wide mb-2">יומן שוקים</p>
-          <div className="flex flex-col gap-2">
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.18)' }}>
+          <p className="text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">
+            יומן שוקים
+          </p>
+          {/* shock table */}
+          <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'rgba(245,158,11,0.2)' }}>
+            {/* header */}
+            <div
+              className="grid text-[0.6rem] font-black text-amber-400/50 uppercase tracking-wider bg-black/30 px-3 py-1.5"
+              style={{ gridTemplateColumns: '1.5rem 1fr 1fr 1fr' }}
+            >
+              <span>#</span>
+              <span>שעה</span>
+              <span>מהתחלה</span>
+              <span>פער</span>
+            </div>
             {log.cprShockLogs!.map((shock, i) => (
-              <div key={i} className="flex items-center justify-between text-xs bg-black/20 rounded-xl px-3 py-2">
-                <span className="text-orange-400 font-black w-12">שוק {i + 1}</span>
-                <span className="text-emt-light font-mono">{shock.time}</span>
-                <span className="text-emt-muted font-mono">{shock.elapsed} מהתחלה</span>
-                <span className="text-emt-muted/60 font-mono tabular-nums">
+              <div
+                key={i}
+                className="grid px-3 py-2 text-xs font-mono border-t"
+                style={{
+                  gridTemplateColumns: '1.5rem 1fr 1fr 1fr',
+                  borderColor: 'rgba(245,158,11,0.1)',
+                  backgroundColor: i % 2 === 0 ? 'rgba(245,158,11,0.04)' : 'transparent',
+                }}
+              >
+                <span className="font-black text-orange-400">{i + 1}</span>
+                <span className="text-emt-light">{shock.time}</span>
+                <span className="text-emt-muted">{shock.elapsed}</span>
+                <span className="text-emt-muted/60">
                   {shock.gap !== '—' ? `+${shock.gap}` : '—'}
                 </span>
               </div>
