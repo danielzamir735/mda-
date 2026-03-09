@@ -13,6 +13,7 @@ interface Props {
   onMedicalHistoryOpen: () => void;
   onHospitalsOpen: () => void;
   onUpdatesOpen: () => void;
+  onBagStandardsOpen: () => void;
 }
 
 type HubItem = {
@@ -121,6 +122,7 @@ export default function HubModal({
   onMedicalHistoryOpen,
   onHospitalsOpen,
   onUpdatesOpen,
+  onBagStandardsOpen,
 }: Props) {
   const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
   useModalBackHandler(isOpen, onClose);
@@ -133,7 +135,7 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates')      onUpdatesOpen();
-    if (id === 'kit-standards') alert('יועלה בהמשך');
+    if (id === 'kit-standards') onBagStandardsOpen();
   };
 
   return (
