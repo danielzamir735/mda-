@@ -13,7 +13,7 @@ export default function AlertOverlay({ visible }: Props) {
       return;
     }
     setShown(true);
-    const timer = setTimeout(() => setShown(false), 5000);
+    const timer = setTimeout(() => setShown(false), 2500);
     return () => clearTimeout(timer);
   }, [visible]);
 
@@ -21,7 +21,7 @@ export default function AlertOverlay({ visible }: Props) {
 
   return (
     <div
-      className="fixed inset-x-0 top-8 z-40 flex justify-center pointer-events-none"
+      className="fixed inset-x-0 top-4 z-40 flex justify-center pointer-events-none"
       aria-live="assertive"
     >
       <p
