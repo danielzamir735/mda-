@@ -186,9 +186,23 @@ interface Props {
 
 export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
-  useModalBackHandler(isOpen, onClose);
+
+  // When a bag detail is open, hardware back clears the selection;
+  // otherwise it closes the entire modal.
+  useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
 
   if (!isOpen) return null;
+
+  const handleSelectBag = (bag: Bag) => {
+    setSelectedBag(bag);
+    // Push an extra history entry so hardware back navigates to list, not out of modal
+    window.history.pushState({ bagDetail: true }, '');
+  };
+
+  const handleBackFromDetail = () => {
+    // Pop the bagDetail history entry → triggers popstate → setSelectedBag(null)
+    window.history.back();
+  };
 
   if (selectedBag) {
     return (
@@ -196,7 +210,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
           <button
-            onClick={() => setSelectedBag(null)}
+            onClick={handleBackFromDetail}
             className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
                        flex items-center justify-center active:scale-90 transition-transform
                        text-emt-muted hover:text-emt-light"
@@ -255,7 +269,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         {BAGS.map((bag) => (
           <button
             key={bag.id}
-            onClick={() => setSelectedBag(bag)}
+            onClick={() => handleSelectBag(bag)}
             className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
                         flex items-center gap-4 active:scale-[0.98] transition-transform`}
           >
