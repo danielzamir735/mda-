@@ -33,8 +33,10 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
   const handlePress = () => {
     if (!active) {
+      if ('vibrate' in navigator) navigator.vibrate([100]);
       startContraction();
     } else {
+      if ('vibrate' in navigator) navigator.vibrate([50, 100, 50]);
       endContraction();
     }
   };
