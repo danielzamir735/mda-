@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Square, Zap, Volume2, VolumeX, Save, Trash2 } from 'lucide-react';
-import { useMetronomeStore } from '../../store/metronomeStore';
+import { useMetronomeStore, type BpmValue } from '../../store/metronomeStore';
 import type { ShockLog } from '../../store/vitalsLogStore';
 
 // ── global keyframes (injected once) ─────────────────────────────────────────
@@ -155,8 +155,8 @@ function SummaryModal({ elapsedMs, shocks, onSave, onDiscard }: SummaryProps) {
 
 export default function CPRTimerOverlay() {
   const {
-    cprStartTime, shockLogs, isAudioMuted,
-    incrementShock, endCPR, discardCPR, toggleAudio,
+    cprStartTime, shockLogs, isAudioMuted, bpm,
+    incrementShock, endCPR, discardCPR, toggleAudio, setBpm,
   } = useMetronomeStore();
 
   const shockCount = shockLogs.length;
@@ -266,8 +266,10 @@ export default function CPRTimerOverlay() {
           }}
           aria-label="שוק חשמלי"
         >
-          <Zap fill="#1a0800" color="#1a0800" size={62} />
-          <span className="font-black text-[#1a0800] text-lg leading-none">שוק חשמלי</span>
+          <Zap fill="#1a0800" color="#1a0800" size={50} />
+          <span className="font-black text-[#1a0800] text-sm leading-tight text-center px-5">
+            תעד מתן שוק חשמלי
+          </span>
         </button>
 
         {/* linear shock counter badges */}
@@ -293,8 +295,40 @@ export default function CPRTimerOverlay() {
         )}
       </div>
 
-      {/* ── bottom: metronome toggle ── */}
-      <div className="relative z-20 flex items-center justify-center pb-14 px-6">
+      {/* ── bottom: BPM toggle + metronome toggle ── */}
+      <div className="relative z-20 flex flex-col items-center gap-3 pb-14 px-6">
+
+        {/* BPM segmented control */}
+        <div
+          className="flex items-center p-1 rounded-2xl"
+          style={{
+            backgroundColor: 'rgba(20,20,35,0.75)',
+            border: '1.5px solid rgba(100,100,150,0.22)',
+          }}
+        >
+          {([100, 120] as BpmValue[]).map((value) => {
+            const active = bpm === value;
+            return (
+              <button
+                key={value}
+                onClick={() => setBpm(value)}
+                className="px-6 py-2 rounded-xl font-black text-sm transition-all active:scale-95"
+                style={{
+                  backgroundColor: active ? 'rgba(245,158,11,0.18)' : 'transparent',
+                  color: active ? '#f5c842' : '#6b7280',
+                  border: active ? '1.5px solid rgba(245,158,11,0.42)' : '1.5px solid transparent',
+                  boxShadow: active ? '0 0 12px rgba(245,158,11,0.12)' : 'none',
+                }}
+                aria-pressed={active}
+                aria-label={`${value} דופק לדקה`}
+              >
+                {value} <span style={{ fontWeight: 500, opacity: 0.7 }}>BPM</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Metronome toggle */}
         <button
           onClick={toggleAudio}
           className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-xl active:scale-95 transition-all"
