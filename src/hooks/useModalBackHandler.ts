@@ -3,35 +3,57 @@ import { useEffect, useRef } from 'react';
 /**
  * PWA hardware back-button / swipe-back modal interceptor.
  *
- * When isOpen becomes true  → pushes a dummy history entry so the
- *   browser back gesture closes the modal instead of exiting the app.
- * When the user presses back → popstate fires → onClose() is called.
- * When the modal is closed normally (X button, save, etc.) → the dummy
- *   history entry is removed via history.back() so the stack stays clean.
+ * Supports arbitrarily nested modals (Hub → sub-modal → inner-modal).
  *
- * suppressCount guards against nested-modal cleanup:
- *   When a child modal closes normally it calls history.back() which would
- *   fire the parent modal's popstate listener. The counter lets the parent
- *   skip exactly those synthetic events.
+ * HOW IT WORKS
+ * ─────────────
+ * modalDepth   – counts how many modal layers are currently open.
+ *                Each call to the hook increments it on open and
+ *                decrements it on close (cleanup).
+ * myDepthRef   – records the depth at which *this* modal opened.
+ *                The popstate handler only fires when this modal IS
+ *                the deepest layer (myDepth === modalDepth), so a
+ *                parent modal's listener is silently skipped while a
+ *                child is open and automatically re-activates the
+ *                moment the child closes.
+ * suppressCount – guards the one remaining edge case: when a modal
+ *                closes normally (X button) it calls history.back()
+ *                to clean up its dummy history entry. That navigation
+ *                fires a popstate which must be ignored by the parent.
+ *                suppressCount is incremented only when a parent
+ *                actually exists (modalDepth > 0 after decrement) to
+ *                prevent the counter from leaking when the top-level
+ *                modal closes.
  */
+let modalDepth = 0;
 let suppressCount = 0;
 
 export function useModalBackHandler(isOpen: boolean, onClose: () => void): void {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  // Capture the depth at which this modal instance opened.
+  const myDepthRef = useRef(0);
+
   useEffect(() => {
     if (!isOpen) return;
+
+    modalDepth++;
+    myDepthRef.current = modalDepth;
 
     let closedByBackButton = false;
 
     window.history.pushState({ modal: true }, '');
 
     const handlePopState = () => {
+      // Skip events produced by a child modal's normal-close cleanup.
       if (suppressCount > 0) {
         suppressCount--;
         return;
       }
+      // Only the deepest open modal should react to the back gesture.
+      if (myDepthRef.current !== modalDepth) return;
+
       closedByBackButton = true;
       onCloseRef.current();
     };
@@ -40,10 +62,13 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void): void 
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      // Modal was closed normally (not by back button) → pop the dummy entry.
-      // Increment suppressCount so sibling/parent listeners skip this event.
+      modalDepth = Math.max(0, modalDepth - 1);
+
       if (!closedByBackButton) {
-        suppressCount++;
+        // Modal closed programmatically → pop the dummy history entry.
+        // Only signal the parent to suppress the resulting popstate when
+        // a parent actually exists; otherwise suppressCount would leak.
+        if (modalDepth > 0) suppressCount++;
         window.history.back();
       }
     };
