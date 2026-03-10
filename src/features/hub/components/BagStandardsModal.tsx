@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, Backpack } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronRight, Backpack, CheckCircle2, Circle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface BagItem {
@@ -186,6 +186,21 @@ interface Props {
 
 export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!selectedBag) return;
+    const stored = localStorage.getItem(`bag-checklist-${selectedBag.id}`);
+    setCheckedItems(stored ? JSON.parse(stored) : {});
+  }, [selectedBag]);
+
+  const toggleItem = (key: string) => {
+    setCheckedItems((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem(`bag-checklist-${selectedBag!.id}`, JSON.stringify(next));
+      return next;
+    });
+  };
 
   // When a bag detail is open, hardware back clears the selection;
   // otherwise it closes the entire modal.
@@ -229,19 +244,30 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
         {/* Items list */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-          {selectedBag.items.map((item, i) => (
-            <div
-              key={i}
-              className="bg-slate-800 rounded-xl p-4 flex justify-between items-center border border-emt-border"
-            >
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${selectedBag.bg} ${selectedBag.color} border ${selectedBag.border} shrink-0`}>
-                {item.qty}
-              </span>
-              <span className="text-emt-light font-medium text-sm text-right flex-1 mr-3">
-                {item.name}
-              </span>
-            </div>
-          ))}
+          {selectedBag.items.map((item, i) => {
+            const isChecked = !!checkedItems[item.name];
+            return (
+              <button
+                key={i}
+                onClick={() => toggleItem(item.name)}
+                className={`w-full rounded-xl p-4 flex items-center gap-3 border text-right transition-colors active:scale-[0.98] ${
+                  isChecked
+                    ? 'bg-emerald-950/30 border-emerald-500/30'
+                    : 'bg-slate-800 border-emt-border'
+                }`}
+              >
+                {isChecked
+                  ? <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
+                  : <Circle size={20} className="text-slate-600 shrink-0" />}
+                <span className={`flex-1 text-sm font-medium ${isChecked ? 'line-through text-slate-500' : 'text-emt-light'}`}>
+                  {item.name}
+                </span>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${selectedBag.bg} ${selectedBag.color} border ${selectedBag.border}`}>
+                  {item.qty}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );

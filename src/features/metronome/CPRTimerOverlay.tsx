@@ -182,10 +182,11 @@ export default function CPRTimerOverlay() {
   }, [incrementShock]);
 
   const handleEndCPR = useCallback(() => {
+    if (!isAudioMuted) toggleAudio(); // stop metronome immediately
     setSnapElapsed(elapsed);
     setSnapShocks([...shockLogs]);
     setShowSummary(true);
-  }, [elapsed, shockLogs]);
+  }, [elapsed, shockLogs, isAudioMuted, toggleAudio]);
 
   const handleSave    = useCallback(() => { setShowSummary(false); endCPR();    }, [endCPR]);
   const handleDiscard = useCallback(() => { setShowSummary(false); discardCPR(); }, [discardCPR]);
