@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, Backpack, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface BagItem {
@@ -194,6 +194,11 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     setCheckedItems(stored ? JSON.parse(stored) : {});
   }, [selectedBag]);
 
+  const clearChecklist = () => {
+    setCheckedItems({});
+    localStorage.removeItem(`bag-checklist-${selectedBag!.id}`);
+  };
+
   const toggleItem = (key: string) => {
     setCheckedItems((prev) => {
       const next = { ...prev, [key]: !prev[key] };
@@ -234,7 +239,14 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
             <ChevronRight size={20} />
           </button>
           <h2 className="text-emt-light font-bold text-xl">{selectedBag.title}</h2>
-          <div className="w-10" />
+          <button
+            onClick={clearChecklist}
+            className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
+            aria-label="נקה סימונים"
+          >
+            <RotateCcw size={15} />
+            <span>נקה</span>
+          </button>
         </div>
 
         {/* Item count badge */}
