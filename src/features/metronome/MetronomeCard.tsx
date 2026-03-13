@@ -53,48 +53,80 @@ export default function MetronomeCard() {
         )}
       </div>
 
-      {/* BPM selector */}
-      <div className="w-full flex items-center gap-2 px-1">
-        {BPM_VALUES.map((val) => {
-          const isActive = bpm === val;
-          return (
+      {/* BPM selector — +/- buttons with track */}
+      <div className="w-full flex items-center gap-3 px-2">
+        <button
+          onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i > 0) setBpm(BPM_VALUES[i - 1]); }}
+          disabled={BPM_VALUES.indexOf(bpm) === 0}
+          className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl
+                     active:scale-90 transition-all duration-150 select-none disabled:opacity-30"
+          style={{
+            backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.07)',
+            border: isPlaying ? '2px solid rgba(245,158,11,0.4)' : '2px solid rgba(0,0,0,0.12)',
+            color: isPlaying ? '#f5c842' : '#374151',
+          }}
+          aria-label="הפחת BPM"
+        >−</button>
+
+        <div className="flex-1 relative flex items-center" style={{ height: 28 }}>
+          {/* track background */}
+          <div
+            className="absolute inset-x-0 rounded-full"
+            style={{
+              height: 6,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.08)',
+            }}
+          />
+          {/* filled portion */}
+          <div
+            className="absolute left-0 rounded-full transition-all duration-200"
+            style={{
+              height: 6,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
+              backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
+            }}
+          />
+          {/* step dots */}
+          {BPM_VALUES.map((val, i) => (
             <button
               key={val}
               onClick={() => setBpm(val)}
-              aria-label={`${val} BPM`}
-              aria-pressed={isActive}
-              className="flex-1 py-4 rounded-2xl flex flex-col items-center justify-center gap-0.5
-                         active:scale-95 transition-all duration-150 select-none"
-              style={isActive ? {
-                backgroundColor: '#F5A623',
-                boxShadow: '0 0 18px rgba(245,166,35,0.55)',
-                border: '2px solid #FFD580',
-              } : {
-                backgroundColor: 'rgba(255,255,255,0.06)',
-                border: '2px solid rgba(255,255,255,0.14)',
+              className="absolute transition-all duration-150 active:scale-90"
+              style={{
+                left: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
+                transform: 'translate(-50%, -50%)',
+                top: '50%',
+                width: bpm === val ? 20 : 14,
+                height: bpm === val ? 20 : 14,
+                borderRadius: '50%',
+                backgroundColor: bpm === val
+                  ? (isPlaying ? '#F5A623' : '#3b82f6')
+                  : (isPlaying ? 'rgba(245,158,11,0.35)' : 'rgba(0,0,0,0.2)'),
+                border: bpm === val ? '2px solid white' : '2px solid transparent',
+                boxShadow: bpm === val ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
               }}
-            >
-              <span
-                className="font-black tabular-nums leading-none"
-                style={{
-                  fontSize: '1.75rem',
-                  color: isActive ? '#1A1200' : '#cbd5e1',
-                }}
-              >
-                {val}
-              </span>
-              <span
-                className="font-bold uppercase tracking-widest"
-                style={{
-                  fontSize: '0.6rem',
-                  color: isActive ? '#4a3000' : '#64748b',
-                }}
-              >
-                BPM
-              </span>
-            </button>
-          );
-        })}
+              aria-label={`${val} BPM`}
+              aria-pressed={bpm === val}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i < BPM_VALUES.length - 1) setBpm(BPM_VALUES[i + 1]); }}
+          disabled={BPM_VALUES.indexOf(bpm) === BPM_VALUES.length - 1}
+          className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl
+                     active:scale-90 transition-all duration-150 select-none disabled:opacity-30"
+          style={{
+            backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.07)',
+            border: isPlaying ? '2px solid rgba(245,158,11,0.4)' : '2px solid rgba(0,0,0,0.12)',
+            color: isPlaying ? '#f5c842' : '#374151',
+          }}
+          aria-label="הגדל BPM"
+        >+</button>
       </div>
 
       {/* Action buttons */}

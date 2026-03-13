@@ -276,9 +276,39 @@ export default function CPRTimerOverlay() {
           </span>
         </button>
 
+        {/* BPM quick-select — directly under shock button */}
+        <div
+          className="flex items-center p-1 rounded-2xl mt-5"
+          style={{
+            backgroundColor: 'rgba(20,20,35,0.75)',
+            border: '1.5px solid rgba(100,100,150,0.22)',
+          }}
+        >
+          {([100, 110, 120] as BpmValue[]).map((value) => {
+            const active = bpm === value;
+            return (
+              <button
+                key={value}
+                onClick={() => setBpm(value)}
+                className="px-5 py-2.5 rounded-xl font-black text-sm transition-all active:scale-95"
+                style={{
+                  backgroundColor: active ? 'rgba(245,158,11,0.22)' : 'transparent',
+                  color: active ? '#f5c842' : '#6b7280',
+                  border: active ? '1.5px solid rgba(245,158,11,0.5)' : '1.5px solid transparent',
+                  boxShadow: active ? '0 0 14px rgba(245,158,11,0.18)' : 'none',
+                }}
+                aria-pressed={active}
+                aria-label={`${value} BPM`}
+              >
+                {value} <span style={{ fontWeight: 500, opacity: 0.7 }}>BPM</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* linear shock counter badges */}
         {shockCount > 0 && (
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
             {shockLogs.map((_, i) => {
               const isLatest = i === shockCount - 1;
               return (
@@ -299,38 +329,8 @@ export default function CPRTimerOverlay() {
         )}
       </div>
 
-      {/* ── bottom: BPM toggle + metronome toggle ── */}
+      {/* ── bottom: metronome toggle ── */}
       <div className="relative z-20 flex flex-col items-center gap-3 pb-14 px-6">
-
-        {/* BPM segmented control */}
-        <div
-          className="flex items-center p-1 rounded-2xl"
-          style={{
-            backgroundColor: 'rgba(20,20,35,0.75)',
-            border: '1.5px solid rgba(100,100,150,0.22)',
-          }}
-        >
-          {([100, 120] as BpmValue[]).map((value) => {
-            const active = bpm === value;
-            return (
-              <button
-                key={value}
-                onClick={() => setBpm(value)}
-                className="px-6 py-2 rounded-xl font-black text-sm transition-all active:scale-95"
-                style={{
-                  backgroundColor: active ? 'rgba(245,158,11,0.18)' : 'transparent',
-                  color: active ? '#f5c842' : '#6b7280',
-                  border: active ? '1.5px solid rgba(245,158,11,0.42)' : '1.5px solid transparent',
-                  boxShadow: active ? '0 0 12px rgba(245,158,11,0.12)' : 'none',
-                }}
-                aria-pressed={active}
-                aria-label={`${value} BPM`}
-              >
-                {value} <span style={{ fontWeight: 500, opacity: 0.7 }}>BPM</span>
-              </button>
-            );
-          })}
-        </div>
 
         {/* Metronome toggle */}
         <button
