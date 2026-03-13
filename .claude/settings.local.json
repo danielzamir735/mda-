@@ -25,7 +25,8 @@
       "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -type f -name \"*etronome*\" -o -name \"*itals*\" 2>/dev/null | head -20)",
       "Bash(find \"C:/Users/User/Desktop/עוזר חובש/src\" -type f -name \"*store*\" 2>/dev/null | head -20)",
       "Bash(grep:*)",
-      "Bash(find /c/Users/User/Desktop/עוזר\\\\ חובש/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) 2>/dev/null | grep -v node_modules)"
+      "Bash(find /c/Users/User/Desktop/עוזר\\\\ חובש/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) 2>/dev/null | grep -v node_modules)",
+      "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1 | head -50)"
     ]
   }
 }

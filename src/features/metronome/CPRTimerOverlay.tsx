@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Square, Zap, Volume2, VolumeX, Save, Trash2 } from 'lucide-react';
 import { useMetronomeStore, type BpmValue } from '../../store/metronomeStore';
 import type { ShockLog } from '../../store/vitalsLogStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // ── global keyframes (injected once) ─────────────────────────────────────────
 const CSS = `
@@ -28,39 +29,39 @@ function formatElapsed(ms: number): string {
 
 // ── summary shock table ───────────────────────────────────────────────────────
 
-function ShockTable({ logs }: { logs: ShockLog[] }) {
+function ShockTable({ logs, t }: { logs: ShockLog[]; t: (k: Parameters<ReturnType<typeof useTranslation>>[0]) => string }) {
   if (logs.length === 0) {
     return (
-      <p className="text-slate-500 text-sm text-center py-3">
-        לא נרשמו שוקים חשמליים
+      <p className="text-gray-500 dark:text-slate-500 text-sm text-center py-3">
+        {t('noShocksRecorded')}
       </p>
     );
   }
 
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-700/50">
+    <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700/50">
       <div
-        className="grid text-[0.62rem] font-black text-slate-400 uppercase tracking-wider bg-slate-800/90 px-3 py-2"
+        className="grid text-[0.62rem] font-black text-gray-500 dark:text-slate-400 uppercase tracking-wider bg-gray-100 dark:bg-slate-800/90 px-3 py-2"
         style={{ gridTemplateColumns: '1.5rem 1fr 1fr 1fr' }}
       >
         <span>#</span>
-        <span>שעה</span>
-        <span>מהתחלה</span>
-        <span>פער</span>
+        <span>{t('shockTime')}</span>
+        <span>{t('fromStart')}</span>
+        <span>{t('gap')}</span>
       </div>
       {logs.map((shock, i) => (
         <div
           key={i}
-          className="grid px-3 py-2.5 text-xs font-mono border-t border-slate-800/50"
+          className="grid px-3 py-2.5 text-xs font-mono border-t border-gray-200 dark:border-slate-800/50"
           style={{
             gridTemplateColumns: '1.5rem 1fr 1fr 1fr',
             backgroundColor: i % 2 === 0 ? 'rgba(245,158,11,0.06)' : 'transparent',
           }}
         >
           <span className="font-black text-amber-400">{i + 1}</span>
-          <span className="text-white">{shock.time}</span>
-          <span className="text-slate-300">{shock.elapsed}</span>
-          <span className="text-slate-500">{shock.gap !== '—' ? `+${shock.gap}` : '—'}</span>
+          <span className="text-gray-900 dark:text-white">{shock.time}</span>
+          <span className="text-gray-600 dark:text-slate-300">{shock.elapsed}</span>
+          <span className="text-gray-400 dark:text-slate-500">{shock.gap !== '—' ? `+${shock.gap}` : '—'}</span>
         </div>
       ))}
     </div>
@@ -77,35 +78,36 @@ interface SummaryProps {
 }
 
 function SummaryModal({ elapsedMs, shocks, onSave, onDiscard }: SummaryProps) {
+  const t = useTranslation();
   return (
     <div
-      className="absolute inset-0 z-30 bg-slate-950 flex flex-col items-center justify-center p-5 gap-4 overflow-y-auto"
+      className="absolute inset-0 z-30 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-5 gap-4 overflow-y-auto"
       style={{ animation: 'cpr-modal-in 330ms cubic-bezier(0.34,1.46,0.64,1) both' }}
     >
       {/* card */}
-      <div className="w-full max-w-sm bg-slate-900 rounded-3xl border border-slate-700/50 overflow-hidden">
+      <div className="w-full max-w-sm bg-gray-50 dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700/50 overflow-hidden">
         {/* card header */}
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-800">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-200 dark:border-slate-800">
           <Zap size={16} className="text-amber-400" fill="currentColor" />
-          <h2 className="font-black text-lg text-white">סיכום החייאה</h2>
+          <h2 className="font-black text-lg text-gray-900 dark:text-white">{t('cprSummary')}</h2>
         </div>
 
         {/* stats */}
         <div
-          className="grid grid-cols-2 border-b border-slate-800"
+          className="grid grid-cols-2 border-b border-gray-200 dark:border-slate-800"
           style={{ direction: 'ltr' }}
         >
-          <div className="flex flex-col items-center py-5 border-r border-slate-800">
-            <p className="text-slate-500 text-[0.62rem] font-black uppercase tracking-wider mb-1">
-              משך
+          <div className="flex flex-col items-center py-5 border-r border-gray-200 dark:border-slate-800">
+            <p className="text-gray-500 dark:text-slate-500 text-[0.62rem] font-black uppercase tracking-wider mb-1">
+              {t('duration')}
             </p>
-            <p className="font-mono font-black text-white tabular-nums text-4xl leading-none">
+            <p className="font-mono font-black text-gray-900 dark:text-white tabular-nums text-4xl leading-none">
               {formatElapsed(elapsedMs)}
             </p>
           </div>
           <div className="flex flex-col items-center py-5">
-            <p className="text-slate-500 text-[0.62rem] font-black uppercase tracking-wider mb-1">
-              שוקים
+            <p className="text-gray-500 dark:text-slate-500 text-[0.62rem] font-black uppercase tracking-wider mb-1">
+              {t('shocksLabel')}
             </p>
             <p
               className="font-black text-4xl leading-none"
@@ -119,7 +121,7 @@ function SummaryModal({ elapsedMs, shocks, onSave, onDiscard }: SummaryProps) {
         {/* shock table */}
         {shocks.length > 0 && (
           <div className="p-4">
-            <ShockTable logs={shocks} />
+            <ShockTable logs={shocks} t={t} />
           </div>
         )}
       </div>
@@ -136,15 +138,15 @@ function SummaryModal({ elapsedMs, shocks, onSave, onDiscard }: SummaryProps) {
           }}
         >
           <Save size={18} />
-          שמור בהיסטוריית מדדים
+          {t('saveToCPRHistory')}
         </button>
 
         <button
           onClick={onDiscard}
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold text-base active:scale-95 transition-transform border border-slate-700 bg-slate-800 text-slate-300"
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold text-base active:scale-95 transition-transform border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"
         >
           <Trash2 size={18} />
-          מחק / סגור
+          {t('deleteClose')}
         </button>
       </div>
     </div>
@@ -154,6 +156,7 @@ function SummaryModal({ elapsedMs, shocks, onSave, onDiscard }: SummaryProps) {
 // ── main component ────────────────────────────────────────────────────────────
 
 export default function CPRTimerOverlay() {
+  const t = useTranslation();
   const {
     cprStartTime, shockLogs, isAudioMuted, bpm,
     incrementShock, endCPR, discardCPR, toggleAudio, setBpm,
@@ -194,7 +197,7 @@ export default function CPRTimerOverlay() {
   // When summary is shown, render only the modal on a clean background
   if (showSummary) {
     return (
-      <div className="fixed inset-0 z-[60] bg-slate-950 select-none overflow-hidden">
+      <div className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 select-none overflow-hidden">
         <SummaryModal
           elapsedMs={snapElapsed}
           shocks={snapShocks}
@@ -221,7 +224,7 @@ export default function CPRTimerOverlay() {
       {/* ── top: timer + end button ── */}
       <div className="relative z-20 flex flex-col items-center pt-10 pb-5 px-6 gap-2">
         <p className="text-slate-500 font-bold tracking-[0.2em] text-xs uppercase">
-          זמן בהחייאה
+          {t('cprTime')}
         </p>
         <span
           className="font-mono font-black tabular-nums leading-none"
@@ -237,10 +240,10 @@ export default function CPRTimerOverlay() {
           onClick={handleEndCPR}
           className="mt-2 flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-base active:scale-95 transition-transform"
           style={{ backgroundColor: '#EF233C', boxShadow: '0 4px 24px rgba(239,35,60,0.55)' }}
-          aria-label="סיים החייאה"
+          aria-label={t('endCPR')}
         >
           <Square size={15} fill="white" />
-          סיים החייאה
+          {t('endCPR')}
         </button>
       </div>
 
@@ -265,11 +268,11 @@ export default function CPRTimerOverlay() {
               : '0 0 24px rgba(245,158,11,0.35), 0 8px 40px rgba(0,0,0,0.7)',
             transition: 'box-shadow 300ms',
           }}
-          aria-label="שוק חשמלי"
+          aria-label={t('recordShock')}
         >
           <Zap fill="#1a0800" color="#1a0800" size={50} />
           <span className="font-black text-[#1a0800] text-sm leading-tight text-center px-5">
-            תעד מתן שוק חשמלי
+            {t('recordShock')}
           </span>
         </button>
 
@@ -321,7 +324,7 @@ export default function CPRTimerOverlay() {
                   boxShadow: active ? '0 0 12px rgba(245,158,11,0.12)' : 'none',
                 }}
                 aria-pressed={active}
-                aria-label={`${value} דופק לדקה`}
+                aria-label={`${value} BPM`}
               >
                 {value} <span style={{ fontWeight: 500, opacity: 0.7 }}>BPM</span>
               </button>
@@ -341,10 +344,10 @@ export default function CPRTimerOverlay() {
             color: isAudioMuted ? '#6b7280' : '#f5c842',
             boxShadow: isAudioMuted ? 'none' : '0 0 18px rgba(245,158,11,0.14)',
           }}
-          aria-label={isAudioMuted ? 'הפעל מטרונום' : 'הפסק מטרונום'}
+          aria-label={isAudioMuted ? t('startMetronome') : t('stopMetronome')}
         >
           {isAudioMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
-          {isAudioMuted ? 'הפעל מטרונום' : 'הפסק מטרונום'}
+          {isAudioMuted ? t('startMetronome') : t('stopMetronome')}
         </button>
       </div>
     </div>

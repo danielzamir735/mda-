@@ -1,4 +1,5 @@
 import { ChevronDown, Phone, PhoneCall, Navigation } from 'lucide-react';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 export interface Hospital {
   name: string;
@@ -29,13 +30,13 @@ function PhoneRow({
     <a
       href={`tel:${digits}`}
       className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
-                 bg-emt-dark border border-emt-border
+                 bg-gray-50 dark:bg-emt-dark border border-gray-200 dark:border-emt-border
                  active:scale-95 transition-transform"
     >
       <span className="text-blue-400 shrink-0">{icon}</span>
       <div className="flex flex-col flex-1 text-right">
-        <span className="text-emt-muted text-xs leading-none mb-0.5">{label}</span>
-        <span className="text-emt-light font-semibold text-base leading-none" dir="ltr">
+        <span className="text-gray-500 dark:text-emt-muted text-xs leading-none mb-0.5">{label}</span>
+        <span className="text-gray-900 dark:text-emt-light font-semibold text-base leading-none" dir="ltr">
           {number}
         </span>
       </div>
@@ -44,14 +45,14 @@ function PhoneRow({
 }
 
 export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onToggle }: Props) {
+  const t = useTranslation();
   const mapsUrl =
     'https://www.google.com/maps/search/?api=1&query=' +
     encodeURIComponent('מיון ' + hospital.name + ' ' + hospital.city);
 
   return (
     <div
-      className={`rounded-xl border overflow-hidden
-        ${isLevelA ? 'border-red-700/40 bg-red-950/20' : 'border-emt-border bg-emt-gray'}`}
+      className="rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden"
     >
       {/* Header row — always visible */}
       <button
@@ -63,29 +64,29 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
         <div className="flex items-center gap-2.5">
           {isLevelA && (
             <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0
-                         bg-red-900/60 text-red-300 border border-red-700/50"
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0
+                         bg-transparent text-red-400 border border-red-500/60"
             >
               A
             </span>
           )}
           <div className="text-right">
-            <div className="text-emt-light font-bold text-base leading-tight">{hospital.name}</div>
-            <div className="text-emt-muted text-xs mt-0.5">{hospital.city}</div>
+            <div className="text-gray-900 dark:text-emt-light font-bold text-base leading-tight">{hospital.name}</div>
+            <div className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{hospital.city}</div>
           </div>
         </div>
         <ChevronDown
           size={20}
-          className={`text-emt-muted transition-transform duration-200 shrink-0
+          className={`text-gray-400 dark:text-emt-muted transition-transform duration-200 shrink-0
                       ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Expanded actions */}
       {isOpen && (
-        <div className="px-3 pb-3 pt-1 flex flex-col gap-2 border-t border-emt-border/60">
-          <PhoneRow number={hospital.central} label="מרכזיה" icon={<Phone size={20} />} />
-          <PhoneRow number={hospital.er} label="מיון" icon={<PhoneCall size={20} />} />
+        <div className="px-3 pb-3 pt-1 flex flex-col gap-2 border-t border-gray-200/60 dark:border-emt-border/60">
+          <PhoneRow number={hospital.central} label={t('hospitalCentral')} icon={<Phone size={20} />} />
+          <PhoneRow number={hospital.er} label={t('hospitalER')} icon={<PhoneCall size={20} />} />
           <a
             href={mapsUrl}
             target="_blank"
@@ -95,7 +96,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                        active:scale-95 transition-transform"
           >
             <Navigation size={20} className="text-blue-400 shrink-0" />
-            <span className="text-blue-300 font-semibold">ניווט למיון</span>
+            <span className="text-blue-300 font-semibold">{t('navigateToER')}</span>
           </a>
         </div>
       )}

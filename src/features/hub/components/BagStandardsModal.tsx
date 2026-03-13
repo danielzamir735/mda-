@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface BagItem {
   name: string;
@@ -185,6 +186,7 @@ interface Props {
 }
 
 export default function BagStandardsModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
@@ -226,32 +228,32 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
   if (selectedBag) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-emt-dark">
+      <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <button
             onClick={handleBackFromDetail}
-            className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-emt-muted hover:text-emt-light"
-            aria-label="חזור"
+                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+            aria-label={t('back')}
           >
             <ChevronRight size={20} />
           </button>
-          <h2 className="text-emt-light font-bold text-xl">{selectedBag.title}</h2>
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{selectedBag.title}</h2>
           <button
             onClick={clearChecklist}
             className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
-            aria-label="נקה סימונים"
+            aria-label={t('clearMarkings')}
           >
             <RotateCcw size={15} />
-            <span>נקה</span>
+            <span>{t('clearMarkings')}</span>
           </button>
         </div>
 
         {/* Item count badge */}
-        <div className="shrink-0 px-4 py-2 border-b border-emt-border">
-          <span className="text-sm text-emt-muted">{selectedBag.items.length} פריטים</span>
+        <div className="shrink-0 px-4 py-2 border-b border-gray-200 dark:border-emt-border">
+          <span className="text-sm text-gray-500 dark:text-emt-muted">{selectedBag.items.length} {t('items')}</span>
         </div>
 
         {/* Items list */}
@@ -265,13 +267,13 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
                 className={`w-full rounded-xl p-4 flex items-center gap-3 border text-right transition-colors active:scale-[0.98] ${
                   isChecked
                     ? 'bg-emerald-950/30 border-emerald-500/30'
-                    : 'bg-slate-800 border-emt-border'
+                    : 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-emt-border'
                 }`}
               >
                 {isChecked
                   ? <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
-                  : <Circle size={20} className="text-slate-600 shrink-0" />}
-                <span className={`flex-1 text-sm font-medium ${isChecked ? 'line-through text-slate-500' : 'text-emt-light'}`}>
+                  : <Circle size={20} className="text-gray-300 dark:text-slate-600 shrink-0" />}
+                <span className={`flex-1 text-sm font-medium ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
                   {item.name}
                 </span>
                 <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${selectedBag.bg} ${selectedBag.color} border ${selectedBag.border}`}>
@@ -286,19 +288,19 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-emt-muted hover:text-emt-light"
-          aria-label="חזור"
+                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+          aria-label={t('back')}
         >
           <ChevronRight size={20} />
         </button>
-        <h2 className="text-emt-light font-bold text-xl">תקנים לתיקי כונן</h2>
+        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('bagStandardsTitle')}</h2>
         <div className="w-10" />
       </div>
 
@@ -316,7 +318,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
             </div>
             <div className="flex-1 text-right">
               <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
-              <p className="text-xs text-emt-muted mt-0.5">{bag.items.length} פריטים</p>
+              <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
             </div>
           </button>
         ))}

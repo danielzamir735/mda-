@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Wind } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,7 @@ type PressureUnit = 'bar' | 'psi';
 
 export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50' }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
   const [pressureUnit, setPressureUnit] = useState<PressureUnit>('bar');
   const [pressure, setPressure] = useState('');
   const [volume, setVolume] = useState('');
@@ -38,9 +40,9 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
   const handleReset = () => { setPressure(''); setVolume(''); setFlow(''); };
 
   const inputCls =
-    'w-full bg-[#1A1A20] border border-emt-border rounded-xl ' +
-    'px-4 py-3 text-emt-light text-lg font-semibold ' +
-    'placeholder:text-emt-border focus:outline-none ' +
+    'w-full bg-gray-100 dark:bg-[#1A1A20] border border-gray-200 dark:border-emt-border rounded-xl ' +
+    'px-4 py-3 text-gray-900 dark:text-emt-light text-lg font-semibold ' +
+    'placeholder:text-gray-300 dark:placeholder:text-emt-border focus:outline-none ' +
     'focus:border-emt-blue focus:ring-2 focus:ring-emt-blue/20';
 
   return (
@@ -49,25 +51,25 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-[#111114] border border-emt-border
+        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#111114] border border-gray-200 dark:border-emt-border
                    shadow-2xl overflow-hidden animate-fade-scale"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="relative flex items-center justify-center px-5 pt-5 pb-4
-                        border-b border-emt-border">
+                        border-b border-gray-200 dark:border-emt-border">
           <button
             onClick={onClose}
-            className="absolute right-4 w-9 h-9 rounded-full bg-emt-border/30
+            className="absolute right-4 w-9 h-9 rounded-full bg-gray-100 dark:bg-emt-border/30
                        flex items-center justify-center
-                       text-emt-muted hover:text-emt-light active:scale-90 transition-all"
-            aria-label="סגור"
+                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light active:scale-90 transition-all"
+            aria-label={t('close')}
           >
             <X size={18} />
           </button>
           <div className="flex items-center gap-2">
             <Wind size={20} className="text-emt-blue" />
-            <p className="text-emt-light font-bold text-lg">מחשבון חמצן</p>
+            <p className="text-gray-900 dark:text-emt-light font-bold text-lg">{t('oxygenCalculator')}</p>
           </div>
         </div>
 
@@ -75,8 +77,8 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Pressure + Bar/PSI toggle */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
-              לחץ בבלון
+            <label className="text-sm font-semibold text-gray-500 dark:text-emt-muted uppercase tracking-wide">
+              {t('tankPressure')}
             </label>
             <div className="flex gap-2">
               <input
@@ -88,7 +90,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
                 className={inputCls + ' flex-1'}
               />
               {/* Toggle switch */}
-              <div className="flex rounded-xl border border-emt-border overflow-hidden shrink-0">
+              <div className="flex rounded-xl border border-gray-200 dark:border-emt-border overflow-hidden shrink-0">
                 {(['bar', 'psi'] as PressureUnit[]).map(u => (
                   <button
                     key={u}
@@ -97,7 +99,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
                       'px-4 py-2 text-sm font-bold transition-colors duration-150',
                       pressureUnit === u
                         ? 'bg-emt-blue text-white'
-                        : 'bg-[#1A1A20] text-emt-muted hover:text-emt-light',
+                        : 'bg-gray-100 dark:bg-[#1A1A20] text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light',
                     ].join(' ')}
                   >
                     {u === 'bar' ? 'Bar' : 'PSI'}
@@ -109,8 +111,8 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Volume */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
-              נפח הבלון (ליטר)
+            <label className="text-sm font-semibold text-gray-500 dark:text-emt-muted uppercase tracking-wide">
+              {t('tankVolume')}
             </label>
             <input
               type="number"
@@ -124,8 +126,8 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
           {/* Flow rate */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-emt-muted uppercase tracking-wide">
-              קצב זרימה (LPM)
+            <label className="text-sm font-semibold text-gray-500 dark:text-emt-muted uppercase tracking-wide">
+              {t('flowRate')}
             </label>
             <input
               type="number"
@@ -148,8 +150,8 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
           >
             {minutes !== null ? (
               <>
-                <p className="text-emt-muted text-xs font-semibold uppercase tracking-wide mb-1">
-                  זמן חמצן משוער
+                <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide mb-1">
+                  {t('estimatedOxygenTime')}
                 </p>
                 <p
                   className="font-mono font-black tabular-nums text-emt-blue leading-none"
@@ -157,11 +159,11 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
                 >
                   {minutes}
                 </p>
-                <p className="text-emt-muted text-sm font-medium mt-1">דקות</p>
+                <p className="text-gray-500 dark:text-emt-muted text-sm font-medium mt-1">{t('minutes')}</p>
               </>
             ) : (
               <p className="text-gray-600 dark:text-gray-200 text-base font-medium py-2">
-                מלא את כל השדות לחישוב
+                {t('fillAllFields')}
               </p>
             )}
           </div>
@@ -169,12 +171,12 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
           {/* Reset */}
           <button
             onClick={handleReset}
-            className="w-full py-3 rounded-xl bg-emt-border/20 border border-emt-border
-                       text-emt-muted font-semibold text-sm
+            className="w-full py-3 rounded-xl bg-gray-100 dark:bg-emt-border/20 border border-gray-200 dark:border-emt-border
+                       text-gray-500 dark:text-emt-muted font-semibold text-sm
                        active:scale-95 transition-transform duration-150
-                       hover:bg-emt-border/40 hover:text-emt-light"
+                       hover:bg-gray-200 dark:hover:bg-emt-border/40 hover:text-gray-900 dark:hover:text-emt-light"
           >
-            אפס
+            {t('reset')}
           </button>
 
         </div>

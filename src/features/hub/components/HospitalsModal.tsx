@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Search } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
 
 interface Props {
@@ -48,6 +49,7 @@ function filter(list: Hospital[], q: string) {
 }
 
 export default function HospitalsModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -64,35 +66,35 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark" dir="rtl">
+    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark" dir="rtl">
 
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3
-                      border-b border-emt-border bg-emt-gray shadow-sm">
-        <h2 className="text-emt-light font-bold text-xl">בתי חולים בפריסה ארצית</h2>
+                      border-b border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray shadow-sm">
+        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('hospitalsTitle')}</h2>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-dark border border-emt-border
+          className="w-10 h-10 rounded-full bg-white dark:bg-emt-dark border border-gray-200 dark:border-emt-border
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-emt-muted hover:text-emt-light"
-          aria-label="סגור"
+                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
       </div>
 
       {/* Sticky search bar */}
-      <div className="shrink-0 px-4 pt-3 pb-2 bg-emt-dark border-b border-emt-border/40">
+      <div className="shrink-0 px-4 pt-3 pb-2 bg-white dark:bg-emt-dark border-b border-gray-200/40 dark:border-emt-border/40">
         <div className="relative flex items-center">
-          <Search size={16} className="absolute right-3.5 text-emt-muted pointer-events-none" />
+          <Search size={16} className="absolute right-3.5 text-gray-400 dark:text-emt-muted pointer-events-none" />
           <input
             type="search"
             value={search}
             onChange={e => { setSearch(e.target.value); setOpenKey(null); }}
-            placeholder="חיפוש לפי שם או עיר..."
+            placeholder={t('searchHospital')}
             autoComplete="off"
-            className="w-full bg-emt-gray border border-emt-border rounded-2xl
-                       pr-10 pl-8 py-2.5 text-emt-light placeholder:text-emt-muted text-sm
+            className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl
+                       pr-10 pl-8 py-2.5 text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted text-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-500/40
                        focus:border-blue-500/30 transition-shadow"
             dir="rtl"
@@ -100,8 +102,8 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
           {search && (
             <button
               onClick={() => { setSearch(''); setOpenKey(null); }}
-              className="absolute left-3 text-emt-muted hover:text-emt-light active:scale-90 transition-all"
-              aria-label="נקה חיפוש"
+              className="absolute left-3 text-gray-400 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light active:scale-90 transition-all"
+              aria-label={t('clearSearch')}
             >
               <X size={15} />
             </button>
@@ -112,7 +114,7 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
         {empty && (
-          <p className="text-center text-emt-muted py-12 text-sm">לא נמצאו בתי חולים</p>
+          <p className="text-center text-gray-500 dark:text-emt-muted py-12 text-sm">{t('noHospitalsFound')}</p>
         )}
 
         {listA.length > 0 && (
