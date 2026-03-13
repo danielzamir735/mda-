@@ -24,7 +24,7 @@ export default function QuickToolsCard() {
           video: { facingMode: 'environment' },
         });
         const track = stream.getVideoTracks()[0];
-        await track.applyConstraints({ advanced: [{ torch: true }] } as MediaTrackConstraints);
+        await track.applyConstraints({ advanced: [{ torch: true }] as any });
         torchStream.current = stream;
         setTorchOn(true);
       }
