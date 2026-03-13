@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import HospitalAccordionItem from './HospitalAccordionItem';
-import NavChoiceModal, { type Hospital } from './NavChoiceModal';
+import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
 
 interface Props {
   isOpen: boolean;
@@ -43,13 +42,30 @@ function SectionLabel({ text, cls }: { text: string; cls: string }) {
   );
 }
 
+function filter(list: Hospital[], q: string) {
+  if (!q) return list;
+  return list.filter(h => h.name.includes(q) || h.city.includes(q));
+}
+
 export default function HospitalsModal({ isOpen, onClose }: Props) {
-  const [navHospital, setNavHospital] = useState<Hospital | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
+  const q = search.trim();
+  const listA = filter(LEVEL_A, q);
+  const listB = filter(LEVEL_B, q);
+  const empty = listA.length === 0 && listB.length === 0;
+
+  function toggle(name: string) {
+    setOpenKey(prev => (prev === name ? null : name));
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark" dir="rtl">
+
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3
                       border-b border-emt-border bg-emt-gray shadow-sm">
@@ -65,40 +81,74 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
         </button>
       </div>
 
-      {/* Scrollable list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-        <SectionLabel
-          text="LEVEL A — מרכזי טראומה"
-          cls="bg-red-900/30 text-red-300 border-red-700/40"
-        />
-        <div className="space-y-2 mb-4">
-          {LEVEL_A.map(h => (
-            <HospitalAccordionItem
-              key={h.name}
-              hospital={h}
-              isLevelA={true}
-              onNavigate={setNavHospital}
-            />
-          ))}
-        </div>
-
-        <SectionLabel
-          text="LEVEL B"
-          cls="bg-yellow-900/30 text-yellow-300 border-yellow-700/40"
-        />
-        <div className="space-y-2">
-          {LEVEL_B.map(h => (
-            <HospitalAccordionItem
-              key={h.name}
-              hospital={h}
-              isLevelA={false}
-              onNavigate={setNavHospital}
-            />
-          ))}
+      {/* Sticky search bar */}
+      <div className="shrink-0 px-4 pt-3 pb-2 bg-emt-dark border-b border-emt-border/40">
+        <div className="relative flex items-center">
+          <Search size={16} className="absolute right-3.5 text-emt-muted pointer-events-none" />
+          <input
+            type="search"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setOpenKey(null); }}
+            placeholder="חיפוש לפי שם או עיר..."
+            autoComplete="off"
+            className="w-full bg-emt-gray border border-emt-border rounded-2xl
+                       pr-10 pl-8 py-2.5 text-emt-light placeholder:text-emt-muted text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/40
+                       focus:border-blue-500/30 transition-shadow"
+            dir="rtl"
+          />
+          {search && (
+            <button
+              onClick={() => { setSearch(''); setOpenKey(null); }}
+              className="absolute left-3 text-emt-muted hover:text-emt-light active:scale-90 transition-all"
+              aria-label="נקה חיפוש"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
       </div>
 
-      <NavChoiceModal hospital={navHospital} onClose={() => setNavHospital(null)} />
+      {/* Scrollable list */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+        {empty && (
+          <p className="text-center text-emt-muted py-12 text-sm">לא נמצאו בתי חולים</p>
+        )}
+
+        {listA.length > 0 && (
+          <>
+            <SectionLabel text="LEVEL A — מרכזי טראומה" cls="bg-red-900/30 text-red-300 border-red-700/40" />
+            <div className="space-y-2 mb-4">
+              {listA.map(h => (
+                <HospitalAccordionItem
+                  key={h.name}
+                  hospital={h}
+                  isLevelA={true}
+                  isOpen={openKey === h.name}
+                  onToggle={() => toggle(h.name)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {listB.length > 0 && (
+          <>
+            <SectionLabel text="LEVEL B" cls="bg-yellow-900/30 text-yellow-300 border-yellow-700/40" />
+            <div className="space-y-2">
+              {listB.map(h => (
+                <HospitalAccordionItem
+                  key={h.name}
+                  hospital={h}
+                  isLevelA={false}
+                  isOpen={openKey === h.name}
+                  onToggle={() => toggle(h.name)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
