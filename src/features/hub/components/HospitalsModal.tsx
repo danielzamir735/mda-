@@ -119,7 +119,7 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
 
         {listA.length > 0 && (
           <>
-            <SectionLabel text="LEVEL A — מרכזי טראומה" cls="bg-red-900/30 text-red-300 border-red-700/40" />
+            <SectionLabel text="LEVEL A — מרכזי טראומה" cls="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700/40" />
             <div className="space-y-2 mb-4">
               {listA.map(h => (
                 <HospitalAccordionItem
@@ -136,7 +136,7 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
 
         {listB.length > 0 && (
           <>
-            <SectionLabel text="LEVEL B" cls="bg-yellow-900/30 text-yellow-300 border-yellow-700/40" />
+            <SectionLabel text="LEVEL B" cls="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700/40" />
             <div className="space-y-2">
               {listB.map(h => (
                 <HospitalAccordionItem

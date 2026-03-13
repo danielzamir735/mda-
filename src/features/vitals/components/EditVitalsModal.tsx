@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, ChevronDown } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -12,6 +12,9 @@ export interface EditData {
   saturation: string;
   temperature: string;
   fastTest: string;
+  fastMotorStrength?: string;
+  fastFacialDroop?: string;
+  fastSymptomTime?: string;
   notes: string;
 }
 
@@ -63,13 +66,19 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   const [saturation, setSaturation] = useState(initialData.saturation);
   const [temperature, setTemperature] = useState(initialData.temperature);
   const [fastTest, setFastTest] = useState(initialData.fastTest);
+  const [fastExpanded, setFastExpanded] = useState(
+    !!(initialData.fastMotorStrength || initialData.fastFacialDroop || initialData.fastSymptomTime)
+  );
+  const [fastMotorStrength, setFastMotorStrength] = useState(initialData.fastMotorStrength ?? '');
+  const [fastFacialDroop, setFastFacialDroop] = useState(initialData.fastFacialDroop ?? '');
+  const [fastSymptomTime, setFastSymptomTime] = useState(initialData.fastSymptomTime ?? '');
   const [notes, setNotes] = useState(initialData.notes);
   const [saved, setSaved] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, notes });
+    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, fastMotorStrength, fastFacialDroop, fastSymptomTime, notes });
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1500);
   };
@@ -132,6 +141,56 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* FAST Expansion */}
+          <div className="col-span-2">
+            <button
+              type="button"
+              onClick={() => setFastExpanded(!fastExpanded)}
+              className="flex items-center gap-1.5 text-gray-400 dark:text-emt-muted text-xs font-bold w-full py-1.5 hover:text-gray-600 dark:hover:text-emt-light transition-colors"
+            >
+              <ChevronDown size={14} className={`transition-transform duration-200 ${fastExpanded ? 'rotate-180' : ''}`} />
+              {t('fastExpand')}
+            </button>
+            {fastExpanded && (
+              <div className="flex flex-col gap-3 mt-1 pt-3 border-t border-gray-200 dark:border-emt-border">
+                {[
+                  { label: t('fastMotorStrength'), val: fastMotorStrength, set: setFastMotorStrength },
+                  { label: t('fastFacialDroop'), val: fastFacialDroop, set: setFastFacialDroop },
+                ].map(({ label, val, set }) => (
+                  <div key={label} className="flex flex-col gap-1.5">
+                    <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{label}</label>
+                    <div className="flex gap-2">
+                      {fastOptions.map(({ value, label: optLabel }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => set(val === value ? '' : value)}
+                          className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
+                            ${val === value
+                              ? value === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
+                              : 'bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted'}`}
+                        >
+                          {optLabel}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('fastSymptomTime')}</label>
+                  <input
+                    type="time"
+                    value={fastSymptomTime}
+                    onChange={(e) => setFastSymptomTime(e.target.value)}
+                    className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
+                               text-gray-900 dark:text-emt-light text-center text-base font-bold
+                               focus:outline-none focus:border-emt-red transition-colors"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Notes */}

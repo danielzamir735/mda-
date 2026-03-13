@@ -63,7 +63,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
           {isLevelA && (
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0
-                         bg-transparent text-red-400 border border-red-500/60"
+                         bg-transparent text-red-600 dark:text-red-400 border border-red-600/60 dark:border-red-500/60"
             >
               A
             </span>

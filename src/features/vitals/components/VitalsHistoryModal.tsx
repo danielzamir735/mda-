@@ -169,6 +169,31 @@ function LogCard({ log, onDelete, onEdit }: {
         )}
       </div>
 
+      {/* FAST expanded details */}
+      {(log.fastMotorStrength || log.fastFacialDroop || log.fastSymptomTime) && (
+        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-emt-border flex flex-wrap gap-x-4 gap-y-1">
+          {log.fastMotorStrength && (
+            <span className="text-xs text-gray-500 dark:text-emt-muted">
+              {t('fastMotorStrength')}: <span className={`font-bold ${log.fastMotorStrength === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
+                {log.fastMotorStrength === 'תקין' ? t('normal') : t('abnormal')}
+              </span>
+            </span>
+          )}
+          {log.fastFacialDroop && (
+            <span className="text-xs text-gray-500 dark:text-emt-muted">
+              {t('fastFacialDroop')}: <span className={`font-bold ${log.fastFacialDroop === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
+                {log.fastFacialDroop === 'תקין' ? t('normal') : t('abnormal')}
+              </span>
+            </span>
+          )}
+          {log.fastSymptomTime && (
+            <span className="text-xs text-gray-500 dark:text-emt-muted">
+              {t('fastSymptomTime')}: <span className="font-bold text-gray-900 dark:text-emt-light">{log.fastSymptomTime}</span>
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Notes — full-width below grid */}
       {log.notes && (
         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-emt-border">
@@ -236,6 +261,9 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
             saturation: editingLog.saturation ?? '',
             temperature: editingLog.temperature ?? '',
             fastTest: editingLog.fastTest ?? '',
+            fastMotorStrength: editingLog.fastMotorStrength ?? '',
+            fastFacialDroop: editingLog.fastFacialDroop ?? '',
+            fastSymptomTime: editingLog.fastSymptomTime ?? '',
             notes: editingLog.notes ?? '',
           }}
         />

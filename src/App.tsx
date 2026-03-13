@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
 import LegalDisclaimerModal from './components/LegalDisclaimerModal';
+import UpdateModal from './components/UpdateModal';
+import WhatsNewModal from './components/WhatsNewModal';
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -13,6 +15,7 @@ export default function App() {
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const [legalOpen, setLegalOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   const {
@@ -59,6 +62,9 @@ export default function App() {
     if (!localStorage.getItem('hasAcceptedLegal_v2')) {
       setLegalOpen(true);
     }
+    if (!localStorage.getItem('whatsNew_v2_seen')) {
+      setWhatsNewOpen(true);
+    }
   }, []);
 
   const handleLegalAccept = () => {
@@ -75,22 +81,8 @@ export default function App() {
       </Routes>
       <Analytics />
       <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
-      {needRefresh && (
-        <div
-          className="fixed inset-x-0 top-0 z-[9999] flex items-center justify-between gap-4 bg-red-600 px-5 py-4 shadow-2xl"
-          style={{ animation: 'pulse 1.5s ease-in-out infinite' }}
-        >
-          <span className="text-base font-bold text-white drop-shadow">
-            🔄 עדכון זמין — יש גרסה חדשה!
-          </span>
-          <button
-            onClick={() => updateServiceWorker(true)}
-            className="shrink-0 rounded-xl bg-white px-5 py-2 text-sm font-extrabold text-red-600 shadow-lg active:scale-95"
-          >
-            לחץ כאן לעדכון
-          </button>
-        </div>
-      )}
+      {whatsNewOpen && <WhatsNewModal onClose={() => setWhatsNewOpen(false)} />}
+      {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
     </BrowserRouter>
   );
 }

@@ -18,6 +18,9 @@ export interface VitalsLog {
   saturation: string;
   temperature: string;
   fastTest: string;
+  fastMotorStrength?: string;
+  fastFacialDroop?: string;
+  fastSymptomTime?: string;
   notes: string;
   cprDuration?: string;      // for type === 'cpr'
   cprShocks?: number;        // for type === 'cpr'

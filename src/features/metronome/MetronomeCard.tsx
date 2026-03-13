@@ -1,4 +1,4 @@
-import { Play, VolumeX, Volume2 } from 'lucide-react';
+import { Play, VolumeX, Volume2, Plus, Minus } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -58,15 +58,12 @@ export default function MetronomeCard() {
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i > 0) setBpm(BPM_VALUES[i - 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === 0}
-          className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl
-                     active:scale-90 transition-all duration-150 select-none disabled:opacity-30"
-          style={{
-            backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.07)',
-            border: isPlaying ? '2px solid rgba(245,158,11,0.4)' : '2px solid rgba(0,0,0,0.12)',
-            color: isPlaying ? '#f5c842' : '#374151',
-          }}
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                     disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הפחת BPM"
-        >−</button>
+        ><Minus size={16} /></button>
 
         <div className="flex-1 relative flex items-center" style={{ height: 28 }}>
           {/* track background */}
@@ -79,9 +76,9 @@ export default function MetronomeCard() {
               backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.08)',
             }}
           />
-          {/* filled portion */}
+          {/* filled portion — anchored at right so it grows leftward (RTL: 100 on right → 120 on left) */}
           <div
-            className="absolute left-0 rounded-full transition-all duration-200"
+            className="absolute right-0 rounded-full transition-all duration-200"
             style={{
               height: 6,
               top: '50%',
@@ -90,15 +87,15 @@ export default function MetronomeCard() {
               backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
             }}
           />
-          {/* step dots */}
+          {/* step dots — right: 0% = 100 BPM (far right in RTL), right: 100% = 120 BPM (far left) */}
           {BPM_VALUES.map((val, i) => (
             <button
               key={val}
               onClick={() => setBpm(val)}
               className="absolute transition-all duration-150 active:scale-90"
               style={{
-                left: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
-                transform: 'translate(-50%, -50%)',
+                right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
+                transform: 'translate(50%, -50%)',
                 top: '50%',
                 width: bpm === val ? 20 : 14,
                 height: bpm === val ? 20 : 14,
@@ -118,15 +115,12 @@ export default function MetronomeCard() {
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i < BPM_VALUES.length - 1) setBpm(BPM_VALUES[i + 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === BPM_VALUES.length - 1}
-          className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl
-                     active:scale-90 transition-all duration-150 select-none disabled:opacity-30"
-          style={{
-            backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.07)',
-            border: isPlaying ? '2px solid rgba(245,158,11,0.4)' : '2px solid rgba(0,0,0,0.12)',
-            color: isPlaying ? '#f5c842' : '#374151',
-          }}
+          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
+                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                     disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הגדל BPM"
-        >+</button>
+        ><Plus size={16} /></button>
       </div>
 
       {/* Action buttons */}
