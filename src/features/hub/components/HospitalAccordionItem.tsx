@@ -46,9 +46,7 @@ function PhoneRow({
 
 export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onToggle }: Props) {
   const t = useTranslation();
-  const mapsUrl =
-    'https://www.google.com/maps/search/?api=1&query=' +
-    encodeURIComponent('מיון ' + hospital.name + ' ' + hospital.city);
+  const mapsUrl = 'geo:0,0?q=' + encodeURIComponent('מיון ' + hospital.name + ' ' + hospital.city);
 
   return (
     <div
@@ -89,8 +87,6 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
           <PhoneRow number={hospital.er} label={t('hospitalER')} icon={<PhoneCall size={20} />} />
           <a
             href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
                        bg-blue-600/15 border border-blue-500/40
                        active:scale-95 transition-transform"
