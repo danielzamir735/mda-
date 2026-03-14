@@ -1,4 +1,5 @@
-import { ChevronDown, Phone, PhoneCall, Navigation } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Phone, PhoneCall, Navigation, X } from 'lucide-react';
 import { useTranslation } from '../../../hooks/useTranslation';
 
 export interface Hospital {
@@ -6,6 +7,7 @@ export interface Hospital {
   city: string;
   central: string;
   er: string;
+  hasSeparateERs?: boolean;
 }
 
 interface Props {
@@ -44,9 +46,19 @@ function PhoneRow({
   );
 }
 
+function erUrl(prefix: string, name: string, city: string) {
+  return 'geo:0,0?q=' + encodeURIComponent(prefix + ' ' + name + ' ' + city);
+}
+
 export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onToggle }: Props) {
   const t = useTranslation();
-  const mapsUrl = 'geo:0,0?q=' + encodeURIComponent('מיון ' + hospital.name + ' ' + hospital.city);
+  const [showERChoice, setShowERChoice] = useState(false);
+
+  // Reset sub-menu when accordion closes
+  function handleToggle() {
+    if (isOpen) setShowERChoice(false);
+    onToggle();
+  }
 
   return (
     <div
@@ -54,7 +66,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
     >
       {/* Header row — always visible */}
       <button
-        onClick={onToggle}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between px-4 py-3.5
                    active:bg-white/5 transition-colors"
         aria-expanded={isOpen}
@@ -85,15 +97,77 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
         <div className="px-3 pb-3 pt-1 flex flex-col gap-2 border-t border-gray-200/60 dark:border-emt-border/60">
           <PhoneRow number={hospital.central} label={t('hospitalCentral')} icon={<Phone size={20} />} />
           <PhoneRow number={hospital.er} label={t('hospitalER')} icon={<PhoneCall size={20} />} />
-          <a
-            href={mapsUrl}
-            className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
-                       bg-blue-600/15 border border-blue-500/40
-                       active:scale-95 transition-transform"
-          >
-            <Navigation size={20} className="text-blue-400 shrink-0" />
-            <span className="text-blue-300 font-semibold">{t('navigateToER')}</span>
-          </a>
+
+          {hospital.hasSeparateERs ? (
+            showERChoice ? (
+              /* Sub-menu: 3 ER type buttons */
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1 pb-0.5">
+                  <span className="text-gray-500 dark:text-emt-muted text-xs">בחר/י סוג מיון לניווט</span>
+                  <button
+                    onClick={() => setShowERChoice(false)}
+                    className="text-gray-400 dark:text-emt-muted hover:text-gray-700 dark:hover:text-emt-light
+                               active:scale-90 transition-all p-1 -m-1"
+                    aria-label="סגור"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <a
+                  href={erUrl('מיון', hospital.name, hospital.city)}
+                  className="flex items-center gap-3 w-full rounded-xl px-4 py-4
+                             bg-blue-600 dark:bg-blue-600 border border-blue-500
+                             active:scale-95 transition-transform"
+                >
+                  <Navigation size={20} className="text-white shrink-0" />
+                  <span className="text-white font-bold text-base">מיון כללי</span>
+                </a>
+
+                <a
+                  href={erUrl('מיון ילדים', hospital.name, hospital.city)}
+                  className="flex items-center gap-3 w-full rounded-xl px-4 py-4
+                             bg-emerald-600 dark:bg-emerald-600 border border-emerald-500
+                             active:scale-95 transition-transform"
+                >
+                  <Navigation size={20} className="text-white shrink-0" />
+                  <span className="text-white font-bold text-base">מיון ילדים</span>
+                </a>
+
+                <a
+                  href={erUrl('מיון יולדות', hospital.name, hospital.city)}
+                  className="flex items-center gap-3 w-full rounded-xl px-4 py-4
+                             bg-purple-600 dark:bg-purple-600 border border-purple-500
+                             active:scale-95 transition-transform"
+                >
+                  <Navigation size={20} className="text-white shrink-0" />
+                  <span className="text-white font-bold text-base">מיון יולדות</span>
+                </a>
+              </div>
+            ) : (
+              /* Trigger button — shows sub-menu */
+              <button
+                onClick={() => setShowERChoice(true)}
+                className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
+                           bg-blue-600/15 border border-blue-500/40
+                           active:scale-95 transition-transform"
+              >
+                <Navigation size={20} className="text-blue-400 shrink-0" />
+                <span className="text-blue-300 font-semibold">{t('navigateToER')}</span>
+              </button>
+            )
+          ) : (
+            /* Single direct nav link */
+            <a
+              href={erUrl('מיון', hospital.name, hospital.city)}
+              className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
+                         bg-blue-600/15 border border-blue-500/40
+                         active:scale-95 transition-transform"
+            >
+              <Navigation size={20} className="text-blue-400 shrink-0" />
+              <span className="text-blue-300 font-semibold">{t('navigateToER')}</span>
+            </a>
+          )}
         </div>
       )}
     </div>

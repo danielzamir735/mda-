@@ -10,29 +10,32 @@ interface Props {
 }
 
 const LEVEL_A: Hospital[] = [
-  { name: 'רמב"ם',           city: 'חיפה',        central: '04-777-2222', er: '04-777-1300' },
-  { name: 'בלינסון',          city: 'פתח תקווה',   central: '03-937-7377', er: '03-937-7021' },
-  { name: 'איכילוב',          city: 'תל אביב',     central: '03-697-4444', er: '03-697-3232' },
-  { name: 'תל השומר שיבא',    city: 'רמת גן',      central: '03-530-3030', er: '03-530-3101' },
-  { name: 'הדסה עין כרם',     city: 'ירושלים',     central: '02-677-7111', er: '02-677-7222' },
-  { name: 'שערי צדק',         city: 'ירושלים',     central: '02-655-5111', er: '02-655-5509' },
-  { name: 'סורוקה',           city: 'באר שבע',     central: '08-640-0111', er: '08-640-0888' },
+  { name: 'רמב"ם',           city: 'חיפה',        central: '04-777-2222', er: '04-777-1300', hasSeparateERs: true },
+  { name: 'בלינסון',          city: 'פתח תקווה',   central: '03-937-7377', er: '03-937-7021', hasSeparateERs: true },
+  { name: 'איכילוב',          city: 'תל אביב',     central: '03-697-4444', er: '03-697-3232', hasSeparateERs: true },
+  { name: 'תל השומר שיבא',    city: 'רמת גן',      central: '03-530-3030', er: '03-530-3101', hasSeparateERs: true },
+  { name: 'הדסה עין כרם',     city: 'ירושלים',     central: '02-677-7111', er: '02-677-7222', hasSeparateERs: true },
+  { name: 'שערי צדק',         city: 'ירושלים',     central: '02-655-5111', er: '02-655-5509', hasSeparateERs: true },
+  { name: 'סורוקה',           city: 'באר שבע',     central: '08-640-0111', er: '08-640-0888', hasSeparateERs: true },
 ];
 
 const LEVEL_B: Hospital[] = [
-  { name: 'המרכז הרפואי לגליל', city: 'נהריה',      central: '04-910-7107', er: '04-9107766' },
-  { name: 'זיו',               city: 'צפת',         central: '04-682-8811', er: '04-682-8838' },
-  { name: 'פוריה',             city: 'טבריה',       central: '04-665-2211', er: '04-665-2850' },
-  { name: 'העמק',              city: 'עפולה',       central: '04-649-4000', er: '04-649-4166' },
-  { name: 'בני ציון',          city: 'חיפה',        central: '04-835-9359', er: '04-835-9210' },
-  { name: 'כרמל',              city: 'חיפה',        central: '04-825-0211', er: '04-825-0240' },
+  { name: 'המרכז הרפואי לגליל', city: 'נהריה',      central: '04-910-7107', er: '04-9107766',  hasSeparateERs: true },
+  { name: 'זיו',               city: 'צפת',         central: '04-682-8811', er: '04-682-8838', hasSeparateERs: true },
+  { name: 'פוריה',             city: 'טבריה',       central: '04-665-2211', er: '04-665-2850', hasSeparateERs: true },
+  { name: 'העמק',              city: 'עפולה',       central: '04-649-4000', er: '04-649-4166', hasSeparateERs: true },
+  { name: 'בני ציון',          city: 'חיפה',        central: '04-835-9359', er: '04-835-9210', hasSeparateERs: true },
+  { name: 'כרמל',              city: 'חיפה',        central: '04-825-0211', er: '04-825-0240', hasSeparateERs: true },
   { name: 'מעלה הכרמל',        city: 'טירת הכרמל', central: '-',           er: '-'           },
-  { name: 'הלל יפה',           city: 'חדרה',        central: '04-774-4477', er: '04-774-4277' },
-  { name: 'מאיר',              city: 'כפר סבא',     central: '09-747-2555', er: '09-747-2322' },
-  { name: 'לניאדו',            city: 'נתניה',       central: '09-860-4666', er: '09-8604619' },
+  { name: 'הלל יפה',           city: 'חדרה',        central: '04-774-4477', er: '04-774-4277', hasSeparateERs: true },
+  { name: 'מאיר',              city: 'כפר סבא',     central: '09-747-2555', er: '09-747-2322', hasSeparateERs: true },
+  { name: 'לניאדו',            city: 'נתניה',       central: '09-860-4666', er: '09-8604619',  hasSeparateERs: true },
   { name: 'שניידר (ילדים)',    city: 'פתח תקווה',   central: '03-925-3726', er: '03-925-3656' },
-  { name: 'וולפסון',           city: 'חולון',       central: '03-502-8211', er: '03-5028317' },
-  { name: 'מעייני הישועה',     city: 'בני ברק',     central: '03-5771111',  er: '053-7345978' },
+  { name: 'וולפסון',           city: 'חולון',       central: '03-502-8211', er: '03-5028317',  hasSeparateERs: true },
+  { name: 'מעייני הישועה',     city: 'בני ברק',     central: '03-5771111',  er: '053-7345978', hasSeparateERs: true },
+  { name: 'קפלן',              city: 'רחובות',      central: '08-944-1211', er: '08-944-1553', hasSeparateERs: true },
+  { name: 'ברזילי',            city: 'אשקלון',      central: '08-674-5111', er: '08-674-5561', hasSeparateERs: true },
+  { name: 'אסף הרופא',         city: 'צריפין',      central: '08-977-9020', er: '08-977-9333', hasSeparateERs: true },
 ];
 
 function SectionLabel({ text, cls }: { text: string; cls: string }) {
