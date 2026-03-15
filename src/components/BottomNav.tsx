@@ -1,7 +1,7 @@
 import { FileText, Images, Activity, LayoutGrid, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
-import { useHaptics } from '../hooks/useHaptics';
+import HapticButton from './HapticButton';
 
 interface Props {
   onGalleryOpen: () => void;
@@ -14,7 +14,6 @@ interface Props {
 export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
   const navigate = useNavigate();
   const t = useTranslation();
-  const vibrate = useHaptics();
 
   return (
     <nav
@@ -42,64 +41,64 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         }
       `}</style>
 
-      {/* Support — far right in RTL */}
-      <button
-        onClick={() => { vibrate(); navigate('/support'); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
-                   text-rose-400
-                   active:scale-95 transition-all duration-150"
+      {/* Support */}
+      <HapticButton
+        onClick={() => navigate('/support')}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"
         aria-label="תמיכה"
       >
         <span className="animate-heartbeat">
           <Heart size={20} fill="currentColor" />
         </span>
-      </button>
+      </HapticButton>
 
-      <button
-        onClick={() => { vibrate(); onNotesOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
-                   text-blue-600 dark:text-blue-400
-                   active:scale-95 transition-all duration-150"
+      <HapticButton
+        onClick={onNotesOpen}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-blue-600 dark:text-blue-400"
         aria-label={t('notes')}
       >
         <FileText size={20} />
         <span className="text-[0.65rem] font-semibold">{t('notes')}</span>
-      </button>
+      </HapticButton>
 
-      <button
-        onClick={() => { vibrate(); onGalleryOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
-                   text-purple-600 dark:text-purple-400
-                   active:scale-95 transition-all duration-150"
+      <HapticButton
+        onClick={onGalleryOpen}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-purple-600 dark:text-purple-400"
         aria-label={t('photos')}
       >
         <Images size={20} />
         <span className="text-[0.65rem] font-semibold">{t('photos')}</span>
-      </button>
+      </HapticButton>
 
-      <button
-        onClick={() => { vibrate(); onVitalsOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
-                   text-green-600 dark:text-green-400
-                   active:scale-95 transition-all duration-150"
+      <HapticButton
+        onClick={onVitalsOpen}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-green-600 dark:text-green-400"
         aria-label={t('vitalsHistory')}
       >
         <Activity size={20} />
         <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('vitalsHistory')}</span>
-      </button>
+      </HapticButton>
 
-      <button
-        onClick={() => { vibrate(); onHubOpen(); }}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
-                   text-amber-500 dark:text-amber-400
-                   active:scale-95 transition-all duration-150"
+      <HapticButton
+        onClick={onHubOpen}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-500 dark:text-amber-400"
         aria-label={t('hub')}
       >
         <span className="animate-breathe">
           <LayoutGrid size={20} />
         </span>
         <span className="text-[0.65rem] font-semibold">{t('hub')}</span>
-      </button>
+      </HapticButton>
     </nav>
   );
 }

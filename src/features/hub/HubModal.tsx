@@ -1,6 +1,8 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useHaptics } from '../../hooks/useHaptics';
+import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 
 interface Props {
@@ -125,6 +127,7 @@ export default function HubModal({
   onBagStandardsOpen,
 }: Props) {
   const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
+  const vibrate = useHaptics();
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -143,15 +146,16 @@ export default function HubModal({
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכז עזרים</h2>
-        <button
+        <HapticButton
           onClick={onClose}
+          pressScale={0.88}
           className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                     flex items-center justify-center active:scale-90 transition-transform
+                     flex items-center justify-center
                      text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
           aria-label="סגור"
         >
           <X size={20} />
-        </button>
+        </HapticButton>
       </div>
 
       {/* Grid */}
@@ -196,28 +200,29 @@ export default function HubModal({
             }
 
             return (
-              <button
+              <HapticButton
                 key={id}
                 disabled={!enabled}
                 onClick={() => handleItemClick(id)}
                 className={sharedClass}
+                pressScale={enabled ? 0.93 : 1}
               >
                 {content}
-              </button>
+              </HapticButton>
             );
           })}
         </div>
 
         {/* Feedback button */}
-        <button
+        <HapticButton
           onClick={onFeedbackOpen}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
                      border border-emt-red/30 bg-emt-red/10
-                     text-emt-red font-bold text-base active:scale-95 transition-transform"
+                     text-emt-red font-bold text-base"
         >
           <MessageSquare size={22} />
           שליחת משוב
-        </button>
+        </HapticButton>
 
       </div>
     </div>
