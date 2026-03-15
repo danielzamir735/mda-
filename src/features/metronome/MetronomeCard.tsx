@@ -123,17 +123,7 @@ export default function MetronomeCard() {
             onChange={e => setBpm(Number(e.target.value) as BpmValue)}
             className={`bpm-card-slider w-full ${isPlaying ? 'active-play' : 'inactive'}`}
             style={{
-              background: isPlaying
-                ? `linear-gradient(to left,
-                    #F5A623 0%,
-                    #F5A623 ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
-                    rgba(245,158,11,0.18) ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
-                    rgba(245,158,11,0.18) 100%)`
-                : `linear-gradient(to left,
-                    #3b82f6 0%,
-                    #3b82f6 ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
-                    rgba(107,114,128,0.35) ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
-                    rgba(107,114,128,0.35) 100%)`,
+              background: isPlaying ? '#F5A623' : '#3b82f6',
             }}
             aria-label="BPM"
           />
