@@ -1,4 +1,5 @@
 import { FileText, Images, Activity, LayoutGrid, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import { useHaptics } from '../hooks/useHaptics';
 
@@ -7,10 +8,11 @@ interface Props {
   onNotesOpen: () => void;
   onVitalsOpen: () => void;
   onHubOpen: () => void;
-  onSupportOpen: () => void;
+  onSupportOpen?: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
+  const navigate = useNavigate();
   const t = useTranslation();
   const vibrate = useHaptics();
 
@@ -42,7 +44,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
       {/* Support — far right in RTL */}
       <button
-        onClick={() => { vibrate(); onSupportOpen(); }}
+        onClick={() => { vibrate(); navigate('/support'); }}
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2
                    text-rose-400
                    active:scale-95 transition-all duration-150"
