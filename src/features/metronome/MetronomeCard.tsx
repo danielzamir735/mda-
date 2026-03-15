@@ -1,7 +1,54 @@
 import { Play, VolumeX, Volume2, Plus, Minus } from 'lucide-react';
-import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
+import { useMetronomeStore, BPM_VALUES, type BpmValue } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation } from '../../hooks/useTranslation';
+
+// ── slider styles injected once ───────────────────────────────────────────────
+const CARD_CSS = `
+  .bpm-card-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  .bpm-card-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    cursor: pointer;
+    transition: box-shadow 150ms, transform 150ms;
+  }
+  .bpm-card-slider:active::-webkit-slider-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+  }
+  .bpm-card-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    cursor: pointer;
+  }
+  /* inactive (blue) */
+  .bpm-card-slider.inactive::-webkit-slider-thumb { background: #3b82f6; }
+  .bpm-card-slider.inactive::-moz-range-thumb     { background: #3b82f6; }
+  /* active (amber) */
+  .bpm-card-slider.active-play::-webkit-slider-thumb { background: #F5A623; }
+  .bpm-card-slider.active-play::-moz-range-thumb     { background: #F5A623; }
+`;
+if (typeof document !== 'undefined' && !document.getElementById('bpm-card-slider-css')) {
+  const tag = document.createElement('style');
+  tag.id = 'bpm-card-slider-css';
+  tag.textContent = CARD_CSS;
+  document.head.appendChild(tag);
+}
 
 export default function MetronomeCard() {
   useMetronome();
@@ -65,51 +112,37 @@ export default function MetronomeCard() {
           aria-label="הפחת BPM"
         ><Minus size={16} /></button>
 
-        <div className="flex-1 relative flex items-center" style={{ height: 28 }}>
-          {/* track background */}
-          <div
-            className="absolute inset-x-0 rounded-full"
+        {/* slider wrapper — horizontal padding prevents thumb clipping at extremes */}
+        <div className="flex-1 flex flex-col items-stretch gap-1 px-1">
+          <input
+            type="range"
+            min={100}
+            max={120}
+            step={10}
+            value={bpm}
+            onChange={e => setBpm(Number(e.target.value) as BpmValue)}
+            className={`bpm-card-slider w-full ${isPlaying ? 'active-play' : 'inactive'}`}
             style={{
-              height: 6,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.08)',
+              background: isPlaying
+                ? `linear-gradient(to left,
+                    #F5A623 0%,
+                    #F5A623 ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
+                    rgba(245,158,11,0.18) ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
+                    rgba(245,158,11,0.18) 100%)`
+                : `linear-gradient(to left,
+                    #3b82f6 0%,
+                    #3b82f6 ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
+                    rgba(107,114,128,0.35) ${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%,
+                    rgba(107,114,128,0.35) 100%)`,
             }}
+            aria-label="BPM"
           />
-          {/* filled portion — anchored at right so it grows leftward (RTL: 100 on right → 120 on left) */}
-          <div
-            className="absolute right-0 rounded-full transition-all duration-200"
-            style={{
-              height: 6,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
-              backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
-            }}
-          />
-          {/* step dots — right: 0% = 100 BPM (far right in RTL), right: 100% = 120 BPM (far left) */}
-          {BPM_VALUES.map((val, i) => (
-            <button
-              key={val}
-              onClick={() => setBpm(val)}
-              className="absolute transition-all duration-150 active:scale-90"
-              style={{
-                right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
-                transform: 'translate(50%, -50%)',
-                top: '50%',
-                width: bpm === val ? 20 : 14,
-                height: bpm === val ? 20 : 14,
-                borderRadius: '50%',
-                backgroundColor: bpm === val
-                  ? (isPlaying ? '#F5A623' : '#3b82f6')
-                  : (isPlaying ? 'rgba(245,158,11,0.35)' : 'rgba(0,0,0,0.2)'),
-                border: bpm === val ? '2px solid white' : '2px solid transparent',
-                boxShadow: bpm === val ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
-              }}
-              aria-label={`${val} BPM`}
-              aria-pressed={bpm === val}
-            />
-          ))}
+          {/* tick labels */}
+          <div className="flex justify-between text-[0.58rem] font-bold text-gray-400 dark:text-slate-600 tracking-wide select-none" style={{ direction: 'ltr' }}>
+            <span>100</span>
+            <span>110</span>
+            <span>120</span>
+          </div>
         </div>
 
         <button
