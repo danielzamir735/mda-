@@ -1,4 +1,4 @@
-import { X, Heart } from 'lucide-react';
+import { X, Heart, Sparkles } from 'lucide-react';
 import { useModalBackHandler } from '../hooks/useModalBackHandler';
 
 interface Props {
@@ -7,14 +7,15 @@ interface Props {
 }
 
 const FLOATING_HEARTS = [
-  { size: 18, top: '8%',  left: '7%',  delay: '0s',    duration: '4s',   opacity: 0.18 },
-  { size: 12, top: '15%', left: '85%', delay: '0.8s',  duration: '5s',   opacity: 0.14 },
-  { size: 22, top: '30%', left: '92%', delay: '1.4s',  duration: '6s',   opacity: 0.12 },
-  { size: 10, top: '50%', left: '5%',  delay: '2s',    duration: '4.5s', opacity: 0.16 },
-  { size: 16, top: '65%', left: '80%', delay: '0.4s',  duration: '5.5s', opacity: 0.13 },
-  { size: 14, top: '75%', left: '18%', delay: '1.8s',  duration: '4s',   opacity: 0.15 },
-  { size: 20, top: '88%', left: '60%', delay: '1s',    duration: '6.5s', opacity: 0.10 },
-  { size: 11, top: '20%', left: '45%', delay: '2.5s',  duration: '5s',   opacity: 0.12 },
+  { size: 16, top: '6%',  left: '8%',  delay: '0s',    duration: '4.2s', opacity: 0.15 },
+  { size: 10, top: '12%', left: '82%', delay: '1.1s',  duration: '5.5s', opacity: 0.12 },
+  { size: 20, top: '28%', left: '90%', delay: '0.6s',  duration: '6s',   opacity: 0.10 },
+  { size:  9, top: '48%', left: '4%',  delay: '2.2s',  duration: '4.8s', opacity: 0.13 },
+  { size: 14, top: '62%', left: '78%', delay: '0.3s',  duration: '5.2s', opacity: 0.11 },
+  { size: 12, top: '74%', left: '20%', delay: '1.7s',  duration: '4.3s', opacity: 0.14 },
+  { size: 18, top: '86%', left: '58%', delay: '0.9s',  duration: '6.8s', opacity: 0.09 },
+  { size: 11, top: '18%', left: '48%', delay: '2.8s',  duration: '5.1s', opacity: 0.10 },
+  { size:  8, top: '40%', left: '65%', delay: '1.5s',  duration: '4.6s', opacity: 0.12 },
 ];
 
 export default function SupportModal({ isOpen, onClose }: Props) {
@@ -23,22 +24,33 @@ export default function SupportModal({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col" dir="rtl">
-      {/* Full-screen premium background */}
+
+      {/* ── Background layers ── */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(160deg, #0d0d14 0%, #130a1a 40%, #0f0010 70%, #0a0a12 100%)',
+          background:
+            'linear-gradient(170deg, #0c0b14 0%, #11071c 35%, #160823 65%, #0a0b14 100%)',
         }}
       />
-      {/* Radial accent glow */}
+      {/* Warm rose glow — top center */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 70% 50% at 50% 30%, rgba(225,30,80,0.12) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse 75% 55% at 50% 25%, rgba(220,38,90,0.14) 0%, transparent 70%)',
+        }}
+      />
+      {/* Subtle warm bottom accent */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 40% at 50% 90%, rgba(159,18,57,0.08) 0%, transparent 65%)',
         }}
       />
 
-      {/* Floating hearts */}
+      {/* ── Floating hearts ── */}
       {FLOATING_HEARTS.map((h, i) => (
         <div
           key={i}
@@ -54,125 +66,201 @@ export default function SupportModal({ isOpen, onClose }: Props) {
         </div>
       ))}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col flex-1 px-6 pt-safe-top pb-safe-bottom"
-           style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-
-        {/* Close button */}
-        <div className="flex justify-start mb-4">
+      {/* ── Content ── */}
+      <div
+        className="relative z-10 flex flex-col flex-1 px-6"
+        style={{
+          paddingTop: 'max(1.25rem, env(safe-area-inset-top))',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+        }}
+      >
+        {/* Close */}
+        <div className="flex justify-start mb-2">
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/15
-                       flex items-center justify-center active:scale-90 transition-transform
-                       text-white/50 hover:text-white"
+            className="w-10 h-10 rounded-full bg-white/8 border border-white/12
+                       flex items-center justify-center active:scale-90
+                       transition-all duration-200 text-white/40 hover:text-white/70
+                       hover:bg-white/12"
             aria-label="סגור"
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         </div>
 
-        {/* Hero section */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-8">
+        {/* ── Hero ── */}
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-7">
 
-          {/* Heart icon cluster */}
-          <div className="relative flex items-center justify-center">
+          {/* Pulsing heart cluster — NO title below */}
+          <div className="relative flex items-center justify-center" style={{ height: 130 }}>
+            {/* Outermost ring — slow fade */}
             <div
-              className="absolute rounded-full bg-rose-500/10 animate-ping"
-              style={{ width: 110, height: 110, animationDuration: '2.8s' }}
+              className="absolute rounded-full border border-rose-500/15"
+              style={{ width: 120, height: 120, animation: 'ringExpand 3s ease-out infinite' }}
             />
+            {/* Ping ring 1 */}
             <div
-              className="absolute rounded-full bg-rose-500/20 animate-ping"
-              style={{ width: 80, height: 80, animationDuration: '2.8s', animationDelay: '0.6s' }}
+              className="absolute rounded-full bg-rose-500/8"
+              style={{ width: 100, height: 100, animation: 'heartPing 2.6s ease-in-out infinite' }}
             />
+            {/* Ping ring 2 — offset */}
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ background: 'radial-gradient(circle, rgba(225,30,80,0.3) 0%, rgba(225,30,80,0.08) 100%)' }}
-            >
-              <Heart size={34} className="text-rose-400" fill="currentColor" style={{ filter: 'drop-shadow(0 0 10px rgba(225,30,80,0.8))' }} />
-            </div>
+              className="absolute rounded-full bg-rose-400/12"
+              style={{ width: 76, height: 76, animation: 'heartPing 2.6s ease-in-out 0.55s infinite' }}
+            />
+            {/* Glass circle behind icon */}
+            <div
+              className="absolute rounded-full"
+              style={{
+                width: 72,
+                height: 72,
+                background:
+                  'radial-gradient(circle at 40% 35%, rgba(255,80,110,0.28) 0%, rgba(200,30,80,0.12) 60%, transparent 100%)',
+                border: '1px solid rgba(255,100,130,0.18)',
+                backdropFilter: 'blur(4px)',
+              }}
+            />
+            {/* Heart icon */}
+            <Heart
+              size={36}
+              className="text-rose-400 relative z-10"
+              fill="currentColor"
+              style={{
+                filter: 'drop-shadow(0 0 14px rgba(220,38,90,0.85)) drop-shadow(0 0 4px rgba(255,120,150,0.5))',
+                animation: 'heartbeat 2.6s ease-in-out infinite',
+              }}
+            />
           </div>
 
-          {/* Headline */}
-          <div className="flex flex-col gap-3">
-            <h1 className="text-white font-black text-3xl leading-tight tracking-tight">
-              תמכו במשימה
-            </h1>
-            <div
-              className="h-0.5 w-16 mx-auto rounded-full"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(225,30,80,0.7), transparent)' }}
-            />
-          </div>
-
-          {/* Copy block */}
-          <div className="flex flex-col gap-4 max-w-xs">
-            <p className="text-white/85 text-lg leading-relaxed font-medium">
-              האפליקציה הזו נולדה מתוך רצון אחד פשוט —
+          {/* Copy */}
+          <div className="flex flex-col gap-5 max-w-[17rem]">
+            <p className="text-white/90 text-xl leading-snug font-semibold tracking-tight">
+              האפליקציה הזו נולדה מתוך<br />רצון אחד פשוט —
             </p>
-            <p className="text-rose-300 font-bold text-xl leading-snug">
+            <p
+              className="font-black text-2xl leading-snug"
+              style={{
+                background: 'linear-gradient(135deg, #fb7185 0%, #f43f5e 50%, #e11d48 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               לעזור לחובשים להציל חיים.
             </p>
-            <p className="text-white/60 text-base leading-relaxed">
+
+            {/* Divider */}
+            <div
+              className="h-px mx-auto w-20 rounded-full"
+              style={{
+                background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.5), transparent)',
+              }}
+            />
+
+            <p className="text-white/55 text-sm leading-relaxed">
               פותחה בהתנדבות מלאה, בחינם לכל הצוות הרפואי, ללא מטרות רווח.
             </p>
-            <p className="text-white/45 text-sm leading-relaxed">
+            <p className="text-white/38 text-xs leading-relaxed">
               כל תמיכה — גדולה כקטנה — שומרת את האפליקציה חיה ומתפתחת עבורכם.
             </p>
           </div>
 
-          {/* Donation buttons */}
-          <div className="flex flex-col gap-4 w-full max-w-xs">
+          {/* ── Donation buttons ── */}
+          <div className="flex flex-col gap-3.5 w-full max-w-[17rem]">
+
+            {/* Bit */}
             <a
               href="https://bit.co.il"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 font-black text-lg rounded-2xl px-6 py-5
-                         text-white active:scale-[0.96] transition-transform shadow-xl
-                         hover:brightness-110"
+              className="relative overflow-hidden flex items-center justify-center gap-3
+                         rounded-2xl px-6 py-5 text-white font-black text-xl
+                         active:scale-[0.96] transition-transform duration-150
+                         select-none"
               style={{
-                background: 'linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%)',
-                boxShadow: '0 8px 32px rgba(26,115,232,0.4)',
-                animation: 'subtleBounce 3s ease-in-out 0.5s infinite',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%, #1e40af 100%)',
+                boxShadow: '0 10px 40px rgba(37,99,235,0.45), 0 2px 8px rgba(0,0,0,0.3)',
+                animation: 'floatBtn 3.4s ease-in-out 0.4s infinite',
               }}
             >
-              <Heart size={22} fill="currentColor" className="text-blue-200" />
-              תרומה בביט
+              {/* Shimmer */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.10) 50%, transparent 65%)',
+                  animation: 'shimmer 3.4s linear 0.4s infinite',
+                }}
+              />
+              <Heart size={24} fill="currentColor" className="text-blue-200 relative z-10" />
+              <span className="relative z-10">תרומה בביט</span>
             </a>
 
+            {/* PayBox */}
             <a
               href="https://www.paybox.co.il"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 font-black text-lg rounded-2xl px-6 py-5
-                         text-white active:scale-[0.96] transition-transform shadow-xl
-                         hover:brightness-110"
+              className="relative overflow-hidden flex items-center justify-center gap-3
+                         rounded-2xl px-6 py-5 text-white font-black text-xl
+                         active:scale-[0.96] transition-transform duration-150
+                         select-none"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
-                boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
-                animation: 'subtleBounce 3s ease-in-out 1.2s infinite',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 60%, #5b21b6 100%)',
+                boxShadow: '0 10px 40px rgba(124,58,237,0.45), 0 2px 8px rgba(0,0,0,0.3)',
+                animation: 'floatBtn 3.4s ease-in-out 1.3s infinite',
               }}
             >
-              <Heart size={22} fill="currentColor" className="text-purple-200" />
-              תרומה ב-PayBox
+              {/* Shimmer */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.10) 50%, transparent 65%)',
+                  animation: 'shimmer 3.4s linear 1.3s infinite',
+                }}
+              />
+              <Sparkles size={22} className="text-purple-200 relative z-10" />
+              <span className="relative z-10">תרומה ב-PayBox</span>
             </a>
+
           </div>
 
-          {/* Footer note */}
-          <p className="text-white/25 text-xs leading-relaxed pb-2">
+          {/* Footer */}
+          <p className="text-white/22 text-xs pb-1">
             תודה מעומק הלב על כל תמיכה 🙏
           </p>
 
         </div>
       </div>
 
-      {/* CSS animations */}
+      {/* ── Keyframes ── */}
       <style>{`
         @keyframes floatHeart {
-          0%   { transform: translateY(0px) rotate(-8deg) scale(1); }
-          100% { transform: translateY(-18px) rotate(8deg) scale(1.1); }
+          0%   { transform: translateY(0px)   rotate(-7deg) scale(1);   }
+          100% { transform: translateY(-16px) rotate(7deg)  scale(1.12); }
         }
-        @keyframes subtleBounce {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-4px); }
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1);    }
+          14%       { transform: scale(1.18); }
+          28%       { transform: scale(1);    }
+          42%       { transform: scale(1.10); }
+          56%       { transform: scale(1);    }
+        }
+        @keyframes heartPing {
+          0%        { transform: scale(0.85); opacity: 0.7; }
+          60%, 100% { transform: scale(1.35); opacity: 0;   }
+        }
+        @keyframes ringExpand {
+          0%        { transform: scale(0.9);  opacity: 0.6; }
+          70%, 100% { transform: scale(1.45); opacity: 0;   }
+        }
+        @keyframes floatBtn {
+          0%, 100% { transform: translateY(0px);  }
+          50%      { transform: translateY(-5px); }
+        }
+        @keyframes shimmer {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(200%);  }
         }
       `}</style>
     </div>
