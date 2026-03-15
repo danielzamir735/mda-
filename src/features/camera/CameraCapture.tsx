@@ -12,6 +12,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captured, setCaptured] = useState(false);
+  const [flash, setFlash] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -53,14 +54,20 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     onPhoto(dataUrl);
+    // Shutter flash
+    setFlash(true);
+    setTimeout(() => setFlash(false), 150);
+    // Show frozen frame briefly, then auto-close
     setCaptured(true);
-    setTimeout(() => {
-      onClose();
-    }, 800);
+    setTimeout(() => onClose(), 650);
   };
 
   return (
     <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+      {/* Shutter flash overlay */}
+      {flash && (
+        <div className="absolute inset-0 z-20 bg-white pointer-events-none" style={{ opacity: 0.85 }} />
+      )}
       <button
         onClick={handleClose}
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full

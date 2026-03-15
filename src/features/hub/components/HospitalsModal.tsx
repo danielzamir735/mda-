@@ -71,11 +71,10 @@ function NearestERButton() {
           href={"geo:0,0?q=" + encodeURIComponent("חדר מיון")}
           className="relative z-10 flex flex-col items-center justify-center gap-1.5
                      w-28 h-28 rounded-full text-white font-black text-center
-                     active:scale-90 transition-transform animate-pulse"
+                     active:scale-90 transition-transform"
           style={{
             background: 'linear-gradient(135deg, #ef233c 0%, #b01020 100%)',
             boxShadow: '0 6px 32px rgba(239,35,60,0.7), 0 0 0 3px rgba(239,35,60,0.3)',
-            animationDuration: '2.5s',
           }}
         >
           <Navigation size={28} strokeWidth={2.5} />
