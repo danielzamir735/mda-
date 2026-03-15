@@ -1,7 +1,6 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../store/settingsStore';
-import { useHaptics } from '../../hooks/useHaptics';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 
@@ -127,7 +126,6 @@ export default function HubModal({
   onBagStandardsOpen,
 }: Props) {
   const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
-  const vibrate = useHaptics();
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
