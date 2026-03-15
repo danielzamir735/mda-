@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, Navigation } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
@@ -116,6 +116,21 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+
+        {/* Nearest ER navigation — always visible at top */}
+        <a
+          href={"geo:0,0?q=" + encodeURIComponent("מיון בית חולים")}
+          className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl font-black text-base text-white active:scale-95 transition-transform mb-3 block"
+          style={{
+            background: 'linear-gradient(135deg, #ef233c 0%, #b91c2e 100%)',
+            boxShadow: '0 4px 20px rgba(239,35,60,0.45)',
+            textDecoration: 'none',
+          }}
+        >
+          <Navigation size={20} />
+          ניווט למיון הקרוב ביותר
+        </a>
+
         {empty && (
           <p className="text-center text-gray-500 dark:text-emt-muted py-12 text-sm">{t('noHospitalsFound')}</p>
         )}

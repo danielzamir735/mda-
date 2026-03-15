@@ -4,11 +4,44 @@ import { useMetronomeStore, type BpmValue } from '../../store/metronomeStore';
 import type { ShockLog } from '../../store/vitalsLogStore';
 import { useTranslation } from '../../hooks/useTranslation';
 
-// ── global keyframes (injected once) ─────────────────────────────────────────
+// ── global keyframes + slider styles (injected once) ─────────────────────────
 const CSS = `
   @keyframes cpr-modal-in {
     from { opacity: 0; transform: scale(0.94) translateY(14px); }
     to   { opacity: 1; transform: scale(1)    translateY(0);    }
+  }
+  .bpm-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+  .bpm-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f5c842;
+    border: 2.5px solid #1a0800;
+    box-shadow: 0 0 12px rgba(245,200,66,0.7);
+    cursor: pointer;
+    transition: box-shadow 150ms;
+  }
+  .bpm-slider:active::-webkit-slider-thumb {
+    box-shadow: 0 0 22px rgba(245,200,66,0.95);
+    transform: scale(1.12);
+  }
+  .bpm-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f5c842;
+    border: 2.5px solid #1a0800;
+    box-shadow: 0 0 12px rgba(245,200,66,0.7);
+    cursor: pointer;
   }
 `;
 if (typeof document !== 'undefined' && !document.getElementById('cpr-anim')) {
@@ -276,34 +309,78 @@ export default function CPRTimerOverlay() {
           </span>
         </button>
 
-        {/* BPM quick-select — directly under shock button */}
-        <div
-          className="flex items-center p-1 rounded-2xl mt-5"
-          style={{
-            backgroundColor: 'rgba(20,20,35,0.75)',
-            border: '1.5px solid rgba(100,100,150,0.22)',
-          }}
-        >
-          {([100, 110, 120] as BpmValue[]).map((value) => {
-            const active = bpm === value;
-            return (
-              <button
-                key={value}
-                onClick={() => setBpm(value)}
-                className="px-5 py-2.5 rounded-xl font-black text-sm transition-all active:scale-95"
-                style={{
-                  backgroundColor: active ? 'rgba(245,158,11,0.22)' : 'transparent',
-                  color: active ? '#f5c842' : '#6b7280',
-                  border: active ? '1.5px solid rgba(245,158,11,0.5)' : '1.5px solid transparent',
-                  boxShadow: active ? '0 0 14px rgba(245,158,11,0.18)' : 'none',
-                }}
-                aria-pressed={active}
-                aria-label={`${value} BPM`}
-              >
-                {value} <span style={{ fontWeight: 500, opacity: 0.7 }}>BPM</span>
-              </button>
-            );
-          })}
+        {/* BPM controller — circular ± buttons + visual slider */}
+        <div className="flex flex-col items-center gap-1.5 mt-5">
+          {/* current BPM label */}
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono font-black text-3xl leading-none" style={{ color: '#f5c842' }}>
+              {bpm}
+            </span>
+            <span className="text-slate-400 text-sm font-semibold">BPM</span>
+          </div>
+
+          {/* track row */}
+          <div className="flex items-center gap-3">
+            {/* − button */}
+            <button
+              onClick={() => bpm > 100 && setBpm((bpm - 10) as BpmValue)}
+              disabled={bpm === 100}
+              className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl active:scale-90 transition-all"
+              style={{
+                backgroundColor: 'rgba(245,158,11,0.15)',
+                border: '2px solid rgba(245,158,11,0.4)',
+                color: bpm === 100 ? '#4b5563' : '#f5c842',
+              }}
+              aria-label="BPM down"
+            >
+              −
+            </button>
+
+            {/* range slider */}
+            <input
+              type="range"
+              min={100}
+              max={120}
+              step={10}
+              value={bpm}
+              onChange={e => setBpm(Number(e.target.value) as BpmValue)}
+              className="bpm-slider"
+              style={{
+                width: 130,
+                background: `linear-gradient(to right,
+                  #f59e0b 0%,
+                  #f59e0b ${(bpm - 100) / 20 * 100}%,
+                  rgba(100,100,150,0.35) ${(bpm - 100) / 20 * 100}%,
+                  rgba(100,100,150,0.35) 100%)`,
+              }}
+              aria-label="BPM"
+            />
+
+            {/* + button */}
+            <button
+              onClick={() => bpm < 120 && setBpm((bpm + 10) as BpmValue)}
+              disabled={bpm === 120}
+              className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl active:scale-90 transition-all"
+              style={{
+                backgroundColor: 'rgba(245,158,11,0.15)',
+                border: '2px solid rgba(245,158,11,0.4)',
+                color: bpm === 120 ? '#4b5563' : '#f5c842',
+              }}
+              aria-label="BPM up"
+            >
+              +
+            </button>
+          </div>
+
+          {/* tick labels */}
+          <div
+            className="flex justify-between text-[0.6rem] font-black text-slate-600 tracking-wide"
+            style={{ width: 186 }}
+          >
+            <span>100</span>
+            <span>110</span>
+            <span>120</span>
+          </div>
         </div>
 
         {/* linear shock counter badges */}
