@@ -1,92 +1,123 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { X, Check } from 'lucide-react';
+import { useCameraStore } from '../../store/cameraStore';
 
 interface Props {
   onClose: () => void;
-  onPhoto: (dataUrl: string) => void;
 }
 
-export default function CameraCapture({ onClose, onPhoto }: Props) {
+export default function CameraCapture({ onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captured, setCaptured] = useState(false);
 
+  const addPhoto = useCameraStore((s) => s.addPhoto);
+
+  // Start camera stream
   useEffect(() => {
-    let active = true;
+    let cancelled = false;
 
     navigator.mediaDevices
       .getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 4096 }, height: { ideal: 2160 } },
         audio: false,
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 3840 },
+          height: { ideal: 2160 },
+        },
       })
       .then((stream) => {
-        if (!active) {
+        if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => setReady(true);
+        const video = videoRef.current;
+        if (video) {
+          video.srcObject = stream;
+          video.onloadedmetadata = () => {
+            video.play().then(() => setReady(true)).catch(() => setReady(true));
+          };
         }
       })
-      .catch(() => setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.'));
+      .catch(() => {
+        if (!cancelled) setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.');
+      });
 
     return () => {
-      active = false;
+      cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
   }, []);
 
-  const handleClose = () => {
+  const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+  }, []);
+
+  const handleClose = useCallback(() => {
+    stopStream();
     onClose();
-  };
+  }, [stopStream, onClose]);
 
-  const handleCapture = () => {
-    if (!videoRef.current || !ready || captured) return;
+  const handleShutter = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !ready || isDone) return;
 
-    // (a) Draw at native resolution
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+    try {
+      // a) Canvas at native stream resolution
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    // (b) Save to gallery
-    onPhoto(dataUrl);
+      // b) Draw current frame
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('canvas context unavailable');
+      ctx.drawImage(video, 0, 0);
 
-    // (c) Show green checkmark
-    setCaptured(true);
+      // c) High-quality JPEG dataURL
+      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
 
-    // (d) Auto-close after exactly 700ms
-    setTimeout(() => {
-      handleClose();
-    }, 700);
-  };
+      // d) Save to global images state
+      addPhoto(dataUrl);
+
+      // e) Mark capture as done → show green checkmark
+      setIsDone(true);
+
+      // f) Stop stream and close after 700ms
+      setTimeout(() => {
+        stopStream();
+        onClose();
+      }, 700);
+    } catch (err) {
+      console.error('Capture failed:', err);
+      setError('שגיאה בצילום. נסה שוב.');
+    }
+  }, [ready, isDone, addPhoto, stopStream, onClose]);
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
-      {/* Close button */}
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col overflow-hidden">
+
+      {/* Close (X) button — top right */}
       <button
         onClick={handleClose}
-        className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
+        aria-label="סגור מצלמה"
+        className="absolute top-4 right-4 z-10
+                   w-11 h-11 rounded-full
                    bg-black/60 backdrop-blur-sm border border-white/20
                    flex items-center justify-center text-white
                    active:scale-90 transition-transform"
-        aria-label="סגור מצלמה"
       >
         <X size={22} />
       </button>
 
-      {/* Video feed or error */}
+      {/* Video feed */}
       {error ? (
         <div className="flex-1 flex items-center justify-center px-8">
-          <p className="text-white text-center text-base">{error}</p>
+          <p className="text-white text-center text-base leading-relaxed">{error}</p>
         </div>
       ) : (
         <video
@@ -98,25 +129,27 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
         />
       )}
 
-      {/* Shutter button */}
-      <div className="absolute bottom-10 inset-x-0 flex justify-center">
-        {!captured ? (
-          <button
-            onClick={handleCapture}
-            disabled={!ready || !!error}
-            className="w-20 h-20 rounded-full bg-white
-                       flex items-center justify-center
-                       active:scale-90 transition-transform duration-150
-                       disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="צלם תמונה"
-          />
-        ) : (
+      {/* Shutter / Done button — bottom center */}
+      <div className="absolute bottom-10 inset-x-0 flex justify-center pointer-events-none">
+        {isDone ? (
+          /* Solid green circle with white checkmark */
           <div
             className="w-20 h-20 rounded-full bg-green-500
                        flex items-center justify-center"
           >
-            <Check size={38} strokeWidth={3} className="text-white" />
+            <Check size={40} strokeWidth={3} className="text-white" />
           </div>
+        ) : (
+          /* Large white solid shutter button */
+          <button
+            onClick={handleShutter}
+            disabled={!ready || !!error}
+            aria-label="צלם תמונה"
+            className="pointer-events-auto
+                       w-20 h-20 rounded-full bg-white
+                       active:scale-90 transition-transform duration-100
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          />
         )}
       </div>
     </div>
