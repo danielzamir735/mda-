@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { useCameraStore } from '../../store/cameraStore';
 
@@ -15,7 +15,6 @@ export default function CameraCapture({ onClose }: Props) {
 
   const addPhoto = useCameraStore((s) => s.addPhoto);
 
-  // Start camera stream
   useEffect(() => {
     let cancelled = false;
 
@@ -29,18 +28,14 @@ export default function CameraCapture({ onClose }: Props) {
         },
       })
       .then((stream) => {
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
+        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         const video = videoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          video.onloadedmetadata = () => {
-            video.play().then(() => setReady(true)).catch(() => setReady(true));
-          };
-        }
+        if (!video) return;
+        video.srcObject = stream;
+        // 'playing' fires only when the browser is actually rendering frames
+        // — at this point videoWidth/videoHeight are guaranteed > 0
+        video.onplaying = () => { if (!cancelled) setReady(true); };
       })
       .catch(() => {
         if (!cancelled) setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.');
@@ -53,60 +48,45 @@ export default function CameraCapture({ onClose }: Props) {
     };
   }, []);
 
-  const stopStream = useCallback(() => {
+  function stopAndClose() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-  }, []);
-
-  const handleClose = useCallback(() => {
-    stopStream();
     onClose();
-  }, [stopStream, onClose]);
+  }
 
-  const handleShutter = useCallback(() => {
+  function handleShutter() {
     const video = videoRef.current;
     if (!video || !ready || isDone) return;
 
-    try {
-      // a) Canvas at native stream resolution
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
 
-      // b) Draw current frame
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('canvas context unavailable');
-      ctx.drawImage(video, 0, 0);
-
-      // c) High-quality JPEG dataURL
-      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
-
-      // d) Save to global images state
-      addPhoto(dataUrl);
-
-      // e) Mark capture as done → show green checkmark
-      setIsDone(true);
-
-      // f) Stop stream and close after 700ms
-      setTimeout(() => {
-        stopStream();
-        onClose();
-      }, 700);
-    } catch (err) {
-      console.error('Capture failed:', err);
-      setError('שגיאה בצילום. נסה שוב.');
+    if (!w || !h) {
+      setError('המצלמה טרם מוכנה. נסה שוב.');
+      return;
     }
-  }, [ready, isDone, addPhoto, stopStream, onClose]);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(video, 0, 0, w, h);
+    const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+
+    addPhoto(dataUrl);
+    setIsDone(true);
+
+    setTimeout(stopAndClose, 700);
+  }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
 
-      {/* Close (X) button — top right */}
+      {/* X — top right */}
       <button
-        onClick={handleClose}
+        onClick={stopAndClose}
         aria-label="סגור מצלמה"
-        className="absolute top-4 right-4 z-10
-                   w-11 h-11 rounded-full
+        className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
                    bg-black/60 backdrop-blur-sm border border-white/20
                    flex items-center justify-center text-white
                    active:scale-90 transition-transform"
@@ -114,7 +94,7 @@ export default function CameraCapture({ onClose }: Props) {
         <X size={22} />
       </button>
 
-      {/* Video feed */}
+      {/* Video / Error */}
       {error ? (
         <div className="flex-1 flex items-center justify-center px-8">
           <p className="text-white text-center text-base leading-relaxed">{error}</p>
@@ -129,29 +109,24 @@ export default function CameraCapture({ onClose }: Props) {
         />
       )}
 
-      {/* Shutter / Done button — bottom center */}
-      <div className="absolute bottom-10 inset-x-0 flex justify-center pointer-events-none">
+      {/* Shutter button — bottom center */}
+      <div className="absolute bottom-10 inset-x-0 flex justify-center">
         {isDone ? (
-          /* Solid green circle with white checkmark */
-          <div
-            className="w-20 h-20 rounded-full bg-green-500
-                       flex items-center justify-center"
-          >
+          <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
             <Check size={40} strokeWidth={3} className="text-white" />
           </div>
         ) : (
-          /* Large white solid shutter button */
           <button
             onClick={handleShutter}
             disabled={!ready || !!error}
             aria-label="צלם תמונה"
-            className="pointer-events-auto
-                       w-20 h-20 rounded-full bg-white
+            className="w-20 h-20 rounded-full bg-white
                        active:scale-90 transition-transform duration-100
                        disabled:opacity-40 disabled:cursor-not-allowed"
           />
         )}
       </div>
+
     </div>
   );
 }
