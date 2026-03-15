@@ -51,17 +51,23 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
-    // Save image immediately
+
+    // Step 1: Save image to gallery BEFORE anything else
     onPhoto(dataUrl);
-    // Stop stream after capture
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    // Shutter flash
+
+    // Step 2: Shutter flash
     setFlash(true);
     setTimeout(() => setFlash(false), 150);
-    // Show success state, then auto-close
+
+    // Step 3: Show green checkmark
     setIsCaptured(true);
-    setTimeout(() => { closeCameraModal(); }, 800);
+
+    // Step 4: After 600ms — stop stream and close modal
+    setTimeout(() => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      onClose();
+    }, 600);
   };
 
   return (
