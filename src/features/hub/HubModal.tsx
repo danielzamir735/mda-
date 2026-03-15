@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList, Heart, CreditCard } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { LucideIcon } from 'lucide-react';
@@ -218,6 +218,40 @@ export default function HubModal({
           <MessageSquare size={22} />
           שליחת משוב
         </button>
+
+        {/* Support Us */}
+        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Heart size={18} className="text-yellow-500" />
+            <span className="text-base font-bold text-yellow-500">תרומה ותמיכה</span>
+            <Heart size={18} className="text-yellow-500" />
+          </div>
+          <p className="text-sm text-gray-600 dark:text-emt-muted leading-relaxed mb-4">
+            אפליקציה זו פותחה בהתנדבות וללא מטרות רווח, כדי לשמש כלי עזר מציל חיים בשטח.
+            תחזוקת השרתים, פיתוח הפיצ'רים והעלאת אפליקציה רשמית לחנויות כרוכים בעלויות.
+            נשמח לתמיכתכם כדי שנוכל להמשיך לפתח ולהשתפר! כל תרומה עוזרת.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="#TODO_BIT_LINK"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
+                         bg-teal-500 hover:bg-teal-400 text-white font-bold text-base
+                         active:scale-95 transition-transform"
+            >
+              <Heart size={20} />
+              תרומה בביט
+            </a>
+            <a
+              href="#TODO_PAYBOX_LINK"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
+                         bg-purple-600 hover:bg-purple-500 text-white font-bold text-base
+                         active:scale-95 transition-transform"
+            >
+              <CreditCard size={20} />
+              תרומה בפייבוקס
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
