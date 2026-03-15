@@ -39,7 +39,7 @@ export default function UpdateModal({ onUpdate }: Props) {
         </div>
 
         {/* Text block */}
-        <div className="text-center flex flex-col gap-2">
+        <div className="text-center flex flex-col gap-3">
           <h2 className="text-emt-light font-black text-2xl tracking-tight">
             עדכון זמין
           </h2>
@@ -48,6 +48,16 @@ export default function UpdateModal({ onUpdate }: Props) {
             <br />
             העדכון ייקח שנייה אחת בלבד.
           </p>
+
+          {/* Reassurance notes */}
+          <div className="mt-1 flex flex-col gap-2 border-t border-white/8 pt-3">
+            <p className="text-xs leading-relaxed text-white/45">
+              אל דאגה, העדכון בטוח ולא ימחק נתונים שהזנתם באפליקציה.
+            </p>
+            <p className="text-xs leading-relaxed text-white/35">
+              ניתן לראות את פירוט החידושים במסך ״מה חדש״ תחת תפריט כלים.
+            </p>
+          </div>
         </div>
 
         {/* Update button */}

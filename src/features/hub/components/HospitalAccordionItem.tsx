@@ -7,7 +7,11 @@ export interface Hospital {
   city: string;
   central: string;
   er: string;
-  hasSeparateERs?: boolean;
+  navQueries?: {
+    general: string;
+    pediatric: string;
+    maternity?: string;
+  };
 }
 
 interface Props {
@@ -46,15 +50,14 @@ function PhoneRow({
   );
 }
 
-function erUrl(prefix: string, name: string, city: string) {
-  return 'geo:0,0?q=' + encodeURIComponent(prefix + ' ' + name + ' ' + city);
+function navUrl(query: string) {
+  return 'geo:0,0?q=' + encodeURIComponent(query);
 }
 
 export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onToggle }: Props) {
   const t = useTranslation();
   const [showERChoice, setShowERChoice] = useState(false);
 
-  // Reset sub-menu when accordion closes
   function handleToggle() {
     if (isOpen) setShowERChoice(false);
     onToggle();
@@ -98,9 +101,9 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
           <PhoneRow number={hospital.central} label={t('hospitalCentral')} icon={<Phone size={20} />} />
           <PhoneRow number={hospital.er} label={t('hospitalER')} icon={<PhoneCall size={20} />} />
 
-          {hospital.hasSeparateERs ? (
+          {hospital.navQueries ? (
             showERChoice ? (
-              /* Sub-menu: 3 ER type buttons */
+              /* Sub-menu: ER type buttons using exact search queries */
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between px-1 pb-0.5">
                   <span className="text-gray-500 dark:text-emt-muted text-xs">בחר/י סוג מיון לניווט</span>
@@ -115,7 +118,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                 </div>
 
                 <a
-                  href={erUrl('מיון', hospital.name, hospital.city)}
+                  href={navUrl(hospital.navQueries.general)}
                   className="flex items-center gap-3 w-full rounded-xl px-4 py-4
                              bg-blue-600 dark:bg-blue-600 border border-blue-500
                              active:scale-95 transition-transform"
@@ -125,7 +128,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                 </a>
 
                 <a
-                  href={erUrl('מיון ילדים', hospital.name, hospital.city)}
+                  href={navUrl(hospital.navQueries.pediatric)}
                   className="flex items-center gap-3 w-full rounded-xl px-4 py-4
                              bg-emerald-600 dark:bg-emerald-600 border border-emerald-500
                              active:scale-95 transition-transform"
@@ -134,18 +137,20 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                   <span className="text-white font-bold text-base">מיון ילדים</span>
                 </a>
 
-                <a
-                  href={erUrl('מיון יולדות', hospital.name, hospital.city)}
-                  className="flex items-center gap-3 w-full rounded-xl px-4 py-4
-                             bg-purple-600 dark:bg-purple-600 border border-purple-500
-                             active:scale-95 transition-transform"
-                >
-                  <Navigation size={20} className="text-white shrink-0" />
-                  <span className="text-white font-bold text-base">מיון יולדות</span>
-                </a>
+                {hospital.navQueries.maternity && (
+                  <a
+                    href={navUrl(hospital.navQueries.maternity)}
+                    className="flex items-center gap-3 w-full rounded-xl px-4 py-4
+                               bg-purple-600 dark:bg-purple-600 border border-purple-500
+                               active:scale-95 transition-transform"
+                  >
+                    <Navigation size={20} className="text-white shrink-0" />
+                    <span className="text-white font-bold text-base">מיון יולדות</span>
+                  </a>
+                )}
               </div>
             ) : (
-              /* Trigger button — shows sub-menu */
+              /* Trigger button — opens ER type sub-menu */
               <button
                 onClick={() => setShowERChoice(true)}
                 className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
@@ -157,9 +162,9 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
               </button>
             )
           ) : (
-            /* Single direct nav link */
+            /* Single direct nav link — searches hospital name + city */
             <a
-              href={erUrl('מיון', hospital.name, hospital.city)}
+              href={navUrl('מיון ' + hospital.name + ' ' + hospital.city)}
               className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
                          bg-blue-600/15 border border-blue-500/40
                          active:scale-95 transition-transform"
