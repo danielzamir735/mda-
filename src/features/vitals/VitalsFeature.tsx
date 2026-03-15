@@ -106,15 +106,6 @@ export default function VitalsFeature() {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
-      {/* Top bar */}
-      <header className="shrink-0 flex items-center justify-center px-3 py-1.5
-                         border-b border-gray-200/60 dark:border-emt-border/60
-                         bg-gray-100/80 dark:bg-emt-gray/80 backdrop-blur-sm">
-        <span className="text-gray-800 dark:text-emt-light font-black text-sm tracking-wide">
-          עוזר חובש
-        </span>
-      </header>
-
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
         {!isMetronomePlaying && (
           <>
