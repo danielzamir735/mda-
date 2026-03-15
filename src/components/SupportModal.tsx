@@ -9,15 +9,17 @@ interface Props {
 }
 
 const PARTICLES = [
-  { w: 5, h: 5, top: '5%',  left: '8%',  delay: 0,   dur: 5.2, color: 'rgba(244,63,94,0.7)'  },
-  { w: 3, h: 3, top: '13%', left: '78%', delay: 1.2, dur: 6.8, color: 'rgba(251,146,60,0.6)'  },
-  { w: 6, h: 6, top: '26%', left: '91%', delay: 0.5, dur: 4.9, color: 'rgba(244,63,94,0.5)'  },
-  { w: 4, h: 4, top: '42%', left: '5%',  delay: 2.1, dur: 5.6, color: 'rgba(168,85,247,0.6)' },
-  { w: 3, h: 3, top: '59%', left: '84%', delay: 1.5, dur: 7.1, color: 'rgba(244,63,94,0.6)'  },
-  { w: 4, h: 4, top: '72%', left: '17%', delay: 0.8, dur: 5.3, color: 'rgba(251,146,60,0.5)' },
-  { w: 6, h: 6, top: '86%', left: '55%', delay: 2.9, dur: 6.1, color: 'rgba(244,63,94,0.5)'  },
-  { w: 3, h: 3, top: '20%', left: '43%', delay: 1.8, dur: 4.6, color: 'rgba(168,85,247,0.5)' },
-  { w: 5, h: 5, top: '64%', left: '66%', delay: 3.3, dur: 5.9, color: 'rgba(251,146,60,0.6)' },
+  { w: 4, h: 4, top: '5%',  left: '8%',  delay: 0,   dur: 6.2, color: 'rgba(147,197,253,0.85)' },
+  { w: 2, h: 2, top: '13%', left: '78%', delay: 1.2, dur: 7.8, color: 'rgba(255,255,255,0.70)'  },
+  { w: 5, h: 5, top: '26%', left: '91%', delay: 0.5, dur: 5.9, color: 'rgba(186,230,253,0.65)'  },
+  { w: 3, h: 3, top: '42%', left: '5%',  delay: 2.1, dur: 6.6, color: 'rgba(167,243,208,0.60)'  },
+  { w: 2, h: 2, top: '59%', left: '84%', delay: 1.5, dur: 8.1, color: 'rgba(255,255,255,0.55)'  },
+  { w: 4, h: 4, top: '72%', left: '17%', delay: 0.8, dur: 6.3, color: 'rgba(147,197,253,0.70)'  },
+  { w: 5, h: 5, top: '86%', left: '55%', delay: 2.9, dur: 7.1, color: 'rgba(186,230,253,0.50)'  },
+  { w: 2, h: 2, top: '20%', left: '43%', delay: 1.8, dur: 5.6, color: 'rgba(255,255,255,0.45)'  },
+  { w: 3, h: 3, top: '64%', left: '66%', delay: 3.3, dur: 6.9, color: 'rgba(167,243,208,0.65)'  },
+  { w: 2, h: 2, top: '34%', left: '29%', delay: 2.5, dur: 7.4, color: 'rgba(147,197,253,0.55)'  },
+  { w: 3, h: 3, top: '78%', left: '37%', delay: 0.3, dur: 5.8, color: 'rgba(255,255,255,0.50)'  },
 ];
 
 const containerVariants: Variants = {
@@ -48,7 +50,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
     setCount(0);
     setCountDone(false);
     const TARGET = 2000;
-    const DURATION = 1800; // ms
+    const DURATION = 1800;
     const STEP = 16;
     const increment = TARGET / (DURATION / STEP);
     let current = 0;
@@ -76,18 +78,24 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden" dir="rtl">
 
-      {/* ══ BACKGROUND ══ */}
+      {/* ══ BACKGROUND — deep dark blue-black ══ */}
       <div className="absolute inset-0" style={{
-        background: 'linear-gradient(155deg, #09050f 0%, #130410 38%, #0f0608 65%, #080408 100%)',
+        background: 'linear-gradient(155deg, #020817 0%, #050d1f 25%, #030a18 55%, #040b1a 80%, #020712 100%)',
       }} />
+      {/* Top atmospheric glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 110% 60% at 50% -5%, rgba(244,63,94,0.22) 0%, transparent 65%)',
+        background: 'radial-gradient(ellipse 120% 55% at 50% -8%, rgba(59,130,246,0.16) 0%, rgba(37,99,235,0.08) 45%, transparent 70%)',
       }} />
+      {/* Mid depth glow */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(190,18,60,0.13) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 70% 50% at 50% 55%, rgba(30,58,138,0.10) 0%, transparent 65%)',
+      }} />
+      {/* Bottom warm accent */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 80% 30% at 50% 105%, rgba(244,63,94,0.09) 0%, transparent 55%)',
       }} />
 
-      {/* ══ PARTICLES ══ */}
+      {/* ══ LIFE PARTICLES — subtle drifting points of light ══ */}
       {PARTICLES.map((p, i) => (
         <motion.div
           key={i}
@@ -96,9 +104,9 @@ export default function SupportModal({ isOpen, onClose }: Props) {
             width: p.w, height: p.h,
             top: p.top, left: p.left,
             background: p.color,
-            boxShadow: `0 0 ${p.w * 4}px ${p.color}`,
+            boxShadow: `0 0 ${p.w * 5}px ${p.color}`,
           }}
-          animate={{ y: [-8, 8], opacity: [0.35, 1, 0.35], scale: [0.8, 1.4, 0.8] }}
+          animate={{ y: [-6, 6], x: [-3, 3], opacity: [0.25, 0.9, 0.25], scale: [0.7, 1.3, 0.7] }}
           transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
@@ -116,12 +124,12 @@ export default function SupportModal({ isOpen, onClose }: Props) {
       >
 
         {/* Close */}
-        <motion.div variants={fadeIn} className="flex justify-start mb-2 shrink-0">
+        <motion.div variants={fadeIn} className="flex justify-start mb-1 shrink-0">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/8 border border-white/12
+            className="w-9 h-9 rounded-full bg-white/8 border border-white/10
                        flex items-center justify-center active:scale-90
-                       transition-all duration-200 text-white/40 hover:text-white/70
+                       transition-all duration-200 text-white/35 hover:text-white/65
                        hover:bg-white/12"
             aria-label="סגור"
           >
@@ -132,53 +140,53 @@ export default function SupportModal({ isOpen, onClose }: Props) {
         {/* ── Hero + Counter ── */}
         <motion.div variants={fadeUp} className="flex flex-col items-center shrink-0">
 
-          {/* Pulsing heart cluster — tighter */}
-          <div className="relative flex items-center justify-center" style={{ height: 108 }}>
+          {/* Pulsing heart cluster */}
+          <div className="relative flex items-center justify-center" style={{ height: 104 }}>
             <motion.div
-              className="absolute rounded-full border border-rose-500/15"
-              style={{ width: 98, height: 98 }}
-              animate={{ scale: [0.9, 1.5], opacity: [0.6, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeOut' }}
+              className="absolute rounded-full border border-rose-500/12"
+              style={{ width: 96, height: 96 }}
+              animate={{ scale: [0.9, 1.5], opacity: [0.5, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeOut' }}
             />
             <motion.div
-              className="absolute rounded-full bg-rose-500/8"
-              style={{ width: 80, height: 80 }}
-              animate={{ scale: [0.85, 1.38], opacity: [0.7, 0] }}
-              transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute rounded-full bg-rose-500/7"
+              style={{ width: 76, height: 76 }}
+              animate={{ scale: [0.85, 1.38], opacity: [0.6, 0] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.div
-              className="absolute rounded-full bg-rose-400/12"
-              style={{ width: 62, height: 62 }}
-              animate={{ scale: [0.85, 1.38], opacity: [0.7, 0] }}
-              transition={{ duration: 2.6, delay: 0.55, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute rounded-full bg-rose-400/10"
+              style={{ width: 58, height: 58 }}
+              animate={{ scale: [0.85, 1.38], opacity: [0.6, 0] }}
+              transition={{ duration: 2.8, delay: 0.55, repeat: Infinity, ease: 'easeInOut' }}
             />
             <div className="absolute rounded-full" style={{
-              width: 60, height: 60,
-              background: 'radial-gradient(circle at 40% 35%, rgba(255,80,110,0.32) 0%, rgba(200,30,80,0.15) 60%, transparent 100%)',
-              border: '1px solid rgba(255,100,130,0.22)',
+              width: 58, height: 58,
+              background: 'radial-gradient(circle at 40% 35%, rgba(255,80,110,0.28) 0%, rgba(200,30,80,0.12) 60%, transparent 100%)',
+              border: '1px solid rgba(255,100,130,0.18)',
               backdropFilter: 'blur(6px)',
             }} />
             <motion.div
-              animate={{ scale: [1, 1.2, 1, 1.12, 1] }}
+              animate={{ scale: [1, 1.18, 1, 1.1, 1] }}
               transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <Heart size={34} fill="currentColor" style={{
+              <Heart size={32} fill="currentColor" style={{
                 color: '#fb7185',
-                filter: 'drop-shadow(0 0 14px rgba(220,38,90,0.95)) drop-shadow(0 0 6px rgba(255,120,150,0.6))',
+                filter: 'drop-shadow(0 0 14px rgba(220,38,90,0.90)) drop-shadow(0 0 5px rgba(255,120,150,0.55))',
               }} />
             </motion.div>
           </div>
 
           {/* Counter: 0 → 2000+ */}
-          <div className="flex flex-col items-center gap-1 mt-1">
+          <div className="flex flex-col items-center gap-0.5 mt-0.5">
             <div className="flex items-end gap-0.5 leading-none">
               <span className="font-black tabular-nums" style={{
-                fontSize: 'clamp(2.6rem, 10vw, 3.2rem)',
+                fontSize: 'clamp(2.8rem, 11vw, 3.4rem)',
                 letterSpacing: '-0.03em',
                 background: 'linear-gradient(135deg, #fecdd3 0%, #fb7185 35%, #f43f5e 65%, #e11d48 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 2px 14px rgba(244,63,94,0.55))',
+                filter: 'drop-shadow(0 2px 16px rgba(244,63,94,0.60))',
               }}>
                 {count.toLocaleString('he-IL')}
               </span>
@@ -189,7 +197,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   transition={{ type: 'spring', stiffness: 400, damping: 18 }}
                   className="font-black"
                   style={{
-                    fontSize: 'clamp(2rem, 8vw, 2.5rem)',
+                    fontSize: 'clamp(2.2rem, 8.5vw, 2.8rem)',
                     background: 'linear-gradient(135deg, #fecdd3 0%, #fb7185 35%, #f43f5e 65%, #e11d48 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -198,30 +206,30 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   }}>+</motion.span>
               )}
             </div>
-            <p className="text-white/60 font-bold" style={{
-              fontSize: 'clamp(0.65rem, 2.6vw, 0.78rem)',
-              letterSpacing: '0.18em',
+            <p className="text-white/65 font-bold" style={{
+              fontSize: 'clamp(0.68rem, 2.8vw, 0.82rem)',
+              letterSpacing: '0.20em',
               textTransform: 'uppercase',
             }}>אנשי רפואת חירום</p>
-            <p className="text-white/35 font-medium" style={{ fontSize: 'clamp(0.6rem, 2.2vw, 0.68rem)', letterSpacing: '0.06em' }}>
+            <p className="text-white/35 font-medium" style={{ fontSize: 'clamp(0.60rem, 2.2vw, 0.68rem)', letterSpacing: '0.06em' }}>
               משתמשים בחובש+ בכל משמרת
             </p>
           </div>
 
           {/* Partnership badge */}
           <div className="flex items-center gap-2 px-4 py-1 rounded-full mt-2" style={{
-            border: '1px solid rgba(244,63,94,0.32)',
-            background: 'rgba(244,63,94,0.10)',
+            border: '1px solid rgba(59,130,246,0.30)',
+            background: 'rgba(59,130,246,0.10)',
           }}>
-            <Users size={12} style={{ color: '#fda4af' }} />
-            <span style={{ color: '#fda4af', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em' }}>שותפות לחיים</span>
+            <Users size={12} style={{ color: '#93c5fd' }} />
+            <span style={{ color: '#93c5fd', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em' }}>שותפות לחיים</span>
           </div>
         </motion.div>
 
         {/* Divider */}
         <motion.div variants={fadeIn} className="flex justify-center my-3 shrink-0">
-          <div className="h-px w-24 rounded-full" style={{
-            background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.6), transparent)',
+          <div className="h-px w-28 rounded-full" style={{
+            background: 'linear-gradient(90deg, transparent, rgba(99,179,237,0.55), transparent)',
           }} />
         </motion.div>
 
@@ -230,11 +238,11 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           variants={fadeUp}
           className="text-center font-black leading-tight tracking-tight shrink-0"
           style={{
-            fontSize: 'clamp(1.6rem, 6.5vw, 2.2rem)',
+            fontSize: 'clamp(1.7rem, 7vw, 2.3rem)',
             background: 'linear-gradient(135deg, #ffe4e6 0%, #fda4af 22%, #fb7185 50%, #f43f5e 75%, #be123c 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 24px rgba(244,63,94,0.45))',
+            filter: 'drop-shadow(0 0 22px rgba(244,63,94,0.40))',
           }}
         >
           שותפים לדרך,{' '}שותפים להצלת חיים
@@ -242,13 +250,11 @@ export default function SupportModal({ isOpen, onClose }: Props) {
 
         {/* ── Body text ── */}
         <motion.div variants={fadeUp} className="text-right mt-3 shrink-0">
-          <p className="text-white/80 font-medium mb-2" style={{ fontSize: 'clamp(0.88rem, 3.5vw, 0.97rem)', lineHeight: 1.75 }}>
-            האפליקציה הזו נבנתה נטו מתוך אהבה והערכה לעבודת הקודש שאתם עושים,
-            במטרה אחת: לתת לכם שקט נפשי בשטח.
+          <p className="text-white/82 font-medium mb-2" style={{ fontSize: 'clamp(0.90rem, 3.6vw, 1.0rem)', lineHeight: 1.72 }}>
+            האפליקציה הזאת נבנתה נטו מתוך אהבה והתנדבות, כדי לתת לכם את הכלי הכי חזק ומהיר בזמן אמת – בלי פרסומות ובלי כאב ראש.
           </p>
-          <p className="text-white/56" style={{ fontSize: 'clamp(0.82rem, 3.2vw, 0.9rem)', lineHeight: 1.72 }}>
-            כל שותפות, גדולה כקטנה, מכסה את העלויות, נותנת לנו כוח להמשיך לפתח,
-            ומאפשרת לנו להציל חיים – יחד איתכם.
+          <p className="text-white/55" style={{ fontSize: 'clamp(0.84rem, 3.3vw, 0.92rem)', lineHeight: 1.70 }}>
+            כל שותפות מכסה את העלויות, נותנת כוח להמשיך לפתח, ומאפשרת להציל חיים – יחד איתכם.
           </p>
         </motion.div>
 
@@ -260,25 +266,25 @@ export default function SupportModal({ isOpen, onClose }: Props) {
             onClick={() => handleDonate('bit', 'https://bit.co.il')}
             className="relative overflow-hidden flex items-center justify-center gap-3 rounded-2xl text-white font-black select-none w-full"
             style={{
-              paddingTop: '1.2rem', paddingBottom: '1.2rem',
+              paddingTop: '1.55rem', paddingBottom: '1.55rem',
               fontSize: 'clamp(0.97rem, 4vw, 1.1rem)',
               background: 'linear-gradient(135deg, #1d6dea 0%, #1a56d4 55%, #1740b0 100%)',
-              boxShadow: '0 8px 36px rgba(29,109,234,0.52), 0 2px 8px rgba(0,0,0,0.3)',
+              boxShadow: '0 8px 36px rgba(29,109,234,0.55), 0 2px 8px rgba(0,0,0,0.35)',
             }}
-            whileHover={{ scale: 1.03, boxShadow: '0 14px 48px rgba(29,109,234,0.68)' }}
+            whileHover={{ scale: 1.025, boxShadow: '0 14px 50px rgba(29,109,234,0.72)' }}
             whileTap={{ scale: 0.97 }}
           >
             <ShimmerLayer />
             {donated === 'bit' ? (
               <motion.div
                 className="absolute inset-0 flex items-center justify-center rounded-2xl"
-                style={{ background: 'rgba(22,163,74,0.96)' }}
+                style={{ background: 'rgba(22,163,74,0.97)' }}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 320, damping: 20 }}
               >
-                <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-                  <Check size={26} strokeWidth={3} className="text-white" />
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check size={28} strokeWidth={3} className="text-white" />
                 </div>
               </motion.div>
             ) : (
@@ -294,25 +300,25 @@ export default function SupportModal({ isOpen, onClose }: Props) {
             onClick={() => handleDonate('paybox', 'https://www.paybox.co.il')}
             className="relative overflow-hidden flex items-center justify-center gap-3 rounded-2xl text-white font-black select-none w-full"
             style={{
-              paddingTop: '1.2rem', paddingBottom: '1.2rem',
+              paddingTop: '1.55rem', paddingBottom: '1.55rem',
               fontSize: 'clamp(0.97rem, 4vw, 1.1rem)',
               background: 'linear-gradient(135deg, #7c3aed 0%, #6527d4 55%, #5318b0 100%)',
-              boxShadow: '0 8px 36px rgba(124,58,237,0.52), 0 2px 8px rgba(0,0,0,0.3)',
+              boxShadow: '0 8px 36px rgba(124,58,237,0.55), 0 2px 8px rgba(0,0,0,0.35)',
             }}
-            whileHover={{ scale: 1.03, boxShadow: '0 14px 48px rgba(124,58,237,0.68)' }}
+            whileHover={{ scale: 1.025, boxShadow: '0 14px 50px rgba(124,58,237,0.72)' }}
             whileTap={{ scale: 0.97 }}
           >
             <ShimmerLayer />
             {donated === 'paybox' ? (
               <motion.div
                 className="absolute inset-0 flex items-center justify-center rounded-2xl"
-                style={{ background: 'rgba(22,163,74,0.96)' }}
+                style={{ background: 'rgba(22,163,74,0.97)' }}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 320, damping: 20 }}
               >
-                <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-                  <Check size={26} strokeWidth={3} className="text-white" />
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check size={28} strokeWidth={3} className="text-white" />
                 </div>
               </motion.div>
             ) : (
@@ -326,7 +332,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
         </motion.div>
 
         {/* Footer */}
-        <motion.p variants={fadeIn} className="text-center text-white/25 mt-3 shrink-0" style={{ fontSize: '0.69rem' }}>
+        <motion.p variants={fadeIn} className="text-center text-white/25 mt-3 shrink-0" style={{ fontSize: '0.68rem' }}>
           תודה שאתם הלב הפועם של הפרויקט הזה. בזכותכם אנחנו כאן ❤️
         </motion.p>
 
@@ -339,7 +345,7 @@ function ShimmerLayer() {
   return (
     <motion.div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: 'linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.15) 50%, transparent 75%)' }}
+      style={{ background: 'linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.14) 50%, transparent 75%)' }}
       animate={{ x: ['-120%', '220%'] }}
       transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}
     />
