@@ -1,4 +1,4 @@
-import { X, Heart, Coffee, Star, Mail } from 'lucide-react';
+import { X, Heart, Coffee, Star } from 'lucide-react';
 import { useModalBackHandler } from '../hooks/useModalBackHandler';
 
 interface Props {
@@ -13,72 +13,90 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-end justify-center" dir="rtl">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
 
       {/* Sheet */}
       <div
-        className="relative w-full max-w-md bg-[#111114] border border-white/10
-                   rounded-t-3xl shadow-[0_-20px_80px_rgba(0,0,0,0.7)]
-                   p-6 flex flex-col gap-5 animate-slide-up"
+        className="relative w-full max-w-md bg-[#0f0f12] border border-white/10
+                   rounded-t-3xl shadow-[0_-24px_80px_rgba(0,0,0,0.8)]
+                   flex flex-col gap-0 animate-slide-up overflow-hidden"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
-        {/* Drag handle */}
-        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto -mt-1" />
+        {/* Subtle gradient strip at top */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-500/60 to-transparent" />
 
-        {/* Header row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Heart size={22} className="text-emt-red" fill="#EF233C" />
-            <h2 className="text-emt-light font-black text-xl tracking-tight">תמכו בנו</h2>
+        <div className="p-6 flex flex-col gap-5">
+          {/* Drag handle */}
+          <div className="w-10 h-1 bg-white/20 rounded-full mx-auto -mt-1" />
+
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Heart size={22} className="text-rose-400" fill="currentColor" />
+              <h2 className="text-white font-black text-xl tracking-tight">תמכו בנו</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-white/10 border border-white/10
+                         flex items-center justify-center active:scale-90 transition-transform
+                         text-white/50 hover:text-white"
+              aria-label="סגור"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 border border-white/10
-                       flex items-center justify-center active:scale-90 transition-transform
-                       text-emt-muted hover:text-emt-light"
-            aria-label="סגור"
-          >
-            <X size={18} />
-          </button>
-        </div>
 
-        {/* Description */}
-        <p className="text-white/85 text-base leading-relaxed">
-          האפליקציה פותחה מתוך אהבה לעבודת ההצלה ומוצעת בחינם לכלל הצוות הרפואי.
-          <br />
-          אם היא עוזרת לך בשטח — שקול לתמוך בפיתוח המשך 🙏
-        </p>
+          {/* Hero copy */}
+          <div className="rounded-2xl bg-white/5 border border-white/8 p-4 text-center">
+            <p className="text-white/90 text-base leading-relaxed font-medium">
+              האפליקציה פותחה בהתנדבות מתוך אהבה לעבודת ההצלה —
+              <br />
+              <span className="text-rose-300 font-bold">בחינם, לכל הצוות הרפואי, ללא מטרות רווח.</span>
+            </p>
+            <p className="text-white/55 text-sm leading-relaxed mt-2">
+              אם היא עוזרת לך בשטח, שקול לתמוך בהמשך הפיתוח 🙏
+            </p>
+          </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-3">
-          <a
-            href="https://www.buymeacoffee.com/danielzamir"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 font-black text-base rounded-2xl px-5 py-4
-                       active:scale-[0.97] transition-transform shadow-lg text-[#111114]"
-            style={{ background: '#FFDD00' }}
-          >
-            <Coffee size={22} />
-            קנו לי קפה ☕
-          </a>
+          {/* Social proof stars */}
+          <div className="flex items-center justify-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={16} className="text-amber-400" fill="currentColor" />
+            ))}
+            <span className="text-white/40 text-xs mr-2">מאות חובשים כבר משתמשים</span>
+          </div>
 
-          <a
-            href="mailto:ydbyd4723@gmail.com?subject=תמיכה%20באפליקציה%20עוזר%20חובש"
-            className="flex items-center gap-3 bg-white/10 border border-white/15
-                       text-emt-light font-bold text-base rounded-2xl px-5 py-4
-                       active:scale-[0.97] transition-transform"
-          >
-            <Mail size={22} />
-            שלח הודעת תמיכה
-          </a>
-        </div>
+          {/* Action buttons */}
+          <div className="flex flex-col gap-3">
+            <a
+              href="https://www.buymeacoffee.com/danielzamir"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 font-black text-base rounded-2xl px-5 py-4
+                         active:scale-[0.97] transition-transform shadow-lg text-[#111114]"
+              style={{ background: 'linear-gradient(135deg, #FFDD00 0%, #FFB800 100%)' }}
+            >
+              <Coffee size={22} />
+              קנו לי קפה ☕
+            </a>
 
-        {/* Thank you note */}
-        <div className="flex items-center justify-center gap-2 text-white/50 text-sm">
-          <Star size={13} className="text-emt-yellow" fill="#F59E0B" />
-          <span>תודה על כל שיתוף, דירוג והמלצה!</span>
-          <Star size={13} className="text-emt-yellow" fill="#F59E0B" />
+            <a
+              href="https://www.paybox.co.il"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 font-bold text-base rounded-2xl px-5 py-4
+                         bg-purple-600/80 border border-purple-500/40 text-white
+                         active:scale-[0.97] transition-transform"
+            >
+              <Heart size={20} fill="currentColor" className="text-purple-200" />
+              תרומה בפייבוקס
+            </a>
+          </div>
+
+          {/* Thank you */}
+          <p className="text-center text-white/35 text-xs leading-relaxed">
+            כל תמיכה — גדולה כקטנה — עוזרת לשמור את האפליקציה חיה ומתפתחת
+          </p>
         </div>
       </div>
     </div>

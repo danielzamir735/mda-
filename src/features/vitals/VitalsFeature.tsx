@@ -107,21 +107,12 @@ export default function VitalsFeature() {
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Top bar */}
-      <header className="shrink-0 flex items-center justify-between px-3 py-1.5
+      <header className="shrink-0 flex items-center justify-center px-3 py-1.5
                          border-b border-gray-200/60 dark:border-emt-border/60
                          bg-gray-100/80 dark:bg-emt-gray/80 backdrop-blur-sm">
         <span className="text-gray-800 dark:text-emt-light font-black text-sm tracking-wide">
           עוזר חובש
         </span>
-        <button
-          type="button"
-          onClick={() => setSupportOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                     bg-emt-red/10 border border-emt-red/30
-                     text-emt-red font-bold text-xs active:scale-90 transition-transform"
-        >
-          ❤️ תמכו בנו
-        </button>
       </header>
 
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
@@ -161,6 +152,7 @@ export default function VitalsFeature() {
         onNotesOpen={() => setNotesOpen(true)}
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
         onHubOpen={() => setHubOpen(true)}
+        onSupportOpen={() => setSupportOpen(true)}
       />
 
       <footer className="shrink-0 text-center pb-1 pt-1">

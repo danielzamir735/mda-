@@ -1,4 +1,4 @@
-import { FileText, Images, Activity, LayoutGrid } from 'lucide-react';
+import { FileText, Images, Activity, LayoutGrid, Heart } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useHaptics } from '../hooks/useHaptics';
 
@@ -7,9 +7,10 @@ interface Props {
   onNotesOpen: () => void;
   onVitalsOpen: () => void;
   onHubOpen: () => void;
+  onSupportOpen: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen }: Props) {
   const t = useTranslation();
   const vibrate = useHaptics();
 
@@ -26,7 +27,32 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
           animation: breathe 2.2s ease-in-out infinite;
           display: inline-flex;
         }
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          14%  { transform: scale(1.25); }
+          28%  { transform: scale(1); }
+          42%  { transform: scale(1.18); }
+          56%  { transform: scale(1); }
+        }
+        .animate-heartbeat {
+          animation: heartbeat 1.4s ease-in-out infinite;
+          display: inline-flex;
+        }
       `}</style>
+
+      {/* Support — far right in RTL */}
+      <button
+        onClick={() => { vibrate(); onSupportOpen(); }}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2
+                   text-rose-400
+                   active:scale-95 transition-all duration-150"
+        aria-label="תמיכה"
+      >
+        <span className="animate-heartbeat">
+          <Heart size={20} fill="currentColor" />
+        </span>
+        <span className="text-[0.65rem] font-semibold">תמיכה</span>
+      </button>
 
       <button
         onClick={() => { vibrate(); onNotesOpen(); }}
