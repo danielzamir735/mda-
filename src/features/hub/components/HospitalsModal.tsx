@@ -40,17 +40,57 @@ const LEVEL_B: Hospital[] = [
 
 function NearestERButton() {
   return (
-    <a
-      href={"geo:0,0?q=" + encodeURIComponent("חדר מיון")}
-      className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl font-black text-base text-white active:scale-95 transition-transform mb-3"
-      style={{
-        background: 'linear-gradient(135deg, #ef233c 0%, #b91c2e 100%)',
-        boxShadow: '0 4px 20px rgba(239,35,60,0.45)',
-      }}
-    >
-      <Navigation size={20} />
-      ניווט למיון הקרוב ביותר
-    </a>
+    <div className="flex flex-col items-center justify-center py-6 mb-1">
+      <div className="relative flex items-center justify-center">
+        {/* Radar rings — outermost to innermost */}
+        <div
+          className="absolute rounded-full bg-emt-red/15 animate-ping"
+          style={{ width: 176, height: 176, animationDuration: '2.2s', animationDelay: '0s' }}
+        />
+        <div
+          className="absolute rounded-full bg-emt-red/25 animate-ping"
+          style={{ width: 148, height: 148, animationDuration: '2.2s', animationDelay: '0.5s' }}
+        />
+        <div
+          className="absolute rounded-full bg-emt-red/35 animate-ping"
+          style={{ width: 120, height: 120, animationDuration: '2.2s', animationDelay: '1s' }}
+        />
+
+        {/* Static glow ring behind button */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: 108,
+            height: 108,
+            background: 'radial-gradient(circle, rgba(239,35,60,0.45) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* Main circle button */}
+        <a
+          href={"geo:0,0?q=" + encodeURIComponent("חדר מיון")}
+          className="relative z-10 flex flex-col items-center justify-center gap-1.5
+                     w-28 h-28 rounded-full text-white font-black text-center
+                     active:scale-90 transition-transform"
+          style={{
+            background: 'linear-gradient(135deg, #ef233c 0%, #b01020 100%)',
+            boxShadow: '0 6px 32px rgba(239,35,60,0.7), 0 0 0 3px rgba(239,35,60,0.3)',
+          }}
+        >
+          <Navigation size={28} strokeWidth={2.5} />
+          <span className="text-xs leading-tight font-black tracking-wide px-1">
+            ניווט למיון
+            <br />
+            הקרוב
+          </span>
+        </a>
+      </div>
+
+      {/* Label below */}
+      <p className="mt-3 text-emt-red font-bold text-sm tracking-wide">
+        ניווט למיון הקרוב ביותר
+      </p>
+    </div>
   );
 }
 
