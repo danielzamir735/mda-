@@ -43,18 +43,18 @@ export default function UpdateModal({ onUpdate }: Props) {
           <h2 className="text-emt-light font-black text-2xl tracking-tight">
             עדכון זמין
           </h2>
-          <p className="text-emt-muted text-sm leading-relaxed">
+          <p className="text-gray-200 text-base leading-relaxed">
             גרסה חדשה ומשופרת מוכנה.
             <br />
             העדכון ייקח שנייה אחת בלבד.
           </p>
 
           {/* Reassurance notes */}
-          <div className="mt-1 flex flex-col gap-2 border-t border-white/8 pt-3">
-            <p className="text-xs leading-relaxed text-white/45">
+          <div className="mt-1 flex flex-col gap-2 border-t border-white/15 pt-3">
+            <p className="text-sm leading-relaxed text-white/80">
               אל דאגה, העדכון בטוח ולא ימחק נתונים שהזנתם באפליקציה.
             </p>
-            <p className="text-xs leading-relaxed text-white/35">
+            <p className="text-xs leading-relaxed text-white/60">
               ניתן לראות את פירוט החידושים במסך ״מה חדש״ תחת תפריט כלים.
             </p>
           </div>
