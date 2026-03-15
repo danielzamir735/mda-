@@ -1,5 +1,4 @@
 import { FileText, Images, Activity, LayoutGrid, Heart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import HapticButton from './HapticButton';
 
@@ -11,8 +10,7 @@ interface Props {
   onSupportOpen?: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen }: Props) {
-  const navigate = useNavigate();
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen }: Props) {
   const t = useTranslation();
 
   return (
@@ -43,7 +41,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
 
       {/* Support */}
       <HapticButton
-        onClick={() => navigate('/support')}
+        onClick={() => onSupportOpen?.()}
         pressScale={0.88}
         hapticPattern={10}
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"

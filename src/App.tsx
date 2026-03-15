@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import SupportPage from './pages/SupportPage';
 import { useSettingsStore } from './store/settingsStore';
 import LegalDisclaimerModal from './components/LegalDisclaimerModal';
 import UpdateModal from './components/UpdateModal';
@@ -78,7 +77,6 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/support" element={<SupportPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       <Analytics />

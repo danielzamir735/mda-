@@ -25,6 +25,7 @@ import WhatsNewModal from '../hub/components/WhatsNewModal';
 import BagStandardsModal from '../hub/components/BagStandardsModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
+import SupportModal from '../../pages/SupportPage';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -55,6 +56,7 @@ export default function VitalsFeature() {
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
@@ -141,6 +143,7 @@ export default function VitalsFeature() {
         onNotesOpen={() => setNotesOpen(true)}
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
         onHubOpen={() => setHubOpen(true)}
+        onSupportOpen={() => setSupportOpen(true)}
       />
 
       <footer className="shrink-0 text-center pb-1 pt-1">
@@ -214,6 +217,7 @@ export default function VitalsFeature() {
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
+      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
   );
 }
