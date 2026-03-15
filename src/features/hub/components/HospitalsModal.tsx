@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { X, Search, Navigation } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -38,67 +38,19 @@ const LEVEL_B: Hospital[] = [
   { name: 'אסף הרופא',         city: 'צריפין',      central: '08-977-9020', er: '08-977-9333', lat: 31.930, lng: 34.830 },
 ];
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 function NearestERButton() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
-
-  const handlePress = useCallback(() => {
-    if (!navigator.geolocation) {
-      window.open('geo:0,0?q=' + encodeURIComponent('מיון בית חולים'), '_blank');
-      return;
-    }
-    setStatus('loading');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const candidates = [...LEVEL_A, ...LEVEL_B].filter(h => h.lat !== undefined && h.lng !== undefined);
-        let nearest = candidates[0];
-        let minDist = Infinity;
-        for (const h of candidates) {
-          const d = haversineKm(latitude, longitude, h.lat!, h.lng!);
-          if (d < minDist) { minDist = d; nearest = h; }
-        }
-        setStatus('idle');
-        const wazeUrl = `https://waze.com/ul?ll=${nearest.lat},${nearest.lng}&navigate=yes`;
-        window.open(wazeUrl, '_blank');
-      },
-      () => {
-        setStatus('error');
-        setTimeout(() => setStatus('idle'), 3000);
-      },
-      { timeout: 8000, maximumAge: 60000 }
-    );
-  }, []);
-
-  const label =
-    status === 'loading' ? 'מאתר מיקום...' :
-    status === 'error'   ? 'שגיאת מיקום — נסה שוב' :
-                           'ניווט למיון הקרוב ביותר';
-
   return (
-    <button
-      onClick={handlePress}
-      disabled={status === 'loading'}
+    <a
+      href={"geo:0,0?q=" + encodeURIComponent("חדר מיון")}
       className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl font-black text-base text-white active:scale-95 transition-transform mb-3"
       style={{
-        background: status === 'error'
-          ? 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)'
-          : 'linear-gradient(135deg, #ef233c 0%, #b91c2e 100%)',
+        background: 'linear-gradient(135deg, #ef233c 0%, #b91c2e 100%)',
         boxShadow: '0 4px 20px rgba(239,35,60,0.45)',
-        opacity: status === 'loading' ? 0.75 : 1,
       }}
     >
       <Navigation size={20} />
-      {label}
-    </button>
+      ניווט למיון הקרוב ביותר
+    </a>
   );
 }
 
