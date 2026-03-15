@@ -11,7 +11,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captured, setCaptured] = useState(false);
+  const [isCaptured, setIsCaptured] = useState(false);
   const [flash, setFlash] = useState(false);
 
   useEffect(() => {
@@ -38,28 +38,30 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     };
   }, []);
 
-  const handleClose = () => {
+  const closeCameraModal = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     onClose();
   };
 
   const capture = () => {
-    if (!videoRef.current || !ready) return;
+    if (!videoRef.current || !ready || isCaptured) return;
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+    // Save image immediately
+    onPhoto(dataUrl);
+    // Stop stream after capture
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    onPhoto(dataUrl);
     // Shutter flash
     setFlash(true);
     setTimeout(() => setFlash(false), 150);
-    // Show frozen frame briefly, then auto-close
-    setCaptured(true);
-    setTimeout(() => onClose(), 650);
+    // Show success state, then auto-close
+    setIsCaptured(true);
+    setTimeout(() => { closeCameraModal(); }, 800);
   };
 
   return (
@@ -69,7 +71,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
         <div className="absolute inset-0 z-20 bg-white pointer-events-none" style={{ opacity: 0.85 }} />
       )}
       <button
-        onClick={handleClose}
+        onClick={closeCameraModal}
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
                    bg-black/60 backdrop-blur-sm border border-white/20
                    flex items-center justify-center text-white
@@ -94,21 +96,29 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
       )}
 
       <div className="absolute bottom-10 inset-x-0 flex justify-center">
-        <button
-          onClick={capture}
-          disabled={!ready || !!error || captured}
-          className="w-20 h-20 rounded-full border-4 border-white
-                     flex items-center justify-center
-                     active:scale-90 transition-all duration-150
-                     disabled:cursor-not-allowed"
-          style={{
-            background: captured ? 'rgba(34,197,94,0.85)' : 'rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(4px)',
-          }}
-          aria-label="צלם תמונה"
-        >
-          {captured && <Check size={36} strokeWidth={3} className="text-white" />}
-        </button>
+        {!isCaptured ? (
+          <button
+            onClick={capture}
+            disabled={!ready || !!error}
+            className="w-20 h-20 rounded-full border-4 border-white
+                       flex items-center justify-center
+                       active:scale-90 transition-all duration-150
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)' }}
+            aria-label="צלם תמונה"
+          >
+            <div className="w-14 h-14 rounded-full bg-white" />
+          </button>
+        ) : (
+          <div
+            className="w-20 h-20 rounded-full border-4 border-green-400
+                       flex items-center justify-center
+                       animate-pulse"
+            style={{ background: 'rgba(34,197,94,0.85)', backdropFilter: 'blur(4px)' }}
+          >
+            <Check size={36} strokeWidth={3} className="text-white" />
+          </div>
+        )}
       </div>
     </div>
   );
