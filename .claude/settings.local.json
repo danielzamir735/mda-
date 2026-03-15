@@ -28,7 +28,8 @@
       "Bash(find /c/Users/User/Desktop/עוזר\\\\ חובש/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) 2>/dev/null | grep -v node_modules)",
       "Bash(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" && npx tsc --noEmit 2>&1 | head -50)",
       "Bash(find \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" -type f \\\\\\( -name \"*update*\" -o -name \"*banner*\" -o -name \"*sw*\" -o -name \"*service-worker*\" \\\\\\) 2>/dev/null | head -20)",
-      "Bash(find \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" -type f -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.jsx\" 2>/dev/null | xargs grep -l \"useRegisterSW\\\\|registerServiceWorker\\\\|service.?worker\\\\|workbox\" 2>/dev/null)"
+      "Bash(find \"C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש\" -type f -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.jsx\" 2>/dev/null | xargs grep -l \"useRegisterSW\\\\|registerServiceWorker\\\\|service.?worker\\\\|workbox\" 2>/dev/null)",
+      "Bash(cd:*)"
     ]
   }
 }

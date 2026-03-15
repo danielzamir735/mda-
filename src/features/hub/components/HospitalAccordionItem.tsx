@@ -7,6 +7,8 @@ export interface Hospital {
   city: string;
   central: string;
   er: string;
+  lat?: number;
+  lng?: number;
   navQueries?: {
     general: string;
     pediatric: string;

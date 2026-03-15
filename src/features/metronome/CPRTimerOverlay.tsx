@@ -13,10 +13,11 @@ const CSS = `
   .bpm-slider {
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
-    border-radius: 3px;
+    height: 8px;
+    border-radius: 4px;
     outline: none;
     cursor: pointer;
+    background: rgba(100,116,139,0.55);
   }
   .bpm-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -350,8 +351,8 @@ export default function CPRTimerOverlay() {
                 background: `linear-gradient(to right,
                   #f59e0b 0%,
                   #f59e0b ${(bpm - 100) / 20 * 100}%,
-                  rgba(100,100,150,0.35) ${(bpm - 100) / 20 * 100}%,
-                  rgba(100,100,150,0.35) 100%)`,
+                  rgba(100,116,139,0.6) ${(bpm - 100) / 20 * 100}%,
+                  rgba(100,116,139,0.6) 100%)`,
               }}
               aria-label="BPM"
             />
