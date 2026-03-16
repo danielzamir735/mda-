@@ -1,120 +1,105 @@
-import { useRef, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { useCameraStore } from '../../store/cameraStore';
+import { useRef, useState, useEffect } from 'react';
+import { X, Check } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
+  onPhoto: (dataUrl: string) => void;
 }
 
-export default function CameraCapture({ onClose }: Props) {
+export default function CameraCapture({ onClose, onPhoto }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [frozenImage, setFrozenImage] = useState<string | null>(null);
-
-  const addPhoto = useCameraStore((s) => s.addPhoto);
+  const [captured, setCaptured] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
+    let mounted = true;
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-      .then((stream) => {
-        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
+      .then((s) => {
+        if (!mounted) { s.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = s;
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+          videoRef.current.onloadedmetadata = () => setReady(true);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.');
-      });
+      .catch(() => setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.'));
 
     return () => {
-      cancelled = true;
+      mounted = false;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
   }, []);
 
-  function handleShutter() {
-    const video = videoRef.current;
-    if (!video || frozenImage) return;
-    if (video.readyState !== 4) return;
-
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    canvas.getContext('2d')!.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-    addPhoto(dataUrl);
-    setFrozenImage(dataUrl);
-    setTimeout(() => setFrozenImage(null), 500);
-  }
-
-  function handleClose() {
+  const handleClose = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     onClose();
-  }
+  };
+
+  const capture = () => {
+    if (!videoRef.current || !ready) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    onPhoto(dataUrl);
+    setCaptured(true);
+    setTimeout(() => {
+      onClose();
+    }, 800);
+  };
 
   return (
     <div className="fixed inset-0 z-[60] bg-black flex flex-col">
-
-      {/* Video — always mounted and playing */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="flex-1 w-full object-cover"
-      />
-
-      {/* Error message */}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center px-8 z-10">
-          <p className="text-white text-center text-base leading-relaxed">{error}</p>
-        </div>
-      )}
-
-      {/* Frozen image overlay — sits on top for 500ms then gone */}
-      {frozenImage && (
-        <img
-          src={frozenImage}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover z-50 pointer-events-none"
-        />
-      )}
-
-      {/* X — top right */}
       <button
         onClick={handleClose}
-        aria-label="סגור מצלמה"
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
                    bg-black/60 backdrop-blur-sm border border-white/20
                    flex items-center justify-center text-white
                    active:scale-90 transition-transform"
+        aria-label="סגור מצלמה"
       >
-        <X size={22} />
+        <X size={20} />
       </button>
 
-      {/* Shutter button — bottom center */}
-      <div className="absolute bottom-10 inset-x-0 flex justify-center z-10">
+      {error ? (
+        <div className="flex-1 flex items-center justify-center px-8">
+          <p className="text-white text-center text-base">{error}</p>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="flex-1 w-full object-cover"
+        />
+      )}
+
+      <div className="absolute bottom-10 inset-x-0 flex justify-center">
         <button
-          onClick={handleShutter}
-          disabled={!!error}
+          onClick={capture}
+          disabled={!ready || !!error || captured}
+          className="w-20 h-20 rounded-full border-4 border-white
+                     flex items-center justify-center
+                     active:scale-90 transition-all duration-150
+                     disabled:cursor-not-allowed"
+          style={{
+            background: captured ? 'rgba(34,197,94,0.85)' : 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(4px)',
+          }}
           aria-label="צלם תמונה"
-          className="w-20 h-20 rounded-full border-4 border-white bg-white/10
-                     active:scale-90 transition-transform duration-100
-                     disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <span className="block w-full h-full rounded-full bg-white" />
+          {captured && <Check size={36} strokeWidth={3} className="text-white" />}
         </button>
       </div>
-
     </div>
   );
 }
