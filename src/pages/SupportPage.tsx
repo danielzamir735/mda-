@@ -10,7 +10,9 @@ function useCountUp(target: number, durationMs: number, active: boolean) {
     let frame = 0;
     const id = setInterval(() => {
       frame++;
-      setCount(Math.min(Math.floor((frame / totalFrames) * target), target));
+      const t = frame / totalFrames;
+      const eased = 1 - Math.pow(1 - t, 3); // easeOut cubic
+      setCount(Math.min(Math.floor(eased * target), target));
       if (frame >= totalFrames) clearInterval(id);
     }, 16);
     return () => clearInterval(id);
@@ -22,7 +24,7 @@ interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donated, setDonated] = useState(false);
-  const count = useCountUp(2000, 1800, isOpen);
+  const count = useCountUp(2000, 3000, isOpen);
 
   useEffect(() => {
     if (!isOpen) setDonated(false);
