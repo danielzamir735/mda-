@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, X, CheckCircle } from 'lucide-react';
 
-// TODO: Replace with your real payment links
-const BIT_URL = 'https://www.bitpay.co.il/';
-const PAYBOX_URL = 'https://payboxapp.page.link/';
-
 function useCountUp(target: number, durationMs: number, active: boolean) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -25,11 +21,11 @@ function useCountUp(target: number, durationMs: number, active: boolean) {
 interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function SupportModal({ isOpen, onClose }: Props) {
-  const [donatedTo, setDonatedTo] = useState<'bit' | 'paybox' | null>(null);
+  const [donated, setDonated] = useState(false);
   const count = useCountUp(2000, 1800, isOpen);
 
   useEffect(() => {
-    if (!isOpen) setDonatedTo(null);
+    if (!isOpen) setDonated(false);
   }, [isOpen]);
 
   useEffect(() => {
@@ -37,14 +33,6 @@ export default function SupportModal({ isOpen, onClose }: Props) {
     if (isOpen) document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
-
-  function handleDonate(platform: 'bit' | 'paybox') {
-    if (navigator.vibrate) navigator.vibrate(50);
-    setDonatedTo(platform);
-    setTimeout(() => {
-      window.open(platform === 'bit' ? BIT_URL : PAYBOX_URL, '_blank', 'noopener,noreferrer');
-    }, 700);
-  }
 
   return (
     <AnimatePresence>
@@ -125,24 +113,22 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               </p>
             </motion.div>
 
-            {/* Buttons */}
+            {/* Button */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, type: 'spring', stiffness: 260, damping: 20 }}
-              className="w-full max-w-sm space-y-3"
+              className="w-full max-w-sm"
             >
-              <ShinyButton
-                label="פרגנו לנו דרך Bit"
-                gradient="from-orange-400 via-rose-500 to-pink-600"
-                done={donatedTo === 'bit'}
-                onClick={() => handleDonate('bit')}
-              />
               <ShinyButton
                 label="פרגנו לנו דרך PayBox"
                 gradient="from-sky-400 via-blue-600 to-indigo-700"
-                done={donatedTo === 'paybox'}
-                onClick={() => handleDonate('paybox')}
+                done={donated}
+                onClick={() => {
+                  if (navigator.vibrate) navigator.vibrate(50);
+                  setDonated(true);
+                  window.open('https://links.payboxapp.com/ikLxTdoky1b', '_blank');
+                }}
               />
             </motion.div>
           </div>
