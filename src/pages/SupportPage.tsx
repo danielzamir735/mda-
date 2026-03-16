@@ -26,7 +26,7 @@ interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donatedTo, setDonatedTo] = useState<'bit' | 'paybox' | null>(null);
-  const count = useCountUp(4217, 1800, isOpen);
+  const count = useCountUp(2000, 1800, isOpen);
 
   useEffect(() => {
     if (!isOpen) setDonatedTo(null);
@@ -55,15 +55,16 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.28 }}
-          className="fixed inset-0 z-[60] h-[100dvh] overflow-hidden bg-black/65 backdrop-blur-xl flex flex-col"
+          className="fixed inset-0 z-[60] h-[100dvh] overflow-hidden backdrop-blur-xl flex flex-col"
+          style={{ background: 'radial-gradient(ellipse at top center, rgba(110, 8, 28, 0.94) 0%, rgba(8, 10, 35, 0.97) 65%)' }}
           dir="rtl"
         >
           <style>{`
             @keyframes shineBtn {
-              0%   { transform: translateX(-120%) skewX(-15deg); }
-              60%  { transform: translateX(-120%) skewX(-15deg); }
-              80%  { transform: translateX(350%)  skewX(-15deg); }
-              100% { transform: translateX(350%)  skewX(-15deg); }
+              0%   { transform: translateX(-200%) skewX(-15deg); }
+              25%  { transform: translateX(-200%) skewX(-15deg); }
+              72%  { transform: translateX(550%)  skewX(-15deg); }
+              100% { transform: translateX(550%)  skewX(-15deg); }
             }
           `}</style>
 
@@ -106,7 +107,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 {count.toLocaleString('he-IL')}
                 <span className="text-rose-400">+</span>
               </motion.div>
-              <p className="text-sm text-white/50 mt-1 font-medium">חובשים ומגישי עזרה ראשונה</p>
+              <p className="text-sm text-white/50 mt-1 font-medium">חובשים כבר משתמשים באפליקציה</p>
             </div>
 
             {/* Copy */}
@@ -119,7 +120,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               <p className="text-white/80 text-sm leading-relaxed font-medium">
                 כדי שנוכל להמשיך להשקיע בכם, להוסיף יכולות חדשות ולשמור על חובש+ נקייה, מקצועית ובשירות מלא עבורכם.
               </p>
-              <p className="text-rose-300/80 text-xs font-semibold leading-relaxed">
+              <p className="text-white font-bold text-xl leading-relaxed">
                 כל פרגון שלכם מכסה ישירות את העלויות, נותן לנו כוח להמשיך לפתח, ומאפשר לנו להציל חיים – יחד איתכם.
               </p>
             </motion.div>
@@ -132,13 +133,13 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               className="w-full max-w-sm space-y-3"
             >
               <ShinyButton
-                label="תרומה דרך Bit"
+                label="פרגנו לנו דרך Bit"
                 gradient="from-orange-400 via-rose-500 to-pink-600"
                 done={donatedTo === 'bit'}
                 onClick={() => handleDonate('bit')}
               />
               <ShinyButton
-                label="תרומה דרך PayBox"
+                label="פרגנו לנו דרך PayBox"
                 gradient="from-sky-400 via-blue-600 to-indigo-700"
                 done={donatedTo === 'paybox'}
                 onClick={() => handleDonate('paybox')}
@@ -161,7 +162,7 @@ function ShinyButton({ label, gradient, done, onClick }: {
       className={`relative w-full py-4 rounded-2xl font-bold text-lg text-white overflow-hidden bg-gradient-to-l ${gradient} shadow-xl active:brightness-90 transition-[filter]`}
     >
       <span
-        className="pointer-events-none absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+        className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent"
         style={{ animation: 'shineBtn 3s ease-in-out infinite' }}
       />
       <AnimatePresence mode="wait">
