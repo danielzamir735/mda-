@@ -3,6 +3,7 @@ import { Camera, Activity, Zap } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useCameraStore } from '../../store/cameraStore';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -10,6 +11,7 @@ export default function QuickToolsCard() {
   const [torchOn, setTorchOn] = useState(false);
   const torchStream = useRef<MediaStream | null>(null);
   const t = useTranslation();
+  const addPhoto = useCameraStore((s) => s.addPhoto);
 
   async function toggleTorch() {
     try {
@@ -104,6 +106,7 @@ export default function QuickToolsCard() {
       {cameraOpen && (
         <CameraCapture
           onClose={() => setCameraOpen(false)}
+          onPhoto={(dataUrl) => addPhoto(dataUrl)}
         />
       )}
 
