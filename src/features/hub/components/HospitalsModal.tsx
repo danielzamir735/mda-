@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Search, Navigation, Loader2 } from 'lucide-react';
+import { X, Search, Navigation } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
@@ -38,60 +38,7 @@ const LEVEL_B: Hospital[] = [
   { name: 'אסף הרופא',         city: 'צריפין',      central: '08-977-9020', er: '08-977-9333', lat: 31.930, lng: 34.830 },
 ];
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLng = (lng2 - lng1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 function NearestERButton() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-
-  function handlePress() {
-    if (!navigator.geolocation) {
-      setErrorMsg('הדפדפן אינו תומך באיתור מיקום');
-      setStatus('error');
-      return;
-    }
-    setStatus('loading');
-    setErrorMsg('');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const all = [...LEVEL_A, ...LEVEL_B].filter(
-          (h): h is Hospital & { lat: number; lng: number } =>
-            h.lat !== undefined && h.lng !== undefined
-        );
-        if (all.length === 0) {
-          setErrorMsg('לא נמצאו בתי חולים עם מיקום');
-          setStatus('error');
-          return;
-        }
-        let nearest = all[0];
-        let minDist = haversineKm(latitude, longitude, all[0].lat, all[0].lng);
-        for (const h of all.slice(1)) {
-          const d = haversineKm(latitude, longitude, h.lat, h.lng);
-          if (d < minDist) { minDist = d; nearest = h; }
-        }
-        const wazeUrl = `https://waze.com/ul?ll=${nearest.lat},${nearest.lng}&navigate=yes&zoom=17`;
-        window.open(wazeUrl, '_blank') ?? window.location.assign(
-          `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lng}`
-        );
-        setStatus('idle');
-      },
-      (err) => {
-        setErrorMsg(err.code === err.PERMISSION_DENIED ? 'הרשאת מיקום נדחתה' : 'לא ניתן לאתר מיקום');
-        setStatus('error');
-      },
-      { timeout: 10000 }
-    );
-  }
-
   return (
     <div className="flex flex-col items-center justify-center py-6 mb-1">
       <div className="relative flex items-center justify-center">
@@ -119,32 +66,25 @@ function NearestERButton() {
           }}
         />
 
-        {/* Main circle button */}
-        <button
-          onClick={handlePress}
-          disabled={status === 'loading'}
+        {/* Main circle button — opens Waze search for nearest ER */}
+        <a
+          href="https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F"
+          target="_blank"
+          rel="noopener noreferrer"
           className="relative z-10 flex flex-col items-center justify-center gap-1.5
                      w-28 h-28 rounded-full text-white font-black text-center
-                     active:scale-90 transition-transform disabled:opacity-70 disabled:cursor-not-allowed"
+                     active:scale-90 transition-transform"
           style={{
             background: 'linear-gradient(135deg, #ef233c 0%, #b01020 100%)',
             boxShadow: '0 6px 32px rgba(239,35,60,0.7), 0 0 0 3px rgba(239,35,60,0.3)',
           }}
         >
-          {status === 'loading'
-            ? <Loader2 size={28} className="animate-spin" />
-            : <Navigation size={28} strokeWidth={2.5} />
-          }
+          <Navigation size={28} strokeWidth={2.5} />
           <span className="text-[9px] leading-tight font-black tracking-wide px-1">
-            {status === 'loading' ? 'מאתר מיקום...' : (
-              <>ניווט לבית החולים<br />הקרוב ביותר</>
-            )}
+            ניווט לבית החולים<br />הקרוב ביותר
           </span>
-        </button>
+        </a>
       </div>
-      {status === 'error' && (
-        <p className="mt-3 text-xs text-red-400 font-medium">{errorMsg}</p>
-      )}
     </div>
   );
 }

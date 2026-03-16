@@ -25,19 +25,18 @@ export default function WhatsNewModal({ onClose }: Props) {
           <h2 className="text-gray-900 dark:text-emt-light font-black text-2xl">מה חדש? ✨</h2>
         </div>
 
-        {/* Content — replace the placeholder lines below with your exact Hebrew content */}
         <ul className="flex flex-col gap-3 text-gray-700 dark:text-emt-muted text-sm leading-relaxed">
           <li className="flex gap-2">
             <span className="text-emt-yellow font-bold shrink-0">•</span>
-            <span>[ הכנס כאן את תוכן השינויים בגרסה זו ]</span>
+            <span>נוספו בתי חולים לרשימה</span>
           </li>
           <li className="flex gap-2">
             <span className="text-emt-yellow font-bold shrink-0">•</span>
-            <span>[ שורה שנייה ]</span>
+            <span>נוספו תקנים לתיקי כונן</span>
           </li>
           <li className="flex gap-2">
             <span className="text-emt-yellow font-bold shrink-0">•</span>
-            <span>[ שורה שלישית ]</span>
+            <span>מטרונום החייאה מקצועי עם תיעוד מדדים</span>
           </li>
         </ul>
 
