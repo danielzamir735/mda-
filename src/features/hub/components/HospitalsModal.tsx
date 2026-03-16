@@ -63,7 +63,15 @@ function NearestERButton() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        const all = [...LEVEL_A, ...LEVEL_B];
+        const all = [...LEVEL_A, ...LEVEL_B].filter(
+          (h): h is Hospital & { lat: number; lng: number } =>
+            h.lat !== undefined && h.lng !== undefined
+        );
+        if (all.length === 0) {
+          setErrorMsg('לא נמצאו בתי חולים עם מיקום');
+          setStatus('error');
+          return;
+        }
         let nearest = all[0];
         let minDist = haversineKm(latitude, longitude, all[0].lat, all[0].lng);
         for (const h of all.slice(1)) {
