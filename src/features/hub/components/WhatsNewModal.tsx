@@ -9,9 +9,11 @@ interface Props {
 }
 
 const UPDATES = [
-  'נוספו בתי חולים לרשימה',
-  'נוספו תקנים לתיקי כונן',
-  'מטרונום החייאה מקצועי עם תיעוד מדדים',
+  { emoji: '🏥', text: "בתי חולים: עדכון מספרי טלפון והוספת כפתור 'ניווט לבית החולים הקרוב ביותר'." },
+  { emoji: '⏱️', text: 'מטרונום: שדרוג הממשק לעבודה נוחה ומדויקת יותר.' },
+  { emoji: '📸', text: 'מצלמה: מנגנון צילום חדש, מהיר ויציב.' },
+  { emoji: '✨', text: 'עיצוב: שדרוג חוויית המשתמש והנראות הכללית באפליקציה.' },
+  { emoji: '🛠️', text: 'יציבות: תיקוני באגים ושיפורי ביצועים תחת מכסה המנוע.' },
 ];
 
 export default function WhatsNewModal({ isOpen, onClose }: Props) {
@@ -30,7 +32,7 @@ export default function WhatsNewModal({ isOpen, onClose }: Props) {
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm">
         <div className="flex items-center gap-2">
           <Sparkles size={22} className="text-emt-yellow" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מה חדש?</h2>
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מה חדש ב'חובש +'? 🚀</h2>
         </div>
         <button
           onClick={onClose}
@@ -44,17 +46,21 @@ export default function WhatsNewModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden shadow-sm">
-          <ul className="px-4 py-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm overflow-hidden">
+          <ul className="divide-y divide-gray-100 dark:divide-emt-border">
             {UPDATES.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-base text-gray-700 dark:text-emt-light">
-                <span className="mt-2 w-2 h-2 rounded-full bg-emt-yellow shrink-0" />
-                {item}
+              <li key={item.text} className="flex items-start gap-4 px-5 py-4">
+                <span className="text-2xl shrink-0 leading-tight">{item.emoji}</span>
+                <span className="text-base text-gray-700 dark:text-emt-light leading-relaxed">{item.text}</span>
               </li>
             ))}
           </ul>
         </div>
+
+        <p className="mt-6 text-center text-sm text-gray-500 dark:text-emt-muted font-medium">
+          תודה שאתם שותפים לדרך! ❤️
+        </p>
       </div>
     </div>
   );

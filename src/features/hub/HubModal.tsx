@@ -1,6 +1,6 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
+import { useState } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
-import { useSettingsStore } from '../../store/settingsStore';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 
@@ -125,7 +125,9 @@ export default function HubModal({
   onUpdatesOpen,
   onBagStandardsOpen,
 }: Props) {
-  const hasSeenLatestUpdate = useSettingsStore((s) => s.hasSeenLatestUpdate);
+  const [hasReadUpdate, setHasReadUpdate] = useState(
+    () => localStorage.getItem('has_read_update_v2') === 'true'
+  );
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -135,7 +137,11 @@ export default function HubModal({
     if (id === 'clinical')     onVitalsReferenceOpen();
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
-    if (id === 'updates')      onUpdatesOpen();
+    if (id === 'updates') {
+      localStorage.setItem('has_read_update_v2', 'true');
+      setHasReadUpdate(true);
+      onUpdatesOpen();
+    }
     if (id === 'kit-standards') onBagStandardsOpen();
   };
 
@@ -170,8 +176,8 @@ export default function HubModal({
 
             const content = (
               <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full">
-                {id === 'updates' && !hasSeenLatestUpdate && (
-                  <span className="absolute top-2 left-2 w-3 h-3 rounded-full bg-emt-red shadow-md" />
+                {id === 'updates' && !hasReadUpdate && (
+                  <span className="absolute top-2 left-2 w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                 )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
