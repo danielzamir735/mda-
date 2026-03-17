@@ -88,26 +88,15 @@ export default function MetronomeCard() {
 
           {/* Inner track area — inset so edge dots stay within outer bounds */}
           <div className="absolute" style={{ left: 12, right: 12, top: 0, bottom: 0 }}>
-            {/* Track background */}
+            {/* Track background — static, always full width */}
             <div
               className="absolute inset-x-0 rounded-full"
               style={{
                 height: 6,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(120,120,140,0.15)',
-                border: isPlaying ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(120,120,140,0.2)',
-              }}
-            />
-            {/* Filled portion — anchored at right, grows leftward */}
-            <div
-              className="absolute right-0 rounded-full transition-all duration-200"
-              style={{
-                height: 6,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
-                backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
+                backgroundColor: isPlaying ? 'rgba(245,158,11,0.28)' : 'rgba(120,120,140,0.28)',
+                border: isPlaying ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(120,120,140,0.3)',
               }}
             />
             {/* Step dots */}

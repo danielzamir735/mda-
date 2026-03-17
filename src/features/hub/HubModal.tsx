@@ -218,7 +218,7 @@ export default function HubModal({
               <HapticButton
                 key={id}
                 disabled={!enabled}
-                onClick={() => handleItemClick(id)}
+                onClick={(e) => { e.stopPropagation(); handleItemClick(id); }}
                 className={sharedClass}
                 pressScale={enabled ? 0.93 : 1}
               >
