@@ -138,7 +138,7 @@ export default function HubModal({
   onCommonMedsOpen,
 }: Props) {
   const [hasReadUpdate, setHasReadUpdate] = useState(
-    () => localStorage.getItem('has_read_update_v2') === 'true'
+    () => localStorage.getItem('seen-update-v2.1') === 'true'
   );
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
@@ -150,7 +150,7 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      localStorage.setItem('has_read_update_v2', 'true');
+      localStorage.setItem('seen-update-v2.1', 'true');
       setHasReadUpdate(true);
       onUpdatesOpen();
     }
