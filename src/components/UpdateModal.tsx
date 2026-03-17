@@ -41,12 +41,12 @@ export default function UpdateModal({ onUpdate }: Props) {
         {/* Text block */}
         <div className="text-center flex flex-col gap-2">
           <h2 className="text-emt-light font-black text-2xl tracking-tight">
-            עדכון זמין
+            עדכון גרסה זמין! 🚀
           </h2>
           <p className="text-emt-muted text-sm leading-relaxed">
-            גרסה חדשה ומשופרת מוכנה.
+            העדכון ייקח שנייה בדיוק.
             <br />
-            העדכון ייקח שנייה אחת בלבד.
+            אל דאגה, שום נתון ששמרת לא יימחק.
           </p>
         </div>
 
