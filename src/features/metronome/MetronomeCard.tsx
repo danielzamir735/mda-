@@ -1,54 +1,9 @@
-import { Play, VolumeX, Volume2, Plus, Minus } from 'lucide-react';
-import { useMetronomeStore, BPM_VALUES, type BpmValue } from '../../store/metronomeStore';
+import { Play, VolumeX, Volume2 } from 'lucide-react';
+import { useMetronomeStore, type BpmValue } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation } from '../../hooks/useTranslation';
 
-// ── slider styles injected once ───────────────────────────────────────────────
-const CARD_CSS = `
-  .bpm-card-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    border-radius: 3px;
-    outline: none;
-    cursor: pointer;
-  }
-  .bpm-card-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2.5px solid white;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
-    cursor: pointer;
-    transition: box-shadow 150ms, transform 150ms;
-  }
-  .bpm-card-slider:active::-webkit-slider-thumb {
-    transform: scale(1.15);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
-  }
-  .bpm-card-slider::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2.5px solid white;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
-    cursor: pointer;
-  }
-  /* inactive (blue) */
-  .bpm-card-slider.inactive::-webkit-slider-thumb { background: #3b82f6; }
-  .bpm-card-slider.inactive::-moz-range-thumb     { background: #3b82f6; }
-  /* active (amber) */
-  .bpm-card-slider.active-play::-webkit-slider-thumb { background: #F5A623; }
-  .bpm-card-slider.active-play::-moz-range-thumb     { background: #F5A623; }
-`;
-if (typeof document !== 'undefined' && !document.getElementById('bpm-card-slider-css')) {
-  const tag = document.createElement('style');
-  tag.id = 'bpm-card-slider-css';
-  tag.textContent = CARD_CSS;
-  document.head.appendChild(tag);
-}
+const CPR_TEMPOS: BpmValue[] = [100, 110, 120];
 
 export default function MetronomeCard() {
   useMetronome();
@@ -100,50 +55,32 @@ export default function MetronomeCard() {
         )}
       </div>
 
-      {/* BPM selector — +/- buttons with track */}
-      <div className="w-full flex items-center gap-3 px-2">
-        <button
-          onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i > 0) setBpm(BPM_VALUES[i - 1]); }}
-          disabled={BPM_VALUES.indexOf(bpm) === 0}
-          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
-                     disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
-          aria-label="הפחת BPM"
-        ><Minus size={16} /></button>
-
-        {/* slider wrapper — horizontal padding prevents thumb clipping at extremes */}
-        <div className="flex-1 flex flex-col items-stretch gap-1 px-1">
-          <input
-            type="range"
-            min={100}
-            max={120}
-            step={10}
-            value={bpm}
-            onChange={e => setBpm(Number(e.target.value) as BpmValue)}
-            className={`bpm-card-slider w-full ${isPlaying ? 'active-play' : 'inactive'}`}
-            style={{
-              background: isPlaying ? '#F5A623' : '#3b82f6',
-            }}
-            aria-label="BPM"
-          />
-          {/* tick labels */}
-          <div className="flex justify-between text-[0.58rem] font-bold text-gray-400 dark:text-slate-600 tracking-wide select-none" style={{ direction: 'ltr' }}>
-            <span>100</span>
-            <span>110</span>
-            <span>120</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i < BPM_VALUES.length - 1) setBpm(BPM_VALUES[i + 1]); }}
-          disabled={BPM_VALUES.indexOf(bpm) === BPM_VALUES.length - 1}
-          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
-                     disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
-          aria-label="הגדל BPM"
-        ><Plus size={16} /></button>
+      {/* BPM selector — 3 discrete tempo buttons */}
+      <div className="w-full flex justify-between gap-2 px-1">
+        {CPR_TEMPOS.map(tempo => {
+          const active = bpm === tempo;
+          return (
+            <button
+              key={tempo}
+              onClick={() => setBpm(tempo)}
+              className="flex-1 py-3 rounded-2xl font-black text-base tracking-wide
+                         active:scale-95 transition-all duration-150"
+              style={active ? {
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                boxShadow: '0 2px 10px rgba(59,130,246,0.45)',
+              } : {
+                backgroundColor: 'rgba(100,100,120,0.18)',
+                color: '#9ca3af',
+                border: '1px solid rgba(150,150,180,0.25)',
+              }}
+              aria-label={`${tempo} BPM`}
+              aria-pressed={active}
+            >
+              {tempo}
+            </button>
+          );
+        })}
       </div>
 
       {/* Action buttons */}
