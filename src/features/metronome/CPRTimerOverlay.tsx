@@ -4,45 +4,11 @@ import { useMetronomeStore, type BpmValue } from '../../store/metronomeStore';
 import type { ShockLog } from '../../store/vitalsLogStore';
 import { useTranslation } from '../../hooks/useTranslation';
 
-// ── global keyframes + slider styles (injected once) ─────────────────────────
+// ── global keyframes (injected once) ─────────────────────────────────────────
 const CSS = `
   @keyframes cpr-modal-in {
     from { opacity: 0; transform: scale(0.94) translateY(14px); }
     to   { opacity: 1; transform: scale(1)    translateY(0);    }
-  }
-  .bpm-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 8px;
-    border-radius: 4px;
-    outline: none;
-    cursor: pointer;
-    background: rgba(100,116,139,0.55);
-  }
-  .bpm-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #f5c842;
-    border: 2.5px solid #1a0800;
-    box-shadow: 0 0 12px rgba(245,200,66,0.7);
-    cursor: pointer;
-    transition: box-shadow 150ms;
-  }
-  .bpm-slider:active::-webkit-slider-thumb {
-    box-shadow: 0 0 22px rgba(245,200,66,0.95);
-    transform: scale(1.12);
-  }
-  .bpm-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #f5c842;
-    border: 2.5px solid #1a0800;
-    box-shadow: 0 0 12px rgba(245,200,66,0.7);
-    cursor: pointer;
   }
 `;
 if (typeof document !== 'undefined' && !document.getElementById('cpr-anim')) {
@@ -310,8 +276,8 @@ export default function CPRTimerOverlay() {
           </span>
         </button>
 
-        {/* BPM controller — circular ± buttons + visual slider */}
-        <div className="flex flex-col items-center gap-1.5 mt-5">
+        {/* BPM controller — 3 preset buttons */}
+        <div className="flex flex-col items-center gap-2 mt-5 w-full px-6">
           {/* current BPM label */}
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono font-black text-3xl leading-none" style={{ color: '#f5c842' }}>
@@ -320,67 +286,32 @@ export default function CPRTimerOverlay() {
             <span className="text-slate-400 text-sm font-semibold">BPM</span>
           </div>
 
-          {/* track row */}
-          <div className="flex items-center gap-3">
-            {/* − button */}
-            <button
-              onClick={() => bpm > 100 && setBpm((bpm - 10) as BpmValue)}
-              disabled={bpm === 100}
-              className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl active:scale-90 transition-all"
-              style={{
-                backgroundColor: 'rgba(245,158,11,0.15)',
-                border: '2px solid rgba(245,158,11,0.4)',
-                color: bpm === 100 ? '#4b5563' : '#f5c842',
-              }}
-              aria-label="BPM down"
-            >
-              −
-            </button>
-
-            {/* range slider */}
-            <input
-              type="range"
-              min={100}
-              max={120}
-              step={10}
-              value={bpm}
-              onChange={e => setBpm(Number(e.target.value) as BpmValue)}
-              className="bpm-slider"
-              style={{
-                width: 130,
-                background: `linear-gradient(to right,
-                  #f59e0b 0%,
-                  #f59e0b ${(bpm - 100) / 20 * 100}%,
-                  rgba(100,116,139,0.6) ${(bpm - 100) / 20 * 100}%,
-                  rgba(100,116,139,0.6) 100%)`,
-              }}
-              aria-label="BPM"
-            />
-
-            {/* + button */}
-            <button
-              onClick={() => bpm < 120 && setBpm((bpm + 10) as BpmValue)}
-              disabled={bpm === 120}
-              className="w-10 h-10 rounded-full flex items-center justify-center font-black text-xl active:scale-90 transition-all"
-              style={{
-                backgroundColor: 'rgba(245,158,11,0.15)',
-                border: '2px solid rgba(245,158,11,0.4)',
-                color: bpm === 120 ? '#4b5563' : '#f5c842',
-              }}
-              aria-label="BPM up"
-            >
-              +
-            </button>
-          </div>
-
-          {/* tick labels */}
-          <div
-            className="flex justify-between text-[0.6rem] font-black text-slate-600 tracking-wide"
-            style={{ width: 186 }}
-          >
-            <span>100</span>
-            <span>110</span>
-            <span>120</span>
+          {/* preset buttons */}
+          <div className="w-full flex justify-between gap-2">
+            {([100, 110, 120] as BpmValue[]).map(tempo => {
+              const active = bpm === tempo;
+              return (
+                <button
+                  key={tempo}
+                  onClick={() => setBpm(tempo)}
+                  className="flex-1 py-3 rounded-2xl font-black text-base tracking-wide
+                             active:scale-95 transition-all duration-150"
+                  style={active ? {
+                    backgroundColor: '#f59e0b',
+                    color: '#1a0800',
+                    boxShadow: '0 2px 12px rgba(245,158,11,0.55)',
+                  } : {
+                    backgroundColor: 'rgba(245,158,11,0.10)',
+                    color: '#6b7280',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                  }}
+                  aria-label={`${tempo} BPM`}
+                  aria-pressed={active}
+                >
+                  {tempo}
+                </button>
+              );
+            })}
           </div>
         </div>
 

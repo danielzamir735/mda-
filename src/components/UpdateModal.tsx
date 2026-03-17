@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -14,39 +14,39 @@ export default function UpdateModal({ onUpdate }: Props) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[9999] flex justify-center p-4 pb-6 pointer-events-none">
-      {/* Toast card */}
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-5">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+
+      {/* Card */}
       <div
-        className="pointer-events-auto w-full max-w-sm
-                   bg-white/10 backdrop-blur-xl
-                   border border-white/20
-                   rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]
-                   p-4
-                   flex items-center gap-4
-                   animate-slide-up"
+        className="relative w-full max-w-xs bg-[#111114] border border-white/10
+                   rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.6)] p-8
+                   flex flex-col items-center gap-6 animate-fade-scale"
       >
-        {/* Icon */}
-        <div className="relative flex-shrink-0 flex items-center justify-center w-12 h-12">
-          <div className="absolute inset-0 rounded-full bg-emt-green/25 blur-lg" />
+        {/* Glow ring behind icon */}
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-24 h-24 rounded-full bg-emt-green/20 blur-2xl" />
           <div
-            className="relative w-12 h-12 rounded-full
-                       bg-gradient-to-br from-emt-green/40 to-emt-green/15
-                       border border-emt-green/50
+            className="relative w-20 h-20 rounded-full
+                       bg-gradient-to-br from-emt-green/30 to-emt-green/10
+                       border border-emt-green/40
                        flex items-center justify-center
-                       shadow-[0_0_20px_rgba(34,197,94,0.4)]
-                       text-xl"
+                       shadow-[0_0_30px_rgba(34,197,94,0.35)]"
           >
-            🚀
+            <Sparkles size={34} className="text-emt-green" strokeWidth={1.8} />
           </div>
         </div>
 
-        {/* Text */}
-        <div className="flex-1 min-w-0 text-right">
-          <p className="text-white font-black text-base leading-tight">
-            גרסה חדשה זמינה! 🚀
-          </p>
-          <p className="text-white/70 text-sm mt-0.5 leading-snug">
-            נוספו כלים חדשים ושיפורים
+        {/* Text block */}
+        <div className="text-center flex flex-col gap-2">
+          <h2 className="text-emt-light font-black text-2xl tracking-tight">
+            עדכון זמין
+          </h2>
+          <p className="text-emt-muted text-sm leading-relaxed">
+            גרסה חדשה ומשופרת מוכנה.
+            <br />
+            העדכון ייקח שנייה אחת בלבד.
           </p>
         </div>
 
@@ -54,19 +54,19 @@ export default function UpdateModal({ onUpdate }: Props) {
         <button
           onClick={handleUpdate}
           disabled={loading}
-          className="flex-shrink-0 px-4 py-2.5 rounded-xl
-                     bg-emt-green text-white font-black text-sm
-                     flex items-center gap-1.5
-                     shadow-[0_4px_16px_rgba(34,197,94,0.45)]
-                     active:scale-[0.96] transition-all duration-150
+          className="w-full py-4 rounded-2xl
+                     bg-emt-green text-white font-black text-base
+                     flex items-center justify-center gap-2.5
+                     shadow-[0_8px_24px_rgba(34,197,94,0.4)]
+                     active:scale-[0.97] transition-all duration-150
                      disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <RefreshCw
-            size={14}
+            size={18}
             strokeWidth={2.5}
             className={loading ? 'animate-spin' : ''}
           />
-          {loading ? 'מעדכן…' : 'עדכן'}
+          {loading ? 'מעדכן…' : 'עדכן עכשיו'}
         </button>
       </div>
     </div>
