@@ -195,7 +195,7 @@ export default function VitalsFeature() {
         onHospitalsOpen={() => setHospitalsOpen(true)}
         onUpdatesOpen={() => setUpdatesOpen(true)}
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
-        onMedicationsOpen={() => { setHubOpen(false); setMedicationsOpen(true); }}
+        onMedicationsOpen={() => setMedicationsOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -218,7 +218,7 @@ export default function VitalsFeature() {
       <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
       <WhatsNewModal isOpen={updatesOpen} onClose={() => { setUpdatesOpen(false); setHubOpen(true); }} />
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
-      <MedicationsModal isOpen={medicationsOpen} onClose={() => { setMedicationsOpen(false); setHubOpen(true); }} />
+      <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

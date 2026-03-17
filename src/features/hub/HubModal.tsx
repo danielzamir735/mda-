@@ -31,7 +31,7 @@ type HubItem = {
 const HUB_ITEMS: HubItem[] = [
   {
     id: 'medications-classification',
-    label: 'סיווג תרופות',
+    label: 'קבוצות תרופות',
     icon: Pill,
     color: 'text-teal-400',
     border: 'border-teal-400/30',
