@@ -1,13 +1,10 @@
 import { X, Sparkles, Pill, Stethoscope, Tablet } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import { useEffect, useState } from 'react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const VERSION_KEY = 'app-version-2.1';
 
 type UpdateItem =
   | { type: 'icon'; Icon: React.ElementType; iconClass: string; text: string }
@@ -40,26 +37,9 @@ const UPDATES: UpdateItem[] = [
 ];
 
 export default function WhatsNewModal({ isOpen, onClose }: Props) {
-  const [autoOpen, setAutoOpen] = useState(false);
-  const visible = isOpen || autoOpen;
+  useModalBackHandler(isOpen, onClose);
 
-  useModalBackHandler(visible, handleClose);
-
-  useEffect(() => {
-    if (!localStorage.getItem(VERSION_KEY)) {
-      setAutoOpen(true);
-    }
-  }, []);
-
-  function handleClose() {
-    if (autoOpen) {
-      localStorage.setItem(VERSION_KEY, 'true');
-      setAutoOpen(false);
-    }
-    onClose();
-  }
-
-  if (!visible) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark" dir="rtl">
@@ -70,7 +50,7 @@ export default function WhatsNewModal({ isOpen, onClose }: Props) {
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מה חדש ב'חובש +'? 🚀</h2>
         </div>
         <button
-          onClick={handleClose}
+          onClick={onClose}
           className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border
                      flex items-center justify-center active:scale-90 transition-transform
                      text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"

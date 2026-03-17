@@ -152,22 +152,22 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
             </p>
             {TABLET_CATEGORIES.map((cat) => (
               <div key={cat.category}>
-                <h3 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2 pr-1">
+                <h3 className="text-xs font-black uppercase tracking-widest text-gray-100 mb-2 pr-1">
                   {cat.category}
                 </h3>
-                <div className="rounded-2xl border border-blue-400/20 bg-blue-400/5 overflow-hidden">
+                <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
                   {cat.items.map((item, i) => (
                     <div
                       key={item.abbr}
                       className={[
                         'flex items-center justify-between px-4 py-3',
-                        i < cat.items.length - 1 ? 'border-b border-blue-400/15' : '',
+                        i < cat.items.length - 1 ? 'border-b border-white/10' : '',
                       ].join(' ')}
                     >
                       <span className="text-sm font-bold text-gray-900 dark:text-white">{item.he}</span>
                       <div className="flex items-center gap-2 text-left" dir="ltr">
-                        <span className="text-xs text-gray-400 dark:text-emt-muted">{item.en}</span>
-                        <span className="text-xs font-black font-mono bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md whitespace-nowrap">
+                        <span className="text-xs text-gray-400 dark:text-gray-400">{item.en}</span>
+                        <span className="text-xs font-black font-mono bg-white/10 text-white px-2 py-0.5 rounded-md whitespace-nowrap">
                           {item.abbr}
                         </span>
                       </div>
