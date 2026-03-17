@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, BookHeart, Search, Plus, Trash2 } from 'lucide-react';
+import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import { MEDICAL_CATEGORIES } from '../data/medicalTerms';
+import { MEDICAL_CATEGORIES, TABLET_CATEGORIES } from '../data/medicalTerms';
 import { useMedicalHistoryStore } from '../../../store/medicalHistoryStore';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [newHe, setNewHe] = useState('');
   const [newEn, setNewEn] = useState('');
+  const [view, setView] = useState<'general' | 'tablet'>('general');
   const { customItems, addItem, removeItem } = useMedicalHistoryStore();
 
   if (!isOpen) return null;
@@ -97,8 +98,36 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="shrink-0 px-4 pt-3 pb-2">
+      {/* View Toggle */}
+      <div className="shrink-0 flex gap-2 px-4 pt-3">
+        <button
+          onClick={() => setView('general')}
+          className={[
+            'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all',
+            view === 'general'
+              ? 'bg-purple-500 text-white'
+              : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
+          ].join(' ')}
+        >
+          <BookOpen size={13} />
+          כללי
+        </button>
+        <button
+          onClick={() => setView('tablet')}
+          className={[
+            'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all',
+            view === 'tablet'
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
+          ].join(' ')}
+        >
+          <Tablet size={13} />
+          תצוגת טאבלט
+        </button>
+      </div>
+
+      {/* Search — general view only */}
+      {view === 'general' && <div className="shrink-0 px-4 pt-3 pb-2">
         <div className="relative">
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-emt-muted pointer-events-none" />
           <input
@@ -112,11 +141,43 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
                        pr-9 pl-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/40"
           />
         </div>
-      </div>
+      </div>}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
-        {filtered ? (
+        {view === 'tablet' ? (
+          <>
+            <p className="text-xs text-gray-400 dark:text-emt-muted pr-1">
+              מחלות רקע לפי בחירות בטאבלט האמבולנס
+            </p>
+            {TABLET_CATEGORIES.map((cat) => (
+              <div key={cat.category}>
+                <h3 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2 pr-1">
+                  {cat.category}
+                </h3>
+                <div className="rounded-2xl border border-blue-400/20 bg-blue-400/5 overflow-hidden">
+                  {cat.items.map((item, i) => (
+                    <div
+                      key={item.abbr}
+                      className={[
+                        'flex items-center justify-between px-4 py-3',
+                        i < cat.items.length - 1 ? 'border-b border-blue-400/15' : '',
+                      ].join(' ')}
+                    >
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{item.he}</span>
+                      <div className="flex items-center gap-2 text-left" dir="ltr">
+                        <span className="text-xs text-gray-400 dark:text-emt-muted">{item.en}</span>
+                        <span className="text-xs font-black font-mono bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md whitespace-nowrap">
+                          {item.abbr}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : filtered ? (
           <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
             {filtered.length === 0 ? (
               <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
@@ -176,8 +237,8 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
           </>
         )}
 
-        {/* Add custom item form */}
-        <div className="rounded-2xl border border-dashed border-gray-300 dark:border-emt-border p-3 space-y-2">
+        {/* Add custom item form — general view only */}
+        {view === 'general' && <div className="rounded-2xl border border-dashed border-gray-300 dark:border-emt-border p-3 space-y-2">
           <p className="text-xs font-bold text-gray-500 dark:text-emt-muted flex items-center gap-1">
             <Plus size={13} />
             הוסף מחלה מותאמת אישית
@@ -211,7 +272,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
           >
             הוסף
           </button>
-        </div>
+        </div>}
       </div>
     </div>
   );

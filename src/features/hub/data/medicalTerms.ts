@@ -1,5 +1,8 @@
 export type MedicalTerm = { he: string; en: string };
 
+export type TabletItem = { abbr: string; en: string; he: string };
+export type TabletCategory = { category: string; items: TabletItem[] };
+
 export type MedicalCategory = {
   title: string;
   color: string;
@@ -7,6 +10,62 @@ export type MedicalCategory = {
   border: string;
   terms: MedicalTerm[];
 };
+
+export const TABLET_CATEGORIES: TabletCategory[] = [
+  {
+    category: 'מחלות נשימה (Respiratory)',
+    items: [
+      { abbr: 'Asthma', en: 'Asthma', he: 'אסטמה' },
+      { abbr: 'COPD', en: 'Chronic Obstructive Pulmonary Disease', he: 'מחלת ריאות חסימתית כרונית' },
+    ],
+  },
+  {
+    category: 'מחלות ובעיות בלב (Cardiovascular)',
+    items: [
+      { abbr: 'Hypertension', en: 'Hypertension', he: 'יתר לחץ דם (כרוני)' },
+      { abbr: 'Chr.IHD', en: 'Chronic Ischemic Heart Disease', he: 'מחלת לב איסכמית כרונית' },
+      { abbr: 's/p MI', en: 'Myocardial Infarction', he: 'אוטם בשריר הלב (לאחר אירוע)' },
+      { abbr: 'CHF', en: 'Congestive Heart Failure', he: 'אי ספיקת לב' },
+      { abbr: 'Atrial fib', en: 'Atrial fibrillation', he: 'פרפור עליות' },
+      { abbr: 's/p CABG', en: 'Coronary Artery Bypass Grafting', he: 'ניתוח מעקפים' },
+      { abbr: 'Pacemaker', en: 'Pacemaker', he: 'קוצב לב' },
+      { abbr: 's/p PTCA', en: 'Percutaneous Transluminal Coronary Angioplasty', he: 'צנתור (בלון/תומכן)' },
+    ],
+  },
+  {
+    category: 'מחלות נוירולוגיות (Neurology)',
+    items: [
+      { abbr: 's/p CVA', en: 'Cerebro Vascular Accident / Stroke', he: 'שבץ מוחי' },
+      { abbr: 's/p TIA', en: 'Transient Ischemic Attack', he: 'שבץ איסכמי חולף' },
+      { abbr: 's/p Epilepsy', en: 'Epilepsy', he: 'אפילפסיה / כפיון' },
+      { abbr: 'Cognitive Dis.', en: 'Cognitive Disorder', he: 'הפרעות בתפקודי חשיבה וזיכרון' },
+    ],
+  },
+  {
+    category: 'מערכות נוספות והפרעות מטבוליות',
+    items: [
+      { abbr: 'CRF', en: 'Chronic Renal Failure', he: 'אי ספיקת כליות כרונית' },
+      { abbr: 'Diabetes Mellitus', en: 'Diabetes Mellitus', he: 'סכרת' },
+      { abbr: 'Lipid disorder', en: 'Lipid disorder', he: 'בעיות ברמות השומנים בדם (היפרליפידמיה)' },
+      { abbr: 'Thyroid Disorder', en: 'Thyroid Disorder', he: 'בעיות בלוטת התריס' },
+      { abbr: 'Malignancy', en: 'Malignancy / Cancer', he: 'גידולים סרטניים' },
+      { abbr: 'Gastrointestinal', en: 'Gastrointestinal', he: 'מחלות מערכת העיכול' },
+      { abbr: 'Hematologic', en: 'Hematologic', he: 'מחלות הקשורות לדם ומרכיביו' },
+      { abbr: 'Psychiatric', en: 'Psychiatric', he: 'מחלות ובעיות נפשיות' },
+      { abbr: 'Orthopedic', en: 'Orthopedic', he: 'פגיעות עצמות ושרירים' },
+      { abbr: 'Genitourinary', en: 'Genitourinary', he: 'מחלות מין ודרכי השתן' },
+    ],
+  },
+  {
+    category: 'הרגלים ואחר (Habits & Other)',
+    items: [
+      { abbr: 'Obesity', en: 'Obesity', he: 'השמנת יתר' },
+      { abbr: 'Smoking', en: 'Smoking', he: 'עישון' },
+      { abbr: 'Drug Abuse', en: 'Chronic Drug Use', he: 'שימוש כרוני בסמים' },
+      { abbr: 'Alcohol', en: 'Alcoholism', he: 'שתיית אלכוהול' },
+    ],
+  },
+];
 
 export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   {
