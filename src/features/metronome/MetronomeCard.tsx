@@ -53,74 +53,99 @@ export default function MetronomeCard() {
         )}
       </div>
 
-      {/* BPM selector — +/- buttons with track */}
-      <div className="w-full flex items-center gap-3 px-2">
+      {/* BPM selector — +/- buttons with bounded custom track */}
+      <div className="w-full flex items-center gap-2 px-1">
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i > 0) setBpm(BPM_VALUES[i - 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === 0}
-          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+          className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center
                      bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
                      text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הפחת BPM"
-        ><Minus size={16} /></button>
+        ><Minus size={15} /></button>
 
-        <div className="flex-1 relative flex items-center" style={{ height: 28 }}>
-          {/* track background */}
+        {/* Outer track wrapper — end-caps sit here */}
+        <div className="flex-1 relative" style={{ height: 36 }}>
+          {/* Right end-cap (100 BPM side) */}
           <div
-            className="absolute inset-x-0 rounded-full"
+            className="absolute right-0 rounded-full"
             style={{
-              height: 6,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.08)',
+              width: 3, height: 14,
+              top: '50%', transform: 'translateY(-50%)',
+              backgroundColor: isPlaying ? 'rgba(245,158,11,0.55)' : 'rgba(120,120,140,0.35)',
             }}
           />
-          {/* filled portion — anchored at right so it grows leftward (RTL: 100 on right → 120 on left) */}
+          {/* Left end-cap (140 BPM side) */}
           <div
-            className="absolute right-0 rounded-full transition-all duration-200"
+            className="absolute left-0 rounded-full"
             style={{
-              height: 6,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
-              backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
+              width: 3, height: 14,
+              top: '50%', transform: 'translateY(-50%)',
+              backgroundColor: isPlaying ? 'rgba(245,158,11,0.55)' : 'rgba(120,120,140,0.35)',
             }}
           />
-          {/* step dots */}
-          {BPM_VALUES.map((val, i) => (
-            <button
-              key={val}
-              onClick={() => setBpm(val)}
-              className="absolute transition-all duration-150 active:scale-90"
+
+          {/* Inner track area — inset so edge dots stay within outer bounds */}
+          <div className="absolute" style={{ left: 12, right: 12, top: 0, bottom: 0 }}>
+            {/* Track background */}
+            <div
+              className="absolute inset-x-0 rounded-full"
               style={{
-                right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
-                transform: 'translate(50%, -50%)',
+                height: 6,
                 top: '50%',
-                width: bpm === val ? 20 : 14,
-                height: bpm === val ? 20 : 14,
-                borderRadius: '50%',
-                backgroundColor: bpm === val
-                  ? (isPlaying ? '#F5A623' : '#3b82f6')
-                  : (isPlaying ? 'rgba(245,158,11,0.35)' : 'rgba(0,0,0,0.2)'),
-                border: bpm === val ? '2px solid white' : '2px solid transparent',
-                boxShadow: bpm === val ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
+                transform: 'translateY(-50%)',
+                backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(120,120,140,0.15)',
+                border: isPlaying ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(120,120,140,0.2)',
               }}
-              aria-label={`${val} BPM`}
-              aria-pressed={bpm === val}
             />
-          ))}
+            {/* Filled portion — anchored at right, grows leftward */}
+            <div
+              className="absolute right-0 rounded-full transition-all duration-200"
+              style={{
+                height: 6,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
+                backgroundColor: isPlaying ? '#F5A623' : '#3b82f6',
+              }}
+            />
+            {/* Step dots */}
+            {BPM_VALUES.map((val, i) => (
+              <button
+                key={val}
+                onClick={() => setBpm(val)}
+                className="absolute transition-all duration-150 active:scale-90"
+                style={{
+                  right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
+                  transform: 'translate(50%, -50%)',
+                  top: '50%',
+                  width: bpm === val ? 20 : 12,
+                  height: bpm === val ? 20 : 12,
+                  borderRadius: '50%',
+                  backgroundColor: bpm === val
+                    ? (isPlaying ? '#F5A623' : '#3b82f6')
+                    : (isPlaying ? 'rgba(245,158,11,0.3)' : 'rgba(120,120,140,0.25)'),
+                  border: bpm === val ? '2.5px solid white' : '1.5px solid transparent',
+                  boxShadow: bpm === val ? '0 0 10px rgba(0,0,0,0.35)' : 'none',
+                  zIndex: bpm === val ? 2 : 1,
+                }}
+                aria-label={`${val} BPM`}
+                aria-pressed={bpm === val}
+              />
+            ))}
+          </div>
         </div>
 
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i < BPM_VALUES.length - 1) setBpm(BPM_VALUES[i + 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === BPM_VALUES.length - 1}
-          className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
+          className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center
                      bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
                      text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הגדל BPM"
-        ><Plus size={16} /></button>
+        ><Plus size={15} /></button>
       </div>
 
       {/* Action buttons */}

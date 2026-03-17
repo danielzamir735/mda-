@@ -23,6 +23,7 @@ import MedicalHistoryModal from '../hub/components/MedicalHistoryModal';
 import HospitalsModal from '../hub/components/HospitalsModal';
 import WhatsNewModal from '../hub/components/WhatsNewModal';
 import BagStandardsModal from '../hub/components/BagStandardsModal';
+import MedicationsModal from '../quicktools/MedicationsModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
@@ -55,6 +56,7 @@ export default function VitalsFeature() {
   const [hospitalsOpen, setHospitalsOpen] = useState(false);
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
+  const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -193,6 +195,7 @@ export default function VitalsFeature() {
         onHospitalsOpen={() => setHospitalsOpen(true)}
         onUpdatesOpen={() => setUpdatesOpen(true)}
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
+        onMedicationsOpen={() => { setHubOpen(false); setMedicationsOpen(true); }}
       />
 
       <AmbulanceChecklistModal
@@ -215,6 +218,7 @@ export default function VitalsFeature() {
       <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
       <WhatsNewModal isOpen={updatesOpen} onClose={() => { setUpdatesOpen(false); setHubOpen(true); }} />
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
+      <MedicationsModal isOpen={medicationsOpen} onClose={() => { setMedicationsOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

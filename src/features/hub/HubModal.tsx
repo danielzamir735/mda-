@@ -15,6 +15,7 @@ interface Props {
   onHospitalsOpen: () => void;
   onUpdatesOpen: () => void;
   onBagStandardsOpen: () => void;
+  onMedicationsOpen: () => void;
 }
 
 type HubItem = {
@@ -28,6 +29,14 @@ type HubItem = {
 };
 
 const HUB_ITEMS: HubItem[] = [
+  {
+    id: 'medications-classification',
+    label: 'סיווג תרופות',
+    icon: Pill,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+  },
   {
     id: 'calculators',
     label: 'מחשבונים',
@@ -111,7 +120,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification']);
 
 export default function HubModal({
   isOpen,
@@ -124,6 +133,7 @@ export default function HubModal({
   onHospitalsOpen,
   onUpdatesOpen,
   onBagStandardsOpen,
+  onMedicationsOpen,
 }: Props) {
   const [hasReadUpdate, setHasReadUpdate] = useState(
     () => localStorage.getItem('has_read_update_v2') === 'true'
@@ -143,6 +153,7 @@ export default function HubModal({
       onUpdatesOpen();
     }
     if (id === 'kit-standards') onBagStandardsOpen();
+    if (id === 'medications-classification') onMedicationsOpen();
   };
 
   return (

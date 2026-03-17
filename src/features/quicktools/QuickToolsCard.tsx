@@ -1,15 +1,13 @@
 import { useRef, useState } from 'react';
-import { Camera, Activity, Zap, Pill } from 'lucide-react';
+import { Camera, Activity, Zap } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
-import MedicationsModal from './MedicationsModal';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCameraStore } from '../../store/cameraStore';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [addVitalsOpen, setAddVitalsOpen] = useState(false);
-  const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const torchStream = useRef<MediaStream | null>(null);
   const t = useTranslation();
@@ -102,22 +100,6 @@ export default function QuickToolsCard() {
             <span className="text-emt-green text-sm font-bold">{t('addVitals')}</span>
           </button>
 
-          {/* Medication Classification */}
-          <button
-            onClick={() => setMedicationsOpen(true)}
-            className="flex items-center gap-3 px-3 py-2 rounded-2xl
-                       transition-all duration-200 active:scale-95"
-            aria-label="סיווג תרופות"
-          >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
-                         border border-teal-400/40 bg-teal-400/10"
-            >
-              <Pill size={18} className="text-teal-400" />
-            </div>
-            <span className="text-teal-400 text-sm font-bold">סיווג תרופות</span>
-          </button>
-
         </div>
       </div>
 
@@ -131,11 +113,6 @@ export default function QuickToolsCard() {
       <AddVitalsModal
         isOpen={addVitalsOpen}
         onClose={() => setAddVitalsOpen(false)}
-      />
-
-      <MedicationsModal
-        isOpen={medicationsOpen}
-        onClose={() => setMedicationsOpen(false)}
       />
     </>
   );
