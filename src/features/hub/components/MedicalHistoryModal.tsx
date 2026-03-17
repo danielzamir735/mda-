@@ -117,12 +117,12 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
           className={[
             'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all',
             view === 'tablet'
-              ? 'bg-blue-500 text-white'
+              ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
               : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
           ].join(' ')}
         >
           <Tablet size={13} />
-          תצוגת טאבלט
+          מחלות רקע מהטאבלט
         </button>
       </div>
 

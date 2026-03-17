@@ -24,6 +24,7 @@ import HospitalsModal from '../hub/components/HospitalsModal';
 import WhatsNewModal from '../hub/components/WhatsNewModal';
 import BagStandardsModal from '../hub/components/BagStandardsModal';
 import MedicationsModal from '../quicktools/MedicationsModal';
+import CommonMedsModal from '../hub/components/CommonMedsModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
@@ -57,6 +58,7 @@ export default function VitalsFeature() {
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
   const [medicationsOpen, setMedicationsOpen] = useState(false);
+  const [commonMedsOpen, setCommonMedsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -196,6 +198,7 @@ export default function VitalsFeature() {
         onUpdatesOpen={() => setUpdatesOpen(true)}
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
         onMedicationsOpen={() => setMedicationsOpen(true)}
+        onCommonMedsOpen={() => setCommonMedsOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -219,6 +222,7 @@ export default function VitalsFeature() {
       <WhatsNewModal isOpen={updatesOpen} onClose={() => { setUpdatesOpen(false); setHubOpen(true); }} />
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
       <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
+      <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

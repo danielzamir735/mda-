@@ -16,6 +16,7 @@ interface Props {
   onUpdatesOpen: () => void;
   onBagStandardsOpen: () => void;
   onMedicationsOpen: () => void;
+  onCommonMedsOpen: () => void;
 }
 
 type HubItem = {
@@ -30,12 +31,36 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
+    id: 'medhistory',
+    label: 'מחלות רקע נפוצות',
+    icon: Stethoscope,
+    color: 'text-purple-400',
+    border: 'border-purple-400/30',
+    bg: 'bg-purple-400/10',
+  },
+  {
     id: 'medications-classification',
     label: 'קבוצות תרופות',
     icon: Pill,
     color: 'text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
+  },
+  {
+    id: 'common-meds',
+    label: 'תרופות נפוצות',
+    icon: Pill,
+    color: 'text-emerald-400',
+    border: 'border-emerald-400/30',
+    bg: 'bg-emerald-400/10',
+  },
+  {
+    id: 'clinical',
+    label: 'טבלת מדדים',
+    icon: BookOpen,
+    color: 'text-blue-400',
+    border: 'border-blue-400/30',
+    bg: 'bg-blue-400/10',
   },
   {
     id: 'calculators',
@@ -54,36 +79,12 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-indigo-400/10',
   },
   {
-    id: 'clinical',
-    label: 'טבלת מדדים',
-    icon: BookOpen,
-    color: 'text-blue-400',
-    border: 'border-blue-400/30',
-    bg: 'bg-blue-400/10',
-  },
-  {
-    id: 'medhistory',
-    label: 'מחלות רקע נפוצות',
-    icon: Stethoscope,
-    color: 'text-purple-400',
-    border: 'border-purple-400/30',
-    bg: 'bg-purple-400/10',
-  },
-  {
     id: 'hospitals',
     label: 'מידע בתי חולים',
     icon: Building2,
     color: 'text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
-  },
-  {
-    id: 'realtime-translate',
-    label: 'תרגום רפואי בזמן אמת',
-    icon: Mic,
-    color: 'text-orange-400',
-    border: 'border-orange-400/30',
-    bg: 'bg-orange-400/10',
   },
   {
     id: 'defibrillator',
@@ -95,12 +96,12 @@ const HUB_ITEMS: HubItem[] = [
     href: 'https://defi.co.il/#/map',
   },
   {
-    id: 'pharmacy',
-    label: 'מילון תרופות',
-    icon: Pill,
-    color: 'text-teal-400',
-    border: 'border-teal-400/30',
-    bg: 'bg-teal-400/10',
+    id: 'realtime-translate',
+    label: 'תרגום רפואי בזמן אמת',
+    icon: Mic,
+    color: 'text-orange-400',
+    border: 'border-orange-400/30',
+    bg: 'bg-orange-400/10',
   },
   {
     id: 'updates',
@@ -120,7 +121,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds']);
 
 export default function HubModal({
   isOpen,
@@ -134,6 +135,7 @@ export default function HubModal({
   onUpdatesOpen,
   onBagStandardsOpen,
   onMedicationsOpen,
+  onCommonMedsOpen,
 }: Props) {
   const [hasReadUpdate, setHasReadUpdate] = useState(
     () => localStorage.getItem('has_read_update_v2') === 'true'
@@ -154,6 +156,7 @@ export default function HubModal({
     }
     if (id === 'kit-standards') onBagStandardsOpen();
     if (id === 'medications-classification') onMedicationsOpen();
+    if (id === 'common-meds') onCommonMedsOpen();
   };
 
   return (
