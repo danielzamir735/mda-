@@ -109,14 +109,16 @@ export default function MetronomeCard() {
                   right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
                   transform: 'translate(50%, -50%)',
                   top: '50%',
-                  width: bpm === val ? 20 : 12,
-                  height: bpm === val ? 20 : 12,
+                  width: bpm === val ? 24 : 11,
+                  height: bpm === val ? 24 : 11,
                   borderRadius: '50%',
                   backgroundColor: bpm === val
-                    ? (isPlaying ? '#F5A623' : '#3b82f6')
-                    : (isPlaying ? 'rgba(245,158,11,0.3)' : 'rgba(120,120,140,0.25)'),
-                  border: bpm === val ? '2.5px solid white' : '1.5px solid transparent',
-                  boxShadow: bpm === val ? '0 0 10px rgba(0,0,0,0.35)' : 'none',
+                    ? (isPlaying ? '#F5A623' : '#38bdf8')
+                    : (isPlaying ? 'rgba(245,158,11,0.25)' : 'rgba(120,120,140,0.22)'),
+                  border: bpm === val ? '3px solid white' : '1.5px solid transparent',
+                  boxShadow: bpm === val
+                    ? (isPlaying ? '0 0 14px rgba(245,166,35,0.7), 0 2px 6px rgba(0,0,0,0.4)' : '0 0 14px rgba(56,189,248,0.65), 0 2px 6px rgba(0,0,0,0.4)')
+                    : 'none',
                   zIndex: bpm === val ? 2 : 1,
                 }}
                 aria-label={`${val} BPM`}

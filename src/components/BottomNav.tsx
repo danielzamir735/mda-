@@ -18,14 +18,6 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
       className="shrink-0 flex items-center gap-2 px-2 min-h-[4rem] bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border safe-area-bottom"
     >
       <style>{`
-        @keyframes breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.18); }
-        }
-        .animate-breathe {
-          animation: breathe 2.2s ease-in-out infinite;
-          display: inline-flex;
-        }
         @keyframes heartbeat {
           0%, 100% { transform: scale(1); }
           14%  { transform: scale(1.25); }
@@ -89,13 +81,11 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         onClick={onHubOpen}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-500 dark:text-amber-400"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-400"
         aria-label={t('hub')}
       >
-        <span className="animate-breathe">
-          <LayoutGrid size={20} />
-        </span>
-        <span className="text-[0.65rem] font-semibold">{t('hub')}</span>
+        <LayoutGrid size={30} />
+        <span className="text-[0.65rem] font-black">{t('hub')}</span>
       </HapticButton>
     </nav>
   );
