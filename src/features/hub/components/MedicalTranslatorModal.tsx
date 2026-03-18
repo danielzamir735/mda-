@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, Mic, ExternalLink } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
@@ -41,6 +41,14 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   selectedLangRef.current = selectedLang;
   expandedRef.current = expanded;
   onCloseRef.current = onClose;
+
+  const openGoogleTranslate = (lang: string) => {
+    const googleCodes: Record<string, string> = {
+      en: 'en', ru: 'ru', ar: 'ar', fr: 'fr', am: 'am',
+    };
+    const tl = googleCodes[lang] || 'en';
+    window.open(`https://translate.google.com/?sl=he&tl=${tl}&op=translate`, '_blank');
+  };
 
   const speakText = (text: string, langCode: string) => {
     if (!('speechSynthesis' in window)) {
@@ -300,16 +308,15 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             pressScale={0.93}
             onClick={e => {
               e.stopPropagation();
-              window.open(`https://translate.google.com/?sl=iw&tl=${selectedLang}&op=translate`, '_blank');
+              openGoogleTranslate(selectedLang);
             }}
             className="mt-8 flex items-center gap-2 bg-slate-800 border border-slate-600
                        hover:bg-slate-700 text-white px-6 py-4 rounded-full shadow-2xl
                        transition-all text-lg font-medium"
-            aria-label="הקלט תשובת מטופל"
+            aria-label="עבור לשיחה בגוגל טרנסלייט"
           >
-            <Mic size={20} />
-            הקלט תשובת מטופל
-            <ExternalLink size={15} className="opacity-60" />
+            <ExternalLink size={20} />
+            עבור לשיחה בגוגל טרנסלייט
           </HapticButton>
           {/* Task 3: Enlarged 'click to close' text */}
           <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
