@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Languages, Maximize2 } from 'lucide-react';
+import { X, Languages, Maximize2, Volume2 } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { PHRASES, CATEGORIES, LANG_LABELS, LANG_DIR, type Lang } from '../data/medicalTranslationsData';
@@ -10,6 +10,24 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   const [lang, setLang] = useState<Lang>('en');
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  const speakText = (text: string, langCode: string) => {
+    if (!('speechSynthesis' in window)) {
+      alert('מנוע דיבור אינו נתמך במכשיר זה');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const ttsLangs: Record<string, string> = {
+      en: 'en-US',
+      ru: 'ru-RU',
+      ar: 'ar-SA',
+    };
+    utterance.lang = ttsLangs[langCode] || 'en-US';
+    utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
 
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
@@ -95,7 +113,18 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
                 {phrase.he}
               </p>
             </div>
-            <Maximize2 size={16} className="shrink-0 text-gray-400 dark:text-emt-muted mt-0.5" />
+            <div className="flex flex-col items-center gap-1.5">
+            <HapticButton
+              pressScale={0.85}
+              onClick={e => { e.stopPropagation(); speakText(phrase[lang], lang); }}
+              className="w-8 h-8 rounded-full bg-orange-400/20 border border-orange-400/40
+                         flex items-center justify-center text-orange-400"
+              aria-label="השמע"
+            >
+              <Volume2 size={15} />
+            </HapticButton>
+            <Maximize2 size={14} className="shrink-0 text-gray-400 dark:text-emt-muted" />
+          </div>
           </HapticButton>
         ))}
       </div>
@@ -112,10 +141,20 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           </p>
           <p
             dir={LANG_DIR[lang]}
-            className="text-white font-bold text-3xl text-center leading-relaxed mb-8"
+            className="text-white font-bold text-3xl text-center leading-relaxed mb-6"
           >
             {expandedPhrase[lang]}
           </p>
+          <HapticButton
+            pressScale={0.9}
+            onClick={e => { e.stopPropagation(); speakText(expandedPhrase[lang], lang); }}
+            className="mb-8 px-6 py-3 rounded-2xl bg-orange-400/20 border border-orange-400/50
+                       flex items-center gap-2 text-orange-400 font-bold text-base"
+            aria-label="השמע"
+          >
+            <Volume2 size={20} />
+            השמע
+          </HapticButton>
           <div className="w-full h-px bg-emt-border mb-6" />
           <p dir="rtl" className="text-emt-muted text-base text-center">
             {expandedPhrase.he}
