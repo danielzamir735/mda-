@@ -70,8 +70,12 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     const installIgnored = localStorage.getItem(KEYS.installIgnored) === 'true';
 
     const prev = parseInt(localStorage.getItem(KEYS.visitCount) || '0', 10);
-    const visitCount = prev + 1;
-    localStorage.setItem(KEYS.visitCount, String(visitCount));
+    let visitCount = prev;
+    if (!sessionStorage.getItem('hoveshPlus_session_started')) {
+      visitCount = prev + 1;
+      localStorage.setItem(KEYS.visitCount, String(visitCount));
+      sessionStorage.setItem('hoveshPlus_session_started', 'true');
+    }
 
     // Never auto-show on first visit (collides with Legal + Welcome modals).
     // Auto-trigger only on visits 2 and 3.
