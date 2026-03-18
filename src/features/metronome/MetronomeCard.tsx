@@ -65,38 +65,34 @@ export default function MetronomeCard() {
           aria-label="הפחת BPM"
         ><Minus size={15} /></button>
 
-        {/* Outer track wrapper — end-caps sit here */}
+        {/* Track wrapper */}
         <div className="flex-1 relative" style={{ height: 36 }}>
-          {/* Right end-cap (100 BPM side) */}
-          <div
-            className="absolute right-0 rounded-full"
-            style={{
-              width: 3, height: 14,
-              top: '50%', transform: 'translateY(-50%)',
-              backgroundColor: isPlaying ? 'rgba(245,158,11,0.55)' : 'rgba(120,120,140,0.35)',
-            }}
-          />
-          {/* Left end-cap (140 BPM side) */}
-          <div
-            className="absolute left-0 rounded-full"
-            style={{
-              width: 3, height: 14,
-              top: '50%', transform: 'translateY(-50%)',
-              backgroundColor: isPlaying ? 'rgba(245,158,11,0.55)' : 'rgba(120,120,140,0.35)',
-            }}
-          />
-
-          {/* Inner track area — inset so edge dots stay within outer bounds */}
           <div className="absolute" style={{ left: 12, right: 12, top: 0, bottom: 0 }}>
-            {/* Track background — static, always full width */}
+            {/* Inactive track — full width */}
             <div
               className="absolute inset-x-0 rounded-full"
               style={{
                 height: 6,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                backgroundColor: isPlaying ? 'rgba(245,158,11,0.28)' : 'rgba(120,120,140,0.28)',
-                border: isPlaying ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(120,120,140,0.3)',
+                backgroundColor: isPlaying ? 'rgba(245,158,11,0.18)' : 'rgba(100,116,139,0.3)',
+              }}
+            />
+            {/* Active fill — from right edge to current thumb */}
+            <div
+              className="absolute rounded-full transition-all duration-150"
+              style={{
+                height: 6,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                right: 0,
+                width: `${(BPM_VALUES.indexOf(bpm) / (BPM_VALUES.length - 1)) * 100}%`,
+                background: isPlaying
+                  ? 'linear-gradient(to left, #F5A623, #facc15)'
+                  : 'linear-gradient(to left, #3b82f6, #38bdf8)',
+                boxShadow: isPlaying
+                  ? '0 0 8px rgba(245,166,35,0.55)'
+                  : '0 0 8px rgba(59,130,246,0.5)',
               }}
             />
             {/* Step dots */}
@@ -109,15 +105,15 @@ export default function MetronomeCard() {
                   right: `${(i / (BPM_VALUES.length - 1)) * 100}%`,
                   transform: 'translate(50%, -50%)',
                   top: '50%',
-                  width: bpm === val ? 24 : 11,
-                  height: bpm === val ? 24 : 11,
+                  width: bpm === val ? 22 : 10,
+                  height: bpm === val ? 22 : 10,
                   borderRadius: '50%',
-                  backgroundColor: bpm === val
-                    ? (isPlaying ? '#F5A623' : '#38bdf8')
-                    : (isPlaying ? 'rgba(245,158,11,0.25)' : 'rgba(120,120,140,0.22)'),
-                  border: bpm === val ? '3px solid white' : '1.5px solid transparent',
+                  backgroundColor: bpm === val ? 'white' : (isPlaying ? 'rgba(245,158,11,0.3)' : 'rgba(100,116,139,0.35)'),
+                  border: bpm === val ? 'none' : '1.5px solid transparent',
                   boxShadow: bpm === val
-                    ? (isPlaying ? '0 0 14px rgba(245,166,35,0.7), 0 2px 6px rgba(0,0,0,0.4)' : '0 0 14px rgba(56,189,248,0.65), 0 2px 6px rgba(0,0,0,0.4)')
+                    ? (isPlaying
+                        ? '0 0 0 3px rgba(245,166,35,0.45), 0 2px 8px rgba(0,0,0,0.5)'
+                        : '0 0 0 3px rgba(59,130,246,0.4), 0 2px 8px rgba(0,0,0,0.5)')
                     : 'none',
                   zIndex: bpm === val ? 2 : 1,
                 }}
