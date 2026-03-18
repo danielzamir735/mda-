@@ -89,7 +89,7 @@ function AndroidContent({
                      flex items-center justify-center gap-3 border border-blue-400/30"
         >
           <Download className="w-7 h-7" />
-          התקן אפליקציה בלחיצה
+          התקנה מהירה ⚡
         </button>
 
         <p className="text-slate-500 text-xs text-center">
