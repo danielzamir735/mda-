@@ -202,7 +202,7 @@ export default function VitalsFeature() {
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
         onMedicationsOpen={() => setMedicationsOpen(true)}
         onCommonMedsOpen={() => setCommonMedsOpen(true)}
-        onTranslatorOpen={() => { setHubOpen(false); setTranslatorOpen(true); }}
+        onTranslatorOpen={() => setTranslatorOpen(true)}
       />
 
       <AmbulanceChecklistModal
