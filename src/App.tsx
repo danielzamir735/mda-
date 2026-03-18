@@ -7,6 +7,9 @@ import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
 import LegalDisclaimerModal from './components/LegalDisclaimerModal';
 import UpdateModal from './components/UpdateModal';
+import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
+import FullInstallModal from './features/pwa/FullInstallModal';
+import BottomInstallBanner from './features/pwa/BottomInstallBanner';
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -68,15 +71,19 @@ export default function App() {
   };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-      <Analytics />
-      <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
-      {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
-    </BrowserRouter>
+    <PwaInstallProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+        <Analytics />
+        <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
+        {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
+        <FullInstallModal />
+        <BottomInstallBanner />
+      </BrowserRouter>
+    </PwaInstallProvider>
   );
 }
