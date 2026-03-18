@@ -2,16 +2,21 @@ import { useState } from 'react';
 import {
   MoreVertical, CheckCircle, ExternalLink, ListChecks,
   PlusCircle, ChevronRight, Download, Smartphone, Apple, AlertTriangle,
+  X, ShieldPlus, Activity,
 } from 'lucide-react';
 import { usePwaInstall } from './PwaInstallContext';
 
 type Tab = 'android' | 'ios';
 
-/* ── App icon ── */
+/* ── Premium EMS app icon ── */
 const AppIcon = () => (
-  <svg viewBox="0 0 48 48" width={36} height={36} fill="none">
-    <path d="M24 4L29 17H43L32 26L36 39L24 31L12 39L16 26L5 17H19L24 4Z" fill="white" />
-  </svg>
+  <div className="relative flex items-center justify-center">
+    <ShieldPlus className="w-9 h-9 text-white drop-shadow-lg" strokeWidth={1.5} />
+    <Activity
+      className="absolute bottom-0 right-0 w-4 h-4 text-blue-200 opacity-90"
+      strokeWidth={2}
+    />
+  </div>
 );
 
 /* ── Step card ── */
@@ -137,7 +142,7 @@ export default function FullInstallModal() {
   if (!showFullModal) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col overflow-y-auto" style={{ direction: 'rtl' }}>
+    <div className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col overflow-y-auto" style={{ direction: 'rtl' }}>
       {/* Midnight-blue gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#080b1c] via-[#0a0e22] to-[#060816]" />
       {/* Glow accents */}
@@ -150,13 +155,24 @@ export default function FullInstallModal() {
         }}
       />
 
+      {/* X close button — top-left */}
+      <button
+        onClick={closeFullModal}
+        className="absolute top-4 left-4 p-2 text-slate-400 hover:text-white transition-colors z-10"
+        aria-label="סגור"
+      >
+        <X size={24} />
+      </button>
+
       {/* Content container */}
       <div className="relative flex flex-col min-h-full w-full max-w-md mx-auto px-5 py-8 gap-6">
         {/* Header */}
         <div className="flex flex-col items-center gap-4 pt-4">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-700
-                          flex items-center justify-center shadow-xl shadow-blue-600/40
-                          border border-blue-400/20">
+          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700
+                          flex items-center justify-center shadow-2xl shadow-blue-500/50
+                          border-2 border-blue-400/30 ring-4 ring-blue-500/10">
+            {/* Outer glow pulse ring */}
+            <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '2.5s' }} />
             <AppIcon />
           </div>
           <div className="text-center">
@@ -198,7 +214,7 @@ export default function FullInstallModal() {
 
         {/* Back button footer */}
         <button
-          onClick={closeFullModal}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeFullModal(); }}
           className="w-full py-4 rounded-2xl border border-white/12 text-slate-300
                      hover:text-white hover:bg-white/6 active:scale-95 transition-all duration-200
                      flex items-center justify-center gap-2 font-semibold text-base mt-2"
