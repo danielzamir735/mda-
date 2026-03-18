@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Languages, Volume2, ArrowRight, Mic, ExternalLink } from 'lucide-react';
-import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import {
-  PHRASES, CATEGORIES, LANG_LABELS, LANG_FLAGS, LANG_DIR,
+  PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
   type Lang,
 } from '../data/medicalTranslationsData';
 
@@ -19,10 +18,29 @@ const TTS_LANGS: Record<string, string> = {
   am: 'am-ET',
 };
 
+// Task 4: Hebrew names for the language selection grid
+const LANG_LABELS_HE: Record<Lang, string> = {
+  en: 'אנגלית',
+  ru: 'רוסית',
+  ar: 'ערבית',
+  fr: 'צרפתית',
+  am: 'אמהרית',
+};
+
 export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   const [selectedLang, setSelectedLang] = useState<Lang | null>(null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Refs for popstate handler — avoids stale closures
+  const selectedLangRef = useRef<Lang | null>(null);
+  const expandedRef = useRef<string | null>(null);
+  const onCloseRef = useRef(onClose);
+  // Tracks how many history entries this modal has pushed
+  const pushCountRef = useRef(0);
+  selectedLangRef.current = selectedLang;
+  expandedRef.current = expanded;
+  onCloseRef.current = onClose;
 
   const speakText = (text: string, langCode: string) => {
     if (!('speechSynthesis' in window)) {
@@ -37,14 +55,70 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Task 2: Stop audio immediately when closing the fullscreen phrase view
+  const handleCloseExpanded = () => {
+    window.speechSynthesis.cancel();
+    setExpanded(null);
+  };
+
   const handleClose = () => {
+    window.speechSynthesis.cancel();
     setSelectedLang(null);
     setCategory('הכל');
     setExpanded(null);
     onClose();
   };
 
-  useModalBackHandler(isOpen, handleClose);
+  // Task 1: Step-by-step hardware back button
+  // Push base history entry when modal opens; register popstate handler
+  useEffect(() => {
+    if (!isOpen) return;
+
+    pushCountRef.current = 1;
+    window.history.pushState({ mtLevel: 'base' }, '');
+
+    const handlePopState = () => {
+      pushCountRef.current = Math.max(0, pushCountRef.current - 1);
+      if (expandedRef.current !== null) {
+        // Fullscreen phrase → back to phrase list
+        window.speechSynthesis.cancel();
+        setExpanded(null);
+      } else if (selectedLangRef.current !== null) {
+        // Phrase list → back to language list
+        setSelectedLang(null);
+        setCategory('הכל');
+      } else {
+        // Language list → close modal
+        onCloseRef.current();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // Pop any remaining history entries when modal closes programmatically
+      if (pushCountRef.current > 0) {
+        window.history.go(-pushCountRef.current);
+        pushCountRef.current = 0;
+      }
+    };
+  }, [isOpen]);
+
+  // Push history entry when a language is selected (phrase list level)
+  useEffect(() => {
+    if (!isOpen || selectedLang === null) return;
+    pushCountRef.current++;
+    window.history.pushState({ mtLevel: 'lang' }, '');
+  }, [selectedLang, isOpen]);
+
+  // Push history entry when a phrase is expanded (fullscreen level)
+  useEffect(() => {
+    if (!isOpen || expanded === null) return;
+    pushCountRef.current++;
+    window.history.pushState({ mtLevel: 'phrase' }, '');
+  }, [expanded, isOpen]);
+
   if (!isOpen) return null;
 
   const filtered = category === 'הכל' ? PHRASES : PHRASES.filter(p => p.category === category);
@@ -87,8 +161,9 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
                            active:border-orange-400/60 active:bg-orange-400/10"
               >
                 <span className="text-4xl">{LANG_FLAGS[l]}</span>
+                {/* Task 4: Hebrew language names */}
                 <span className="text-gray-900 dark:text-white font-bold text-2xl">
-                  {LANG_LABELS[l]}
+                  {LANG_LABELS_HE[l]}
                 </span>
               </HapticButton>
             ))}
@@ -115,8 +190,9 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
 
         <div className="flex items-center gap-2">
           <span className="text-lg">{LANG_FLAGS[selectedLang]}</span>
+          {/* Task 4: Hebrew name in the phrase list header too */}
           <span className="text-gray-900 dark:text-emt-light font-bold text-base">
-            {LANG_LABELS[selectedLang]}
+            {LANG_LABELS_HE[selectedLang]}
           </span>
         </div>
 
@@ -184,7 +260,6 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             </HapticButton>
           </HapticButton>
         ))}
-
       </div>
 
       {/* Expanded / Patient View Overlay */}
@@ -192,12 +267,12 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
         <div
           className="fixed inset-0 z-[80] flex flex-col items-center justify-center
                      bg-emt-dark/95 backdrop-blur-sm p-8"
-          onClick={() => setExpanded(null)}
+          onClick={handleCloseExpanded}
         >
           <div className="flex items-center gap-2 mb-6">
             <span className="text-2xl">{LANG_FLAGS[selectedLang]}</span>
             <p className="text-orange-400 text-sm font-bold uppercase tracking-widest">
-              {LANG_LABELS[selectedLang]}
+              {LANG_LABELS_HE[selectedLang]}
             </p>
           </div>
           <p
@@ -236,7 +311,8 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             הקלט תשובת מטופל
             <ExternalLink size={15} className="opacity-60" />
           </HapticButton>
-          <p className="text-emt-muted text-xs mt-6">לחץ לסגירה</p>
+          {/* Task 3: Enlarged 'click to close' text */}
+          <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
         </div>
       )}
     </div>
