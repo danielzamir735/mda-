@@ -154,8 +154,17 @@ function IosContent() {
 
 /* ── Main modal ── */
 export default function FullInstallModal() {
-  const { showFullModal, closeFullModal, installPromptEvent, handleInstall, isIOS } = usePwaInstall();
+  const { showFullModal, closeFullModal, installPromptEvent, isIOS } = usePwaInstall();
   const [tab, setTab] = useState<Tab>(isIOS ? 'ios' : 'android');
+
+  const handleQuickInstall = async () => {
+    if (!installPromptEvent) return;
+    installPromptEvent.prompt();
+    const { outcome } = await installPromptEvent.userChoice;
+    if (outcome === 'accepted') {
+      closeFullModal();
+    }
+  };
 
   if (!showFullModal) return null;
 
@@ -226,7 +235,7 @@ export default function FullInstallModal() {
         {/* Tab content */}
         <div className="flex-1">
           {tab === 'android' ? (
-            <AndroidContent installPromptEvent={installPromptEvent} onInstall={handleInstall} />
+            <AndroidContent installPromptEvent={installPromptEvent} onInstall={handleQuickInstall} />
           ) : (
             <IosContent />
           )}
