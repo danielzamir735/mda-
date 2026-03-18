@@ -1,5 +1,5 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
@@ -99,7 +99,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'realtime-translate',
-    label: 'תרגומון רפואי',
+    label: 'תרגום רפואי',
     icon: Languages,
     color: 'text-orange-400',
     border: 'border-orange-400/30',
@@ -148,10 +148,14 @@ export default function HubModal({
   onCommonMedsOpen,
   onTranslatorOpen,
 }: Props) {
-  const [hasReadUpdate, setHasReadUpdate] = useState(
-    () => localStorage.getItem('seen-update-v2.1') === 'true'
-  );
+  const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const { openFullModal } = usePwaInstall();
+
+  useEffect(() => {
+    if (localStorage.getItem('whatsNew_v2_seen') === 'true') {
+      setHasSeenWhatsNew(true);
+    }
+  }, []);
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -162,8 +166,8 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      localStorage.setItem('seen-update-v2.1', 'true');
-      setHasReadUpdate(true);
+      localStorage.setItem('whatsNew_v2_seen', 'true');
+      setHasSeenWhatsNew(true);
       onUpdatesOpen();
     }
     if (id === 'kit-standards') onBagStandardsOpen();
@@ -193,7 +197,7 @@ export default function HubModal({
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
-          {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg, href }) => {
+          {HUB_ITEMS.filter(({ id }) => !(id === 'updates' && hasSeenWhatsNew)).map(({ id, label, icon: Icon, color, border, bg, href }) => {
             const enabled = ENABLED.has(id);
             const sharedClass = [
               'flex flex-col items-center justify-center gap-2',
@@ -204,9 +208,6 @@ export default function HubModal({
 
             const content = (
               <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
-                {id === 'updates' && !hasReadUpdate && (
-                  <span className="absolute top-2 left-2 w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
                 {id === 'install-app' && (

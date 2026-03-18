@@ -151,7 +151,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
         <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <div className="flex items-center gap-2">
             <Languages size={20} className="text-orange-400" />
-            <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרגומון רפואי</h2>
+            <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרגום רפואי</h2>
           </div>
           <HapticButton
             onClick={handleClose}
