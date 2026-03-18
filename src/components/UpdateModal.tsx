@@ -15,51 +15,41 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
   };
 
   return (
-    <div
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96
-                 z-[99999] animate-slide-up"
-    >
-      <div
-        className="bg-slate-900/95 backdrop-blur-md border border-emerald-500/30
-                   rounded-2xl shadow-2xl shadow-black/60 px-5 py-4
-                   flex items-start gap-4"
-      >
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+      <div className="w-[90%] max-w-md bg-slate-900 shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
         {/* Icon */}
-        <div className="mt-0.5 shrink-0 flex items-center justify-center
-                        w-10 h-10 rounded-xl bg-emerald-500/10">
-          <DownloadCloud size={20} className="text-emerald-400" />
+        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 mx-auto mb-4">
+          <DownloadCloud size={28} className="text-emerald-400" />
         </div>
 
         {/* Text */}
-        <div className="flex-1 flex flex-col gap-1 text-right">
-          <p className="text-white font-bold text-base leading-snug">
-            עדכון גרסה זמין
-          </p>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            העדכון ייקח שנייה בדיוק. אל דאגה, שום נתון ששמרת לא יימחק והאפליקציה תעלה מיד מחדש.
-          </p>
+        <p className="text-2xl font-bold text-white mb-3">
+          עדכון גרסה זמין
+        </p>
+        <p className="text-base text-slate-300 mb-6">
+          העדכון ייקח שנייה בדיוק. אל דאגה, שום נתון ששמרת לא יימחק והאפליקציה תעלה מיד מחדש.
+        </p>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-end gap-2 mt-3">
-            {onDismiss && (
-              <button
-                onClick={onDismiss}
-                className="text-slate-400 hover:text-white text-sm px-3 py-1.5
-                           transition-colors duration-150"
-              >
-                מאוחר יותר
-              </button>
-            )}
+        {/* Buttons */}
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleUpdate}
+            disabled={loading}
+            className="w-full py-3 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold
+                       rounded-xl transition-colors duration-150
+                       disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? 'מעדכן…' : 'עדכן עכשיו'}
+          </button>
+          {onDismiss && (
             <button
-              onClick={handleUpdate}
-              disabled={loading}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium
-                         text-sm rounded-xl px-4 py-2 transition-colors duration-150
-                         disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={onDismiss}
+              className="w-full py-2.5 text-slate-400 hover:text-white text-base
+                         transition-colors duration-150"
             >
-              {loading ? 'מעדכן…' : 'עדכן עכשיו'}
+              מאוחר יותר
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>
