@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Brain } from 'lucide-react';
+import { X, Brain, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface Props { isOpen: boolean; onClose: () => void; }
@@ -132,15 +132,27 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
           <Brain size={20} className="text-cyan-400" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מדד גלזגו (GCS)</h2>
         </div>
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                     flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted"
-          aria-label="סגור"
-        >
-          <X size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30
+                       bg-red-500/10 text-red-500 text-sm font-semibold
+                       hover:bg-red-500/20 active:scale-95 transition-all"
+            aria-label="אפס נתונים"
+          >
+            <RotateCcw size={14} />
+            <span>אפס</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                       flex items-center justify-center active:scale-90 transition-transform
+                       text-gray-500 dark:text-emt-muted"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Scrollable content */}
@@ -203,15 +215,6 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
           ))}
         </section>
 
-        {/* Reset */}
-        <button
-          onClick={handleReset}
-          className="w-full py-3 rounded-2xl border border-gray-200 dark:border-emt-border
-                     bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted
-                     font-bold text-sm active:scale-95 transition-transform"
-        >
-          אפס לברירת מחדל (15)
-        </button>
       </div>
 
       {/* Sticky bottom score bar */}
