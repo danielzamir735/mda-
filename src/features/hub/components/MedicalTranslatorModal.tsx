@@ -42,15 +42,6 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   expandedRef.current = expanded;
   onCloseRef.current = onClose;
 
-  const openGoogleTranslate = (lang: string) => {
-    const googleCodes: Record<string, string> = {
-      en: 'en', ru: 'ru', ar: 'ar', fr: 'fr', am: 'am'
-    };
-    const tl = googleCodes[lang] || 'en';
-    // The magic trick: text=%20 forces the app to apply the language pair
-    window.open(`https://translate.google.com/?sl=iw&tl=${tl}&text=%20&op=translate`, '_blank');
-  };
-
   const speakText = (text: string, langCode: string) => {
     if (!('speechSynthesis' in window)) {
       alert('מנוע דיבור אינו נתמך במכשיר זה');
@@ -309,15 +300,15 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             pressScale={0.93}
             onClick={e => {
               e.stopPropagation();
-              openGoogleTranslate(selectedLang);
+              window.open('https://translate.google.com/', '_blank');
             }}
             className="mt-8 flex items-center gap-2 bg-slate-800 border border-slate-600
                        hover:bg-slate-700 text-white px-6 py-4 rounded-full shadow-2xl
                        transition-all text-lg font-medium"
-            aria-label="עבור לשיחה בגוגל טרנסלייט"
+            aria-label="פתח גוגל טרנסלייט"
           >
             <ExternalLink size={20} />
-            עבור לשיחה בגוגל טרנסלייט
+            פתח גוגל טרנסלייט (יש לבחור שפה באפליקציה)
           </HapticButton>
           {/* Task 3: Enlarged 'click to close' text */}
           <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
