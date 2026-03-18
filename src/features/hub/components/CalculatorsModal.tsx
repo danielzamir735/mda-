@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, Wind, RefreshCw, Flame, Activity, Timer } from 'lucide-react';
+import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
 import BarPsiConverterModal from './BarPsiConverterModal';
 import BurnsCalculatorModal from './BurnsCalculatorModal';
 import ApgarCalculatorModal from './ApgarCalculatorModal';
 import ContractionTimerModal from './ContractionTimerModal';
+import GlasgowCalculatorModal from './GlasgowCalculatorModal';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [burnsOpen, setBurnsOpen] = useState(false);
   const [apgarOpen, setApgarOpen] = useState(false);
   const [contractionOpen, setContractionOpen] = useState(false);
+  const [gcsOpen, setGcsOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -108,6 +110,23 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
+          {/* Glasgow Coma Scale */}
+          <button
+            onClick={() => setGcsOpen(true)}
+            className="flex items-center gap-4 w-full rounded-2xl border border-cyan-400/30
+                       bg-cyan-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-cyan-400/20 border border-cyan-400/40">
+              <Brain size={22} className="text-cyan-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-cyan-400 font-bold text-base">מחשבון גלזגו (GCS)</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                הערכת רמת הכרה — ציון 3–15
+              </p>
+            </div>
+          </button>
+
           {/* APGAR Calculator */}
           <button
             onClick={() => setApgarOpen(true)}
@@ -132,6 +151,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
       <BurnsCalculatorModal isOpen={burnsOpen} onClose={() => setBurnsOpen(false)} />
       <ContractionTimerModal isOpen={contractionOpen} onClose={() => setContractionOpen(false)} />
       <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />
+      <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />
     </>
   );
 }
