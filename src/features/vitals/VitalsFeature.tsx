@@ -25,6 +25,7 @@ import WhatsNewModal from '../hub/components/WhatsNewModal';
 import BagStandardsModal from '../hub/components/BagStandardsModal';
 import MedicationsModal from '../quicktools/MedicationsModal';
 import CommonMedsModal from '../hub/components/CommonMedsModal';
+import MedicalTranslatorModal from '../hub/components/MedicalTranslatorModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
@@ -60,6 +61,7 @@ export default function VitalsFeature() {
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
   const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [commonMedsOpen, setCommonMedsOpen] = useState(false);
+  const [translatorOpen, setTranslatorOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -200,6 +202,7 @@ export default function VitalsFeature() {
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
         onMedicationsOpen={() => setMedicationsOpen(true)}
         onCommonMedsOpen={() => setCommonMedsOpen(true)}
+        onTranslatorOpen={() => { setHubOpen(false); setTranslatorOpen(true); }}
       />
 
       <AmbulanceChecklistModal
@@ -230,6 +233,7 @@ export default function VitalsFeature() {
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
       <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
       <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
+      <MedicalTranslatorModal isOpen={translatorOpen} onClose={() => { setTranslatorOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList, Download } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages } from 'lucide-react';
 import { useState } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -18,6 +18,7 @@ interface Props {
   onBagStandardsOpen: () => void;
   onMedicationsOpen: () => void;
   onCommonMedsOpen: () => void;
+  onTranslatorOpen: () => void;
 }
 
 type HubItem = {
@@ -98,8 +99,8 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'realtime-translate',
-    label: 'תרגום רפואי בזמן אמת',
-    icon: Mic,
+    label: 'תרגומון רפואי',
+    icon: Languages,
     color: 'text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/10',
@@ -130,7 +131,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate']);
 
 export default function HubModal({
   isOpen,
@@ -145,6 +146,7 @@ export default function HubModal({
   onBagStandardsOpen,
   onMedicationsOpen,
   onCommonMedsOpen,
+  onTranslatorOpen,
 }: Props) {
   const [hasReadUpdate, setHasReadUpdate] = useState(
     () => localStorage.getItem('seen-update-v2.1') === 'true'
@@ -167,6 +169,7 @@ export default function HubModal({
     if (id === 'kit-standards') onBagStandardsOpen();
     if (id === 'medications-classification') onMedicationsOpen();
     if (id === 'common-meds') onCommonMedsOpen();
+    if (id === 'realtime-translate') onTranslatorOpen();
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
