@@ -30,7 +30,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
         ),
         ...customItems
           .filter((i) => i.he.includes(q) || i.en.toLowerCase().includes(q))
-          .map((i) => ({ he: i.he, en: i.en, isCustom: true, id: i.id })),
+          .map((i) => ({ he: i.he, en: i.en, isCustom: true, id: i.id, description: undefined as string | undefined })),
       ]
     : null;
 
