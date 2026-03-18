@@ -58,6 +58,7 @@ export default function VitalsFeature() {
   const [hospitalsOpen, setHospitalsOpen] = useState(false);
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const [updatesFromHub, setUpdatesFromHub] = useState(false);
+  const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(() => localStorage.getItem('whatsNew_v2_seen') === 'true');
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
   const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [commonMedsOpen, setCommonMedsOpen] = useState(false);
@@ -225,7 +226,10 @@ export default function VitalsFeature() {
       <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
       <WhatsNewModal
         isOpen={updatesOpen}
+        isRead={hasSeenWhatsNew}
         onClose={() => {
+          localStorage.setItem('whatsNew_v2_seen', 'true');
+          setHasSeenWhatsNew(true);
           setUpdatesOpen(false);
           if (updatesFromHub) setHubOpen(true);
         }}

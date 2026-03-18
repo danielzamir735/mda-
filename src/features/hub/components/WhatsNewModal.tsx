@@ -4,6 +4,7 @@ import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  isRead?: boolean;
 }
 
 type UpdateItem =
@@ -65,7 +66,7 @@ const UPDATES: UpdateItem[] = [
   { type: 'emoji', emoji: '🛠️', text: 'יציבות: תיקוני באגים ושיפורי ביצועים תחת מכסה המנוע.' },
 ];
 
-export default function WhatsNewModal({ isOpen, onClose }: Props) {
+export default function WhatsNewModal({ isOpen, onClose, isRead = false }: Props) {
   useModalBackHandler(isOpen, onClose);
 
   if (!isOpen) return null;
@@ -91,35 +92,45 @@ export default function WhatsNewModal({ isOpen, onClose }: Props) {
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm overflow-hidden">
-          <ul className="divide-y divide-gray-100 dark:divide-emt-border">
-            {UPDATES.map((item, i) => {
-              if (item.type === 'section') {
-                return (
-                  <li key={i} className="px-5 py-2.5 bg-gray-50 dark:bg-emt-dark/60">
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-emt-muted">
-                      {item.label}
-                    </span>
-                  </li>
-                );
-              }
-              return (
-                <li key={i} className="flex items-start gap-4 px-5 py-4">
-                  {item.type === 'icon' ? (
-                    <item.Icon size={22} className={`${item.iconClass} shrink-0 mt-0.5`} strokeWidth={1.8} />
-                  ) : (
-                    <span className="text-2xl shrink-0 leading-tight">{item.emoji}</span>
-                  )}
-                  <span className="text-base text-gray-700 dark:text-emt-light leading-relaxed">{item.text}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        {isRead ? (
+          <div className="flex-1 flex items-center justify-center py-16">
+            <p className="text-center text-gray-400 dark:text-emt-muted text-base font-medium">
+              אין עדכונים חדשים כרגע
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm overflow-hidden">
+              <ul className="divide-y divide-gray-100 dark:divide-emt-border">
+                {UPDATES.map((item, i) => {
+                  if (item.type === 'section') {
+                    return (
+                      <li key={i} className="px-5 py-2.5 bg-gray-50 dark:bg-emt-dark/60">
+                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-emt-muted">
+                          {item.label}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={i} className="flex items-start gap-4 px-5 py-4">
+                      {item.type === 'icon' ? (
+                        <item.Icon size={22} className={`${item.iconClass} shrink-0 mt-0.5`} strokeWidth={1.8} />
+                      ) : (
+                        <span className="text-2xl shrink-0 leading-tight">{item.emoji}</span>
+                      )}
+                      <span className="text-base text-gray-700 dark:text-emt-light leading-relaxed">{item.text}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
 
-        <p className="mt-6 text-center text-sm text-gray-500 dark:text-emt-muted font-medium">
-          תודה שאתם שותפים לדרך! ❤️
-        </p>
+            <p className="mt-6 text-center text-sm text-gray-500 dark:text-emt-muted font-medium">
+              תודה שאתם שותפים לדרך! ❤️
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
