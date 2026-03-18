@@ -63,19 +63,9 @@ export default function VitalsFeature() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
-  const CURRENT_VERSION = 'v2.1';
-
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
       setWelcomeOpen(true);
-      return;
-    }
-    const seenVersion = localStorage.getItem('hoveshPlus_whatsNewSeen');
-    if (seenVersion !== CURRENT_VERSION) {
-      setTimeout(() => {
-        setUpdatesFromHub(false);
-        setUpdatesOpen(true);
-      }, 1500);
     }
   }, []);
 
@@ -233,7 +223,6 @@ export default function VitalsFeature() {
       <WhatsNewModal
         isOpen={updatesOpen}
         onClose={() => {
-          localStorage.setItem('hoveshPlus_whatsNewSeen', CURRENT_VERSION);
           setUpdatesOpen(false);
           if (updatesFromHub) setHubOpen(true);
         }}
