@@ -1,4 +1,4 @@
-import { X, Sparkles, Pill, Stethoscope, Tablet } from 'lucide-react';
+import { X, Sparkles, Pill, Stethoscope, Tablet, BookOpen, Zap, Camera, Wrench } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface Props {
@@ -8,9 +8,38 @@ interface Props {
 
 type UpdateItem =
   | { type: 'icon'; Icon: React.ElementType; iconClass: string; text: string }
-  | { type: 'emoji'; emoji: string; text: string };
+  | { type: 'emoji'; emoji: string; text: string }
+  | { type: 'section'; label: string };
 
 const UPDATES: UpdateItem[] = [
+  // ── v2.1 ──────────────────────────────────────────
+  { type: 'section', label: 'גרסה 2.1 — עדכון אחרון' },
+  {
+    type: 'icon',
+    Icon: BookOpen,
+    iconClass: 'text-amber-400',
+    text: 'מילון רפואי מובנה: הוספנו הסברים רפואיים מקיפים וברורים. פשוט לחצו על כל מחלה במסך \'מחלות רקע נפוצות\' לקבלת הפירוט.',
+  },
+  {
+    type: 'icon',
+    Icon: Zap,
+    iconClass: 'text-yellow-400',
+    text: 'התקנה מהירה וחלקה: שדרגנו את חוויית ההתקנה! כעת ניתן להתקין את \'חובש+\' למסך הבית בלחיצת כפתור אחת (זמין במסך כלים).',
+  },
+  {
+    type: 'icon',
+    Icon: Camera,
+    iconClass: 'text-sky-400',
+    text: 'איכות מצלמה 4K: שברנו את מגבלות הדפדפן! צילום מסמכים, א.ק.ג ופציעות מתוך האפליקציה כעת חד וברור מתמיד.',
+  },
+  {
+    type: 'icon',
+    Icon: Wrench,
+    iconClass: 'text-slate-400',
+    text: 'שיפורי ביצועים: תיקוני באגים, שדרוג ממשק המשתמש, ייעול המטרונום, וחוויית שימוש חלקה יותר.',
+  },
+  // ── v2.0 ──────────────────────────────────────────
+  { type: 'section', label: 'גרסה 2.0' },
   {
     type: 'icon',
     Icon: Pill,
@@ -64,16 +93,27 @@ export default function WhatsNewModal({ isOpen, onClose }: Props) {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm overflow-hidden">
           <ul className="divide-y divide-gray-100 dark:divide-emt-border">
-            {UPDATES.map((item, i) => (
-              <li key={i} className="flex items-start gap-4 px-5 py-4">
-                {item.type === 'icon' ? (
-                  <item.Icon size={22} className={`${item.iconClass} shrink-0 mt-0.5`} strokeWidth={1.8} />
-                ) : (
-                  <span className="text-2xl shrink-0 leading-tight">{item.emoji}</span>
-                )}
-                <span className="text-base text-gray-700 dark:text-emt-light leading-relaxed">{item.text}</span>
-              </li>
-            ))}
+            {UPDATES.map((item, i) => {
+              if (item.type === 'section') {
+                return (
+                  <li key={i} className="px-5 py-2.5 bg-gray-50 dark:bg-emt-dark/60">
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-emt-muted">
+                      {item.label}
+                    </span>
+                  </li>
+                );
+              }
+              return (
+                <li key={i} className="flex items-start gap-4 px-5 py-4">
+                  {item.type === 'icon' ? (
+                    <item.Icon size={22} className={`${item.iconClass} shrink-0 mt-0.5`} strokeWidth={1.8} />
+                  ) : (
+                    <span className="text-2xl shrink-0 leading-tight">{item.emoji}</span>
+                  )}
+                  <span className="text-base text-gray-700 dark:text-emt-light leading-relaxed">{item.text}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
 

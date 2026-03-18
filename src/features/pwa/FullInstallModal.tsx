@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   MoreVertical, CheckCircle, ExternalLink, ListChecks,
   PlusCircle, ChevronRight, Download, Smartphone, Apple, AlertTriangle,
@@ -156,6 +156,20 @@ function IosContent() {
 export default function FullInstallModal() {
   const { showFullModal, closeFullModal, installPromptEvent, isIOS } = usePwaInstall();
   const [tab, setTab] = useState<Tab>(isIOS ? 'ios' : 'android');
+
+  useEffect(() => {
+    window.history.pushState({ installModalOpen: true }, '');
+
+    const handleHardwareBack = (_e: PopStateEvent) => {
+      closeFullModal();
+    };
+
+    window.addEventListener('popstate', handleHardwareBack);
+
+    return () => {
+      window.removeEventListener('popstate', handleHardwareBack);
+    };
+  }, [closeFullModal]);
 
   const handleQuickInstall = async () => {
     if (!installPromptEvent) return;

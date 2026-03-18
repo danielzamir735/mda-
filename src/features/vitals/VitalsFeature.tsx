@@ -56,15 +56,26 @@ export default function VitalsFeature() {
   const [medicalHistoryOpen, setMedicalHistoryOpen] = useState(false);
   const [hospitalsOpen, setHospitalsOpen] = useState(false);
   const [updatesOpen, setUpdatesOpen] = useState(false);
+  const [updatesFromHub, setUpdatesFromHub] = useState(false);
   const [bagStandardsOpen, setBagStandardsOpen] = useState(false);
   const [medicationsOpen, setMedicationsOpen] = useState(false);
   const [commonMedsOpen, setCommonMedsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
+  const CURRENT_VERSION = 'v2.1';
+
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
       setWelcomeOpen(true);
+      return;
+    }
+    const seenVersion = localStorage.getItem('hoveshPlus_whatsNewSeen');
+    if (seenVersion !== CURRENT_VERSION) {
+      setTimeout(() => {
+        setUpdatesFromHub(false);
+        setUpdatesOpen(true);
+      }, 1500);
     }
   }, []);
 
@@ -195,7 +206,7 @@ export default function VitalsFeature() {
         onFeedbackOpen={() => setFeedbackOpen(true)}
         onMedicalHistoryOpen={() => setMedicalHistoryOpen(true)}
         onHospitalsOpen={() => setHospitalsOpen(true)}
-        onUpdatesOpen={() => setUpdatesOpen(true)}
+        onUpdatesOpen={() => { setUpdatesFromHub(true); setUpdatesOpen(true); }}
         onBagStandardsOpen={() => setBagStandardsOpen(true)}
         onMedicationsOpen={() => setMedicationsOpen(true)}
         onCommonMedsOpen={() => setCommonMedsOpen(true)}
@@ -219,7 +230,14 @@ export default function VitalsFeature() {
       <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
       <MedicalHistoryModal isOpen={medicalHistoryOpen} onClose={() => { setMedicalHistoryOpen(false); setHubOpen(true); }} />
       <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
-      <WhatsNewModal isOpen={updatesOpen} onClose={() => { setUpdatesOpen(false); setHubOpen(true); }} />
+      <WhatsNewModal
+        isOpen={updatesOpen}
+        onClose={() => {
+          localStorage.setItem('hoveshPlus_whatsNewSeen', CURRENT_VERSION);
+          setUpdatesOpen(false);
+          if (updatesFromHub) setHubOpen(true);
+        }}
+      />
       <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
       <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
       <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
