@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import {
   MoreVertical, CheckCircle, ExternalLink, ListChecks,
-  PlusCircle, ChevronRight, Download,
+  PlusCircle, ChevronRight, Download, Smartphone, Apple, AlertTriangle,
 } from 'lucide-react';
 import { usePwaInstall } from './PwaInstallContext';
 
 type Tab = 'android' | 'ios';
 
-/* ── Star SVG icon ── */
-const StarIcon = ({ size = 28 }: { size?: number }) => (
-  <svg viewBox="0 0 48 48" width={size} height={size} fill="none">
+/* ── App icon ── */
+const AppIcon = () => (
+  <svg viewBox="0 0 48 48" width={36} height={36} fill="none">
     <path d="M24 4L29 17H43L32 26L36 39L24 31L12 39L16 26L5 17H19L24 4Z" fill="white" />
   </svg>
 );
@@ -20,17 +20,14 @@ function StepCard({
 }: { index: number; icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/8">
-      {/* Number badge */}
       <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-xs
                        font-bold flex items-center justify-center mt-0.5">
         {index}
       </span>
-      {/* Icon */}
       <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30
                       flex items-center justify-center text-blue-400 mt-0.5">
         {icon}
       </div>
-      {/* Text */}
       <div className="flex-1 text-right">
         <p className="text-white font-semibold text-sm leading-snug">{title}</p>
         <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
@@ -67,37 +64,28 @@ function AndroidContent({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Dynamic status / install box */}
       {deferredPrompt ? (
+        /* One-tap install available */
         <button
           onClick={onInstall}
-          className="w-full py-4 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600
-                     text-white font-bold text-lg shadow-lg shadow-blue-500/40
-                     active:scale-95 transition-all duration-200 hover:from-blue-400 hover:to-blue-500"
+          className="w-full py-5 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600
+                     text-white font-extrabold text-xl shadow-xl shadow-blue-500/40
+                     active:scale-95 transition-all duration-200 hover:from-blue-400 hover:to-blue-500
+                     flex items-center justify-center gap-3"
         >
-          התקן עכשיו
+          <Download className="w-6 h-6" />
+          התקן אפליקציה בלחיצה
         </button>
       ) : (
-        <div className="rounded-2xl bg-emerald-500/15 border border-emerald-500/35 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-emerald-400 font-bold text-sm">מכין התקנה... ⌛</span>
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce"
-                  style={{ animationDelay: `${i * 0.18}s` }}
-                />
-              ))}
-            </div>
-          </div>
-          <p className="text-slate-400 text-xs leading-relaxed">
-            ⌛ אם הסטטוס לא משתנה, בצע את ההתקנה הידנית לפי השלבים למטה:
+        /* Native prompt unavailable — show manual steps only */
+        <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+          <p className="text-slate-300 text-sm font-semibold text-right">התקנה ידנית</p>
+          <p className="text-slate-400 text-xs mt-1 text-right leading-relaxed">
+            עקוב אחר השלבים הבאים כדי להוסיף את האפליקציה למסך הבית שלך.
           </p>
         </div>
       )}
 
-      {/* Manual steps */}
       {steps.map((s, i) => (
         <StepCard key={i} index={i + 1} icon={s.icon} title={s.title} desc={s.desc} />
       ))}
@@ -127,10 +115,9 @@ function IosContent() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Safari alert */}
-      <div className="rounded-2xl bg-amber-500/15 border border-amber-500/35 px-4 py-3 flex items-start gap-2">
-        <span className="text-amber-400 text-base mt-0.5">⚠️</span>
-        <p className="text-amber-300 text-sm font-medium leading-snug">
+      <div className="rounded-2xl bg-amber-500/15 border border-amber-500/35 px-4 py-3 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+        <p className="text-amber-300 text-sm font-medium leading-snug text-right">
           שים לב: ההתקנה אפשרית רק דרך דפדפן Safari.
         </p>
       </div>
@@ -170,7 +157,7 @@ export default function FullInstallModal() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-700
                           flex items-center justify-center shadow-xl shadow-blue-600/40
                           border border-blue-400/20">
-            <StarIcon size={36} />
+            <AppIcon />
           </div>
           <div className="text-center">
             <h1 className="text-white font-extrabold text-2xl tracking-tight">התקן את חובש+</h1>
@@ -180,17 +167,22 @@ export default function FullInstallModal() {
 
         {/* Tabs */}
         <div className="flex rounded-2xl bg-white/6 border border-white/8 p-1 gap-1">
-          {(['android', 'ios'] as Tab[]).map((t) => (
+          {([
+            { id: 'android' as Tab, label: 'אנדרואיד', Icon: Smartphone },
+            { id: 'ios' as Tab, label: 'אייפון (iOS)', Icon: Apple },
+          ]).map(({ id, label, Icon }) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                tab === t
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
+                          flex items-center justify-center gap-2 ${
+                tab === id
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {t === 'android' ? '🤖 אנדרואיד' : '🍎 אייפון (iOS)'}
+              <Icon className="w-4 h-4" />
+              {label}
             </button>
           ))}
         </div>

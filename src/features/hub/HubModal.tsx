@@ -1,8 +1,9 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Mic, Building2, Sparkles, ClipboardList, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
+import { usePwaInstall } from '../pwa/PwaInstallContext';
 
 interface Props {
   isOpen: boolean;
@@ -112,6 +113,14 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-emt-yellow/10',
   },
   {
+    id: 'install-app',
+    label: 'התקנת האפליקציה',
+    icon: Download,
+    color: 'text-sky-400',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+  },
+  {
     id: 'settings',
     label: 'הגדרות',
     icon: Settings,
@@ -121,7 +130,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app']);
 
 export default function HubModal({
   isOpen,
@@ -140,6 +149,7 @@ export default function HubModal({
   const [hasReadUpdate, setHasReadUpdate] = useState(
     () => localStorage.getItem('seen-update-v2.1') === 'true'
   );
+  const { openFullModal } = usePwaInstall();
   useModalBackHandler(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -157,6 +167,7 @@ export default function HubModal({
     if (id === 'kit-standards') onBagStandardsOpen();
     if (id === 'medications-classification') onMedicationsOpen();
     if (id === 'common-meds') onCommonMedsOpen();
+    if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
   return (
@@ -189,12 +200,17 @@ export default function HubModal({
             ].join(' ');
 
             const content = (
-              <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full">
+              <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
                 {id === 'updates' && !hasReadUpdate && (
                   <span className="absolute top-2 left-2 w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                 )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
+                {id === 'install-app' && (
+                  <span className="text-xs text-slate-400 text-center leading-tight">
+                    גישה ללא רשת
+                  </span>
+                )}
                 {!enabled && (
                   <span className="text-xs font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">
                     בקרוב

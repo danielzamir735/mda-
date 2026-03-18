@@ -7,13 +7,11 @@ interface BeforeInstallPromptEvent extends Event {
 
 interface PwaInstallContextType {
   showFullModal: boolean;
-  showBottomBanner: boolean;
   isIOS: boolean;
   isAndroid: boolean;
   deferredPrompt: BeforeInstallPromptEvent | null;
   openFullModal: () => void;
   closeFullModal: () => void;
-  closeBanner: () => void;
   handleInstall: () => Promise<void>;
 }
 
@@ -27,7 +25,6 @@ const KEYS = {
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [showFullModal, setShowFullModal] = useState(false);
-  const [showBottomBanner, setShowBottomBanner] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const initialized = useRef(false);
 
@@ -50,7 +47,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     const handler = () => {
       localStorage.setItem(KEYS.isInstalled, 'true');
       setShowFullModal(false);
-      setShowBottomBanner(false);
       setDeferredPrompt(null);
     };
     window.addEventListener('appinstalled', handler);
@@ -77,13 +73,12 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     const visitCount = prev + 1;
     localStorage.setItem(KEYS.visitCount, String(visitCount));
 
+    // Never auto-show on first visit (collides with Legal + Welcome modals).
+    // Auto-trigger only on visits 2 and 3.
     if (isInstalled || installIgnored) return;
 
     if (visitCount === 2 || visitCount === 3) {
-      // Slight delay so the app finishes rendering first
       setTimeout(() => setShowFullModal(true), 1200);
-    } else if (visitCount > 3 && (visitCount - 3) % 5 === 0) {
-      setTimeout(() => setShowBottomBanner(true), 1500);
     }
   }, []);
 
@@ -94,11 +89,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     setShowFullModal(false);
   };
 
-  const closeBanner = () => {
-    localStorage.setItem(KEYS.installIgnored, 'true');
-    setShowBottomBanner(false);
-  };
-
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
@@ -106,7 +96,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     if (outcome === 'accepted') {
       localStorage.setItem(KEYS.isInstalled, 'true');
       setShowFullModal(false);
-      setShowBottomBanner(false);
     }
     setDeferredPrompt(null);
   };
@@ -115,13 +104,11 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     <PwaInstallContext.Provider
       value={{
         showFullModal,
-        showBottomBanner,
         isIOS,
         isAndroid,
         deferredPrompt,
         openFullModal,
         closeFullModal,
-        closeBanner,
         handleInstall,
       }}
     >
