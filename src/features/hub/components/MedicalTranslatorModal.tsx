@@ -185,15 +185,6 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           </HapticButton>
         ))}
 
-        {/* Two-way Conversation Bridge */}
-        <button
-          onClick={() => window.open(`https://translate.google.com/?sl=iw&tl=${selectedLang}&op=translate`, '_blank')}
-          className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-xl shadow-lg font-bold text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform"
-        >
-          <Mic size={22} />
-          המטופל רוצה לענות? פתח שיחה קולית מולו
-          <ExternalLink size={18} className="opacity-70" />
-        </button>
       </div>
 
       {/* Expanded / Patient View Overlay */}
@@ -229,7 +220,23 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           <p dir="rtl" className="text-emt-muted text-lg text-center font-semibold">
             {expandedPhrase.he}
           </p>
-          <p className="text-emt-muted text-xs mt-10">לחץ לסגירה</p>
+          {/* Record Patient Answer — floating pill */}
+          <HapticButton
+            pressScale={0.93}
+            onClick={e => {
+              e.stopPropagation();
+              window.open(`https://translate.google.com/?sl=iw&tl=${selectedLang}&op=translate`, '_blank');
+            }}
+            className="mt-8 flex items-center gap-2 bg-slate-800 border border-slate-600
+                       hover:bg-slate-700 text-white px-6 py-4 rounded-full shadow-2xl
+                       transition-all text-lg font-medium"
+            aria-label="הקלט תשובת מטופל"
+          >
+            <Mic size={20} />
+            הקלט תשובת מטופל
+            <ExternalLink size={15} className="opacity-60" />
+          </HapticButton>
+          <p className="text-emt-muted text-xs mt-6">לחץ לסגירה</p>
         </div>
       )}
     </div>
