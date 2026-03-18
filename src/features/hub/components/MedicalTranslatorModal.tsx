@@ -44,10 +44,11 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
 
   const openGoogleTranslate = (lang: string) => {
     const googleCodes: Record<string, string> = {
-      en: 'en', ru: 'ru', ar: 'ar', fr: 'fr', am: 'am',
+      en: 'en', ru: 'ru', ar: 'ar', fr: 'fr', am: 'am'
     };
     const tl = googleCodes[lang] || 'en';
-    window.open(`https://translate.google.com/?sl=he&tl=${tl}&op=translate`, '_blank');
+    // The magic trick: text=%20 forces the app to apply the language pair
+    window.open(`https://translate.google.com/?sl=iw&tl=${tl}&text=%20&op=translate`, '_blank');
   };
 
   const speakText = (text: string, langCode: string) => {
