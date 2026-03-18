@@ -81,8 +81,9 @@ export default function App() {
         <Analytics />
         <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
         {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
-        <FullInstallModal />
-        <BottomInstallBanner />
+        {/* PWA modals only after legal disclaimer is dismissed */}
+        {!legalOpen && <FullInstallModal />}
+        {!legalOpen && <BottomInstallBanner />}
       </BrowserRouter>
     </PwaInstallProvider>
   );
