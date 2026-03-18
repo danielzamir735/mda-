@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Languages, Volume2, ArrowRight } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, Mic, ExternalLink } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import {
@@ -151,7 +151,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Phrase Cards */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-3">
         {filtered.map(phrase => (
           <HapticButton
             key={phrase.id}
@@ -184,6 +184,16 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             </HapticButton>
           </HapticButton>
         ))}
+
+        {/* Two-way Conversation Bridge */}
+        <button
+          onClick={() => window.open(`https://translate.google.com/?sl=iw&tl=${selectedLang}&op=translate`, '_blank')}
+          className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-xl shadow-lg font-bold text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform"
+        >
+          <Mic size={22} />
+          המטופל רוצה לענות? פתח שיחה קולית מולו
+          <ExternalLink size={18} className="opacity-70" />
+        </button>
       </div>
 
       {/* Expanded / Patient View Overlay */}
