@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, ExternalLink } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink, Thermometer } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
@@ -27,10 +27,29 @@ const LANG_LABELS_HE: Record<Lang, string> = {
   am: 'אמהרית',
 };
 
+const PAIN_COLORS: Record<number, string> = {
+  1: 'bg-green-500 text-white',
+  2: 'bg-green-500 text-white',
+  3: 'bg-green-500 text-white',
+  4: 'bg-yellow-500 text-black',
+  5: 'bg-yellow-500 text-black',
+  6: 'bg-yellow-500 text-black',
+  7: 'bg-orange-500 text-white',
+  8: 'bg-orange-500 text-white',
+  9: 'bg-red-500 text-white',
+  10: 'bg-red-500 text-white',
+};
+
+const PAIN_EMOJIS: Record<number, string> = {
+  1: '😃', 2: '🙂', 3: '😐', 4: '😕', 5: '😟',
+  6: '😣', 7: '😖', 8: '😫', 9: '😭', 10: '😭',
+};
+
 export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   const [selectedLang, setSelectedLang] = useState<Lang | null>(null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showPainScale, setShowPainScale] = useState(false);
 
   // Refs for popstate handler — avoids stale closures
   const selectedLangRef = useRef<Lang | null>(null);
@@ -145,6 +164,20 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           </HapticButton>
         </div>
 
+        {/* Pain Scale Button */}
+        <div className="shrink-0 px-4 pt-3">
+          <HapticButton
+            pressScale={0.95}
+            onClick={() => setShowPainScale(true)}
+            className="w-full py-4 rounded-2xl flex items-center justify-center gap-3
+                       bg-red-500/90 active:bg-red-600 shadow-lg"
+            aria-label="פתח סרגל כאב"
+          >
+            <Thermometer size={24} className="text-white" />
+            <span className="text-white font-black text-xl tracking-wide">סרגל כאב (1-10)</span>
+          </HapticButton>
+        </div>
+
         {/* Language Grid */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 gap-4">
           <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest mb-2">
@@ -169,6 +202,50 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Pain Scale Overlay */}
+        {showPainScale && (
+          <div className="fixed inset-0 z-[99999] flex flex-col bg-emt-dark overflow-y-auto">
+            <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+              <div className="flex items-center gap-2">
+                <Thermometer size={22} className="text-red-400" />
+                <h2 className="text-white font-black text-xl">סרגל כאב</h2>
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center px-4 py-6 gap-4">
+              <p dir="rtl" className="text-white font-black text-3xl text-center leading-snug">
+                כמה כואב לך?
+              </p>
+              <p className="text-emt-muted text-lg font-bold">(1-10)</p>
+
+              <div className="w-full grid grid-cols-2 gap-3 mt-2">
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <HapticButton
+                    key={n}
+                    pressScale={0.92}
+                    onClick={() => {}}
+                    className={`w-full py-6 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-lg ${PAIN_COLORS[n]}`}
+                    aria-label={`כאב ${n}`}
+                  >
+                    <span className="text-5xl font-black">{n}</span>
+                    <span className="text-4xl">{PAIN_EMOJIS[n]}</span>
+                  </HapticButton>
+                ))}
+              </div>
+
+              <HapticButton
+                pressScale={0.93}
+                onClick={() => setShowPainScale(false)}
+                className="w-full mt-4 py-5 rounded-2xl bg-slate-700 active:bg-slate-600
+                           flex items-center justify-center text-white font-black text-2xl shadow-xl"
+                aria-label="סגור סרגל כאב"
+              >
+                סגור
+              </HapticButton>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

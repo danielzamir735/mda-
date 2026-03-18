@@ -58,12 +58,12 @@ export default function MetronomeCard() {
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i > 0) setBpm(BPM_VALUES[i - 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === 0}
-          className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center
-                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+          className="w-14 h-14 rounded-full shrink-0 flex items-center justify-center
+                     bg-slate-700 active:bg-slate-600 text-white font-bold shadow-lg
+                     transition-all active:scale-90
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הפחת BPM"
-        ><Minus size={15} /></button>
+        ><Minus size={22} /></button>
 
         {/* Track wrapper */}
         <div className="flex-1 relative" style={{ height: 36 }}>
@@ -127,12 +127,12 @@ export default function MetronomeCard() {
         <button
           onClick={() => { const i = BPM_VALUES.indexOf(bpm); if (i < BPM_VALUES.length - 1) setBpm(BPM_VALUES[i + 1]); }}
           disabled={BPM_VALUES.indexOf(bpm) === BPM_VALUES.length - 1}
-          className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center
-                     bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                     text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+          className="w-14 h-14 rounded-full shrink-0 flex items-center justify-center
+                     bg-slate-700 active:bg-slate-600 text-white font-bold shadow-lg
+                     transition-all active:scale-90
                      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
           aria-label="הגדל BPM"
-        ><Plus size={15} /></button>
+        ><Plus size={22} /></button>
       </div>
 
       {/* Action buttons */}
