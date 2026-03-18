@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen } from 'lucide-react';
+import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen, ChevronDown } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { MEDICAL_CATEGORIES, TABLET_CATEGORIES } from '../data/medicalTerms';
 import { useMedicalHistoryStore } from '../../../store/medicalHistoryStore';
@@ -15,6 +15,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   const [newHe, setNewHe] = useState('');
   const [newEn, setNewEn] = useState('');
   const [view, setView] = useState<'general' | 'tablet'>('general');
+  const [expandedDiseaseId, setExpandedDiseaseId] = useState<string | null>(null);
   const { customItems, addItem, removeItem } = useMedicalHistoryStore();
 
   if (!isOpen) return null;
@@ -48,36 +49,64 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
     isCustom,
     id,
     border,
+    description,
   }: {
     he: string;
     en: string;
     isCustom?: boolean;
     id?: string;
     border?: string;
-  }) => (
-    <div
-      className={[
-        'flex justify-between items-center px-4 py-3',
-        border ?? '',
-      ].join(' ')}
-    >
-      {/* Hebrew → RIGHT (first child in RTL = right) */}
-      <span className="text-sm font-bold text-gray-900 dark:text-white">{he}</span>
-      <div className="flex items-center gap-2">
-        {/* English → LEFT (last child in RTL = left) */}
-        <span className="text-sm font-bold text-gray-900 dark:text-white font-mono">{en}</span>
-        {isCustom && id && (
-          <button
-            onClick={() => removeItem(id)}
-            className="text-red-400 hover:text-red-600 active:scale-90 transition-all"
-            aria-label="מחק"
-          >
-            <Trash2 size={13} />
-          </button>
+    description?: string;
+  }) => {
+    const isExpanded = !!description && expandedDiseaseId === he;
+    return (
+      <div className={border ?? ''}>
+        {/* Main clickable row */}
+        <div
+          role={description ? 'button' : undefined}
+          onClick={() => {
+            if (description) setExpandedDiseaseId(isExpanded ? null : he);
+          }}
+          className={[
+            'flex justify-between items-center px-4 py-3',
+            description ? 'cursor-pointer active:bg-white/5 transition-colors select-none' : '',
+          ].join(' ')}
+        >
+          {/* Hebrew label → RIGHT in RTL */}
+          <span className="text-sm font-bold text-gray-900 dark:text-white">{he}</span>
+          <div className="flex items-center gap-2">
+            {/* English label → LEFT in RTL */}
+            <span className="text-sm font-bold text-gray-900 dark:text-white font-mono">{en}</span>
+            {isCustom && id && (
+              <button
+                onClick={(e) => { e.stopPropagation(); removeItem(id); }}
+                className="text-red-400 hover:text-red-600 active:scale-90 transition-all"
+                aria-label="מחק"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+            {description && (
+              <ChevronDown
+                size={15}
+                className={[
+                  'text-gray-400 dark:text-emt-muted transition-transform duration-200 shrink-0',
+                  isExpanded ? 'rotate-180' : '',
+                ].join(' ')}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Expanded description panel */}
+        {isExpanded && (
+          <div className="px-4 py-3 bg-slate-900/50 border-r-2 border-emerald-500">
+            <p className="text-sm text-slate-300 leading-relaxed">{description}</p>
+          </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
@@ -189,6 +218,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
                   en={t.en}
                   isCustom={t.isCustom}
                   id={t.id}
+                  description={t.description}
                   border={i < filtered.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : ''}
                 />
               ))
@@ -207,6 +237,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
                       key={t.en}
                       he={t.he}
                       en={t.en}
+                      description={t.description}
                       border={i < cat.terms.length - 1 ? `border-b ${cat.border}` : ''}
                     />
                   ))}
