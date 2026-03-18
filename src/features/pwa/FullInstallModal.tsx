@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   MoreVertical, CheckCircle, ExternalLink, ListChecks,
   PlusCircle, ChevronRight, Download, Smartphone, Apple, AlertTriangle,
-  X, ShieldPlus, Activity,
+  X, ShieldPlus, Activity, CheckCircle2,
 } from 'lucide-react';
 import { usePwaInstall } from './PwaInstallContext';
 
@@ -43,13 +43,13 @@ function StepCard({
 
 /* ── Android tab content ── */
 function AndroidContent({
-  deferredPrompt,
+  installPromptEvent,
   onInstall,
 }: {
-  deferredPrompt: ReturnType<typeof usePwaInstall>['deferredPrompt'];
+  installPromptEvent: ReturnType<typeof usePwaInstall>['installPromptEvent'];
   onInstall: () => Promise<void>;
 }) {
-  const steps = [
+  const manualSteps = [
     {
       icon: <MoreVertical className="w-4 h-4 rotate-90" />,
       title: 'פתח את התפריט',
@@ -67,31 +67,49 @@ function AndroidContent({
     },
   ];
 
-  return (
-    <div className="flex flex-col gap-4">
-      {deferredPrompt ? (
-        /* One-tap install available */
+  if (installPromptEvent) {
+    /* ── Automatic install is ready ── */
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Status banner */}
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/30">
+          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+          <div className="flex-1 text-right">
+            <p className="text-green-300 font-bold text-sm">מכין התקנה...</p>
+            <p className="text-green-400/80 text-xs mt-0.5">ההתקנה מוכנה! לחץ על הכפתור למטה</p>
+          </div>
+        </div>
+
+        {/* One-tap install button — massive and prominent */}
         <button
           onClick={onInstall}
-          className="w-full py-5 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600
-                     text-white font-extrabold text-xl shadow-xl shadow-blue-500/40
+          className="w-full py-6 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600
+                     text-white font-extrabold text-xl shadow-2xl shadow-blue-500/50
                      active:scale-95 transition-all duration-200 hover:from-blue-400 hover:to-blue-500
-                     flex items-center justify-center gap-3"
+                     flex items-center justify-center gap-3 border border-blue-400/30"
         >
-          <Download className="w-6 h-6" />
+          <Download className="w-7 h-7" />
           התקן אפליקציה בלחיצה
         </button>
-      ) : (
-        /* Native prompt unavailable — show manual steps only */
-        <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-          <p className="text-slate-300 text-sm font-semibold text-right">התקנה ידנית</p>
-          <p className="text-slate-400 text-xs mt-1 text-right leading-relaxed">
-            עקוב אחר השלבים הבאים כדי להוסיף את האפליקציה למסך הבית שלך.
-          </p>
-        </div>
-      )}
 
-      {steps.map((s, i) => (
+        <p className="text-slate-500 text-xs text-center">
+          הדפדפן יציג חלון אישור — לחץ "התקן" לסיום
+        </p>
+      </div>
+    );
+  }
+
+  /* ── Native prompt unavailable — manual steps only ── */
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
+        <p className="text-slate-300 text-sm font-semibold text-right">התקנה ידנית</p>
+        <p className="text-slate-400 text-xs mt-1 text-right leading-relaxed">
+          עקוב אחר השלבים הבאים כדי להוסיף את האפליקציה למסך הבית שלך.
+        </p>
+      </div>
+
+      {manualSteps.map((s, i) => (
         <StepCard key={i} index={i + 1} icon={s.icon} title={s.title} desc={s.desc} />
       ))}
     </div>
@@ -136,13 +154,16 @@ function IosContent() {
 
 /* ── Main modal ── */
 export default function FullInstallModal() {
-  const { showFullModal, closeFullModal, deferredPrompt, handleInstall, isIOS } = usePwaInstall();
+  const { showFullModal, closeFullModal, installPromptEvent, handleInstall, isIOS } = usePwaInstall();
   const [tab, setTab] = useState<Tab>(isIOS ? 'ios' : 'android');
 
   if (!showFullModal) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col overflow-y-auto" style={{ direction: 'rtl' }}>
+    <div
+      className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col overflow-y-auto"
+      style={{ direction: 'rtl' }}
+    >
       {/* Midnight-blue gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#080b1c] via-[#0a0e22] to-[#060816]" />
       {/* Glow accents */}
@@ -171,7 +192,6 @@ export default function FullInstallModal() {
           <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700
                           flex items-center justify-center shadow-2xl shadow-blue-500/50
                           border-2 border-blue-400/30 ring-4 ring-blue-500/10">
-            {/* Outer glow pulse ring */}
             <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" style={{ animationDuration: '2.5s' }} />
             <AppIcon />
           </div>
@@ -206,7 +226,7 @@ export default function FullInstallModal() {
         {/* Tab content */}
         <div className="flex-1">
           {tab === 'android' ? (
-            <AndroidContent deferredPrompt={deferredPrompt} onInstall={handleInstall} />
+            <AndroidContent installPromptEvent={installPromptEvent} onInstall={handleInstall} />
           ) : (
             <IosContent />
           )}

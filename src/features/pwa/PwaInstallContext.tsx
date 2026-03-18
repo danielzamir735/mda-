@@ -9,7 +9,7 @@ interface PwaInstallContextType {
   showFullModal: boolean;
   isIOS: boolean;
   isAndroid: boolean;
-  deferredPrompt: BeforeInstallPromptEvent | null;
+  installPromptEvent: BeforeInstallPromptEvent | null;
   openFullModal: () => void;
   closeFullModal: () => void;
   handleInstall: () => Promise<void>;
@@ -23,20 +23,22 @@ const KEYS = {
   isInstalled: 'hoveshPlus_isInstalled',
 } as const;
 
+const SESSION_KEY = 'hoveshPlus_session_started';
+
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [showFullModal, setShowFullModal] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const initialized = useRef(false);
 
   const ua = navigator.userAgent;
   const isIOS = /iphone|ipad|ipod/i.test(ua);
   const isAndroid = /android/i.test(ua);
 
-  // Capture native install prompt (Android Chrome)
+  // Capture native install prompt (Android Chrome) — never cleared on modal close
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setInstallPromptEvent(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -47,13 +49,13 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     const handler = () => {
       localStorage.setItem(KEYS.isInstalled, 'true');
       setShowFullModal(false);
-      setDeferredPrompt(null);
+      setInstallPromptEvent(null);
     };
     window.addEventListener('appinstalled', handler);
     return () => window.removeEventListener('appinstalled', handler);
   }, []);
 
-  // Mount logic — run once
+  // Mount logic — run once, StrictMode-safe via sessionStorage guard
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -69,39 +71,49 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     const isInstalled = localStorage.getItem(KEYS.isInstalled) === 'true';
     const installIgnored = localStorage.getItem(KEYS.installIgnored) === 'true';
 
+    // Visit count logic — sessionStorage prevents StrictMode double-counts
+    const hasSession = sessionStorage.getItem(SESSION_KEY);
     const prev = parseInt(localStorage.getItem(KEYS.visitCount) || '0', 10);
     let visitCount = prev;
-    if (!sessionStorage.getItem('hoveshPlus_session_started')) {
-      visitCount = prev + 1;
+
+    if (!hasSession) {
+      if (prev === 0) {
+        // First ever visit: set to 1
+        visitCount = 1;
+      } else {
+        // Returning visit: increment
+        visitCount = prev + 1;
+      }
       localStorage.setItem(KEYS.visitCount, String(visitCount));
-      sessionStorage.setItem('hoveshPlus_session_started', 'true');
+      sessionStorage.setItem(SESSION_KEY, 'true');
     }
 
-    // Never auto-show on first visit (collides with Legal + Welcome modals).
-    // Auto-trigger only on visits 2 and 3.
+    // Auto-open only on visits 2 and 3; never on first visit
     if (isInstalled || installIgnored) return;
 
     if (visitCount === 2 || visitCount === 3) {
-      setTimeout(() => setShowFullModal(true), 1200);
+      setTimeout(() => setShowFullModal(true), 2500);
     }
   }, []);
 
   const openFullModal = () => setShowFullModal(true);
 
+  // Close modal but NEVER clear installPromptEvent — must remain ready for Tools menu
   const closeFullModal = () => {
     localStorage.setItem(KEYS.installIgnored, 'true');
     setShowFullModal(false);
   };
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    if (!installPromptEvent) return;
+    await installPromptEvent.prompt();
+    const { outcome } = await installPromptEvent.userChoice;
     if (outcome === 'accepted') {
       localStorage.setItem(KEYS.isInstalled, 'true');
       setShowFullModal(false);
     }
-    setDeferredPrompt(null);
+    // Clear only after the native prompt has been consumed
+    setInstallPromptEvent(null);
   };
 
   return (
@@ -110,7 +122,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
         showFullModal,
         isIOS,
         isAndroid,
-        deferredPrompt,
+        installPromptEvent,
         openFullModal,
         closeFullModal,
         handleInstall,
