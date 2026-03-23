@@ -15,6 +15,7 @@ const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 export default function App() {
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
+  const fontSize = useSettingsStore((s) => s.fontSize);
   const [legalOpen, setLegalOpen] = useState(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
@@ -57,6 +58,10 @@ export default function App() {
     html.setAttribute('lang', language);
     html.setAttribute('dir', language === 'en' ? 'ltr' : 'rtl');
   }, [language]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = fontSize + 'px';
+  }, [fontSize]);
 
   useEffect(() => {
     if (!localStorage.getItem('hasAcceptedLegal_v2')) {

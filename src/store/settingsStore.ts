@@ -16,6 +16,8 @@ interface SettingsState {
   hapticsEnabled: boolean;
   wakeLockEnabled: boolean;
   hasSeenLatestUpdate: boolean;
+  bgColor: string;
+  fontSize: number;
   setHeartDuration: (d: HeartDuration) => void;
   setBreathDuration: (d: BreathDuration) => void;
   setTheme: (t: Theme) => void;
@@ -23,6 +25,8 @@ interface SettingsState {
   setHapticsEnabled: (v: boolean) => void;
   setWakeLockEnabled: (v: boolean) => void;
   setHasSeenLatestUpdate: (v: boolean) => void;
+  setBgColor: (v: string) => void;
+  setFontSize: (v: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,6 +39,8 @@ export const useSettingsStore = create<SettingsState>()(
       hapticsEnabled: true,
       wakeLockEnabled: false,
       hasSeenLatestUpdate: false,
+      bgColor: '',
+      fontSize: 16,
       setHeartDuration: (d) => set({ heartDuration: d }),
       setBreathDuration: (d) => set({ breathDuration: d }),
       setTheme: (t) => set({ theme: t }),
@@ -42,6 +48,8 @@ export const useSettingsStore = create<SettingsState>()(
       setHapticsEnabled: (v) => set({ hapticsEnabled: v }),
       setWakeLockEnabled: (v) => set({ wakeLockEnabled: v }),
       setHasSeenLatestUpdate: (v) => set({ hasSeenLatestUpdate: v }),
+      setBgColor: (v) => set({ bgColor: v }),
+      setFontSize: (v) => set({ fontSize: v }),
     }),
     { name: 'emt-settings' },
   ),

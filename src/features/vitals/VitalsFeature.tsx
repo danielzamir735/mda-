@@ -27,12 +27,14 @@ import MedicationsModal from '../quicktools/MedicationsModal';
 import CommonMedsModal from '../hub/components/CommonMedsModal';
 import MedicalTranslatorModal from '../hub/components/MedicalTranslatorModal';
 import PoisonCentersModal from '../hub/components/PoisonCentersModal';
+import AccessibilityModal from '../hub/components/AccessibilityModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
+  const bgColor = useSettingsStore((s) => s.bgColor);
   const heartDuration = useSettingsStore((s) => s.heartDuration);
   const breathDuration = useSettingsStore((s) => s.breathDuration);
   const setHeartDuration = useSettingsStore((s) => s.setHeartDuration);
@@ -65,6 +67,7 @@ export default function VitalsFeature() {
   const [commonMedsOpen, setCommonMedsOpen] = useState(false);
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [poisonCentersOpen, setPoisonCentersOpen] = useState(false);
+  const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -115,7 +118,7 @@ export default function VitalsFeature() {
   const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark" style={bgColor ? { backgroundColor: bgColor } : {}}>
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
         {!isMetronomePlaying && (
           <>
@@ -207,6 +210,7 @@ export default function VitalsFeature() {
         onCommonMedsOpen={() => setCommonMedsOpen(true)}
         onTranslatorOpen={() => setTranslatorOpen(true)}
         onPoisonCentersOpen={() => setPoisonCentersOpen(true)}
+        onAccessibilityOpen={() => setAccessibilityOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -242,6 +246,7 @@ export default function VitalsFeature() {
       <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
       <MedicalTranslatorModal isOpen={translatorOpen} onClose={() => { setTranslatorOpen(false); setHubOpen(true); }} />
       <PoisonCentersModal isOpen={poisonCentersOpen} onClose={() => { setPoisonCentersOpen(false); setHubOpen(true); }} />
+      <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
