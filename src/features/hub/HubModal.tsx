@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -19,6 +19,7 @@ interface Props {
   onMedicationsOpen: () => void;
   onCommonMedsOpen: () => void;
   onTranslatorOpen: () => void;
+  onPoisonCentersOpen: () => void;
 }
 
 type HubItem = {
@@ -122,6 +123,14 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-sky-400/10',
   },
   {
+    id: 'poison-centers',
+    label: 'מרכזי הרעלות',
+    icon: Skull,
+    color: 'text-lime-400',
+    border: 'border-lime-400/30',
+    bg: 'bg-lime-400/10',
+  },
+  {
     id: 'settings',
     label: 'הגדרות',
     icon: Settings,
@@ -131,7 +140,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers']);
 
 export default function HubModal({
   isOpen,
@@ -147,6 +156,7 @@ export default function HubModal({
   onMedicationsOpen,
   onCommonMedsOpen,
   onTranslatorOpen,
+  onPoisonCentersOpen,
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const { openFullModal } = usePwaInstall();
@@ -174,6 +184,7 @@ export default function HubModal({
     if (id === 'medications-classification') onMedicationsOpen();
     if (id === 'common-meds') onCommonMedsOpen();
     if (id === 'realtime-translate') onTranslatorOpen();
+    if (id === 'poison-centers') onPoisonCentersOpen();
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
