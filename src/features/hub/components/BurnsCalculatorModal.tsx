@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Flame } from 'lucide-react';
+import { X, Flame, Share2, Droplets } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface Props { isOpen: boolean; onClose: () => void; }
@@ -26,6 +26,8 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('adult');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [weight, setWeight] = useState('');
+  const [burnOverride, setBurnOverride] = useState('');
 
   if (!isOpen) return null;
 
@@ -38,6 +40,22 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const severity = total === 0 ? null : total < 10 ? 'קל' : total < 25 ? 'בינוני' : 'חמור';
   const sevColor  = total < 10 ? 'text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
   const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-400' : 'bg-emt-red/20 text-emt-red';
+
+  // Parkland formula
+  const parklandBurn = burnOverride !== '' ? parseFloat(burnOverride) : total;
+  const parklandWeight = parseFloat(weight);
+  const parklandResult =
+    parklandWeight > 0 && parklandBurn > 0
+      ? (4 * parklandWeight * parklandBurn) / 1000
+      : null;
+
+  const handleShare = () => {
+    if (!navigator.share) return;
+    navigator.share({
+      title: 'חישוב פרקלנד',
+      text: `מטופל: משקל ${parklandWeight} ק"ג, כוויות ${parklandBurn}%. נוזלים נדרשים (פרקלנד): ${parklandResult?.toFixed(2)} ליטר.`,
+    });
+  };
 
   // Part cell class builder
   const cell = (id: string, extra = '') => [
@@ -166,6 +184,73 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
           </div>
           {severity && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sevBadge}`}>{severity}</span>}
           {total === 0 && <p className="text-gray-600 dark:text-gray-300 text-base">גע באזורי הגוף הפגועים</p>}
+        </div>
+
+        {/* ── Parkland Fluid Resuscitation ── */}
+        <div className="w-full rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Droplets size={18} className="text-blue-500" />
+            <h3 className="text-blue-700 dark:text-blue-300 font-bold text-base">מחשבון פרקלנד</h3>
+          </div>
+
+          <div className="flex gap-2" dir="rtl">
+            {/* Weight input */}
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">משקל גוף (ק"ג)</label>
+              <input
+                type="number"
+                min="0"
+                value={weight}
+                onChange={e => setWeight(e.target.value)}
+                placeholder="0"
+                className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light px-3 py-2 text-sm font-bold focus:outline-none focus:border-blue-400 text-right"
+              />
+            </div>
+
+            {/* Burn % input — auto-filled from TBSA */}
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">אחוז כוויות (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={burnOverride !== '' ? burnOverride : total > 0 ? String(total) : ''}
+                onChange={e => setBurnOverride(e.target.value)}
+                placeholder={total > 0 ? String(total) : '0'}
+                className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light px-3 py-2 text-sm font-bold focus:outline-none focus:border-blue-400 text-right"
+              />
+            </div>
+          </div>
+
+          {/* Result */}
+          <div className={['rounded-xl border p-3 flex flex-col items-center gap-0.5 transition-all duration-300',
+            parklandResult !== null
+              ? 'border-blue-300 dark:border-blue-700 bg-white dark:bg-blue-900/30'
+              : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray',
+          ].join(' ')}>
+            {parklandResult !== null ? (
+              <>
+                <p className="text-xs font-semibold text-gray-500 dark:text-emt-muted uppercase tracking-wide">כמות נוזלים נדרשת</p>
+                <p className="font-black text-blue-600 dark:text-blue-300 tabular-nums" style={{ fontSize: 'clamp(2rem, 10vw, 3rem)' }}>
+                  {parklandResult.toFixed(2)} <span className="text-lg">ליטר</span>
+                </p>
+                <p className="text-xs text-gray-400 dark:text-emt-muted">ל-24 שעות (פרקלנד)</p>
+              </>
+            ) : (
+              <p className="text-gray-500 dark:text-emt-muted text-sm py-1">הזן משקל ואחוז כוויות</p>
+            )}
+          </div>
+
+          {/* Share button */}
+          {parklandResult !== null && (
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-sm active:scale-95 transition-all"
+            >
+              <Share2 size={16} />
+              שתף תוצאות
+            </button>
+          )}
         </div>
 
       </div>
