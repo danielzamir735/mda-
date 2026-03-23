@@ -27,24 +27,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={enabled}
-      onClick={onToggle}
-      className={`relative inline-flex w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${
-        enabled ? 'bg-emt-green' : 'bg-gray-300 dark:bg-emt-border'
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-          enabled ? 'translate-x-5' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  );
-}
 
 export default function AccessibilityModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
