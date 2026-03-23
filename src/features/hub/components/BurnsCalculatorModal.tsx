@@ -64,7 +64,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
           <Flame size={20} className="text-emt-red" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבון כוויות</h2>

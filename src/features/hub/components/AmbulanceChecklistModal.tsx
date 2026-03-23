@@ -77,7 +77,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-emt-dark">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
         <button
           onClick={onClose}
           className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border

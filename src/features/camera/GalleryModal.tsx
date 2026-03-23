@@ -42,7 +42,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
       {/* ── Gallery grid ── */}
       <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4
+        <div className="ios-safe-header flex items-center justify-between px-4 py-4
                         border-b border-emt-border shrink-0">
           <button
             onClick={onClose}
@@ -107,7 +107,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
       {fullscreenIndex !== null && photos[fullscreenIndex] && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-black">
           {/* Top bar */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-3
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3
                           bg-black/80 border-b border-white/10">
             <button
               onClick={() => setFullscreenIndex(null)}

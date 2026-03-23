@@ -74,7 +74,7 @@ export default function WhatsNewModal({ isOpen, onClose, isRead = false }: Props
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark" dir="rtl">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray shadow-sm">
         <div className="flex items-center gap-2">
           <Sparkles size={22} className="text-emt-yellow" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מה חדש ב'חובש +'? 🚀</h2>

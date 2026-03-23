@@ -230,7 +230,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <button
             onClick={handleBackFromDetail}
             className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border

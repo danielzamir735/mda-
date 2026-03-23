@@ -28,7 +28,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
     <>
       <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבונים</h2>
           <button
             onClick={onClose}

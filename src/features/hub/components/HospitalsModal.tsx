@@ -123,7 +123,7 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark" dir="rtl">
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3
                       border-b border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray shadow-sm">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('hospitalsTitle')}</h2>
         <button

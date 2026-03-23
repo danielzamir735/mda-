@@ -111,7 +111,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
           <BookHeart size={22} className="text-purple-400" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחלות רקע נפוצות</h2>

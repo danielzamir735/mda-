@@ -71,7 +71,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   if (editingId !== null) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark">
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <button
             onClick={goBack}
             className="flex items-center gap-1 text-blue-400 font-bold text-sm active:opacity-70"

@@ -7,3 +7,10 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
+
+/* Apply safe-area top padding ONLY on iOS devices */
+@supports (-webkit-touch-callout: none) {
+  .ios-safe-header {
+    padding-top: max(env(safe-area-inset-top), 24px) !important;
+  }
+}

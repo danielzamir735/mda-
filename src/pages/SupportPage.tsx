@@ -59,7 +59,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           `}</style>
 
           {/* Close */}
-          <div className="flex justify-start px-4 pt-4 shrink-0">
+          <div className="ios-safe-header flex justify-start px-4 pt-4 shrink-0">
             <button
               onClick={onClose}
               className="p-2.5 rounded-full bg-white/10 active:bg-white/20 transition-colors"
