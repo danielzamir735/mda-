@@ -82,16 +82,21 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
           </a>
         </div>
 
-        {/* Protocol button */}
-        <HapticButton
-          pressScale={0.95}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl
-                     border-2 border-yellow-500/50 bg-yellow-500/10
-                     text-yellow-600 dark:text-emt-yellow font-bold text-lg"
-        >
-          <AlertTriangle size={24} />
-          פרוטוקול חומ&quot;ס
-        </HapticButton>
+        {/* First Aid Guidelines */}
+        <div className="rounded-2xl border border-red-400/50 bg-red-50 dark:bg-red-900/20 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={20} className="text-red-600 dark:text-red-400 shrink-0" />
+            <h3 className="text-red-700 dark:text-red-300 font-bold text-base">
+              הנחיות עזרה ראשונה (עפ&quot;י מד&quot;א)
+            </h3>
+          </div>
+          <ul className="flex flex-col gap-2 text-sm text-red-800 dark:text-red-200 leading-relaxed">
+            <li>🛑 אין לגרום להקאה בשום אופן!</li>
+            <li>🛑 אין לתת מזון או שתייה מכל סוג.</li>
+            <li>📦 יש לשמור את האריזה המקורית של החומר/תרופה ולהביאה לצוות הרפואי.</li>
+            <li>🚑 במקרה של אובדן הכרה, פרכוסים או קושי בנשימה - חייג 101 מיד.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
