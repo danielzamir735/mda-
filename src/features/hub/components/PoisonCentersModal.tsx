@@ -87,14 +87,14 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
           <div className="flex items-center gap-2">
             <AlertTriangle size={20} className="text-red-600 dark:text-red-400 shrink-0" />
             <h3 className="text-red-700 dark:text-red-300 font-bold text-base">
-              הנחיות עזרה ראשונה (עפ&quot;י מד&quot;א)
+              הנחיות עזרה ראשונה
             </h3>
           </div>
           <ul className="flex flex-col gap-2 text-sm text-red-800 dark:text-red-200 leading-relaxed">
-            <li>🛑 אין לגרום להקאה בשום אופן!</li>
-            <li>🛑 אין לתת מזון או שתייה מכל סוג.</li>
-            <li>📦 יש לשמור את האריזה המקורית של החומר/תרופה ולהביאה לצוות הרפואי.</li>
-            <li>🚑 במקרה של אובדן הכרה, פרכוסים או קושי בנשימה - חייג 101 מיד.</li>
+            <li>אין לגרום להקאה בשום אופן!</li>
+            <li>אין לתת מזון או שתייה מכל סוג.</li>
+            <li>יש לשמור את האריזה המקורית של החומר/תרופה ולהביאה לצוות הרפואי.</li>
+            <li>במקרה של אובדן הכרה, פרכוסים או קושי בנשימה - חייג לכוחות ההצלה.</li>
           </ul>
         </div>
       </div>
