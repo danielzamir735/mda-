@@ -28,6 +28,7 @@ import CommonMedsModal from '../hub/components/CommonMedsModal';
 import MedicalTranslatorModal from '../hub/components/MedicalTranslatorModal';
 import PoisonCentersModal from '../hub/components/PoisonCentersModal';
 import AccessibilityModal from '../hub/components/AccessibilityModal';
+import BreathingSynchronizer from '../hub/components/BreathingSynchronizer';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
@@ -68,6 +69,7 @@ export default function VitalsFeature() {
   const [translatorOpen, setTranslatorOpen] = useState(false);
   const [poisonCentersOpen, setPoisonCentersOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
+  const [breathingOpen, setBreathingOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -211,6 +213,7 @@ export default function VitalsFeature() {
         onTranslatorOpen={() => setTranslatorOpen(true)}
         onPoisonCentersOpen={() => setPoisonCentersOpen(true)}
         onAccessibilityOpen={() => setAccessibilityOpen(true)}
+        onBreathingOpen={() => setBreathingOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -247,6 +250,7 @@ export default function VitalsFeature() {
       <MedicalTranslatorModal isOpen={translatorOpen} onClose={() => { setTranslatorOpen(false); setHubOpen(true); }} />
       <PoisonCentersModal isOpen={poisonCentersOpen} onClose={() => { setPoisonCentersOpen(false); setHubOpen(true); }} />
       <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />
+      <BreathingSynchronizer isOpen={breathingOpen} onClose={() => { setBreathingOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
