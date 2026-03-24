@@ -7,23 +7,31 @@ type Phase = 'idle' | 'inhale' | 'exhale';
 
 const PETAL_ANGLES = [0, 60, 120, 180, 240, 300];
 
-/* Bubble definitions — size(px), left(%), duration(s), delay(s) */
+/* Bubble definitions — size(px), left(%), duration(s), delay(s), color */
 const BUBBLES = [
-  { size: 18, left:  8, dur: 13, delay:  0 },
-  { size: 32, left: 18, dur: 20, delay:  3 },
-  { size: 14, left: 32, dur: 11, delay:  7 },
-  { size: 48, left: 48, dur: 26, delay:  1 },
-  { size: 22, left: 62, dur: 16, delay:  5 },
-  { size: 12, left: 72, dur:  9, delay: 10 },
-  { size: 38, left: 80, dur: 18, delay:  4 },
-  { size: 16, left: 90, dur: 12, delay:  8 },
-  { size: 55, left: 25, dur: 28, delay:  2 },
-  { size: 20, left: 56, dur: 14, delay:  6 },
-  { size: 28, left: 42, dur: 17, delay: 11 },
-  { size: 10, left: 70, dur:  8, delay:  9 },
+  { size: 18, left:  4, dur: 13, delay:  0, color: 'rgba(255,182,193,0.38)' },
+  { size: 32, left: 12, dur: 20, delay:  3, color: 'rgba(186,156,255,0.35)' },
+  { size: 14, left: 20, dur: 11, delay:  7, color: 'rgba(100,240,255,0.32)' },
+  { size: 48, left: 28, dur: 26, delay:  1, color: 'rgba(255,236,100,0.25)' },
+  { size: 22, left: 36, dur: 16, delay:  5, color: 'rgba(255,182,193,0.40)' },
+  { size: 12, left: 44, dur:  9, delay: 10, color: 'rgba(186,156,255,0.38)' },
+  { size: 38, left: 52, dur: 18, delay:  4, color: 'rgba(100,240,255,0.28)' },
+  { size: 16, left: 60, dur: 12, delay:  8, color: 'rgba(255,200,150,0.30)' },
+  { size: 55, left: 68, dur: 28, delay:  2, color: 'rgba(186,156,255,0.25)' },
+  { size: 20, left: 76, dur: 14, delay:  6, color: 'rgba(255,236,100,0.28)' },
+  { size: 28, left: 84, dur: 17, delay: 11, color: 'rgba(100,240,255,0.35)' },
+  { size: 10, left: 92, dur:  8, delay:  9, color: 'rgba(255,182,193,0.42)' },
+  { size: 24, left:  8, dur: 22, delay: 13, color: 'rgba(255,200,150,0.33)' },
+  { size: 40, left: 17, dur: 19, delay:  0, color: 'rgba(160,230,180,0.30)' },
+  { size: 15, left: 35, dur: 10, delay: 15, color: 'rgba(186,156,255,0.40)' },
+  { size: 30, left: 50, dur: 24, delay:  2, color: 'rgba(255,182,193,0.30)' },
+  { size: 45, left: 65, dur: 30, delay:  7, color: 'rgba(100,240,255,0.22)' },
+  { size: 11, left: 78, dur:  7, delay: 12, color: 'rgba(255,236,100,0.35)' },
+  { size: 35, left: 88, dur: 21, delay:  4, color: 'rgba(160,230,180,0.28)' },
+  { size: 19, left: 25, dur: 15, delay: 18, color: 'rgba(255,200,150,0.38)' },
 ];
 
-// ─── FlowerSVG (inhale, 4 s) ───────────────────────────────────────────────
+// ─── FlowerSVG (inhale) — very gentle easing ──────────────────────────────
 function FlowerSVG({ active }: { active: boolean }) {
   const scale = active ? 1.5 : 0.5;
   return (
@@ -45,7 +53,7 @@ function FlowerSVG({ active }: { active: boolean }) {
       <g filter="url(#fl-glow)"
         style={{ transformOrigin: '100px 100px',
           transform: `scale(${scale})`,
-          transition: 'transform 4s cubic-bezier(0.4,0,0.2,1)' }}>
+          transition: 'transform 4s cubic-bezier(0.37,0,0.63,1)' }}>
         {PETAL_ANGLES.map(a => (
           <ellipse key={a} cx={100} cy={64} rx={15} ry={34}
             fill="url(#fl-pg)" opacity={0.9} transform={`rotate(${a},100,100)`} />
@@ -117,11 +125,12 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
   const [running, setRunning]     = useState(false);
   const [phase, setPhase]         = useState<Phase>('idle');
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef   = useRef<HTMLAudioElement>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   useModalBackHandler(isOpen, onClose);
 
-  // Phase timer — untouched logic
+  // Phase timer
   useEffect(() => {
     if (!running) { setPhase('idle'); return; }
     if (phase === 'idle') { setPhase('inhale'); return; }
@@ -131,33 +140,67 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
     return () => clearTimeout(t);
   }, [running, phase]);
 
+  // Reset on close + release wake lock
   useEffect(() => {
     if (!isOpen) {
       setRunning(false);
       setPhase('idle');
       audioRef.current?.pause();
       setIsPlaying(false);
+      wakeLockRef.current?.release().catch(() => {});
+      wakeLockRef.current = null;
     }
   }, [isOpen]);
 
+  // Release wake lock on unmount
+  useEffect(() => {
+    return () => {
+      wakeLockRef.current?.release().catch(() => {});
+    };
+  }, []);
+
   if (!isOpen) return null;
+
+  const handleStart = async () => {
+    setRunning(true);
+    try {
+      wakeLockRef.current = await navigator.wakeLock.request('screen');
+    } catch { /* wake lock not supported or denied — silently ignore */ }
+  };
+
+  const handleStop = () => {
+    setRunning(false);
+    wakeLockRef.current?.release().catch(() => {});
+    wakeLockRef.current = null;
+  };
+
+  const handleAudioEnded = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = 60;
+    audio.play().catch(() => {});
+  };
 
   const toggleAudio = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    isPlaying ? audio.pause() : audio.play().catch(() => {});
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.currentTime = 60;
+      audio.play().catch(() => {});
+    }
     setIsPlaying(p => !p);
   };
 
-  const label     = phase === 'inhale' ? 'שאיפה עמוקה' : phase === 'exhale' ? 'נשיפה ארוכה'  : 'לחץ התחל';
-  const sublabel  = phase === 'inhale' ? '(הרחת פרח)'  : phase === 'exhale' ? '(כיבוי נר)'   : '';
-  const cycleHint = phase === 'idle'   ? '4 שניות שאיפה · 6 שניות נשיפה' : '';
+  const label     = phase === 'inhale' ? 'להריח פרח...' : phase === 'exhale' ? 'לכבות נר...' : 'לחץ התחל';
   const glowColor = phase === 'inhale' ? 'rgba(34,211,238,0.7)' : phase === 'exhale' ? 'rgba(253,186,116,0.7)' : 'none';
+  const cycleHint = phase === 'idle' ? '4 שניות שאיפה · 6 שניות נשיפה' : '';
 
   return (
     <div className="fixed inset-0 z-[65] flex flex-col overflow-hidden">
 
-      {/* ── CSS: background gradient + floating bubbles ─────────────────── */}
+      {/* ── CSS ──────────────────────────────────────────────────────────── */}
       <style>{`
         @keyframes bs-bg {
           0%   { background-position: 0%   50%; }
@@ -184,11 +227,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           position: absolute;
           bottom: -80px;
           border-radius: 50%;
-          background: radial-gradient(circle at 32% 32%,
-            rgba(200,230,255,0.38),
-            rgba(100,160,255,0.06)
-          );
-          border: 1px solid rgba(200,220,255,0.22);
+          border: 1px solid rgba(255,255,255,0.15);
           animation: bs-float linear infinite;
           pointer-events: none;
         }
@@ -197,20 +236,40 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           100% { transform: scale(1.7); opacity: 0;    }
         }
         .bs-pulse { animation: bs-pulse-ring 2.4s ease-out infinite; }
+        .bs-start-btn {
+          transition: box-shadow 0.3s ease, transform 0.15s ease, background-color 0.2s ease;
+          box-shadow: 0 8px 32px rgba(14,165,233,0.45), 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .bs-start-btn:hover {
+          box-shadow: 0 12px 40px rgba(14,165,233,0.60), 0 4px 12px rgba(0,0,0,0.35);
+        }
+        .bs-stop-btn {
+          transition: box-shadow 0.3s ease, transform 0.15s ease, background-color 0.2s ease;
+          box-shadow: 0 4px 20px rgba(255,255,255,0.08);
+        }
+        .bs-stop-btn:hover {
+          box-shadow: 0 6px 28px rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.15);
+        }
       `}</style>
 
-      {/* ── Background: gradient + bubbles ──────────────────────────────── */}
+      {/* ── Background ───────────────────────────────────────────────────── */}
       <div className="bs-bg absolute inset-0">
         {BUBBLES.map((b, i) => (
           <div key={i} className="bs-bubble"
-            style={{ width: b.size, height: b.size,
+            style={{
+              width: b.size,
+              height: b.size,
               left: `${b.left}%`,
+              background: `radial-gradient(circle at 32% 32%, ${b.color}, rgba(0,0,0,0))`,
+              filter: 'blur(2px)',
               animationDuration: `${b.dur}s`,
-              animationDelay:    `${b.delay}s` }} />
+              animationDelay: `${b.delay}s`,
+            }} />
         ))}
       </div>
 
-      {/* ── UI layer ────────────────────────────────────────────────────── */}
+      {/* ── UI layer ─────────────────────────────────────────────────────── */}
       <div className="relative z-10 flex flex-col h-full">
 
         {/* Header */}
@@ -221,7 +280,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
             <h2 className="text-white font-bold text-xl">מסנכרן נשימות</h2>
           </div>
           <HapticButton
-            onClick={() => { setRunning(false); onClose(); }}
+            onClick={() => { handleStop(); onClose(); }}
             pressScale={0.88}
             className="w-10 h-10 rounded-full bg-white/10 border border-white/20
                        flex items-center justify-center text-white/70 hover:text-white"
@@ -234,21 +293,16 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 select-none">
 
-          {/* Phase text */}
-          <div className="text-center min-h-[5.5rem] flex flex-col items-center justify-end gap-1">
-            <p className="text-4xl font-black text-white leading-tight"
-              style={{ opacity: phase === 'idle' ? 0.3 : 1,
+          {/* Phase text — massive */}
+          <div className="text-center flex flex-col items-center justify-end gap-1">
+            <p className="text-6xl font-black text-white leading-tight tracking-tight"
+              style={{
+                opacity: phase === 'idle' ? 0.25 : 1,
                 transition: 'opacity 0.6s ease-in-out',
-                textShadow: phase !== 'idle' ? `0 0 32px ${glowColor}` : 'none' }}>
+                textShadow: phase !== 'idle' ? `0 0 48px ${glowColor}, 0 2px 8px rgba(0,0,0,0.5)` : 'none',
+              }}>
               {label}
             </p>
-            {sublabel && (
-              <p className="text-lg font-semibold"
-                style={{ color: phase === 'inhale' ? '#67E8F9' : '#FCD34D',
-                  transition: 'color 0.6s ease-in-out' }}>
-                {sublabel}
-              </p>
-            )}
           </div>
 
           {/* Flower / Candle */}
@@ -266,32 +320,32 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           </p>
         </div>
 
-        {/* ── Bottom controls ─────────────────────────────────────────── */}
+        {/* ── Bottom controls ──────────────────────────────────────────── */}
         <div className="shrink-0 flex flex-col items-center gap-3 px-6 pb-8 pt-2">
 
-          {/* Start / Stop */}
+          {/* Start / Stop — pill-shaped */}
           {!running ? (
             <HapticButton
-              onClick={() => setRunning(true)}
-              pressScale={0.95}
-              className="w-full py-4 rounded-2xl bg-sky-500 text-white font-bold text-xl
-                         shadow-lg shadow-sky-500/30 active:bg-sky-600 transition-colors"
+              onClick={handleStart}
+              pressScale={0.96}
+              className="bs-start-btn w-full py-4 rounded-full bg-sky-500 hover:bg-sky-400
+                         text-white font-black text-2xl"
             >
               התחל
             </HapticButton>
           ) : (
             <HapticButton
-              onClick={() => setRunning(false)}
-              pressScale={0.95}
-              className="w-full py-4 rounded-2xl bg-white/10 border border-white/20
-                         text-white font-bold text-xl active:bg-white/20 transition-colors"
+              onClick={handleStop}
+              pressScale={0.96}
+              className="bs-stop-btn w-full py-4 rounded-full bg-white/10 border border-white/25
+                         text-white font-black text-2xl"
             >
               עצור
             </HapticButton>
           )}
 
-          {/* Audio toggle — prominent pill */}
-          <audio ref={audioRef} src="/calm-breathing.mp3" loop />
+          {/* Audio toggle */}
+          <audio ref={audioRef} src="/calm-breathing.mp3" onEnded={handleAudioEnded} />
           <HapticButton
             onClick={toggleAudio}
             pressScale={0.93}
