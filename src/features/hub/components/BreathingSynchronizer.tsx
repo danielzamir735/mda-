@@ -236,6 +236,24 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           100% { transform: scale(1.7); opacity: 0;    }
         }
         .bs-pulse { animation: bs-pulse-ring 2.4s ease-out infinite; }
+        @keyframes bs-text-grad {
+          0%   { background-position: 0%   50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0%   50%; }
+        }
+        .bs-text-grad {
+          background: linear-gradient(
+            90deg,
+            #67E8F9, #A78BFA, #F9A8D4,
+            #FCD34D, #6EE7B7, #7DD3FC,
+            #C084FC, #67E8F9
+          );
+          background-size: 300% 300%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          animation: bs-text-grad 5s ease infinite;
+        }
         .bs-start-btn {
           transition: box-shadow 0.3s ease, transform 0.15s ease, background-color 0.2s ease;
           box-shadow: 0 8px 32px rgba(14,165,233,0.45), 0 2px 8px rgba(0,0,0,0.3);
@@ -295,7 +313,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
           {/* Phase text — massive */}
           <div className="text-center flex flex-col items-center justify-end gap-1">
-            <p className="text-6xl font-black text-white leading-tight tracking-tight"
+            <p className={`text-6xl font-black leading-tight tracking-tight${phase !== 'idle' ? ' bs-text-grad' : ' text-white'}`}
               style={{
                 opacity: phase === 'idle' ? 0.25 : 1,
                 transition: 'opacity 0.6s ease-in-out',
@@ -321,16 +339,15 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
         </div>
 
         {/* ── Bottom controls ──────────────────────────────────────────── */}
-        <div className="shrink-0 flex flex-col items-center gap-3 px-6 pb-8 pt-2">
+        <div className="shrink-0 flex flex-row justify-center items-center gap-4 px-6 pb-8 pt-2">
 
           {/* Start / Stop — pill-shaped */}
           {!running ? (
             <HapticButton
               onClick={handleStart}
               pressScale={0.96}
-              className="bs-start-btn w-full py-4 rounded-full bg-sky-500 hover:bg-sky-400
+              className="bs-start-btn flex-1 py-4 rounded-full bg-sky-500 hover:bg-sky-400
                          text-white font-black text-2xl"
-              style={{ borderRadius: '9999px' }}
             >
               התחל
             </HapticButton>
@@ -338,7 +355,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
             <HapticButton
               onClick={handleStop}
               pressScale={0.96}
-              className="bs-stop-btn w-full py-4 rounded-full bg-white/10 border border-white/25
+              className="bs-stop-btn flex-1 py-4 rounded-full bg-white/10 border border-white/25
                          text-white font-black text-2xl"
             >
               עצור
@@ -350,16 +367,15 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           <HapticButton
             onClick={toggleAudio}
             pressScale={0.93}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-full font-semibold text-sm
-                        border transition-all duration-300
+            className={`flex items-center gap-2.5 px-6 py-4 rounded-full font-semibold text-sm
+                        border transition-all duration-300 shrink-0
                         ${isPlaying
                           ? 'bg-violet-500/25 border-violet-400/50 text-violet-200 shadow-lg shadow-violet-500/20'
                           : 'bg-white/8  border-white/20  text-white/45'}`}
           >
             {isPlaying
-              ? <Volume2 size={18} className="text-violet-300" />
-              : <VolumeX size={18} />}
-            {isPlaying ? 'מוזיקה פועלת' : 'הפעל מוזיקה'}
+              ? <Volume2 size={22} className="text-violet-300" />
+              : <VolumeX size={22} />}
           </HapticButton>
         </div>
 
