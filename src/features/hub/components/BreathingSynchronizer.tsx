@@ -77,7 +77,7 @@ function FlowerSVG({ active }: { active: boolean }) {
 // ─── CandleSVG (exhale, 6 s) ───────────────────────────────────────────────
 function CandleSVG({ active }: { active: boolean }) {
   return (
-    <svg viewBox="0 0 200 200" width={220} height={220}
+    <svg viewBox="0 0 200 200" width={320} height={320}
       style={{ overflow: 'visible', position: 'absolute',
         opacity: active ? 1 : 0, transition: 'opacity 1s ease-in-out' }}>
       <defs>
@@ -177,7 +177,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
   const handleAudioEnded = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.currentTime = 60;
+    audio.currentTime = 180;
     audio.play().catch(() => {});
   };
 
@@ -187,7 +187,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.currentTime = 60;
+      audio.currentTime = 180;
       audio.play().catch(() => {});
     }
     setIsPlaying(p => !p);
@@ -306,7 +306,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           </div>
 
           {/* Flower / Candle */}
-          <div style={{ position: 'relative', width: 260, height: 260,
+          <div style={{ position: 'relative', width: 320, height: 320,
             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <FlowerSVG active={phase === 'inhale'} />
             <CandleSVG active={phase === 'exhale'} />
@@ -330,6 +330,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
               pressScale={0.96}
               className="bs-start-btn w-full py-4 rounded-full bg-sky-500 hover:bg-sky-400
                          text-white font-black text-2xl"
+              style={{ borderRadius: '9999px' }}
             >
               התחל
             </HapticButton>
