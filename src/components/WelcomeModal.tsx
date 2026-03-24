@@ -64,10 +64,6 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
             </li>
           </ul>
 
-          {/* Share CTA */}
-          <p className="text-emt-red font-black text-xl text-center tracking-tight">
-            שתפו בכל הכוח! 💪
-          </p>
         </div>
 
         {/* Sticky bottom button — always visible, respects iPhone home indicator */}
@@ -76,7 +72,7 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
             onClick={onClose}
             className="w-full py-3.5 rounded-xl bg-emt-red text-white font-bold text-lg active:scale-95 transition-transform"
           >
-            אני מבין, המשך
+            המשך
           </button>
         </div>
       </div>

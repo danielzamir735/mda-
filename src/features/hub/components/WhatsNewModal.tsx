@@ -1,4 +1,4 @@
-import { X, Sparkles, Pill, Stethoscope, Tablet, BookOpen, Zap, Camera, Wrench } from 'lucide-react';
+import { X, Sparkles, Pill, Stethoscope, Tablet, BookOpen, Zap, Camera, Wrench, Wind } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 interface Props {
@@ -13,8 +13,16 @@ type UpdateItem =
   | { type: 'section'; label: string };
 
 const UPDATES: UpdateItem[] = [
+  // ── v2.2 ──────────────────────────────────────────
+  { type: 'section', label: 'גרסה 2.2 — עדכון אחרון' },
+  {
+    type: 'icon',
+    Icon: Wind,
+    iconClass: 'text-teal-400',
+    text: 'מסנכרן נשימות (חדש!): כלי טיפולי ומרגיע להתמודדות עם התקפי חרדה והיפר-ונטילציה בשטח, כולל אנימציית נשימה אינטראקטיבית וצלילי רקע.',
+  },
   // ── v2.1 ──────────────────────────────────────────
-  { type: 'section', label: 'גרסה 2.1 — עדכון אחרון' },
+  { type: 'section', label: 'גרסה 2.1' },
   {
     type: 'icon',
     Icon: BookOpen,
