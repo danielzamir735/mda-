@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -22,6 +22,7 @@ interface Props {
   onPoisonCentersOpen: () => void;
   onAccessibilityOpen: () => void;
   onBreathingOpen: () => void;
+  onMedicationScannerOpen: () => void;
 }
 
 type HubItem = {
@@ -156,9 +157,17 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
+  {
+    id: 'medication-scanner',
+    label: 'סורק תרופות AI',
+    icon: ScanSearch,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+  },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner']);
 
 export default function HubModal({
   isOpen,
@@ -177,6 +186,7 @@ export default function HubModal({
   onPoisonCentersOpen,
   onAccessibilityOpen,
   onBreathingOpen,
+  onMedicationScannerOpen,
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const { openFullModal } = usePwaInstall();
@@ -207,6 +217,7 @@ export default function HubModal({
     if (id === 'poison-centers') onPoisonCentersOpen();
     if (id === 'accessibility') onAccessibilityOpen();
     if (id === 'breathing') onBreathingOpen();
+    if (id === 'medication-scanner') onMedicationScannerOpen();
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
