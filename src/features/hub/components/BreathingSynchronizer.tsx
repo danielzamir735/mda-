@@ -170,6 +170,10 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
   const handleStop = () => {
     setRunning(false);
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    }
     wakeLockRef.current?.release().catch(() => {});
     wakeLockRef.current = null;
   };
