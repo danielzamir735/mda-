@@ -159,7 +159,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'medication-scanner',
-    label: 'סורק תרופות AI',
+    label: 'מידע על תרופות',
     icon: ScanSearch,
     color: 'text-teal-400',
     border: 'border-teal-400/30',
