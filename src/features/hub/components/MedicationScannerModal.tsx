@@ -54,8 +54,8 @@ function loadHistory(): HistoryItem[] {
 }
 
 function extractMedName(result: string): string {
-  const match = result.match(/\*\*שם מסחרי:\*\*\s*(.+)/);
-  return match?.[1]?.trim() || 'תרופה לא ידועה';
+  const match = result.match(/(?:\*\*)?שם מסחרי:(?:\*\*)?\s*(.+)/);
+  return match?.[1]?.trim().replace(/\*\*/g, '') || 'תרופה זוהתה';
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -128,6 +128,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>(loadHistory);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -155,6 +156,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     setErrorMessage('');
     setPreview(null);
     setTextQuery('');
+    setLoadingPhraseIndex(0);
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
@@ -226,7 +228,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       const text = result.response.text();
       setResultText(text);
       setState('result');
-      saveToHistory(file.name, text);
+      saveToHistory(extractMedName(text), text);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : String(err));
       setState('error');
@@ -445,31 +447,51 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
             {/* History list */}
             {historyExpanded && (
-              <div className="border-t border-emt-border divide-y divide-emt-border/50">
-                {searchHistory.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleHistoryItemClick(item)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-right
-                               hover:bg-white/5 active:bg-white/10 transition-colors"
-                  >
-                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                      <span className="text-emt-light text-sm font-semibold truncate">
-                        {extractMedName(item.result)}
-                      </span>
-                      <span className="text-emt-muted text-xs truncate">{item.query}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0 mr-3">
-                      <span className="text-emt-muted text-xs">
-                        {new Date(item.timestamp).toLocaleDateString('he-IL', {
-                          day: '2-digit',
-                          month: '2-digit',
-                        })}
-                      </span>
-                      <Scan size={12} className="text-teal-400/60" />
-                    </div>
-                  </button>
-                ))}
+              <div className="border-t border-emt-border">
+                {/* Search filter */}
+                <div className="px-3 py-2 border-b border-emt-border/50">
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={e => setHistorySearch(e.target.value)}
+                    placeholder="חפש בהיסטוריה..."
+                    dir="rtl"
+                    className="w-full rounded-xl bg-emt-dark border border-emt-border px-3 py-2
+                               text-emt-light placeholder:text-emt-muted text-xs
+                               focus:outline-none focus:border-teal-400/60"
+                  />
+                </div>
+                <div className="divide-y divide-emt-border/50">
+                  {searchHistory
+                    .filter(item => {
+                      if (!historySearch.trim()) return true;
+                      const name = extractMedName(item.result).toLowerCase();
+                      return name.includes(historySearch.trim().toLowerCase());
+                    })
+                    .map(item => {
+                      const d = new Date(item.timestamp);
+                      const formatted =
+                        d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+                        ' ' +
+                        d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleHistoryItemClick(item)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-right
+                                     hover:bg-white/5 active:bg-white/10 transition-colors"
+                        >
+                          <span className="text-emt-light text-sm font-semibold truncate flex-1 min-w-0">
+                            {extractMedName(item.result)}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0 mr-3">
+                            <span className="text-emt-muted text-xs">{formatted}</span>
+                            <Scan size={12} className="text-teal-400/60" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
               </div>
             )}
           </div>
