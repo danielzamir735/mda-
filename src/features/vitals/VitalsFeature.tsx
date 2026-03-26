@@ -33,6 +33,7 @@ import MedicationScannerModal from '../hub/components/MedicationScannerModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
+import UpdateAnnouncementModal from '../../components/UpdateAnnouncementModal';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -258,6 +259,7 @@ export default function VitalsFeature() {
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+      <UpdateAnnouncementModal />
     </div>
   );
 }
