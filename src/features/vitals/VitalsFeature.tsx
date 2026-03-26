@@ -123,7 +123,7 @@ export default function VitalsFeature() {
   const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark" style={bgColor ? { backgroundColor: bgColor } : {}}>
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark safe-area-top" style={bgColor ? { backgroundColor: bgColor } : {}}>
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
         {!isMetronomePlaying && (
           <>
@@ -164,7 +164,7 @@ export default function VitalsFeature() {
         onSupportOpen={() => setSupportOpen(true)}
       />
 
-      <footer className="shrink-0 text-center pb-1 pt-1">
+      <footer className="shrink-0 text-center pt-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>
         <button
           type="button"
           onClick={() => setFeedbackOpen(true)}
