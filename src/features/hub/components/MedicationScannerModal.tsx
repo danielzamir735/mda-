@@ -1,23 +1,37 @@
 import { useRef, useState, useEffect } from 'react';
-import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown } from 'lucide-react';
+import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 
 const SYSTEM_PROMPT =
-  'You are a professional medical identification tool. Identify the medication in the image or text.\n' +
-  'Respond ONLY in Hebrew.\n' +
-  'Output ONLY these three fields — nothing else:\n' +
-  '**שם מסחרי:** [name]\n' +
-  '**שם גנרי:** [generic name]\n' +
-  '**ייעוד התרופה:** [1-2 sentences maximum]\n\n' +
-  'CRITICAL: DO NOT include dosages, side effects, warnings, interactions, or any other information. ' +
-  'Keep it as short as possible to ensure fast generation.';
+  'אתה סוכן AI רפואי מקצועי. תפקידך לזהות תרופות מתמונה או טקסט.\n' +
+  'חובה עליך להחזיר את התשובה *אך ורק* במבנה המדויק הבא, ללא הקדמות וללא סיכומים מיותרים. השתמש בנקודות (bullets) היכן שמופיע בדוגמה.\n\n' +
+  'תבנית חובה (דוגמה על אופטלגין, החלף את המידע בהתאם לתרופה שזוהתה):\n\n' +
+  'שם מסחרי: אופטלגין (Optalgin)\n' +
+  'שם גנרי: מטאמיזול (Metamizole / Dipyrone)\n\n' +
+  'למה התרופה מיועדת:\n' +
+  '* שיכוך כאבים (כאב ראש, שיניים, כאבי שרירים וכו\')\n' +
+  '* הורדת חום\n' +
+  '* לעיתים גם לכאבים חזקים יותר כשמשככי כאבים רגילים לא מספיקים\n\n' +
+  'מינון מקובל (כללי):\n' +
+  '* מבוגרים: בדרך כלל 500–1000 מ״ג בכל פעם\n' +
+  '* ניתן לקחת עד 3–4 פעמים ביום לפי הצורך\n' +
+  '⚠️ לא לעבור מינון יומי מקסימלי ולהתייעץ עם רופא/רוקח\n\n' +
+  'התוויות נגד:\n' +
+  '* רגישות לחומר הפעיל או לתרופות דומות\n' +
+  '* היסטוריה של בעיות דם (אגרנולוציטוזיס)\n' +
+  '* בעיות חמורות במח העצם\n' +
+  '* יש להיזהר במחלות כבד או כליה\n' +
+  '* לא מומלץ לשימוש ממושך ללא מעקב רפואי\n\n' +
+  '❗ חשוב לדעת:\n' +
+  '[משפט אחד או שניים על אזהרה קריטית או תופעת לוואי חריגה שחובה לשים לב אליה].\n\n' +
+  'אם אתה רוצה, אפשר להשוות אותה לתרופות מקבילות או לבדוק התאמה למצב מסוים 👍';
 
-const LOADING_PHRASES = [
-  'מעבד תמונה...',
-  'מחלץ נתונים...',
-  'בודק במאגרי מידע...',
-  'מכין סיכום...',
+const LOADING_STEPS = [
+  { text: 'מעבד תמונה...', Icon: Image },
+  { text: 'מחלץ נתונים...', Icon: Cpu },
+  { text: 'בודק במאגרי מידע...', Icon: Database },
+  { text: 'מכין סיכום...', Icon: FileEdit },
 ];
 
 const HISTORY_KEY = 'med-scanner-history';
@@ -118,13 +132,13 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  // Cycle loading phrases every 1.5 s
+  // Cycle loading steps every 3.5 s
   useEffect(() => {
     if (state !== 'loading') return;
     setLoadingPhraseIndex(0);
     const interval = setInterval(() => {
-      setLoadingPhraseIndex(i => (i + 1) % LOADING_PHRASES.length);
-    }, 1500);
+      setLoadingPhraseIndex(i => (i + 1) % LOADING_STEPS.length);
+    }, 3500);
     return () => clearInterval(interval);
   }, [state]);
 
@@ -232,7 +246,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
         <div className="flex items-center gap-2">
           <Scan size={22} className="text-teal-400" />
-          <h2 className="text-emt-light font-bold text-xl">זיהוי תרופות רפואי</h2>
+          <h2 className="text-emt-light font-bold text-xl">מידע על תרופות</h2>
         </div>
         <button
           onClick={onClose}
@@ -344,20 +358,26 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
           </div>
         )}
 
-        {/* Loading — cycling phrases */}
-        {state === 'loading' && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <div className="w-12 h-12 border-4 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
-            <p
-              key={loadingPhraseIndex}
-              className="text-teal-300 text-base font-semibold transition-opacity duration-300"
-              style={{ animation: 'fadeIn 0.4s ease' }}
-            >
-              {LOADING_PHRASES[loadingPhraseIndex]}
-            </p>
-            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          </div>
-        )}
+        {/* Loading — cycling steps with icon */}
+        {state === 'loading' && (() => {
+          const { text, Icon: StepIcon } = LOADING_STEPS[loadingPhraseIndex];
+          return (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="w-12 h-12 border-4 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
+              <div
+                key={loadingPhraseIndex}
+                className="flex flex-col items-center gap-2"
+                style={{ animation: 'fadeIn 0.4s ease' }}
+              >
+                <div className="w-12 h-12 rounded-full bg-teal-400/10 flex items-center justify-center">
+                  <StepIcon size={24} className="text-teal-400" />
+                </div>
+                <p className="text-teal-300 text-base font-semibold">{text}</p>
+              </div>
+              <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+            </div>
+          );
+        })()}
 
         {/* Error */}
         {state === 'error' && (
