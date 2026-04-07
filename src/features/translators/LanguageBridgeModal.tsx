@@ -88,15 +88,17 @@ const STATIC_LANGUAGES: Language[] = [
 
 // ─── Animation Variants ────────────────────────────────────────────────────────
 
+const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
+
 const PAGE = {
   initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.26, ease: [0.25, 0.46, 0.45, 0.94] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.26, ease: EASE_OUT } },
   exit:    { opacity: 0, y: -8, transition: { duration: 0.18 } },
 };
 
 const INTRO_PAGE = {
   initial: { opacity: 0, scale: 0.96, y: 20 },
-  animate: { opacity: 1, scale: 1,    y: 0,  transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  animate: { opacity: 1, scale: 1,    y: 0,  transition: { duration: 0.35, ease: EASE_OUT } },
   exit:    { opacity: 0, scale: 0.92, y: -16, transition: { duration: 0.22 } },
 };
 
@@ -151,7 +153,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       <div className="relative">
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, transition: { delay: 0.1, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] } }}
+          animate={{ scale: 1, opacity: 1, transition: { delay: 0.1, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number] } }}
           className="w-28 h-28 rounded-[2rem] flex items-center justify-center"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
@@ -162,7 +164,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         </motion.div>
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, transition: { delay: 0.25, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] } }}
+          animate={{ scale: 1, opacity: 1, transition: { delay: 0.25, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number] } }}
           className="absolute -bottom-2 -right-2 w-11 h-11 rounded-[1rem] bg-emerald-500 flex items-center justify-center"
           style={{ boxShadow: '0 4px 16px rgba(34,197,94,0.45)' }}
         >
@@ -412,7 +414,7 @@ function RegisterForm({
         full_name:    fullName.trim(),
         phone_number: phone.trim(),
         languages:    selectedLangs,
-        is_24_7,
+        is_24_7: is24_7,
         start_time: is24_7 ? null : startTime.slice(0, 5),
         end_time:   is24_7 ? null : endTime.slice(0, 5),
       },
