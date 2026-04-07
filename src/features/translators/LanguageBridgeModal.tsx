@@ -166,7 +166,7 @@ function LangCard({ lang, count, onClick }: { lang: typeof LANGUAGES[0]; count: 
 
 // ─── Registration Form ─────────────────────────────────────────────────────────
 
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+function RegisterForm({ onSuccess }: { onSuccess: (langs: string[]) => void }) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedLangs, setSelectedLangs] = useState<string[]>([]);
@@ -220,7 +220,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     }
 
     setSubmitted(true);
-    setTimeout(onSuccess, 2000);
+    setTimeout(() => onSuccess(selectedLangs), 2000);
   };
 
   if (submitted) {
@@ -379,9 +379,8 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [loadingAll, setLoadingAll] = useState(false);
   const [langSearch, setLangSearch] = useState('');
 
-  // Fetch all translators once (for counts on language grid)
-  useEffect(() => {
-    if (!isOpen) return;
+  // Fetch all translators (for counts on language grid)
+  const fetchAllTranslators = useCallback(() => {
     setLoadingAll(true);
     supabase
       .from('translators')
@@ -390,7 +389,11 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         setAllTranslators((data as Translator[]) ?? []);
         setLoadingAll(false);
       });
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) fetchAllTranslators();
+  }, [isOpen, fetchAllTranslators]);
 
   const fetchForLanguage = useCallback(async (langCode: string) => {
     setLoadingList(true);
@@ -616,7 +619,16 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
         {/* ── Register Form ── */}
         {view === 'register' && (
-          <RegisterForm onSuccess={() => setView('languages')} />
+          <RegisterForm onSuccess={(langs) => {
+            // Optimistic update: add a placeholder entry so counts reflect immediately
+            setAllTranslators(prev => [
+              ...prev,
+              { id: 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
+            ]);
+            setView('languages');
+            // Re-fetch to get the real data from the server
+            fetchAllTranslators();
+          }} />
         )}
       </div>
     </div>
