@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Phone, Globe, ChevronRight, UserPlus, Clock, Check, Loader2, AlertCircle } from 'lucide-react';
+import { X, Phone, Globe, ChevronRight, UserPlus, Clock, Check, Loader2, AlertCircle, Search } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { supabase } from '../../lib/supabase';
 
@@ -19,14 +19,20 @@ interface Translator {
 }
 
 const LANGUAGES = [
-  { code: 'ru', name: 'רוסית',     flag: '🇷🇺' },
-  { code: 'ar', name: 'ערבית',     flag: '🇸🇦' },
-  { code: 'am', name: 'אמהרית',    flag: '🇪🇹' },
-  { code: 'en', name: 'אנגלית',    flag: '🇬🇧' },
-  { code: 'fr', name: 'צרפתית',    flag: '🇫🇷' },
-  { code: 'es', name: 'ספרדית',    flag: '🇪🇸' },
-  { code: 'ro', name: 'רומנית',    flag: '🇷🇴' },
-  { code: 'ti', name: 'טיגרינית',  flag: '🇪🇷' },
+  { code: 'ru', name: 'רוסית',      flag: '🇷🇺' },
+  { code: 'ar', name: 'ערבית',      flag: '🇸🇦' },
+  { code: 'am', name: 'אמהרית',     flag: '🇪🇹' },
+  { code: 'en', name: 'אנגלית',     flag: '🇬🇧' },
+  { code: 'fr', name: 'צרפתית',     flag: '🇫🇷' },
+  { code: 'es', name: 'ספרדית',     flag: '🇪🇸' },
+  { code: 'ro', name: 'רומנית',     flag: '🇷🇴' },
+  { code: 'ti', name: 'טיגרינית',   flag: '🇪🇷' },
+  { code: 'ka', name: 'גיאורגית',   flag: '🇬🇪' },
+  { code: 'yi', name: 'יידיש',      flag: '✡️' },
+  { code: 'th', name: 'תאית',       flag: '🇹🇭' },
+  { code: 'zh', name: 'סינית',      flag: '🇨🇳' },
+  { code: 'uk', name: 'אוקראינית',  flag: '🇺🇦' },
+  { code: 'he', name: 'עברית',      flag: '🇮🇱' },
 ];
 
 function isAvailableNow(t: Translator): boolean {
@@ -51,6 +57,27 @@ function isAvailableNow(t: Translator): boolean {
 function formatTime(t: string | null): string {
   if (!t) return '';
   return t.slice(0, 5);
+}
+
+// ─── iOS-style Toggle ──────────────────────────────────────────────────────────
+
+function IOSToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      onClick={() => onChange(!value)}
+      className={`relative inline-flex h-[28px] w-[50px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
+        ${value ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-[24px] w-[24px] transform rounded-full bg-white transition duration-200 ease-in-out
+          ${value ? 'translate-x-[22px]' : 'translate-x-0'}`}
+        style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}
+      />
+    </button>
+  );
 }
 
 // ─── Translator Card ───────────────────────────────────────────────────────────
@@ -126,12 +153,11 @@ function LangCard({ lang, count, onClick }: { lang: typeof LANGUAGES[0]; count: 
     >
       <span className="text-4xl leading-none">{lang.flag}</span>
       <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{lang.name}</span>
-      {count > 0 && (
+      {count > 0 ? (
         <span className="text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300">
           {count} מתרגמים
         </span>
-      )}
-      {count === 0 && (
+      ) : (
         <span className="text-[0.6rem] text-gray-400 dark:text-gray-500">אין רשומים</span>
       )}
     </button>
@@ -144,6 +170,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedLangs, setSelectedLangs] = useState<string[]>([]);
+  const [formLangSearch, setFormLangSearch] = useState('');
   const [is24_7, setIs24_7] = useState(false);
   const [startTime, setStartTime] = useState('08:00');
   const [endTime, setEndTime] = useState('22:00');
@@ -157,6 +184,10 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     );
   };
 
+  const filteredFormLangs = LANGUAGES.filter(l =>
+    l.name.includes(formLangSearch) || l.code.toLowerCase().includes(formLangSearch.toLowerCase())
+  );
+
   const handleSubmit = async () => {
     if (!fullName.trim()) { setError('נא להזין שם מלא'); return; }
     if (!phone.trim()) { setError('נא להזין מספר טלפון'); return; }
@@ -165,14 +196,21 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     setLoading(true);
     setError(null);
 
-    const { error: dbError } = await supabase.from('translators').insert({
-      full_name: fullName.trim(),
-      phone_number: phone.trim(),
-      languages: selectedLangs,
-      is_24_7: is24_7,
-      start_time: is24_7 ? null : startTime,
-      end_time: is24_7 ? null : endTime,
-    });
+    // Format times as HH:mm (HTML time input already returns HH:mm)
+    const formattedStart = is24_7 ? null : startTime.slice(0, 5);
+    const formattedEnd = is24_7 ? null : endTime.slice(0, 5);
+
+    const { error: dbError } = await supabase.from('translators').upsert(
+      {
+        full_name: fullName.trim(),
+        phone_number: phone.trim(),
+        languages: selectedLangs,
+        is_24_7: is24_7,
+        start_time: formattedStart,
+        end_time: formattedEnd,
+      },
+      { onConflict: 'phone_number' }
+    );
 
     setLoading(false);
 
@@ -182,17 +220,20 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     }
 
     setSubmitted(true);
-    setTimeout(onSuccess, 1800);
+    setTimeout(onSuccess, 2000);
   };
 
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 px-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/40">
-          <Check size={32} className="text-white" strokeWidth={3} />
+        <div
+          className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center"
+          style={{ boxShadow: '0 8px 32px rgba(34,197,94,0.45)' }}
+        >
+          <Check size={36} className="text-white" strokeWidth={3} />
         </div>
         <p className="text-xl font-black text-gray-900 dark:text-white">נרשמת בהצלחה!</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">תודה על ההצטרפות לגשר השפה</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">תודה על ההצטרפות לסיוע בתרגום</p>
       </div>
     );
   }
@@ -225,11 +266,25 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         />
       </div>
 
-      {/* Languages */}
+      {/* Languages with search */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שפות שאני מדבר/ת</label>
+
+        {/* Search */}
+        <div className="relative">
+          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            value={formLangSearch}
+            onChange={e => setFormLangSearch(e.target.value)}
+            placeholder="חפש שפה..."
+            className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            dir="rtl"
+          />
+        </div>
+
         <div className="grid grid-cols-4 gap-2">
-          {LANGUAGES.map(lang => {
+          {filteredFormLangs.map(lang => {
             const selected = selectedLangs.includes(lang.code);
             return (
               <button
@@ -248,6 +303,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
               </button>
             );
           })}
+          {filteredFormLangs.length === 0 && (
+            <p className="col-span-4 text-center text-sm text-gray-400 dark:text-gray-500 py-4">לא נמצאה שפה</p>
+          )}
         </div>
       </div>
 
@@ -255,22 +313,11 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="flex flex-col gap-3">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">זמינות</label>
 
-        {/* 24/7 Toggle */}
-        <button
-          onClick={() => setIs24_7(prev => !prev)}
-          className={`flex items-center justify-between rounded-xl px-4 py-3 border transition-all
-            ${is24_7
-              ? 'bg-emerald-500 dark:bg-emerald-600 border-emerald-400'
-              : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10'
-            }`}
-        >
-          <span className={`text-sm font-bold ${is24_7 ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
-            זמין/ה 24/7
-          </span>
-          <div className={`w-12 h-6 rounded-full transition-all relative ${is24_7 ? 'bg-white/30' : 'bg-gray-200 dark:bg-gray-700'}`}>
-            <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${is24_7 ? 'right-0.5 bg-white' : 'left-0.5 bg-gray-400 dark:bg-gray-500'}`} />
-          </div>
-        </button>
+        {/* 24/7 Toggle — iOS style */}
+        <div className="flex items-center justify-between rounded-xl px-4 py-3 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
+          <span className="text-sm font-bold text-gray-800 dark:text-gray-200">זמין/ה 24/7</span>
+          <IOSToggle value={is24_7} onChange={setIs24_7} />
+        </div>
 
         {/* Time range */}
         {!is24_7 && (
@@ -311,7 +358,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
       >
         {loading ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
-        {loading ? 'שומר...' : 'הצטרף לגשר השפה'}
+        {loading ? 'שומר...' : 'הצטרף לצוות'}
       </button>
     </div>
   );
@@ -330,6 +377,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [allTranslators, setAllTranslators] = useState<Translator[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
+  const [langSearch, setLangSearch] = useState('');
 
   // Fetch all translators once (for counts on language grid)
   useEffect(() => {
@@ -373,6 +421,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         setView('languages');
         setSelectedLang(null);
         setTranslators([]);
+        setLangSearch('');
       }, 300);
     }
   }, [isOpen]);
@@ -384,6 +433,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   const countFor = (code: string) =>
     allTranslators.filter(t => t.languages.includes(code)).length;
+
+  const filteredLangs = LANGUAGES.filter(l =>
+    l.name.includes(langSearch) || l.code.toLowerCase().includes(langSearch.toLowerCase())
+  );
 
   return (
     <div
@@ -414,7 +467,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           ) : (
             <div className="flex items-center justify-center gap-2">
               <Globe size={20} className="text-blue-500" />
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">גשר שפה</h1>
+              <h1 className="text-lg font-black text-gray-900 dark:text-white">סיוע בתרגום</h1>
             </div>
           )}
         </div>
@@ -459,16 +512,32 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         {/* ── Languages Grid ── */}
         {view === 'languages' && (
           <div className="p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">
               בחר שפה למציאת מתרגמים זמינים בקהילה
             </p>
+
+            {/* Language search */}
+            <div className="relative mb-4">
+              <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={langSearch}
+                onChange={e => setLangSearch(e.target.value)}
+                placeholder="חפש שפה..."
+                className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                dir="rtl"
+              />
+            </div>
+
             {loadingAll ? (
               <div className="flex justify-center py-12">
                 <Loader2 size={28} className="animate-spin text-blue-400" />
               </div>
+            ) : filteredLangs.length === 0 ? (
+              <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">לא נמצאה שפה תואמת</p>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {LANGUAGES.map(lang => (
+                {filteredLangs.map(lang => (
                   <LangCard
                     key={lang.code}
                     lang={lang}
@@ -491,9 +560,9 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
             ) : translators.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                 <span className="text-5xl">{selectedLang?.flag}</span>
-                <p className="font-bold text-gray-700 dark:text-gray-300">אין מתרגמים רשומים</p>
+                <p className="font-bold text-gray-700 dark:text-gray-300">אין מתרגמים רשומים עדיין</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">
-                  אין מתרגמים זמינים כרגע בשפה זו
+                  לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!
                 </p>
                 <button
                   onClick={() => setView('register')}
@@ -534,10 +603,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   </div>
                 )}
 
-                {/* Empty available state */}
+                {/* No one available right now */}
                 {available.length === 0 && unavailable.length > 0 && (
                   <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400 font-medium text-center">
-                    אין מתרגמים זמינים כרגע בשפה זו
+                    אין מתרגמים זמינים כרגע — נסה שוב מאוחר יותר
                   </div>
                 )}
               </>
