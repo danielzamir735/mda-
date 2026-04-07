@@ -34,6 +34,7 @@ import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
 import UpdateAnnouncementModal from '../../components/UpdateAnnouncementModal';
+import LanguageBridgeModal from '../translators/LanguageBridgeModal';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -75,6 +76,7 @@ export default function VitalsFeature() {
   const [medicationScannerOpen, setMedicationScannerOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [languageBridgeOpen, setLanguageBridgeOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
@@ -162,6 +164,7 @@ export default function VitalsFeature() {
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
         onHubOpen={() => setHubOpen(true)}
         onSupportOpen={() => setSupportOpen(true)}
+        onLanguageBridgeOpen={() => setLanguageBridgeOpen(true)}
       />
 
       <footer className="shrink-0 text-center pt-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>
@@ -259,6 +262,7 @@ export default function VitalsFeature() {
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+      <LanguageBridgeModal isOpen={languageBridgeOpen} onClose={() => setLanguageBridgeOpen(false)} />
       <UpdateAnnouncementModal />
     </div>
   );

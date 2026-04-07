@@ -1,4 +1,4 @@
-import { FileText, Images, Activity, LayoutGrid, Heart } from 'lucide-react';
+import { FileText, Images, Activity, LayoutGrid, Heart, Globe } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import HapticButton from './HapticButton';
 
@@ -8,9 +8,10 @@ interface Props {
   onVitalsOpen: () => void;
   onHubOpen: () => void;
   onSupportOpen?: () => void;
+  onLanguageBridgeOpen?: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen, onLanguageBridgeOpen }: Props) {
   const t = useTranslation();
 
   return (
@@ -75,6 +76,17 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
       >
         <Activity size={20} />
         <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('vitalsHistory')}</span>
+      </HapticButton>
+
+      <HapticButton
+        onClick={() => onLanguageBridgeOpen?.()}
+        pressScale={0.88}
+        hapticPattern={10}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-blue-500 dark:text-blue-400"
+        aria-label={t('languageBridge')}
+      >
+        <Globe size={20} />
+        <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('languageBridge')}</span>
       </HapticButton>
 
       <HapticButton

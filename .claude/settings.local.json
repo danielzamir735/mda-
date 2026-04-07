@@ -32,7 +32,8 @@
       "Bash(cd:*)",
       "Bash(find:*)",
       "Bash(npx tsc:*)",
-      "Bash(find 'C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))"
+      "Bash(find 'C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
+      "Bash(wc -l /c/Users/User/Desktop/medic-app/src/**/*.tsx)"
     ]
   }
 }

@@ -108,6 +108,9 @@ const dict = {
     items: 'פריטים',
     clearMarkings: 'נקה סימונים',
     back: 'חזור',
+
+    // language bridge
+    languageBridge: 'גשר שפה',
   },
   en: {
     // existing
@@ -216,6 +219,9 @@ const dict = {
     items: 'items',
     clearMarkings: 'Clear',
     back: 'Back',
+
+    // language bridge
+    languageBridge: 'Language Bridge',
   },
 } as const;
 
