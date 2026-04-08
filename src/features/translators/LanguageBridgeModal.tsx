@@ -126,14 +126,14 @@ function IOSToggle({ value, onChange }: { value: boolean; onChange: (v: boolean)
     <button
       type="button" role="switch" aria-checked={value}
       onClick={() => onChange(!value)}
-      className={`relative inline-flex h-[36px] w-[64px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
+      className={`relative inline-flex h-[44px] w-[80px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
         ${value ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-      style={value ? { boxShadow: '0 0 14px rgba(34,197,94,0.45)' } : undefined}
+      style={value ? { boxShadow: '0 0 18px rgba(34,197,94,0.55)' } : undefined}
     >
       <span
-        className={`pointer-events-none inline-block h-[32px] w-[32px] transform rounded-full bg-white transition duration-200
-          ${value ? 'translate-x-[28px]' : 'translate-x-0'}`}
-        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.35)' }}
+        className={`pointer-events-none inline-block h-[40px] w-[40px] transform rounded-full bg-white transition duration-200
+          ${value ? 'translate-x-[36px]' : 'translate-x-0'}`}
+        style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.38)' }}
       />
     </button>
   );
@@ -217,13 +217,18 @@ function WhatsAppIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function TranslatorCard({ translator, available, allLanguages }: {
+function TranslatorCard({ translator, available, allLanguages, selectedLangName }: {
   translator: Translator;
   available: boolean;
   allLanguages: Language[];
+  selectedLangName?: string;
 }) {
   const phone = translator.phone_number.replace(/\D/g, '');
   const waNumber = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+  const waMessage = selectedLangName
+    ? `שלום, אני חובש מאפליקציית "חובש +". אני נמצא כרגע בטיפול רפואי וזקוק לעזרה בתרגום לשפת ה-${selectedLangName}. האם אתה פנוי לסייע כעת?`
+    : 'שלום, אני חובש מאפליקציית "חובש +". אני זקוק לעזרה בתרגום. האם אתה פנוי לסייע כעת?';
+  const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
     <div
@@ -274,7 +279,7 @@ function TranslatorCard({ translator, available, allLanguages }: {
           <Phone size={17} fill="white" />
         </a>
         <a
-          href={`https://wa.me/${waNumber}`}
+          href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
@@ -825,30 +830,30 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-end justify-center pb-8 px-5"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+            className="fixed inset-0 z-[70] flex items-center justify-center px-5"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowInfo(false)}
           >
             <motion.div
-              initial={{ opacity: 0, y: 32, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] } }}
-              exit={{ opacity: 0, y: 16, scale: 0.96, transition: { duration: 0.18 } }}
+              initial={{ opacity: 0, scale: 0.88, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: [0.34, 1.2, 0.64, 1] } }}
+              exit={{ opacity: 0, scale: 0.92, y: 8, transition: { duration: 0.2 } }}
               onClick={e => e.stopPropagation()}
               className="w-full max-w-sm rounded-3xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(24px) saturate(1.5)',
-                border: '1px solid rgba(255,255,255,0.22)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.13)',
+                backdropFilter: 'blur(28px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.22)',
               }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-500/30 flex items-center justify-center">
-                    <Info size={16} className="text-blue-300" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/35 flex items-center justify-center">
+                    <Info size={18} className="text-blue-300" />
                   </div>
-                  <h3 className="font-black text-white text-base">איך זה עובד?</h3>
+                  <h3 className="font-black text-white text-base">מהו שירות סיוע בתרגום?</h3>
                 </div>
                 <button
                   onClick={() => setShowInfo(false)}
@@ -858,22 +863,17 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                 </button>
               </div>
 
-              {/* Steps */}
-              <div className="flex flex-col gap-1 px-5 pb-6">
-                {[
-                  { num: '1', text: 'בחר את השפה הנדרשת מתוך הרשימה.' },
-                  { num: '2', text: 'המערכת תציג מתרגמים שזמינים כעת (מסומנים בנקודה ירוקה).' },
-                  { num: '3', text: 'ניתן ליצור קשר ישירות בשיחת טלפון או בהודעת WhatsApp.' },
-                ].map(step => (
-                  <div key={step.num} className="flex items-start gap-3 rounded-2xl px-4 py-3"
-                    style={{ background: 'rgba(255,255,255,0.07)' }}
-                  >
-                    <div className="shrink-0 w-6 h-6 rounded-full bg-blue-500/50 flex items-center justify-center text-xs font-black text-white mt-0.5">
-                      {step.num}
-                    </div>
-                    <p className="text-white/90 text-sm leading-relaxed font-medium">{step.text}</p>
-                  </div>
-                ))}
+              {/* Body */}
+              <div className="px-5 pb-6">
+                <div
+                  className="rounded-2xl px-4 py-4"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                >
+                  <p className="text-white/90 text-sm leading-relaxed font-medium text-right">
+                    במקרה חירום רפואי שבו קיים מחסום שפה מול המטופל, ניתן לאתר במהירות מתנדבים דוברי שפות שיסייעו בתיווך המידע הרפואי.
+                    {' '}בחר שפה, אתר מתרגם פנוי (נקודה ירוקה) וצור קשר בשיחה או בוואטסאפ.
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -882,30 +882,36 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
       {/* Tab bar — hidden for intro & translators */}
       {view !== 'translators' && view !== 'intro' && (
-        <div className="shrink-0 flex px-4 pt-3 pb-2 gap-2.5">
-          <button
-            onClick={() => setView('languages')}
-            className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
-              ${view === 'languages'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10'
-              }`}
-          >
-            מצא מתרגם
-          </button>
+        <div className="shrink-0 flex flex-col px-4 pt-3 pb-2 gap-2.5">
+          <div className="flex gap-2.5">
+            <button
+              onClick={() => setView('languages')}
+              className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
+                ${view === 'languages'
+                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+                }`}
+            >
+              מצא מתרגם
+            </button>
+          </div>
           <button
             onClick={() => setView('register')}
-            className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
+            className={`w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2
               ${view === 'register'
                 ? 'bg-gradient-to-r from-blue-500 to-violet-600 text-white'
-                : 'bg-white dark:bg-white/5 text-blue-600 dark:text-blue-400 border-2 border-blue-400 dark:border-blue-500'
+                : 'text-white'
               }`}
             style={view === 'register'
-              ? { boxShadow: '0 6px 28px rgba(99,102,241,0.45)' }
-              : { boxShadow: '0 0 0 0 transparent, 0 2px 12px rgba(59,130,246,0.18)' }
+              ? { boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }
+              : {
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
+                  boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+                }
             }
           >
-            הצטרף לצוות
+            <UserPlus size={20} />
+            הצטרף לצוות המתרגמים
           </button>
         </div>
       )}
@@ -1006,7 +1012,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {available.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} />
+                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
                         ))}
                       </div>
                     )}
@@ -1020,7 +1026,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {unavailable.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available={false} allLanguages={allLanguages} />
+                          <TranslatorCard key={t.id} translator={t} available={false} allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
                         ))}
                       </div>
                     )}
