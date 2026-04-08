@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
-  Loader2, AlertCircle, Search, Plus, Languages,
+  Loader2, AlertCircle, Search, Plus, Languages, Info,
 } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { supabase } from '../../lib/supabase';
@@ -207,15 +207,27 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 
 // ─── Translator Card ───────────────────────────────────────────────────────────
 
+// WhatsApp SVG icon
+function WhatsAppIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.532 5.862L.057 23.885a.5.5 0 0 0 .611.612l6.115-1.457A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.935 9.935 0 0 1-5.122-1.415l-.363-.214-3.791.904.942-3.706-.236-.374A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+    </svg>
+  );
+}
+
 function TranslatorCard({ translator, available, allLanguages }: {
   translator: Translator;
   available: boolean;
   allLanguages: Language[];
 }) {
+  const phone = translator.phone_number.replace(/\D/g, '');
+  const waNumber = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+
   return (
-    <a
-      href={`tel:${translator.phone_number}`}
-      className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all active:scale-95
+    <div
+      className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all
         ${available
           ? 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 backdrop-blur-md'
           : 'bg-gray-100/60 dark:bg-white/[0.03] border-gray-200/60 dark:border-white/5 opacity-60'
@@ -250,15 +262,30 @@ function TranslatorCard({ translator, available, allLanguages }: {
         )}
       </div>
 
-      {available && (
-        <div
-          className="shrink-0 flex items-center justify-center w-10 h-10 rounded-full text-white"
+      {/* Dual action buttons */}
+      <div className="shrink-0 flex items-center gap-2">
+        <a
+          href={`tel:${translator.phone_number}`}
+          onClick={e => e.stopPropagation()}
+          className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
+          aria-label="התקשר"
         >
-          <Phone size={18} fill="white" />
-        </div>
-      )}
-    </a>
+          <Phone size={17} fill="white" />
+        </a>
+        <a
+          href={`https://wa.me/${waNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
+          style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
+          aria-label="WhatsApp"
+        >
+          <WhatsAppIcon size={17} />
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -385,6 +412,7 @@ function RegisterForm({
 }) {
   const [fullName, setFullName]         = useState('');
   const [phone, setPhone]               = useState('');
+  const [phoneConfirm, setPhoneConfirm] = useState('');
   const [selectedLangs, setSelectedLangs] = useState<string[]>([]);
   const [formLangSearch, setFormLangSearch] = useState('');
   const [is24_7, setIs24_7]             = useState(false);
@@ -394,6 +422,9 @@ function RegisterForm({
   const [error, setError]               = useState<string | null>(null);
   const [submitted, setSubmitted]       = useState(false);
 
+  const phoneMatch = phone.trim() !== '' && phone.trim() === phoneConfirm.trim();
+  const phoneMismatch = phoneConfirm.trim() !== '' && phone.trim() !== phoneConfirm.trim();
+
   const toggleLang = (code: string) =>
     setSelectedLangs(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
 
@@ -402,9 +433,10 @@ function RegisterForm({
   );
 
   const handleSubmit = async () => {
-    if (!fullName.trim())        { setError('נא להזין שם מלא');           return; }
-    if (!phone.trim())           { setError('נא להזין מספר טלפון');       return; }
-    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    if (!fullName.trim())        { setError('נא להזין שם מלא');                    return; }
+    if (!phone.trim())           { setError('נא להזין מספר טלפון');                return; }
+    if (!phoneMatch)             { setError('מספרי הטלפון אינם תואמים');           return; }
+    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת');         return; }
 
     setLoading(true);
     setError(null);
@@ -465,6 +497,35 @@ function RegisterForm({
           placeholder="050-000-0000" dir="ltr"
           className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         />
+      </div>
+
+      {/* Phone Confirm */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">אימות מספר טלפון</label>
+        <div className="relative">
+          <input
+            type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
+            placeholder="050-000-0000" dir="ltr"
+            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+              ${phoneMismatch
+                ? 'border-red-400 dark:border-red-600 focus:ring-red-400/40'
+                : phoneMatch
+                  ? 'border-emerald-400 dark:border-emerald-600 focus:ring-emerald-400/40'
+                  : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
+              }`}
+          />
+          {phoneMatch && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+              <Check size={11} className="text-white" strokeWidth={3} />
+            </div>
+          )}
+        </div>
+        {phoneMismatch && (
+          <p className="text-xs text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
+            <AlertCircle size={12} />
+            מספרי הטלפון אינם תואמים
+          </p>
+        )}
       </div>
 
       {/* Languages */}
@@ -537,7 +598,7 @@ function RegisterForm({
       )}
 
       <button
-        onClick={handleSubmit} disabled={loading}
+        onClick={handleSubmit} disabled={loading || phoneMismatch || (phoneConfirm.trim() !== '' && !phoneMatch)}
         className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
         style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
       >
@@ -566,6 +627,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [loadingList, setLoadingList]   = useState(false);
   const [loadingAll, setLoadingAll]     = useState(false);
   const [langSearch, setLangSearch]     = useState('');
+  const [showInfo, setShowInfo]         = useState(false);
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
 
@@ -691,13 +753,87 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           )}
         </div>
 
-        <button
-          onClick={onClose}
-          className="p-2 -ml-2 rounded-xl text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-white/5"
-        >
-          <X size={22} />
-        </button>
+        <div className="flex items-center gap-1">
+          {view !== 'intro' && (
+            <button
+              onClick={() => setShowInfo(true)}
+              className="p-2 rounded-xl text-blue-500 dark:text-blue-400 active:bg-blue-50 dark:active:bg-blue-900/20"
+              aria-label="מידע"
+            >
+              <Info size={20} />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-2 -ml-2 rounded-xl text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-white/5"
+          >
+            <X size={22} />
+          </button>
+        </div>
       </div>
+
+      {/* Info Overlay */}
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            key="info-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-end justify-center pb-8 px-5"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setShowInfo(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 32, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] } }}
+              exit={{ opacity: 0, y: 16, scale: 0.96, transition: { duration: 0.18 } }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl overflow-hidden"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.5)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/30 flex items-center justify-center">
+                    <Info size={16} className="text-blue-300" />
+                  </div>
+                  <h3 className="font-black text-white text-base">איך זה עובד?</h3>
+                </div>
+                <button
+                  onClick={() => setShowInfo(false)}
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/70 active:bg-white/20"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Steps */}
+              <div className="flex flex-col gap-1 px-5 pb-6">
+                {[
+                  { num: '1', text: 'בחר את השפה הנדרשת מתוך הרשימה.' },
+                  { num: '2', text: 'המערכת תציג מתרגמים שזמינים כעת (מסומנים בנקודה ירוקה).' },
+                  { num: '3', text: 'ניתן ליצור קשר ישירות בשיחת טלפון או בהודעת WhatsApp.' },
+                ].map(step => (
+                  <div key={step.num} className="flex items-start gap-3 rounded-2xl px-4 py-3"
+                    style={{ background: 'rgba(255,255,255,0.07)' }}
+                  >
+                    <div className="shrink-0 w-6 h-6 rounded-full bg-blue-500/50 flex items-center justify-center text-xs font-black text-white mt-0.5">
+                      {step.num}
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed font-medium">{step.text}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab bar — hidden for intro & translators */}
       {view !== 'translators' && view !== 'intro' && (
