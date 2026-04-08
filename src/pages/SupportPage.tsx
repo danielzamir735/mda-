@@ -1,30 +1,26 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, animate } from 'framer-motion';
 import { Heart, X, CheckCircle } from 'lucide-react';
-
-function useCountUp(target: number, durationMs: number, active: boolean) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!active) { setCount(0); return; }
-    const totalFrames = Math.round(durationMs / 16);
-    let frame = 0;
-    const id = setInterval(() => {
-      frame++;
-      const t = frame / totalFrames;
-      const eased = 1 - Math.pow(1 - t, 3); // easeOut cubic
-      setCount(Math.min(Math.floor(eased * target), target));
-      if (frame >= totalFrames) clearInterval(id);
-    }, 16);
-    return () => clearInterval(id);
-  }, [target, durationMs, active]);
-  return count;
-}
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donated, setDonated] = useState(false);
-  const count = useCountUp(2000, 3000, isOpen);
+  const [displayCount, setDisplayCount] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      setDisplayCount(0);
+      const controls = animate(0, 3000, {
+        duration: 2.8,
+        ease: [0.16, 1, 0.3, 1],
+        onUpdate: (v) => setDisplayCount(Math.floor(v)),
+      });
+      return () => controls.stop();
+    } else {
+      setDisplayCount(0);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) setDonated(false);
@@ -94,7 +90,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 transition={{ delay: 0.2 }}
                 className="text-5xl font-black text-white tabular-nums leading-none"
               >
-                {count.toLocaleString('he-IL')}
+                {displayCount.toLocaleString('he-IL')}
                 <span className="text-rose-400">+</span>
               </motion.div>
               <p className="text-sm text-white/50 mt-1 font-medium">חובשים כבר משתמשים באפליקציה</p>
