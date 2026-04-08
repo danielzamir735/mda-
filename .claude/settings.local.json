@@ -1,18 +1,4 @@
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"/c/Users/User/Desktop/medic-app\" && if [ -n \"$(git status --porcelain 2>/dev/null)\" ]; then if npm run build > /dev/null 2>&1; then git add . && STAT=$(git diff --cached --stat 2>/dev/null | tail -1) && git commit -m \"Automated Update: ${STAT:-code changes}\" && git push origin v2-features > /dev/null 2>&1 && echo '{\"systemMessage\": \"Changes synced to v2-features. Vercel deployment starting.\"}'; else echo '{\"systemMessage\": \"Build FAILED - changes NOT pushed. Fix TypeScript errors first.\"}'; fi; fi",
-            "timeout": 120,
-            "statusMessage": "Verifying build and syncing..."
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(cd \"C:/Users/User/Desktop/עוזר חובש\" && npm install 2>&1)",
@@ -49,7 +35,24 @@
       "Bash(find 'C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
       "Bash(wc -l /c/Users/User/Desktop/medic-app/src/**/*.tsx)",
       "Bash(node -e \"require\\('child_process'\\).execSync\\('cd C:/Users/User/Desktop/medic-app && npx tsc --noEmit', {stdio:'pipe'}\\).toString\\(\\)\")",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"/c/Users/User/Desktop/medic-app\" && if [ -n \"$(git status --porcelain 2>/dev/null)\" ]; then if npm run build > /dev/null 2>&1; then git add . && STAT=$(git diff --cached --stat 2>/dev/null | tail -1) && git commit -m \"Automated Update: ${STAT:-code changes}\" && git push origin v2-features > /dev/null 2>&1 && echo '{\"systemMessage\": \"Changes synced to v2-features. Vercel deployment starting.\"}'; else echo '{\"systemMessage\": \"Build FAILED - changes NOT pushed. Fix TypeScript errors first.\"}'; fi; fi",
+            "timeout": 120,
+            "statusMessage": "Verifying build and syncing..."
+          }
+        ]
+      }
     ]
   }
 }
