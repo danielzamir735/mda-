@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info,
 } from 'lucide-react';
-import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { supabase } from '../../lib/supabase';
 
 interface Props {
@@ -127,13 +126,14 @@ function IOSToggle({ value, onChange }: { value: boolean; onChange: (v: boolean)
     <button
       type="button" role="switch" aria-checked={value}
       onClick={() => onChange(!value)}
-      className={`relative inline-flex h-[28px] w-[50px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
+      className={`relative inline-flex h-[36px] w-[64px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
         ${value ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+      style={value ? { boxShadow: '0 0 14px rgba(34,197,94,0.45)' } : undefined}
     >
       <span
-        className={`pointer-events-none inline-block h-[24px] w-[24px] transform rounded-full bg-white transition duration-200
-          ${value ? 'translate-x-[22px]' : 'translate-x-0'}`}
-        style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}
+        className={`pointer-events-none inline-block h-[32px] w-[32px] transform rounded-full bg-white transition duration-200
+          ${value ? 'translate-x-[28px]' : 'translate-x-0'}`}
+        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.35)' }}
       />
     </button>
   );
@@ -568,8 +568,17 @@ function RegisterForm({
       {/* Availability */}
       <div className="flex flex-col gap-3">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">זמינות</label>
-        <div className="flex items-center justify-between rounded-xl px-4 py-3 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
-          <span className="text-sm font-bold text-gray-800 dark:text-gray-200">זמין/ה 24/7</span>
+        <div
+          className="flex items-center justify-between rounded-2xl px-5 py-4 border-2 bg-white dark:bg-white/5"
+          style={{
+            borderColor: is24_7 ? 'rgba(34,197,94,0.5)' : 'rgba(209,213,219,0.8)',
+            boxShadow: is24_7 ? '0 0 0 3px rgba(34,197,94,0.08), 0 4px 16px rgba(34,197,94,0.12)' : undefined,
+          }}
+        >
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base font-black text-gray-800 dark:text-gray-200">זמין/ה 24/7</span>
+            {is24_7 && <span className="text-xs text-emerald-500 font-semibold">פעיל תמיד</span>}
+          </div>
           <IOSToggle value={is24_7} onChange={setIs24_7} />
         </div>
         {!is24_7 && (
@@ -617,8 +626,6 @@ const getStartView = (): View =>
   localStorage.getItem('lb_intro_seen') ? 'languages' : 'intro';
 
 export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
-  useModalBackHandler(isOpen, onClose);
-
   const [view, setView]                 = useState<View>(getStartView);
   const [selectedLang, setSelectedLang] = useState<Language | null>(null);
   const [translators, setTranslators]   = useState<Translator[]>([]);
@@ -630,6 +637,44 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [showInfo, setShowInfo]         = useState(false);
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
+
+  // ── View-aware back-button handler ─────────────────────────────────────────
+  // First back press from a sub-view → go to the language grid.
+  // Second press (or back from the grid itself) → close the modal.
+
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Push one history entry for this modal session.
+    window.history.pushState({ lbModal: true }, '');
+    let closedByBack = false;
+
+    const handlePop = () => {
+      const currentView = viewRef.current;
+      if (currentView !== 'languages' && currentView !== 'intro') {
+        // Internal navigation: return to the grid and re-push a state entry
+        // so the next back press fires another popstate.
+        setView('languages');
+        setSelectedLang(null);
+        setTranslators([]);
+        window.history.pushState({ lbModal: true }, '');
+      } else {
+        // Already at the root view — close the modal.
+        closedByBack = true;
+        onClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePop);
+    return () => {
+      window.removeEventListener('popstate', handlePop);
+      // If closed by X / programmatically, pop our single history entry.
+      if (!closedByBack) window.history.back();
+    };
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
@@ -723,7 +768,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         className="shrink-0 flex items-center px-4 border-b border-gray-200 dark:border-emt-border bg-white dark:bg-[#0D0D10]"
         style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)', paddingBottom: '12px' }}
       >
-        {view === 'translators' ? (
+        {(view === 'translators' || view === 'register') ? (
           <button
             onClick={handleBack}
             className="p-2 -mr-2 rounded-xl text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-white/5"
@@ -837,10 +882,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
       {/* Tab bar — hidden for intro & translators */}
       {view !== 'translators' && view !== 'intro' && (
-        <div className="shrink-0 flex px-4 pt-3 pb-1 gap-2">
+        <div className="shrink-0 flex px-4 pt-3 pb-2 gap-2.5">
           <button
             onClick={() => setView('languages')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all
+            className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
               ${view === 'languages'
                 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10'
@@ -850,11 +895,15 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           </button>
           <button
             onClick={() => setView('register')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all
+            className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
               ${view === 'register'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+                ? 'bg-gradient-to-r from-blue-500 to-violet-600 text-white'
+                : 'bg-white dark:bg-white/5 text-blue-600 dark:text-blue-400 border-2 border-blue-400 dark:border-blue-500'
               }`}
+            style={view === 'register'
+              ? { boxShadow: '0 6px 28px rgba(99,102,241,0.45)' }
+              : { boxShadow: '0 0 0 0 transparent, 0 2px 12px rgba(59,130,246,0.18)' }
+            }
           >
             הצטרף לצוות
           </button>

@@ -33,7 +33,8 @@
       "Bash(find:*)",
       "Bash(npx tsc:*)",
       "Bash(find 'C:\\\\Users\\\\User\\\\Desktop\\\\עוזר חובש' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
-      "Bash(wc -l /c/Users/User/Desktop/medic-app/src/**/*.tsx)"
+      "Bash(wc -l /c/Users/User/Desktop/medic-app/src/**/*.tsx)",
+      "Bash(node -e \"require\\('child_process'\\).execSync\\('cd C:/Users/User/Desktop/medic-app && npx tsc --noEmit', {stdio:'pipe'}\\).toString\\(\\)\")"
     ]
   }
 }
