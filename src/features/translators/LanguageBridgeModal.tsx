@@ -327,58 +327,33 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
 
 // ─── Add Missing Language Widget ───────────────────────────────────────────────
 
-function AddLanguageWidget({ onAdd }: { onAdd: (lang: Language) => void }) {
+const ADMIN_WA_NUMBER = '972521234567'; // TODO: replace with actual admin WhatsApp number
+
+function AddLanguageWidget() {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
 
-  const handleAdd = async () => {
+  const handleSend = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setLoading(true);
-
-    const code = `custom_${Date.now()}`;
-    const newLang: Language = { code, name: trimmed, flag: '🌐', custom: true };
-
-    try {
-      await supabase.from('custom_languages').insert({ code, name: trimmed, flag: '🌐' });
-    } catch {
-      // Table may not exist yet — still update local state
-    }
-
-    setLoading(false);
-    setDone(true);
-    onAdd(newLang);
-
-    setTimeout(() => {
-      setDone(false);
-      setExpanded(false);
-      setName('');
-    }, 2500);
-  };
-
-  if (done) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex items-center justify-center gap-2 rounded-2xl py-3 px-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 text-sm font-bold"
-      >
-        <Check size={16} />
-        השפה נוספה — תודה!
-      </motion.div>
+    const message = `שלום, אני מעוניין להצטרף כמתרגם באפליקציית "חובש +" עבור שפה שאינה מופיעה ברשימה: ${trimmed}.`;
+    window.open(
+      `https://wa.me/${ADMIN_WA_NUMBER}?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener,noreferrer'
     );
-  }
+    setExpanded(false);
+    setName('');
+  };
 
   if (!expanded) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all active:scale-95 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-500 dark:hover:text-blue-400"
+        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all active:scale-95 hover:border-green-400 dark:hover:border-green-500 hover:text-green-600 dark:hover:text-green-400"
       >
         <Plus size={15} />
-        השפה שלך לא ברשימה? לחץ להוספה
+        השפה שלך לא ברשימה? שלח בקשה
       </button>
     );
   }
@@ -387,26 +362,27 @@ function AddLanguageWidget({ onAdd }: { onAdd: (lang: Language) => void }) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-2 rounded-2xl p-3 border border-blue-200 dark:border-blue-800/50 bg-blue-50/60 dark:bg-blue-900/10"
+      className="flex flex-col gap-2 rounded-2xl p-3 border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-white/5"
     >
-      <p className="text-xs font-bold text-blue-600 dark:text-blue-400">הוסף שפה חדשה לרשימה</p>
+      <p className="text-xs font-bold text-gray-600 dark:text-gray-400">בקש הוספת שפה חדשה דרך WhatsApp</p>
       <div className="flex gap-2">
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="שם השפה..."
           autoFocus
           className="flex-1 rounded-xl px-3 py-2 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           dir="rtl"
         />
         <button
-          onClick={handleAdd}
-          disabled={loading || !name.trim()}
-          className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500 text-white transition-all active:scale-95 disabled:opacity-50"
+          onClick={handleSend}
+          disabled={!name.trim()}
+          className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl text-white transition-all active:scale-95 disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
         >
-          {loading ? <Loader2 size={15} className="animate-spin" /> : <Plus size={18} />}
+          <WhatsAppIcon size={18} />
         </button>
       </div>
     </motion.div>
@@ -422,19 +398,27 @@ function RegisterForm({
   allLanguages: Language[];
   onSuccess: (langs: string[]) => void;
 }) {
-  const [fullName, setFullName]         = useState('');
-  const [phone, setPhone]               = useState('');
-  const [phoneConfirm, setPhoneConfirm] = useState('');
-  const [selectedLangs, setSelectedLangs] = useState<string[]>([]);
+  const [fullName, setFullName]             = useState('');
+  const [phone, setPhone]                   = useState('');
+  const [phoneConfirm, setPhoneConfirm]     = useState('');
+  const [selectedLangs, setSelectedLangs]   = useState<string[]>([]);
   const [formLangSearch, setFormLangSearch] = useState('');
-  const [is24_7, setIs24_7]             = useState(false);
-  const [startTime, setStartTime]       = useState('08:00');
-  const [endTime, setEndTime]           = useState('22:00');
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState<string | null>(null);
-  const [submitted, setSubmitted]       = useState(false);
+  const [is24_7, setIs24_7]                 = useState(false);
+  const [startTime, setStartTime]           = useState('08:00');
+  const [endTime, setEndTime]               = useState('22:00');
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [submitted, setSubmitted]           = useState(false);
+  const [deletedSuccess, setDeletedSuccess] = useState(false);
 
-  const phoneMatch = phone.trim() !== '' && phone.trim() === phoneConfirm.trim();
+  // Identity recognition
+  const [mode, setMode]           = useState<'new' | 'checking' | 'edit'>('new');
+  const [existingId, setExistingId] = useState<string | null>(null);
+  const phoneTimerRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (phoneTimerRef.current) clearTimeout(phoneTimerRef.current); }, []);
+
+  const phoneMatch    = phone.trim() !== '' && phone.trim() === phoneConfirm.trim();
   const phoneMismatch = phoneConfirm.trim() !== '' && phone.trim() !== phoneConfirm.trim();
 
   const toggleLang = (code: string) =>
@@ -444,34 +428,115 @@ function RegisterForm({
     l.name.includes(formLangSearch) || l.code.toLowerCase().includes(formLangSearch.toLowerCase())
   );
 
-  const handleSubmit = async () => {
-    if (!fullName.trim())        { setError('נא להזין שם מלא');                    return; }
-    if (!phone.trim())           { setError('נא להזין מספר טלפון');                return; }
-    if (!phoneMatch)             { setError('מספרי הטלפון אינם תואמים');           return; }
-    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת');         return; }
+  // ── Phone-based identity lookup ──────────────────────────────────────────────
+  const handlePhoneChange = (val: string) => {
+    setPhone(val);
+    setMode('new');
+    setExistingId(null);
+    if (phoneTimerRef.current) clearTimeout(phoneTimerRef.current);
 
-    setLoading(true);
-    setError(null);
+    const digits = val.replace(/\D/g, '');
+    if (digits.length < 9) return;
 
-    const { error: dbError } = await supabase.from('translators').upsert(
-      {
-        full_name:    fullName.trim(),
-        phone_number: phone.trim(),
-        languages:    selectedLangs,
-        is_24_7: is24_7,
+    setMode('checking');
+    phoneTimerRef.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from('translators')
+        .select('id, full_name, languages, is_24_7, start_time, end_time')
+        .eq('phone_number', val.trim())
+        .maybeSingle();
+
+      if (data) {
+        setExistingId(data.id);
+        setFullName(data.full_name);
+        setSelectedLangs(data.languages ?? []);
+        setIs24_7(data.is_24_7);
+        setStartTime(data.start_time ? data.start_time.slice(0, 5) : '08:00');
+        setEndTime(data.end_time ? data.end_time.slice(0, 5) : '22:00');
+        setPhoneConfirm(val.trim()); // auto-confirm since record exists
+        setMode('edit');
+      } else {
+        setMode('new');
+      }
+    }, 600);
+  };
+
+  // ── Actions ──────────────────────────────────────────────────────────────────
+  const handleUpdate = async () => {
+    if (!fullName.trim())           { setError('נא להזין שם מלא');          return; }
+    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    setLoading(true); setError(null);
+
+    const { error: dbError } = await supabase
+      .from('translators')
+      .update({
+        full_name:  fullName.trim(),
+        languages:  selectedLangs,
+        is_24_7:    is24_7,
         start_time: is24_7 ? null : startTime.slice(0, 5),
         end_time:   is24_7 ? null : endTime.slice(0, 5),
-      },
-      { onConflict: 'phone_number' }
-    );
+      })
+      .eq('id', existingId!);
+
+    setLoading(false);
+    if (dbError) { setError('שגיאה בעדכון. נסה שוב.'); return; }
+    ReactGA.event('translator_update', { languages: selectedLangs.join(',') });
+    setSubmitted(true);
+    setTimeout(() => onSuccess(selectedLangs), 2000);
+  };
+
+  const handleDelete = async () => {
+    setLoading(true); setError(null);
+    const { error: dbError } = await supabase
+      .from('translators')
+      .delete()
+      .eq('id', existingId!);
+    setLoading(false);
+    if (dbError) { setError('שגיאה במחיקה. נסה שוב.'); return; }
+    ReactGA.event('translator_delete', {});
+    setDeletedSuccess(true);
+    setTimeout(() => onSuccess([]), 2000);
+  };
+
+  const handleSubmit = async () => {
+    if (!fullName.trim())           { setError('נא להזין שם מלא');          return; }
+    if (!phone.trim())              { setError('נא להזין מספר טלפון');       return; }
+    if (!phoneMatch)                { setError('מספרי הטלפון אינם תואמים'); return; }
+    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    setLoading(true); setError(null);
+
+    const { error: dbError } = await supabase.from('translators').insert({
+      full_name:    fullName.trim(),
+      phone_number: phone.trim(),
+      languages:    selectedLangs,
+      is_24_7:      is24_7,
+      start_time:   is24_7 ? null : startTime.slice(0, 5),
+      end_time:     is24_7 ? null : endTime.slice(0, 5),
+    });
 
     setLoading(false);
     if (dbError) { setError('שגיאה בשמירה. נסה שוב.'); return; }
-
     ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
     setSubmitted(true);
     setTimeout(() => onSuccess(selectedLangs), 2000);
   };
+
+  // ── Success screens ───────────────────────────────────────────────────────────
+  if (deletedSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-16 px-8 text-center">
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 260, damping: 18 } }}
+          className="w-20 h-20 rounded-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center"
+        >
+          <Check size={36} className="text-white" strokeWidth={3} />
+        </motion.div>
+        <p className="text-xl font-black text-gray-900 dark:text-white">הוסרת מהמערכת</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">תודה על תרומתך לקהילה</p>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -484,14 +549,97 @@ function RegisterForm({
         >
           <Check size={36} className="text-white" strokeWidth={3} />
         </motion.div>
-        <p className="text-xl font-black text-gray-900 dark:text-white">נרשמת בהצלחה!</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">תודה על ההצטרפות לסיוע בתרגום</p>
+        <p className="text-xl font-black text-gray-900 dark:text-white">
+          {mode === 'edit' ? 'פרטיך עודכנו בהצלחה!' : 'נרשמת בהצלחה!'}
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {mode === 'edit' ? 'השינויים נשמרו במערכת' : 'תודה על ההצטרפות לסיוע בתרגום'}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-5 px-4 py-5">
+
+      {/* Identity recognition banner */}
+      <AnimatePresence>
+        {mode === 'edit' && (
+          <motion.div
+            key="edit-banner"
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }}
+            exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/15"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center shrink-0">
+              <UserPlus size={16} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-black text-blue-700 dark:text-blue-300">מספר זה כבר רשום במערכת</span>
+              <span className="text-xs text-blue-500 dark:text-blue-400">תוכל/י לעדכן פרטים או להסיר את עצמך</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Phone — shown first for identity detection */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">מספר טלפון</label>
+        <div className="relative">
+          <input
+            type="tel" value={phone} onChange={e => handlePhoneChange(e.target.value)}
+            placeholder="050-000-0000" dir="ltr"
+            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+              ${mode === 'edit'
+                ? 'border-blue-400 dark:border-blue-600 focus:ring-blue-400/40'
+                : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
+              }`}
+          />
+          {mode === 'checking' && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2">
+              <Loader2 size={16} className="animate-spin text-gray-400" />
+            </div>
+          )}
+          {mode === 'edit' && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+              <Check size={11} className="text-white" strokeWidth={3} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Phone confirm — only for new registrations */}
+      {mode !== 'edit' && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">אימות מספר טלפון</label>
+          <div className="relative">
+            <input
+              type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
+              placeholder="050-000-0000" dir="ltr"
+              className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+                ${phoneMismatch
+                  ? 'border-red-400 dark:border-red-600 focus:ring-red-400/40'
+                  : phoneMatch
+                    ? 'border-emerald-400 dark:border-emerald-600 focus:ring-emerald-400/40'
+                    : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
+                }`}
+            />
+            {phoneMatch && (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                <Check size={11} className="text-white" strokeWidth={3} />
+              </div>
+            )}
+          </div>
+          {phoneMismatch && (
+            <p className="text-xs text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
+              <AlertCircle size={12} />
+              מספרי הטלפון אינם תואמים
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Name */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שם מלא</label>
@@ -500,45 +648,6 @@ function RegisterForm({
           placeholder="ישראל ישראלי" dir="rtl"
           className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         />
-      </div>
-
-      {/* Phone */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">מספר טלפון</label>
-        <input
-          type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-          placeholder="050-000-0000" dir="ltr"
-          className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-        />
-      </div>
-
-      {/* Phone Confirm */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">אימות מספר טלפון</label>
-        <div className="relative">
-          <input
-            type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
-            placeholder="050-000-0000" dir="ltr"
-            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
-              ${phoneMismatch
-                ? 'border-red-400 dark:border-red-600 focus:ring-red-400/40'
-                : phoneMatch
-                  ? 'border-emerald-400 dark:border-emerald-600 focus:ring-emerald-400/40'
-                  : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
-              }`}
-          />
-          {phoneMatch && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-              <Check size={11} className="text-white" strokeWidth={3} />
-            </div>
-          )}
-        </div>
-        {phoneMismatch && (
-          <p className="text-xs text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
-            <AlertCircle size={12} />
-            מספרי הטלפון אינם תואמים
-          </p>
-        )}
       </div>
 
       {/* Languages */}
@@ -636,14 +745,46 @@ function RegisterForm({
         </div>
       )}
 
-      <button
-        onClick={handleSubmit} disabled={loading || phoneMismatch || (phoneConfirm.trim() !== '' && !phoneMatch)}
-        className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
-      >
-        {loading ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
-        {loading ? 'שומר...' : 'הצטרף לצוות'}
-      </button>
+      {/* Contextual action buttons */}
+      <AnimatePresence mode="wait">
+        {mode === 'edit' ? (
+          <motion.div
+            key="edit-actions"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col gap-3"
+          >
+            <button
+              onClick={handleUpdate} disabled={loading}
+              className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
+            >
+              {loading ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
+              {loading ? 'שומר...' : 'עדכן שינויים'}
+            </button>
+            <button
+              onClick={handleDelete} disabled={loading}
+              className="flex items-center justify-center gap-2 w-full rounded-2xl py-3.5 font-bold text-sm transition-all active:scale-95 disabled:opacity-60 border-2 bg-transparent"
+              style={{ borderColor: 'rgba(239,68,68,0.35)', color: 'rgb(220,38,38)' }}
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <AlertCircle size={18} />}
+              הסר אותי מהמערכת
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div key="new-action" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <button
+              onClick={handleSubmit} disabled={loading || phoneMismatch || (phoneConfirm.trim() !== '' && !phoneMatch)}
+              className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
+            >
+              {loading ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
+              {loading ? 'שומר...' : 'הצטרף לצוות'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -980,9 +1121,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     <p className="text-center text-sm text-gray-400 dark:text-gray-500">
                       לא נמצאה שפה תואמת
                     </p>
-                    <AddLanguageWidget
-                      onAdd={lang => setCustomLanguages(prev => [...prev, lang])}
-                    />
+                    <AddLanguageWidget />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
@@ -996,9 +1135,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         />
                       ))}
                     </div>
-                    <AddLanguageWidget
-                      onAdd={lang => setCustomLanguages(prev => [...prev, lang])}
-                    />
+                    <AddLanguageWidget />
                   </div>
                 )}
               </div>
