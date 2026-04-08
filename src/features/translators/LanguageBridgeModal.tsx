@@ -594,22 +594,39 @@ function RegisterForm({
           </div>
           <IOSToggle value={is24_7} onChange={setIs24_7} />
         </div>
-        {!is24_7 && (
-          <div className="flex items-center gap-3 rounded-xl px-4 py-3 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
-            <Clock size={16} className="text-gray-400 shrink-0" />
-            <div className="flex items-center gap-2 flex-1">
-              <input
-                type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
-                className="flex-1 text-sm font-semibold bg-transparent text-gray-900 dark:text-white focus:outline-none"
-              />
-              <span className="text-gray-400 text-sm font-bold">—</span>
-              <input
-                type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
-                className="flex-1 text-sm font-semibold bg-transparent text-gray-900 dark:text-white focus:outline-none"
-              />
-            </div>
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {!is24_7 && (
+            <motion.div
+              key="time-picker"
+              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginTop: 0 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-4 py-4 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
+                <Clock size={18} className="text-gray-400 shrink-0" />
+                <div className="flex items-center gap-3 flex-1">
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                    disabled={is24_7}
+                    className="flex-1 text-base font-bold bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[44px] cursor-pointer"
+                  />
+                  <span className="text-gray-400 text-base font-black">—</span>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={e => setEndTime(e.target.value)}
+                    disabled={is24_7}
+                    className="flex-1 text-base font-bold bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[44px] cursor-pointer"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {error && (
@@ -860,10 +877,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/35 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/35 flex items-center justify-center shrink-0">
                     <Info size={18} className="text-blue-300" />
                   </div>
-                  <h3 className="font-black text-white text-base">מהו שירות סיוע בתרגום?</h3>
+                  <h3 className="font-black text-white text-2xl leading-tight">מהו שירות סיוע בתרגום?</h3>
                 </div>
                 <button
                   onClick={() => setShowInfo(false)}
@@ -892,14 +909,20 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
       {/* Tab bar — hidden for intro & translators */}
       {view !== 'translators' && view !== 'intro' && (
-        <div className="shrink-0 flex flex-col px-4 pt-3 pb-2 gap-2.5">
+        <div
+          className="shrink-0 flex flex-col px-4 pt-3 pb-3 gap-2.5 border-b border-white/10"
+          style={{
+            background: 'linear-gradient(180deg, rgba(15,15,25,0.72) 0%, rgba(15,15,25,0.55) 100%)',
+            backdropFilter: 'blur(18px) saturate(1.4)',
+          }}
+        >
           <div className="flex gap-2.5">
             <button
               onClick={() => setView('languages')}
               className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
                 ${view === 'languages'
                   ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                  : 'bg-white dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+                  : 'bg-white/10 text-white/80 border border-white/15'
                 }`}
             >
               מצא מתרגם
@@ -907,18 +930,11 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           </div>
           <button
             onClick={() => setView('register')}
-            className={`w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2
-              ${view === 'register'
-                ? 'bg-gradient-to-r from-blue-500 to-violet-600 text-white'
-                : 'text-white'
-              }`}
-            style={view === 'register'
-              ? { boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }
-              : {
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
-                  boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-                }
-            }
+            className="w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
+              boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.18)',
+            }}
           >
             <UserPlus size={20} />
             הצטרף לצוות המתרגמים
