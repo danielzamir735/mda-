@@ -120,26 +120,6 @@ function formatTime(t: string | null): string {
   return t ? t.slice(0, 5) : '';
 }
 
-// ─── iOS Toggle ────────────────────────────────────────────────────────────────
-
-function IOSToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button" role="switch" aria-checked={value}
-      onClick={() => onChange(!value)}
-      className={`relative inline-flex h-[44px] w-[80px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
-        ${value ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-      style={value ? { boxShadow: '0 0 18px rgba(34,197,94,0.55)' } : undefined}
-    >
-      <span
-        className={`pointer-events-none inline-block h-[40px] w-[40px] transform rounded-full bg-white transition duration-200
-          ${value ? 'translate-x-[36px]' : 'translate-x-0'}`}
-        style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.38)' }}
-      />
-    </button>
-  );
-}
-
 // ─── Intro Screen ──────────────────────────────────────────────────────────────
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
@@ -308,18 +288,21 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 px-2 border
-        bg-white dark:bg-white/5 border-gray-200 dark:border-white/10
-        active:scale-95 transition-all hover:border-blue-400 dark:hover:border-blue-500"
-      style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+        bg-white/10 border-white/20
+        active:scale-95 transition-all hover:border-white/40 hover:bg-white/15"
+      style={{
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.1)',
+      }}
     >
       <span className="text-4xl leading-none">{lang.flag}</span>
-      <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{lang.name}</span>
+      <span className="text-sm font-bold text-white">{lang.name}</span>
       {count > 0 ? (
-        <span className="text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300">
+        <span className="text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-white/80 border border-white/20">
           {count} מתרגמים
         </span>
       ) : (
-        <span className="text-[0.6rem] text-gray-400 dark:text-gray-500">אין רשומים</span>
+        <span className="text-[0.6rem] text-white/40">אין רשומים</span>
       )}
     </button>
   );
@@ -583,13 +566,23 @@ function RegisterForm({
         )}
       </AnimatePresence>
 
-      {/* Phone — shown first for identity detection */}
+      {/* Name */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שם מלא</label>
+        <input
+          type="text" value={fullName} onChange={e => setFullName(e.target.value)}
+          placeholder="שם פרטי ושם משפחה" dir="rtl"
+          className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+        />
+      </div>
+
+      {/* Phone */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">מספר טלפון</label>
         <div className="relative">
           <input
             type="tel" value={phone} onChange={e => handlePhoneChange(e.target.value)}
-            placeholder="050-000-0000" dir="ltr"
+            placeholder="05X-XXXXXXX" dir="ltr"
             className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
               ${mode === 'edit'
                 ? 'border-blue-400 dark:border-blue-600 focus:ring-blue-400/40'
@@ -616,7 +609,7 @@ function RegisterForm({
           <div className="relative">
             <input
               type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
-              placeholder="050-000-0000" dir="ltr"
+              placeholder="05X-XXXXXXX" dir="ltr"
               className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
                 ${phoneMismatch
                   ? 'border-red-400 dark:border-red-600 focus:ring-red-400/40'
@@ -639,16 +632,6 @@ function RegisterForm({
           )}
         </div>
       )}
-
-      {/* Name */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שם מלא</label>
-        <input
-          type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-          placeholder="ישראל ישראלי" dir="rtl"
-          className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-        />
-      </div>
 
       {/* Languages */}
       <div className="flex flex-col gap-2">
@@ -690,19 +673,32 @@ function RegisterForm({
       {/* Availability */}
       <div className="flex flex-col gap-3">
         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">זמינות</label>
-        <div
-          className="flex items-center justify-between rounded-2xl px-5 py-4 border-2 bg-white dark:bg-white/5"
+        <button
+          type="button"
+          onClick={() => setIs24_7(!is24_7)}
+          className="flex items-center justify-between rounded-2xl px-5 py-5 border-2 transition-all active:scale-95 bg-white dark:bg-white/5"
           style={{
-            borderColor: is24_7 ? 'rgba(34,197,94,0.5)' : 'rgba(209,213,219,0.8)',
-            boxShadow: is24_7 ? '0 0 0 3px rgba(34,197,94,0.08), 0 4px 16px rgba(34,197,94,0.12)' : undefined,
+            borderColor: is24_7 ? 'rgba(34,197,94,0.7)' : 'rgba(209,213,219,0.6)',
+            boxShadow: is24_7
+              ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)'
+              : '0 2px 8px rgba(0,0,0,0.04)',
           }}
         >
-          <div className="flex flex-col gap-0.5">
-            <span className="text-base font-black text-gray-800 dark:text-gray-200">זמין/ה 24/7</span>
-            {is24_7 && <span className="text-xs text-emerald-500 font-semibold">פעיל תמיד</span>}
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="text-base font-black text-gray-800 dark:text-gray-200">זמין 24/7</span>
+            {is24_7 && <span className="text-xs text-emerald-500 font-semibold">פעיל תמיד ✓</span>}
+            {!is24_7 && <span className="text-xs text-gray-400 dark:text-gray-500">לחץ לבחירה</span>}
           </div>
-          <IOSToggle value={is24_7} onChange={setIs24_7} />
-        </div>
+          <div
+            className="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all"
+            style={{
+              borderColor: is24_7 ? 'rgb(34,197,94)' : 'rgba(209,213,219,0.8)',
+              background: is24_7 ? 'rgb(34,197,94)' : 'transparent',
+            }}
+          >
+            {is24_7 && <Check size={14} className="text-white" strokeWidth={3} />}
+          </div>
+        </button>
         <AnimatePresence initial={false}>
           {!is24_7 && (
             <motion.div
@@ -713,23 +709,23 @@ function RegisterForm({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 rounded-xl px-4 py-4 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
-                <Clock size={18} className="text-gray-400 shrink-0" />
-                <div className="flex items-center gap-3 flex-1">
+              <div className="flex items-center gap-3 rounded-xl px-4 py-5 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
+                <Clock size={20} className="text-gray-400 shrink-0" />
+                <div className="flex items-center gap-4 flex-1">
                   <input
                     type="time"
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-base font-bold bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[44px] cursor-pointer"
+                    className="flex-1 text-xl font-black bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
                   />
-                  <span className="text-gray-400 text-base font-black">—</span>
+                  <span className="text-gray-400 text-xl font-black">—</span>
                   <input
                     type="time"
                     value={endTime}
                     onChange={e => setEndTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-base font-bold bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[44px] cursor-pointer"
+                    className="flex-1 text-xl font-black bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
                   />
                 </div>
               </div>
@@ -933,18 +929,24 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark animate-fade-scale"
+      className="fixed inset-0 z-[60] flex flex-col animate-fade-scale"
+      style={{ background: 'linear-gradient(160deg, #0d0d18 0%, #111827 60%, #0f172a 100%)' }}
       dir="rtl"
     >
       {/* Header */}
       <div
-        className="shrink-0 flex items-center px-4 border-b border-gray-200 dark:border-emt-border bg-white dark:bg-[#0D0D10]"
-        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)', paddingBottom: '12px' }}
+        className="shrink-0 flex items-center px-4 border-b border-white/10"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
+          paddingBottom: '12px',
+          background: 'rgba(13,13,24,0.85)',
+          backdropFilter: 'blur(20px)',
+        }}
       >
         {(view === 'translators' || view === 'register') ? (
           <button
             onClick={handleBack}
-            className="p-2 -mr-2 rounded-xl text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-white/5"
+            className="p-2 -mr-2 rounded-xl text-white/60 active:bg-white/10"
           >
             <ChevronRight size={22} />
           </button>
@@ -956,17 +958,12 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view === 'translators' && selectedLang ? (
             <div className="flex items-center justify-center gap-2">
               <span className="text-2xl">{selectedLang.flag}</span>
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">{selectedLang.name}</h1>
-            </div>
-          ) : view === 'intro' ? (
-            <div className="flex items-center justify-center gap-2">
-              <Globe size={20} className="text-blue-500" />
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">סיוע בתרגום</h1>
+              <h1 className="text-lg font-black text-white">{selectedLang.name}</h1>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2">
-              <Globe size={20} className="text-blue-500" />
-              <h1 className="text-lg font-black text-gray-900 dark:text-white">סיוע בתרגום</h1>
+              <Globe size={20} className="text-blue-400" />
+              <h1 className="text-lg font-black text-white">סיוע בתרגום</h1>
             </div>
           )}
         </div>
@@ -975,7 +972,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view !== 'intro' && (
             <button
               onClick={() => setShowInfo(true)}
-              className="p-2 rounded-xl text-blue-500 dark:text-blue-400 active:bg-blue-50 dark:active:bg-blue-900/20"
+              className="p-2 rounded-xl text-white/60 active:bg-white/10"
               aria-label="מידע"
             >
               <Info size={20} />
@@ -983,7 +980,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           )}
           <button
             onClick={onClose}
-            className="p-2 -ml-2 rounded-xl text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-white/5"
+            className="p-2 -ml-2 rounded-xl text-white/60 active:bg-white/10"
           >
             <X size={22} />
           </button>
@@ -1048,38 +1045,18 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Tab bar — hidden for intro & translators */}
-      {view !== 'translators' && view !== 'intro' && (
+      {/* Header text — only for language grid */}
+      {view === 'languages' && (
         <div
-          className="shrink-0 flex flex-col px-4 pt-3 pb-3 gap-2.5 border-b border-white/10"
+          className="shrink-0 px-5 pt-4 pb-4 border-b border-white/10"
           style={{
             background: 'linear-gradient(180deg, rgba(15,15,25,0.72) 0%, rgba(15,15,25,0.55) 100%)',
             backdropFilter: 'blur(18px) saturate(1.4)',
           }}
         >
-          <div className="flex gap-2.5">
-            <button
-              onClick={() => setView('languages')}
-              className={`flex-1 py-3.5 rounded-2xl text-base font-black transition-all active:scale-95
-                ${view === 'languages'
-                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                  : 'bg-white/10 text-white/80 border border-white/15'
-                }`}
-            >
-              מצא מתרגם
-            </button>
-          </div>
-          <button
-            onClick={() => setView('register')}
-            className="w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
-            style={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
-              boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.18)',
-            }}
-          >
-            <UserPlus size={20} />
-            הצטרף לצוות המתרגמים
-          </button>
+          <p className="text-center font-black text-white text-[1.05rem] leading-snug">
+            בחר שפה למציאת מתרגמים זמינים בקהילה
+          </p>
         </div>
       )}
 
@@ -1108,7 +1085,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     type="text" value={langSearch}
                     onChange={e => setLangSearch(e.target.value)}
                     placeholder="חפש שפה..." dir="rtl"
-                    className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 backdrop-blur-sm"
                   />
                 </div>
 
@@ -1136,6 +1113,19 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       ))}
                     </div>
                     <AddLanguageWidget />
+                    <button
+                      onClick={() => setView('register')}
+                      className="w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(124,58,237,0.25) 100%)',
+                        border: '1px solid rgba(255,255,255,0.18)',
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 4px 20px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                      }}
+                    >
+                      <UserPlus size={20} />
+                      הצטרף לצוות המתרגמים
+                    </button>
                   </div>
                 )}
               </div>
