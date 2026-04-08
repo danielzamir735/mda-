@@ -4,6 +4,7 @@ import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info,
 } from 'lucide-react';
+import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
 
 interface Props {
@@ -271,7 +272,10 @@ function TranslatorCard({ translator, available, allLanguages, selectedLangName 
       <div className="shrink-0 flex items-center gap-2">
         <a
           href={`tel:${translator.phone_number}`}
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation();
+            ReactGA.event('contact_translator', { method: 'call', language: selectedLangName ?? '' });
+          }}
           className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
           aria-label="התקשר"
@@ -282,7 +286,10 @@ function TranslatorCard({ translator, available, allLanguages, selectedLangName 
           href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation();
+            ReactGA.event('contact_translator', { method: 'whatsapp', language: selectedLangName ?? '' });
+          }}
           className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
           aria-label="WhatsApp"
@@ -461,6 +468,7 @@ function RegisterForm({
     setLoading(false);
     if (dbError) { setError('שגיאה בשמירה. נסה שוב.'); return; }
 
+    ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
     setSubmitted(true);
     setTimeout(() => onSuccess(selectedLangs), 2000);
   };
@@ -709,6 +717,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (isOpen) {
+      ReactGA.event('modal_view', { modal: 'language_bridge' });
       fetchAllTranslators();
       fetchCustomLanguages();
     }
@@ -727,6 +736,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   const handleLangSelect = (lang: Language) => {
+    ReactGA.event('language_select', { language_code: lang.code, language_name: lang.name });
     setSelectedLang(lang);
     setView('translators');
     fetchForLanguage(lang.code);

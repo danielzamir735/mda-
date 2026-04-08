@@ -1,8 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import posthog from 'posthog-js'
+import ReactGA from 'react-ga4'
 import './index.css'
 import App from './App.tsx'
+
+const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
+if (gaMeasurementId) {
+  ReactGA.initialize(gaMeasurementId)
+}
 
 posthog.init('phc_NHYgGJLq95b4ImZloo1QT9kE3AqhrLjZzkguFEol1mG', {
   api_host: 'https://us.i.posthog.com',
