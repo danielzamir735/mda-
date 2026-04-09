@@ -401,10 +401,12 @@ function RegisterForm({
   allLanguages,
   onSuccess,
   onModeChange,
+  initialPhone,
 }: {
   allLanguages: Language[];
   onSuccess: (langs: string[], newId?: string) => void;
   onModeChange?: (mode: 'new' | 'checking' | 'edit') => void;
+  initialPhone?: string;
 }) {
   const [fullName, setFullName]             = useState('');
   const [phone, setPhone]                   = useState('');
@@ -426,6 +428,7 @@ function RegisterForm({
 
   useEffect(() => () => { if (phoneTimerRef.current) clearTimeout(phoneTimerRef.current); }, []);
   useEffect(() => { onModeChange?.(mode); }, [mode]); // eslint-disable-line
+  useEffect(() => { if (initialPhone) handlePhoneChange(initialPhone); }, []); // eslint-disable-line
 
   const phoneMatch    = phone.trim() !== '' && phone.trim() === phoneConfirm.trim();
   const phoneMismatch = phoneConfirm.trim() !== '' && phone.trim() !== phoneConfirm.trim();
@@ -723,7 +726,7 @@ function RegisterForm({
                 : 'none',
             }}
           >
-            <span className="text-2xl">⚡</span>
+            <span className="text-2xl">♾️</span>
             <span className="text-sm font-black text-white">זמין 24/7</span>
             {is24_7 && (
               <span className="text-[0.65rem] text-emerald-400 font-semibold">נבחר ✓</span>
@@ -762,23 +765,23 @@ function RegisterForm({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 rounded-xl px-4 py-5 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <Clock size={20} className="text-white/40 shrink-0" />
-                <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-3 rounded-xl px-3 py-4 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <Clock size={18} className="text-white/40 shrink-0" />
+                <div className="flex flex-wrap items-center gap-2 flex-1">
                   <input
                     type="time"
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-xl font-black bg-transparent text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
+                    className="min-w-[5.5rem] text-lg font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
                   />
-                  <span className="text-white/40 text-xl font-black">—</span>
+                  <span className="text-white/40 text-lg font-black">—</span>
                   <input
                     type="time"
                     value={endTime}
                     onChange={e => setEndTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-xl font-black bg-transparent text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
+                    className="min-w-[5.5rem] text-lg font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
                   />
                 </div>
               </div>
@@ -843,17 +846,19 @@ function RegisterForm({
 interface MyTranslatorData {
   id: string;
   full_name: string;
+  phone_number: string;
   languages: string[];
   is_24_7: boolean;
   start_time: string | null;
   end_time: string | null;
 }
 
-function MyProfileCard({ id, allLanguages, onDeleted, onUpdated }: {
+function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
   id: string;
   allLanguages: Language[];
   onDeleted: () => void;
   onUpdated: () => void;
+  onEdit: (phone: string) => void;
 }) {
   const [data, setData]               = useState<MyTranslatorData | null>(null);
   const [loading, setLoading]         = useState(true);
@@ -863,7 +868,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated }: {
   useEffect(() => {
     supabase
       .from('translators')
-      .select('id, full_name, languages, is_24_7, start_time, end_time')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time')
       .eq('id', id)
       .maybeSingle()
       .then(({ data: row }) => {
@@ -969,14 +974,23 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated }: {
           </p>
         )}
 
-        {/* Delete */}
+        {/* Actions */}
         {!confirmDelete ? (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="text-xs text-red-400/60 hover:text-red-400 font-semibold transition-colors text-right mt-0.5"
-          >
-            הסר פרופיל מהמערכת
-          </button>
+          <div className="flex items-center gap-3 mt-0.5">
+            <button
+              onClick={() => onEdit(data.phone_number)}
+              className="text-xs text-blue-400/80 hover:text-blue-300 font-bold transition-colors"
+            >
+              ערוך פרטים
+            </button>
+            <span className="text-white/20 text-xs">|</span>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="text-xs text-red-400/60 hover:text-red-400 font-semibold transition-colors"
+            >
+              הסר פרופיל
+            </button>
+          </div>
         ) : (
           <div className="flex gap-2 mt-0.5">
             <button
@@ -1019,6 +1033,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [showInfo, setShowInfo]         = useState(false);
   const [registerMode, setRegisterMode] = useState<'new' | 'checking' | 'edit'>('new');
   const [myTranslatorId, setMyTranslatorId] = useState<string | null>(() => localStorage.getItem('lb_translator_id'));
+  const [prefillPhone, setPrefillPhone] = useState<string | undefined>(undefined);
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
 
@@ -1118,6 +1133,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setSelectedLang(null);
     setTranslators([]);
     setRegisterMode('new');
+    setPrefillPhone(undefined);
   };
 
   // Reset when modal closes
@@ -1326,6 +1342,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       allLanguages={allLanguages}
                       onDeleted={() => setMyTranslatorId(null)}
                       onUpdated={fetchAllTranslators}
+                      onEdit={(phone) => { setPrefillPhone(phone); setView('register'); }}
                     />
                   </div>
                 )}
@@ -1440,6 +1457,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               <RegisterForm
                 allLanguages={allLanguages}
                 onModeChange={setRegisterMode}
+                initialPhone={prefillPhone}
                 onSuccess={(langs, newId) => {
                   if (newId) setMyTranslatorId(newId);
                   // Optimistic update for immediate count reflection
@@ -1447,6 +1465,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     ...prev,
                     { id: newId ?? 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
                   ]);
+                  setPrefillPhone(undefined);
                   setRegisterMode('new');
                   setView('languages');
                   fetchAllTranslators();

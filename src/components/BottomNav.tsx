@@ -41,7 +41,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         aria-label="תמיכה"
       >
         <span className="animate-heartbeat">
-          <Heart size={20} fill="currentColor" />
+          <Heart size={24} strokeWidth={1.5} fill="currentColor" />
         </span>
       </HapticButton>
 
@@ -52,7 +52,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-blue-600 dark:text-blue-400"
         aria-label={t('notes')}
       >
-        <FileText size={20} />
+        <FileText size={24} strokeWidth={1.5} />
         <span className="text-[0.65rem] font-semibold">{t('notes')}</span>
       </HapticButton>
 
@@ -63,7 +63,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-purple-600 dark:text-purple-400"
         aria-label={t('photos')}
       >
-        <Images size={20} />
+        <Images size={24} strokeWidth={1.5} />
         <span className="text-[0.65rem] font-semibold">{t('photos')}</span>
       </HapticButton>
 
@@ -74,7 +74,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-green-600 dark:text-green-400"
         aria-label={t('vitalsHistory')}
       >
-        <Activity size={20} />
+        <Activity size={24} strokeWidth={1.5} />
         <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('vitalsHistory')}</span>
       </HapticButton>
 
@@ -85,7 +85,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-blue-500 dark:text-blue-400"
         aria-label={t('languageBridge')}
       >
-        <Globe size={20} />
+        <Globe size={24} strokeWidth={1.5} />
         <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('languageBridge')}</span>
       </HapticButton>
 
@@ -96,7 +96,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-400"
         aria-label={t('hub')}
       >
-        <LayoutGrid size={30} />
+        <LayoutGrid size={24} strokeWidth={1.5} />
         <span className="text-[0.65rem] font-black">{t('hub')}</span>
       </HapticButton>
     </nav>
