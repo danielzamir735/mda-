@@ -210,9 +210,10 @@ function WhatsAppIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function TranslatorCard({ translator, available, allLanguages, selectedLangName }: {
+function TranslatorCard({ translator, available, isEmergency, allLanguages, selectedLangName }: {
   translator: Translator;
   available: boolean;
+  isEmergency?: boolean;
   allLanguages: Language[];
   selectedLangName?: string;
 }) {
@@ -228,14 +229,22 @@ function TranslatorCard({ translator, available, allLanguages, selectedLangName 
       className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all
         ${available
           ? 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 backdrop-blur-md'
-          : 'bg-gray-100/60 dark:bg-white/[0.03] border-gray-200/60 dark:border-white/5 opacity-60'
+          : isEmergency
+            ? 'border-orange-500/20'
+            : 'bg-gray-100/60 dark:bg-white/[0.03] border-gray-200/60 dark:border-white/5 opacity-60'
         }`}
-      style={available ? { boxShadow: '0 4px 24px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.1)' } : undefined}
+      style={available
+        ? { boxShadow: '0 4px 24px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.1)' }
+        : isEmergency
+          ? { background: 'rgba(249,115,22,0.06)', boxShadow: '0 2px 12px rgba(249,115,22,0.08)' }
+          : undefined}
     >
       <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-lg font-black
         ${available
           ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/30'
-          : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+          : isEmergency
+            ? 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-lg shadow-orange-500/25'
+            : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
         }`}
       >
         {translator.full_name.charAt(0)}
@@ -268,6 +277,12 @@ function TranslatorCard({ translator, available, allLanguages, selectedLangName 
           <div className="flex items-center gap-1 mt-0.5">
             <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
             <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+          </div>
+        )}
+        {isEmergency && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <AlertCircle size={10} className="text-orange-400 shrink-0" />
+            <span className="text-[0.6rem] text-orange-400 font-bold">לחירום בלבד (מחוץ לשעות)</span>
           </div>
         )}
       </div>
@@ -861,7 +876,7 @@ function RegisterForm({
                     }}
                   >
                     <Plus size={13} />
-                    + הוסף טווח שעות
+                    הוסף טווח שעות
                   </button>
                 )}
               </div>
@@ -1297,6 +1312,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const available = translators.filter(isAvailableNow);
+  const emergencyBackups = translators.filter(t => !isAvailableNow(t) && t.emergency_only_contact);
   const countFor = (code: string) => allTranslators.filter(t => t.languages.includes(code)).length;
 
   const filteredLangs = allLanguages.filter(l =>
@@ -1556,7 +1572,8 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   </div>
                 ) : (
                   <>
-                    {available.length > 0 ? (
+                    {/* Currently active translators */}
+                    {available.length > 0 && (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow shadow-emerald-400/60 animate-pulse" />
@@ -1568,17 +1585,22 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
                         ))}
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                    )}
+
+                    {/* No active translators state */}
+                    {available.length === 0 && (
+                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
                         <div className="w-14 h-14 rounded-2xl bg-white/8 flex items-center justify-center">
                           <Clock size={28} className="text-white/30" />
                         </div>
                         <p className="font-bold text-white/70">אין מתרגמים זמינים כרגע</p>
-                        <p className="text-sm text-white/35 max-w-[200px]">
-                          {translators.length > 0
-                            ? `${translators.length} מתרגמים רשומים לשפה זו אך אינם זמינים כעת — נסה שוב מאוחר יותר`
-                            : 'לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!'}
-                        </p>
+                        {emergencyBackups.length === 0 && (
+                          <p className="text-sm text-white/35 max-w-[200px]">
+                            {translators.length > 0
+                              ? `${translators.length} מתרגמים רשומים לשפה זו אך אינם זמינים כעת — נסה שוב מאוחר יותר`
+                              : 'לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!'}
+                          </p>
+                        )}
                         {translators.length === 0 && (
                           <button
                             onClick={() => setView('register')}
@@ -1587,6 +1609,21 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                             הצטרף כמתרגם
                           </button>
                         )}
+                      </div>
+                    )}
+
+                    {/* Emergency fallback — always visible when emergency_only_contact=true and out of hours */}
+                    {emergencyBackups.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 px-1">
+                          <div className="w-2 h-2 rounded-full bg-orange-500 shadow shadow-orange-400/50" />
+                          <span className="text-xs font-black text-orange-400 uppercase tracking-wide">
+                            לחירום בלבד (מחוץ לשעות) · {emergencyBackups.length}
+                          </span>
+                        </div>
+                        {emergencyBackups.map(t => (
+                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
+                        ))}
                       </div>
                     )}
                   </>
