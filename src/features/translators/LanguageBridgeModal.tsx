@@ -543,7 +543,7 @@ function RegisterForm({
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5">
+    <div className="flex flex-col gap-5 px-4 py-5 pb-10">
 
       {/* Identity recognition banner */}
       <AnimatePresence>
@@ -553,14 +553,15 @@ function RegisterForm({
             initial={{ opacity: 0, y: -8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25 } }}
             exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/15"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border border-blue-400/40"
+            style={{ background: 'rgba(59,130,246,0.12)' }}
           >
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center shrink-0">
-              <UserPlus size={16} className="text-blue-600 dark:text-blue-400" />
+            <div className="w-8 h-8 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
+              <UserPlus size={16} className="text-blue-300" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-black text-blue-700 dark:text-blue-300">מספר זה כבר רשום במערכת</span>
-              <span className="text-xs text-blue-500 dark:text-blue-400">תוכל/י לעדכן פרטים או להסיר את עצמך</span>
+              <span className="text-sm font-black text-blue-200">מספר זה כבר רשום במערכת</span>
+              <span className="text-xs text-blue-300/70">תוכל/י לעדכן פרטים או להסיר את עצמך</span>
             </div>
           </motion.div>
         )}
@@ -568,30 +569,32 @@ function RegisterForm({
 
       {/* Name */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שם מלא</label>
+        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">שם מלא</label>
         <input
           type="text" value={fullName} onChange={e => setFullName(e.target.value)}
           placeholder="שם פרטי ושם משפחה" dir="rtl"
-          className="w-full rounded-xl px-4 py-3 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          className="w-full rounded-xl px-4 py-3 text-sm bg-white/8 border border-white/15 text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          style={{ background: 'rgba(255,255,255,0.07)' }}
         />
       </div>
 
       {/* Phone */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">מספר טלפון</label>
+        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">מספר טלפון</label>
         <div className="relative">
           <input
             type="tel" value={phone} onChange={e => handlePhoneChange(e.target.value)}
             placeholder="05X-XXXXXXX" dir="ltr"
-            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm border text-white placeholder-white/35 focus:outline-none focus:ring-2 transition-all
               ${mode === 'edit'
-                ? 'border-blue-400 dark:border-blue-600 focus:ring-blue-400/40'
-                : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
+                ? 'border-blue-400/70 focus:ring-blue-400/40'
+                : 'border-white/15 focus:ring-blue-400/50'
               }`}
+            style={{ background: 'rgba(255,255,255,0.07)' }}
           />
           {mode === 'checking' && (
             <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <Loader2 size={16} className="animate-spin text-gray-400" />
+              <Loader2 size={16} className="animate-spin text-white/40" />
             </div>
           )}
           {mode === 'edit' && (
@@ -605,18 +608,19 @@ function RegisterForm({
       {/* Phone confirm — only for new registrations */}
       {mode !== 'edit' && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">אימות מספר טלפון</label>
+          <label className="text-xs font-bold text-white/50 uppercase tracking-wide">אימות מספר טלפון</label>
           <div className="relative">
             <input
               type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
               placeholder="05X-XXXXXXX" dir="ltr"
-              className={`w-full rounded-xl px-4 py-3 pr-10 text-sm bg-white dark:bg-white/5 border text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+              className={`w-full rounded-xl px-4 py-3 pr-10 text-sm border text-white placeholder-white/35 focus:outline-none focus:ring-2 transition-all
                 ${phoneMismatch
-                  ? 'border-red-400 dark:border-red-600 focus:ring-red-400/40'
+                  ? 'border-red-400/70 focus:ring-red-400/40'
                   : phoneMatch
-                    ? 'border-emerald-400 dark:border-emerald-600 focus:ring-emerald-400/40'
-                    : 'border-gray-200 dark:border-white/10 focus:ring-blue-500/50'
+                    ? 'border-emerald-400/70 focus:ring-emerald-400/40'
+                    : 'border-white/15 focus:ring-blue-400/50'
                 }`}
+              style={{ background: 'rgba(255,255,255,0.07)' }}
             />
             {phoneMatch && (
               <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
@@ -625,7 +629,7 @@ function RegisterForm({
             )}
           </div>
           {phoneMismatch && (
-            <p className="text-xs text-red-500 dark:text-red-400 font-medium flex items-center gap-1">
+            <p className="text-xs text-red-400 font-medium flex items-center gap-1">
               <AlertCircle size={12} />
               מספרי הטלפון אינם תואמים
             </p>
@@ -635,13 +639,14 @@ function RegisterForm({
 
       {/* Languages */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">שפות שאני מדבר/ת</label>
+        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">שפות שאני מדבר/ת</label>
         <div className="relative">
-          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
           <input
             type="text" value={formLangSearch} onChange={e => setFormLangSearch(e.target.value)}
             placeholder="חפש שפה..." dir="rtl"
-            className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm border border-white/15 text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+            style={{ background: 'rgba(255,255,255,0.07)' }}
           />
         </div>
 
@@ -653,52 +658,72 @@ function RegisterForm({
                 key={lang.code} onClick={() => toggleLang(lang.code)}
                 className={`flex flex-col items-center gap-1 rounded-xl py-2.5 px-1 border transition-all active:scale-95
                   ${selected
-                    ? 'bg-blue-500 dark:bg-blue-600 border-blue-400 shadow-lg shadow-blue-500/30'
-                    : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10'
+                    ? 'border-blue-400/80 shadow-lg shadow-blue-500/30'
+                    : 'border-white/15'
                   }`}
+                style={{ background: selected ? 'rgba(59,130,246,0.35)' : 'rgba(255,255,255,0.06)' }}
               >
                 <span className="text-xl leading-none">{lang.flag}</span>
-                <span className={`text-[0.6rem] font-semibold leading-tight text-center ${selected ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                <span className={`text-[0.6rem] font-semibold leading-tight text-center ${selected ? 'text-white' : 'text-white/70'}`}>
                   {lang.name}
                 </span>
               </button>
             );
           })}
           {filteredFormLangs.length === 0 && (
-            <p className="col-span-4 text-center text-sm text-gray-400 dark:text-gray-500 py-4">לא נמצאה שפה</p>
+            <p className="col-span-4 text-center text-sm text-white/40 py-4">לא נמצאה שפה</p>
           )}
         </div>
       </div>
 
       {/* Availability */}
       <div className="flex flex-col gap-3">
-        <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">זמינות</label>
-        <button
-          type="button"
-          onClick={() => setIs24_7(!is24_7)}
-          className="flex items-center justify-between rounded-2xl px-5 py-5 border-2 transition-all active:scale-95 bg-white dark:bg-white/5"
-          style={{
-            borderColor: is24_7 ? 'rgba(34,197,94,0.7)' : 'rgba(209,213,219,0.6)',
-            boxShadow: is24_7
-              ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)'
-              : '0 2px 8px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div className="flex flex-col items-start gap-0.5">
-            <span className="text-base font-black text-gray-800 dark:text-gray-200">זמין 24/7</span>
-            {is24_7 && <span className="text-xs text-emerald-500 font-semibold">פעיל תמיד ✓</span>}
-            {!is24_7 && <span className="text-xs text-gray-400 dark:text-gray-500">לחץ לבחירה</span>}
-          </div>
-          <div
-            className="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all"
+        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">זמינות</label>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Option A: 24/7 */}
+          <button
+            type="button"
+            onClick={() => setIs24_7(true)}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
             style={{
-              borderColor: is24_7 ? 'rgb(34,197,94)' : 'rgba(209,213,219,0.8)',
-              background: is24_7 ? 'rgb(34,197,94)' : 'transparent',
+              borderColor: is24_7 ? 'rgba(34,197,94,0.8)' : 'rgba(255,255,255,0.12)',
+              background: is24_7
+                ? 'rgba(34,197,94,0.12)'
+                : 'rgba(255,255,255,0.05)',
+              boxShadow: is24_7
+                ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)'
+                : 'none',
             }}
           >
-            {is24_7 && <Check size={14} className="text-white" strokeWidth={3} />}
-          </div>
-        </button>
+            <span className="text-2xl">⚡</span>
+            <span className="text-sm font-black text-white">זמין 24/7</span>
+            {is24_7 && (
+              <span className="text-[0.65rem] text-emerald-400 font-semibold">נבחר ✓</span>
+            )}
+          </button>
+
+          {/* Option B: Manual hours */}
+          <button
+            type="button"
+            onClick={() => setIs24_7(false)}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
+            style={{
+              borderColor: !is24_7 ? 'rgba(96,165,250,0.8)' : 'rgba(255,255,255,0.12)',
+              background: !is24_7
+                ? 'rgba(96,165,250,0.1)'
+                : 'rgba(255,255,255,0.05)',
+              boxShadow: !is24_7
+                ? '0 0 0 3px rgba(96,165,250,0.12), 0 6px 24px rgba(59,130,246,0.2)'
+                : 'none',
+            }}
+          >
+            <span className="text-2xl">🕐</span>
+            <span className="text-sm font-black text-white">בחירת שעות</span>
+            {!is24_7 && (
+              <span className="text-[0.65rem] text-blue-400 font-semibold">נבחר ✓</span>
+            )}
+          </button>
+        </div>
         <AnimatePresence initial={false}>
           {!is24_7 && (
             <motion.div
@@ -709,23 +734,23 @@ function RegisterForm({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 rounded-xl px-4 py-5 border bg-white dark:bg-white/5 border-gray-200 dark:border-white/10">
-                <Clock size={20} className="text-gray-400 shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl px-4 py-5 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <Clock size={20} className="text-white/40 shrink-0" />
                 <div className="flex items-center gap-4 flex-1">
                   <input
                     type="time"
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-xl font-black bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
+                    className="flex-1 text-xl font-black bg-transparent text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
                   />
-                  <span className="text-gray-400 text-xl font-black">—</span>
+                  <span className="text-white/40 text-xl font-black">—</span>
                   <input
                     type="time"
                     value={endTime}
                     onChange={e => setEndTime(e.target.value)}
                     disabled={is24_7}
-                    className="flex-1 text-xl font-black bg-transparent text-gray-900 dark:text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
+                    className="flex-1 text-xl font-black bg-transparent text-white focus:outline-none min-h-[52px] cursor-pointer tracking-wide"
                   />
                 </div>
               </div>
@@ -735,7 +760,7 @@ function RegisterForm({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 rounded-xl px-4 py-3 border border-red-400/40 text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
           <AlertCircle size={16} className="shrink-0" />
           {error}
         </div>
@@ -1074,11 +1099,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {/* ── Language Grid ── */}
           {view === 'languages' && (
             <motion.div key="languages" {...PAGE}>
-              <div className="p-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">
-                  בחר שפה למציאת מתרגמים זמינים בקהילה
-                </p>
-
+              <div className="p-4 pb-8">
                 <div className="relative mb-4">
                   <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <input
@@ -1113,20 +1134,24 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       ))}
                     </div>
                     <AddLanguageWidget />
-                    <button
-                      onClick={() => setView('register')}
-                      className="w-full py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(124,58,237,0.25) 100%)',
-                        border: '1px solid rgba(255,255,255,0.18)',
-                        backdropFilter: 'blur(12px)',
-                        boxShadow: '0 4px 20px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                      }}
-                    >
-                      <UserPlus size={20} />
-                      הצטרף לצוות המתרגמים
-                    </button>
                   </div>
+                )}
+
+                {/* Join button — always visible */}
+                {!loadingAll && (
+                  <button
+                    onClick={() => setView('register')}
+                    className="w-full mt-4 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(124,58,237,0.25) 100%)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      backdropFilter: 'blur(12px)',
+                      boxShadow: '0 4px 20px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    }}
+                  >
+                    <UserPlus size={20} />
+                    הצטרף לצוות המתרגמים
+                  </button>
                 )}
               </div>
             </motion.div>
