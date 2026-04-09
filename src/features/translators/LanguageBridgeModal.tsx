@@ -510,9 +510,8 @@ function RegisterForm({
     if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
     setLoading(true); setError(null);
 
-    const { error: dbError } = await supabase
-      .from('translators')
-      .update({
+    try {
+      const payload = {
         full_name:               fullName.trim(),
         languages:               selectedLangs,
         is_24_7:                 is24_7,
@@ -520,11 +519,27 @@ function RegisterForm({
         end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
         time_slots:              is24_7 ? [] : timeSlots,
         emergency_only_contact:  emergencyContact,
-      })
-      .eq('id', existingId!);
+      };
+      console.log('[LB] update payload:', payload);
+      const { error: dbError } = await supabase
+        .from('translators')
+        .update(payload)
+        .eq('id', existingId!);
+
+      if (dbError) {
+        console.error('[LB] Supabase update error:', dbError);
+        setError(`שגיאה בעדכון: ${dbError.message}`);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('[LB] Unexpected update error:', err);
+      setError('שגיאה בלתי צפויה. נסה שוב.');
+      setLoading(false);
+      return;
+    }
 
     setLoading(false);
-    if (dbError) { setError('שגיאה בעדכון. נסה שוב.'); return; }
     ReactGA.event('translator_update', { languages: selectedLangs.join(',') });
     setSubmitted(true);
     setTimeout(() => onSuccess(selectedLangs), 2000);
@@ -550,24 +565,42 @@ function RegisterForm({
     if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
     setLoading(true); setError(null);
 
-    const { data: inserted, error: dbError } = await supabase.from('translators').insert({
-      full_name:               fullName.trim(),
-      phone_number:            phone.trim(),
-      languages:               selectedLangs,
-      is_24_7:                 is24_7,
-      start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
-      end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
-      time_slots:              is24_7 ? [] : timeSlots,
-      emergency_only_contact:  emergencyContact,
-    }).select('id').single();
+    try {
+      const payload = {
+        full_name:               fullName.trim(),
+        phone_number:            phone.trim(),
+        languages:               selectedLangs,
+        is_24_7:                 is24_7,
+        start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
+        end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
+        time_slots:              is24_7 ? [] : timeSlots,
+        emergency_only_contact:  emergencyContact,
+      };
+      console.log('[LB] insert payload:', payload);
+      const { data: inserted, error: dbError } = await supabase
+        .from('translators')
+        .insert(payload)
+        .select('id')
+        .single();
 
-    setLoading(false);
-    if (dbError) { setError('שגיאה בשמירה. נסה שוב.'); return; }
-    const newId = (inserted as { id: string } | null)?.id;
-    if (newId) localStorage.setItem('lb_translator_id', newId);
-    ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
-    setSubmitted(true);
-    setTimeout(() => onSuccess(selectedLangs, newId), 2000);
+      if (dbError) {
+        console.error('[LB] Supabase insert error:', dbError);
+        setError(`שגיאה בשמירה: ${dbError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      const newId = (inserted as { id: string } | null)?.id;
+      if (newId) localStorage.setItem('lb_translator_id', newId);
+      setLoading(false);
+      ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
+      setSubmitted(true);
+      setTimeout(() => onSuccess(selectedLangs, newId), 2000);
+    } catch (err) {
+      console.error('[LB] Unexpected insert error:', err);
+      setError('שגיאה בלתי צפויה. נסה שוב.');
+      setLoading(false);
+    }
   };
 
   // ── Success screens ───────────────────────────────────────────────────────────
@@ -820,10 +853,15 @@ function RegisterForm({
                   <button
                     type="button"
                     onClick={() => setTimeSlots(prev => [...prev, { start: '08:00', end: '20:00' }])}
-                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-dashed border-white/20 text-white/50 text-xs font-bold hover:border-blue-400/50 hover:text-blue-400 transition-all active:scale-95 mt-1"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed text-xs font-bold transition-all active:scale-95 mt-1"
+                    style={{
+                      borderColor: 'rgba(96,165,250,0.35)',
+                      color: 'rgba(96,165,250,0.75)',
+                      background: 'rgba(59,130,246,0.04)',
+                    }}
                   >
                     <Plus size={13} />
-                    הוסף טווח שעות
+                    + הוסף טווח שעות
                   </button>
                 )}
               </div>
@@ -832,28 +870,62 @@ function RegisterForm({
         </AnimatePresence>
       </div>
 
-      {/* Emergency contact toggle */}
-      <button
-        type="button"
-        onClick={() => setEmergencyContact(prev => !prev)}
-        className="flex items-center gap-3 w-full rounded-2xl px-4 py-4 border-2 text-right transition-all active:scale-[0.98]"
+      {/* Emergency contact — premium info card */}
+      <div
+        className="rounded-2xl border overflow-hidden transition-all"
         style={{
-          borderColor: emergencyContact ? 'rgba(251,146,60,0.7)' : 'rgba(255,255,255,0.12)',
-          background: emergencyContact ? 'rgba(251,146,60,0.1)' : 'rgba(255,255,255,0.04)',
+          borderColor: emergencyContact ? 'rgba(251,113,133,0.55)' : 'rgba(251,146,60,0.28)',
+          background: emergencyContact
+            ? 'linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(251,146,60,0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(251,146,60,0.07) 0%, rgba(239,68,68,0.04) 100%)',
+          boxShadow: emergencyContact
+            ? '0 0 0 1px rgba(251,113,133,0.18), 0 6px 24px rgba(239,68,68,0.12)'
+            : '0 0 0 1px rgba(251,146,60,0.08)',
         }}
       >
-        <div className={`shrink-0 w-11 h-6 rounded-full flex items-center transition-all ${emergencyContact ? 'bg-orange-500' : 'bg-white/15'}`}>
-          <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-all mx-0.5 ${emergencyContact ? 'translate-x-5' : 'translate-x-0'}`} />
+        {/* Card header */}
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b" style={{ borderColor: 'rgba(251,146,60,0.18)' }}>
+          <AlertCircle size={13} className="text-orange-400 shrink-0" />
+          <span className="text-[0.62rem] font-black text-orange-300 uppercase tracking-widest">זמינות חריגה</span>
         </div>
-        <div className="flex flex-col text-right flex-1">
-          <span className="text-sm font-bold text-white leading-snug">
-            האם ניתן ליצור עמך קשר במקרה חירום חריג גם מחוץ לשעות הזמינות?
-          </span>
-          <span className="text-[0.7rem] text-white/40 mt-0.5">
-            {emergencyContact ? 'כן, ניתן ליצור קשר' : 'לא, רק בשעות הזמינות'}
-          </span>
-        </div>
-      </button>
+        {/* Card body */}
+        <button
+          type="button"
+          onClick={() => setEmergencyContact(prev => !prev)}
+          className="flex items-center gap-4 w-full px-4 py-3.5 text-right transition-all active:scale-[0.99]"
+        >
+          <div className="flex flex-col text-right flex-1 gap-0.5">
+            <span className="text-sm font-bold text-white leading-snug">
+              האם ניתן ליצור עמך קשר במקרה חירום חריג גם מחוץ לשעות הזמינות?
+            </span>
+            <span className={`text-[0.68rem] font-semibold transition-colors ${emergencyContact ? 'text-orange-300' : 'text-white/35'}`}>
+              {emergencyContact ? 'כן — זמין גם בחירום' : 'לא — רק בשעות הזמינות'}
+            </span>
+          </div>
+          {/* iOS-style animated toggle */}
+          <div
+            className="shrink-0 relative w-12 h-6.5 rounded-full transition-all duration-300"
+            style={{
+              width: 48,
+              height: 28,
+              background: emergencyContact
+                ? 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)'
+                : 'rgba(255,255,255,0.12)',
+              boxShadow: emergencyContact ? '0 2px 12px rgba(249,115,22,0.5)' : 'none',
+            }}
+          >
+            <div
+              className="absolute top-0.5 rounded-full bg-white shadow-md transition-all duration-300"
+              style={{
+                width: 23,
+                height: 23,
+                left: emergencyContact ? 22 : 2,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+              }}
+            />
+          </div>
+        </button>
+      </div>
 
       {error && (
         <div className="flex items-center gap-2 rounded-xl px-4 py-3 border border-red-400/40 text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
