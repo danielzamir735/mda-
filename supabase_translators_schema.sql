@@ -7,10 +7,12 @@ create table if not exists public.translators (
   full_name    text not null,
   phone_number text not null unique,          -- unique: enables upsert by phone
   languages    text[] not null default '{}',
-  is_24_7      boolean not null default false,
-  start_time   time,
-  end_time     time,
-  user_id      uuid references auth.users(id) on delete set null
+  is_24_7                boolean not null default false,
+  start_time             time,
+  end_time               time,
+  time_slots             jsonb not null default '[]'::jsonb,
+  emergency_only_contact boolean not null default false,
+  user_id                uuid references auth.users(id) on delete set null
 );
 
 -- Enable Row Level Security
@@ -44,3 +46,8 @@ create policy "translators_delete_own"
 -- GIN index for fast language array filtering
 create index if not exists translators_languages_gin
   on public.translators using gin(languages);
+
+-- Migration: run this if the table already exists (adds new columns)
+alter table public.translators
+  add column if not exists time_slots             jsonb not null default '[]'::jsonb,
+  add column if not exists emergency_only_contact boolean not null default false;

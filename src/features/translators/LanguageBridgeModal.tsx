@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
+  HelpCircle, ShieldCheck, Trash2,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -12,6 +13,8 @@ interface Props {
   onClose: () => void;
 }
 
+interface TimeSlot { start: string; end: string; }
+
 interface Translator {
   id: string;
   full_name: string;
@@ -20,6 +23,8 @@ interface Translator {
   is_24_7: boolean;
   start_time: string | null;
   end_time: string | null;
+  time_slots: TimeSlot[] | null;
+  emergency_only_contact: boolean;
 }
 
 interface Language {
@@ -106,14 +111,21 @@ const INTRO_PAGE = {
 
 function isAvailableNow(t: Translator): boolean {
   if (t.is_24_7) return true;
-  if (!t.start_time || !t.end_time) return false;
+  // Prefer multi-slot array, fall back to legacy single slot
+  const slots: TimeSlot[] =
+    (t.time_slots && t.time_slots.length > 0)
+      ? t.time_slots
+      : (t.start_time && t.end_time ? [{ start: t.start_time, end: t.end_time }] : []);
+  if (slots.length === 0) return false;
   const now = new Date();
   const cur = now.getHours() * 60 + now.getMinutes();
-  const [sh, sm] = t.start_time.split(':').map(Number);
-  const [eh, em] = t.end_time.split(':').map(Number);
-  const start = sh * 60 + sm;
-  const end   = eh * 60 + em;
-  return start <= end ? cur >= start && cur <= end : cur >= start || cur <= end;
+  return slots.some(slot => {
+    const [sh, sm] = slot.start.split(':').map(Number);
+    const [eh, em] = slot.end.split(':').map(Number);
+    const start = sh * 60 + sm;
+    const end   = eh * 60 + em;
+    return start <= end ? cur >= start && cur <= end : cur >= start || cur <= end;
+  });
 }
 
 function formatTime(t: string | null): string {
@@ -237,14 +249,26 @@ function TranslatorCard({ translator, available, allLanguages, selectedLangName 
             return lang ? `${lang.flag} ${lang.name}` : code;
           }).join(' · ')}
         </p>
-        {!translator.is_24_7 && translator.start_time && (
-          <p className="text-[0.65rem] text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1">
-            <Clock size={10} />
-            {formatTime(translator.start_time)} – {formatTime(translator.end_time)}
-          </p>
+        {!translator.is_24_7 && (
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            {(translator.time_slots && translator.time_slots.length > 0
+              ? translator.time_slots
+              : (translator.start_time && translator.end_time
+                  ? [{ start: translator.start_time, end: translator.end_time }]
+                  : [])
+            ).map((slot, i) => (
+              <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                <Clock size={10} />
+                {formatTime(slot.start)} – {formatTime(slot.end)}
+              </p>
+            ))}
+          </div>
         )}
         {translator.is_24_7 && (
-          <p className="text-[0.65rem] text-emerald-500 dark:text-emerald-400 mt-0.5">24/7</p>
+          <div className="flex items-center gap-1 mt-0.5">
+            <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+            <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+          </div>
         )}
       </div>
 
@@ -414,8 +438,8 @@ function RegisterForm({
   const [selectedLangs, setSelectedLangs]   = useState<string[]>([]);
   const [formLangSearch, setFormLangSearch] = useState('');
   const [is24_7, setIs24_7]                 = useState(false);
-  const [startTime, setStartTime]           = useState('08:00');
-  const [endTime, setEndTime]               = useState('22:00');
+  const [timeSlots, setTimeSlots]           = useState<TimeSlot[]>([{ start: '08:00', end: '22:00' }]);
+  const [emergencyContact, setEmergencyContact] = useState(false);
   const [loading, setLoading]               = useState(false);
   const [error, setError]                   = useState<string | null>(null);
   const [submitted, setSubmitted]           = useState(false);
@@ -454,7 +478,7 @@ function RegisterForm({
     phoneTimerRef.current = setTimeout(async () => {
       const { data } = await supabase
         .from('translators')
-        .select('id, full_name, languages, is_24_7, start_time, end_time')
+        .select('id, full_name, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
         .eq('phone_number', val.trim())
         .maybeSingle();
 
@@ -463,8 +487,15 @@ function RegisterForm({
         setFullName(data.full_name);
         setSelectedLangs(data.languages ?? []);
         setIs24_7(data.is_24_7);
-        setStartTime(data.start_time ? data.start_time.slice(0, 5) : '08:00');
-        setEndTime(data.end_time ? data.end_time.slice(0, 5) : '22:00');
+        // Load multi-slot, fall back to legacy single slot
+        if (data.time_slots && (data.time_slots as TimeSlot[]).length > 0) {
+          setTimeSlots(data.time_slots as TimeSlot[]);
+        } else if (data.start_time && data.end_time) {
+          setTimeSlots([{ start: data.start_time.slice(0, 5), end: data.end_time.slice(0, 5) }]);
+        } else {
+          setTimeSlots([{ start: '08:00', end: '22:00' }]);
+        }
+        setEmergencyContact(data.emergency_only_contact ?? false);
         setPhoneConfirm(val.trim()); // auto-confirm since record exists
         setMode('edit');
       } else {
@@ -482,11 +513,13 @@ function RegisterForm({
     const { error: dbError } = await supabase
       .from('translators')
       .update({
-        full_name:  fullName.trim(),
-        languages:  selectedLangs,
-        is_24_7:    is24_7,
-        start_time: is24_7 ? null : startTime.slice(0, 5),
-        end_time:   is24_7 ? null : endTime.slice(0, 5),
+        full_name:               fullName.trim(),
+        languages:               selectedLangs,
+        is_24_7:                 is24_7,
+        start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
+        end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
+        time_slots:              is24_7 ? [] : timeSlots,
+        emergency_only_contact:  emergencyContact,
       })
       .eq('id', existingId!);
 
@@ -518,12 +551,14 @@ function RegisterForm({
     setLoading(true); setError(null);
 
     const { data: inserted, error: dbError } = await supabase.from('translators').insert({
-      full_name:    fullName.trim(),
-      phone_number: phone.trim(),
-      languages:    selectedLangs,
-      is_24_7:      is24_7,
-      start_time:   is24_7 ? null : startTime.slice(0, 5),
-      end_time:     is24_7 ? null : endTime.slice(0, 5),
+      full_name:               fullName.trim(),
+      phone_number:            phone.trim(),
+      languages:               selectedLangs,
+      is_24_7:                 is24_7,
+      start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
+      end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
+      time_slots:              is24_7 ? [] : timeSlots,
+      emergency_only_contact:  emergencyContact,
     }).select('id').single();
 
     setLoading(false);
@@ -718,19 +753,13 @@ function RegisterForm({
             className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
             style={{
               borderColor: is24_7 ? 'rgba(34,197,94,0.8)' : 'rgba(255,255,255,0.12)',
-              background: is24_7
-                ? 'rgba(34,197,94,0.12)'
-                : 'rgba(255,255,255,0.05)',
-              boxShadow: is24_7
-                ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)'
-                : 'none',
+              background: is24_7 ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)',
+              boxShadow: is24_7 ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)' : 'none',
             }}
           >
-            <span className="text-2xl">♾️</span>
+            <ShieldCheck size={26} className={is24_7 ? 'text-emerald-400' : 'text-white/50'} style={is24_7 ? { filter: 'drop-shadow(0 0 6px rgba(52,211,153,0.6))' } : undefined} />
             <span className="text-sm font-black text-white">זמין 24/7</span>
-            {is24_7 && (
-              <span className="text-[0.65rem] text-emerald-400 font-semibold">נבחר ✓</span>
-            )}
+            {is24_7 && <span className="text-[0.65rem] text-emerald-400 font-semibold">נבחר ✓</span>}
           </button>
 
           {/* Option B: Manual hours */}
@@ -740,55 +769,91 @@ function RegisterForm({
             className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
             style={{
               borderColor: !is24_7 ? 'rgba(96,165,250,0.8)' : 'rgba(255,255,255,0.12)',
-              background: !is24_7
-                ? 'rgba(96,165,250,0.1)'
-                : 'rgba(255,255,255,0.05)',
-              boxShadow: !is24_7
-                ? '0 0 0 3px rgba(96,165,250,0.12), 0 6px 24px rgba(59,130,246,0.2)'
-                : 'none',
+              background: !is24_7 ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)',
+              boxShadow: !is24_7 ? '0 0 0 3px rgba(96,165,250,0.12), 0 6px 24px rgba(59,130,246,0.2)' : 'none',
             }}
           >
-            <span className="text-2xl">🕐</span>
+            <Clock size={26} className={!is24_7 ? 'text-blue-400' : 'text-white/50'} />
             <span className="text-sm font-black text-white">בחירת שעות ידנית</span>
-            {!is24_7 && (
-              <span className="text-[0.65rem] text-blue-400 font-semibold">נבחר ✓</span>
-            )}
+            {!is24_7 && <span className="text-[0.65rem] text-blue-400 font-semibold">נבחר ✓</span>}
           </button>
         </div>
         <AnimatePresence initial={false}>
           {!is24_7 && (
             <motion.div
               key="time-picker"
-              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-              animate={{ opacity: 1, height: 'auto', marginTop: 0 }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 rounded-xl px-3 py-4 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <Clock size={18} className="text-white/40 shrink-0" />
-                <div className="flex flex-wrap items-center gap-2 flex-1">
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={e => setStartTime(e.target.value)}
-                    disabled={is24_7}
-                    className="min-w-[5.5rem] text-lg font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
-                  />
-                  <span className="text-white/40 text-lg font-black">—</span>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={e => setEndTime(e.target.value)}
-                    disabled={is24_7}
-                    className="min-w-[5.5rem] text-lg font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
-                  />
-                </div>
+              <div className="flex flex-col gap-2 rounded-xl px-3 py-3 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                {timeSlots.map((slot, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Clock size={16} className="text-white/40 shrink-0" />
+                    <input
+                      type="time"
+                      value={slot.start}
+                      onChange={e => setTimeSlots(prev => prev.map((s, j) => j === i ? { ...s, start: e.target.value } : s))}
+                      className="min-w-[5.5rem] text-base font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
+                    />
+                    <span className="text-white/40 font-black">—</span>
+                    <input
+                      type="time"
+                      value={slot.end}
+                      onChange={e => setTimeSlots(prev => prev.map((s, j) => j === i ? { ...s, end: e.target.value } : s))}
+                      className="min-w-[5.5rem] text-base font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
+                    />
+                    {timeSlots.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setTimeSlots(prev => prev.filter((_, j) => j !== i))}
+                        className="ml-auto p-1.5 rounded-lg text-red-400/70 hover:text-red-400 active:scale-90 transition-all"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {timeSlots.length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => setTimeSlots(prev => [...prev, { start: '08:00', end: '20:00' }])}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border border-dashed border-white/20 text-white/50 text-xs font-bold hover:border-blue-400/50 hover:text-blue-400 transition-all active:scale-95 mt-1"
+                  >
+                    <Plus size={13} />
+                    הוסף טווח שעות
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Emergency contact toggle */}
+      <button
+        type="button"
+        onClick={() => setEmergencyContact(prev => !prev)}
+        className="flex items-center gap-3 w-full rounded-2xl px-4 py-4 border-2 text-right transition-all active:scale-[0.98]"
+        style={{
+          borderColor: emergencyContact ? 'rgba(251,146,60,0.7)' : 'rgba(255,255,255,0.12)',
+          background: emergencyContact ? 'rgba(251,146,60,0.1)' : 'rgba(255,255,255,0.04)',
+        }}
+      >
+        <div className={`shrink-0 w-11 h-6 rounded-full flex items-center transition-all ${emergencyContact ? 'bg-orange-500' : 'bg-white/15'}`}>
+          <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-all mx-0.5 ${emergencyContact ? 'translate-x-5' : 'translate-x-0'}`} />
+        </div>
+        <div className="flex flex-col text-right flex-1">
+          <span className="text-sm font-bold text-white leading-snug">
+            האם ניתן ליצור עמך קשר במקרה חירום חריג גם מחוץ לשעות הזמינות?
+          </span>
+          <span className="text-[0.7rem] text-white/40 mt-0.5">
+            {emergencyContact ? 'כן, ניתן ליצור קשר' : 'לא, רק בשעות הזמינות'}
+          </span>
+        </div>
+      </button>
 
       {error && (
         <div className="flex items-center gap-2 rounded-xl px-4 py-3 border border-red-400/40 text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
@@ -851,6 +916,8 @@ interface MyTranslatorData {
   is_24_7: boolean;
   start_time: string | null;
   end_time: string | null;
+  time_slots: TimeSlot[] | null;
+  emergency_only_contact: boolean;
 }
 
 function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
@@ -868,7 +935,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
   useEffect(() => {
     supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
       .eq('id', id)
       .maybeSingle()
       .then(({ data: row }) => {
@@ -967,11 +1034,18 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
         </div>
 
         {/* Hours */}
-        {!data.is_24_7 && data.start_time && (
-          <p className="text-xs text-white/45 flex items-center gap-1">
-            <Clock size={11} />
-            {formatTime(data.start_time)} – {formatTime(data.end_time)}
-          </p>
+        {!data.is_24_7 && (
+          <div className="flex flex-col gap-0.5">
+            {(data.time_slots && data.time_slots.length > 0
+              ? data.time_slots
+              : (data.start_time && data.end_time ? [{ start: data.start_time, end: data.end_time }] : [])
+            ).map((slot, i) => (
+              <p key={i} className="text-xs text-white/45 flex items-center gap-1">
+                <Clock size={11} />
+                {formatTime(slot.start)} – {formatTime(slot.end)}
+              </p>
+            ))}
+          </div>
         )}
 
         {/* Actions */}
@@ -1081,7 +1155,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setLoadingAll(true);
     supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
       .then(({ data }) => {
         setAllTranslators((data as Translator[]) ?? []);
         setLoadingAll(false);
@@ -1113,7 +1187,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setLoadingList(true);
     const { data } = await supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
       .contains('languages', [langCode]);
     setTranslators((data as Translator[]) ?? []);
     setLoadingList(false);
@@ -1150,8 +1224,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  const available   = translators.filter(isAvailableNow);
-  const unavailable = translators.filter(t => !isAvailableNow(t));
+  const available = translators.filter(isAvailableNow);
   const countFor = (code: string) => allTranslators.filter(t => t.languages.includes(code)).length;
 
   const filteredLangs = allLanguages.filter(l =>
@@ -1187,14 +1260,14 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         ) : view === 'languages' ? (
           <button
             onClick={() => setView('register')}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold text-white/90 border border-white/25 active:scale-95 transition-all"
+            className="flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold text-white/85 border border-white/20 active:scale-95 transition-all"
             style={{
-              background: 'rgba(255,255,255,0.09)',
+              background: 'rgba(255,255,255,0.08)',
               backdropFilter: 'blur(12px)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.15)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.12)',
             }}
           >
-            <UserPlus size={15} />
+            <UserPlus size={13} />
             הצטרף
           </button>
         ) : (
@@ -1225,11 +1298,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view !== 'intro' && (
             <button
               onClick={() => setShowInfo(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-white/75 active:bg-white/10 transition-all"
+              className="p-2 rounded-xl text-white/65 active:bg-white/10 transition-all"
               aria-label="מידע על השירות"
             >
-              <Info size={18} />
-              <span className="text-xs font-bold">מהו?</span>
+              <HelpCircle size={18} />
             </button>
           )}
           <button
@@ -1412,7 +1484,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   </div>
                 ) : (
                   <>
-                    {available.length > 0 && (
+                    {available.length > 0 ? (
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow shadow-emerald-400/60 animate-pulse" />
@@ -1424,25 +1496,25 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
                         ))}
                       </div>
-                    )}
-
-                    {unavailable.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 px-1">
-                          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600" />
-                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                            לא זמינים כרגע · {unavailable.length}
-                          </span>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-white/8 flex items-center justify-center">
+                          <Clock size={28} className="text-white/30" />
                         </div>
-                        {unavailable.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available={false} allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
-                        ))}
-                      </div>
-                    )}
-
-                    {available.length === 0 && unavailable.length > 0 && (
-                      <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400 font-medium text-center">
-                        אין מתרגמים זמינים כרגע — נסה שוב מאוחר יותר
+                        <p className="font-bold text-white/70">אין מתרגמים זמינים כרגע</p>
+                        <p className="text-sm text-white/35 max-w-[200px]">
+                          {translators.length > 0
+                            ? `${translators.length} מתרגמים רשומים לשפה זו אך אינם זמינים כעת — נסה שוב מאוחר יותר`
+                            : 'לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!'}
+                        </p>
+                        {translators.length === 0 && (
+                          <button
+                            onClick={() => setView('register')}
+                            className="mt-1 px-5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-bold active:scale-95 transition-all"
+                          >
+                            הצטרף כמתרגם
+                          </button>
+                        )}
                       </div>
                     )}
                   </>
@@ -1463,7 +1535,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   // Optimistic update for immediate count reflection
                   setAllTranslators(prev => [
                     ...prev,
-                    { id: newId ?? 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
+                    { id: newId ?? 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false }
                   ]);
                   setPrefillPhone(undefined);
                   setRegisterMode('new');
