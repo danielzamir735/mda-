@@ -121,7 +121,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
   const [state, setState] = useState<State>('idle');
   const [resultText, setResultText] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+
   const [preview, setPreview] = useState<string | null>(null);
   const [textQuery, setTextQuery] = useState('');
 
@@ -153,7 +153,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   const handleReset = () => {
     setState('idle');
     setResultText('');
-    setErrorMessage('');
+
     setPreview(null);
     setTextQuery('');
     setLoadingPhraseIndex(0);
@@ -184,7 +184,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
     setState('loading');
     setResultText('');
-    setErrorMessage('');
+
     setPreview(null);
 
     try {
@@ -196,8 +196,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       setResultText(text);
       setState('result');
       saveToHistory(query, text);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : String(err));
+    } catch {
+
       setState('error');
     }
   };
@@ -209,7 +209,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     setPreview(URL.createObjectURL(file));
     setState('loading');
     setResultText('');
-    setErrorMessage('');
+
 
     try {
       const model = getModel();
@@ -229,8 +229,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       setResultText(text);
       setState('result');
       saveToHistory(extractMedName(text), text);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : String(err));
+    } catch {
+
       setState('error');
     }
   };
@@ -383,17 +383,13 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
         {/* Error */}
         {state === 'error' && (
-          <div className="rounded-2xl border border-emt-red/30 bg-emt-red/10 p-4 flex flex-col items-center gap-3 text-center">
-            <AlertCircle size={32} className="text-emt-red" />
-            <p className="text-emt-red font-bold text-base">שגיאה בזיהוי</p>
-            {errorMessage && (
-              <p className="text-emt-muted text-xs font-mono break-all bg-black/30 rounded-xl px-3 py-2 w-full text-right" dir="ltr">
-                {errorMessage}
-              </p>
-            )}
+          <div className="rounded-2xl border border-emt-yellow/30 bg-emt-yellow/10 p-4 flex flex-col items-center gap-3 text-center">
+            <AlertCircle size={32} className="text-emt-yellow" />
+            <p className="text-emt-yellow font-bold text-base">שגיאה עקב עומס בשרתים</p>
+            <p className="text-emt-muted text-sm">נסה שוב מאוחר יותר</p>
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-red/20 text-emt-red font-bold text-sm active:scale-95 transition-transform"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
             >
               <RotateCcw size={16} />
               נסה שוב
