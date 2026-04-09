@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
-  Loader2, AlertCircle, Search, Plus, Languages, Info,
+  Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -310,34 +310,53 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
 
 // ─── Add Missing Language Widget ───────────────────────────────────────────────
 
-const ADMIN_WA_NUMBER = '972521234567'; // TODO: replace with actual admin WhatsApp number
-
 function AddLanguageWidget() {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    const message = `שלום, אני מעוניין להצטרף כמתרגם באפליקציית "חובש +" עבור שפה שאינה מופיעה ברשימה: ${trimmed}.`;
-    window.open(
-      `https://wa.me/${ADMIN_WA_NUMBER}?text=${encodeURIComponent(message)}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
-    setExpanded(false);
-    setName('');
+    if (!trimmed || status === 'sending') return;
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `קטגוריה: הוספת שפה\nשפה מבוקשת: ${trimmed}` }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus('success');
+      setTimeout(() => { setExpanded(false); setName(''); setStatus('idle'); }, 2200);
+    } catch {
+      setStatus('error');
+    }
   };
 
   if (!expanded) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all active:scale-95 hover:border-green-400 dark:hover:border-green-500 hover:text-green-600 dark:hover:text-green-400"
+        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all active:scale-95 hover:border-blue-400 dark:hover:border-blue-400 hover:text-blue-500 dark:hover:text-blue-400"
       >
         <Plus size={15} />
         השפה שלך לא ברשימה? שלח בקשה
       </button>
+    );
+  }
+
+  if (status === 'success') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center gap-2 rounded-2xl p-4 border border-emerald-400/40 text-center"
+        style={{ background: 'rgba(34,197,94,0.1)' }}
+      >
+        <Check size={20} className="text-emerald-400" />
+        <p className="text-sm font-bold text-emerald-300">הבקשה נשלחה בהצלחה!</p>
+        <p className="text-xs text-emerald-400/70">נוסיף את השפה בהקדם האפשרי</p>
+      </motion.div>
     );
   }
 
@@ -347,7 +366,7 @@ function AddLanguageWidget() {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col gap-2 rounded-2xl p-3 border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-white/5"
     >
-      <p className="text-xs font-bold text-gray-600 dark:text-gray-400">בקש הוספת שפה חדשה דרך WhatsApp</p>
+      <p className="text-xs font-bold text-gray-600 dark:text-gray-400">בקש הוספת שפה חדשה</p>
       <div className="flex gap-2">
         <input
           type="text"
@@ -356,18 +375,22 @@ function AddLanguageWidget() {
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="שם השפה..."
           autoFocus
-          className="flex-1 rounded-xl px-3 py-2 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          disabled={status === 'sending'}
+          className="flex-1 rounded-xl px-3 py-2 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
           dir="rtl"
         />
         <button
           onClick={handleSend}
-          disabled={!name.trim()}
+          disabled={!name.trim() || status === 'sending'}
           className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl text-white transition-all active:scale-95 disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
         >
-          <WhatsAppIcon size={18} />
+          {status === 'sending' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </button>
       </div>
+      {status === 'error' && (
+        <p className="text-xs text-red-400">שליחה נכשלה, נסה שוב</p>
+      )}
     </motion.div>
   );
 }
@@ -380,7 +403,7 @@ function RegisterForm({
   onModeChange,
 }: {
   allLanguages: Language[];
-  onSuccess: (langs: string[]) => void;
+  onSuccess: (langs: string[], newId?: string) => void;
   onModeChange?: (mode: 'new' | 'checking' | 'edit') => void;
 }) {
   const [fullName, setFullName]             = useState('');
@@ -491,20 +514,22 @@ function RegisterForm({
     if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
     setLoading(true); setError(null);
 
-    const { error: dbError } = await supabase.from('translators').insert({
+    const { data: inserted, error: dbError } = await supabase.from('translators').insert({
       full_name:    fullName.trim(),
       phone_number: phone.trim(),
       languages:    selectedLangs,
       is_24_7:      is24_7,
       start_time:   is24_7 ? null : startTime.slice(0, 5),
       end_time:     is24_7 ? null : endTime.slice(0, 5),
-    });
+    }).select('id').single();
 
     setLoading(false);
     if (dbError) { setError('שגיאה בשמירה. נסה שוב.'); return; }
+    const newId = (inserted as { id: string } | null)?.id;
+    if (newId) localStorage.setItem('lb_translator_id', newId);
     ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
     setSubmitted(true);
-    setTimeout(() => onSuccess(selectedLangs), 2000);
+    setTimeout(() => onSuccess(selectedLangs, newId), 2000);
   };
 
   // ── Success screens ───────────────────────────────────────────────────────────
@@ -813,6 +838,168 @@ function RegisterForm({
   );
 }
 
+// ─── My Profile Card ──────────────────────────────────────────────────────────
+
+interface MyTranslatorData {
+  id: string;
+  full_name: string;
+  languages: string[];
+  is_24_7: boolean;
+  start_time: string | null;
+  end_time: string | null;
+}
+
+function MyProfileCard({ id, allLanguages, onDeleted, onUpdated }: {
+  id: string;
+  allLanguages: Language[];
+  onDeleted: () => void;
+  onUpdated: () => void;
+}) {
+  const [data, setData]               = useState<MyTranslatorData | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [saving, setSaving]           = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from('translators')
+      .select('id, full_name, languages, is_24_7, start_time, end_time')
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data: row }) => {
+        if (row) {
+          setData(row as MyTranslatorData);
+        } else {
+          localStorage.removeItem('lb_translator_id');
+          onDeleted();
+        }
+        setLoading(false);
+      });
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleAvailability = async () => {
+    if (!data || saving) return;
+    setSaving(true);
+    const next = !data.is_24_7;
+    await supabase.from('translators').update({ is_24_7: next }).eq('id', id);
+    setData(prev => prev ? { ...prev, is_24_7: next } : prev);
+    setSaving(false);
+    onUpdated();
+  };
+
+  const handleDelete = async () => {
+    setSaving(true);
+    await supabase.from('translators').delete().eq('id', id);
+    localStorage.removeItem('lb_translator_id');
+    setSaving(false);
+    onDeleted();
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="rounded-2xl border border-white/15 px-4 py-4 flex items-center gap-3"
+        style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}
+      >
+        <Loader2 size={18} className="animate-spin text-white/40" />
+        <span className="text-sm text-white/50">טוען פרופיל...</span>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.28 } }}
+      className="rounded-2xl border border-blue-400/30 overflow-hidden"
+      style={{
+        background: 'rgba(59,130,246,0.1)',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 4px 24px rgba(59,130,246,0.14), inset 0 1px 0 rgba(255,255,255,0.12)',
+      }}
+    >
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-4 pt-3 pb-2.5 border-b border-white/10">
+        <div className="w-9 h-9 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
+          <UserPlus size={16} className="text-blue-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[0.6rem] font-black text-blue-400 uppercase tracking-widest">ניהול הפרופיל שלי</p>
+          <p className="text-sm font-bold text-white truncate">{data.full_name}</p>
+        </div>
+        {/* Availability toggle */}
+        <button
+          onClick={toggleAvailability}
+          disabled={saving}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+            data.is_24_7
+              ? 'border-emerald-400/50 text-emerald-300 bg-emerald-500/15'
+              : 'border-white/20 text-white/50 bg-white/8'
+          }`}
+        >
+          {saving
+            ? <Loader2 size={12} className="animate-spin" />
+            : data.is_24_7
+              ? <><Check size={12} /> זמין</>
+              : <>לא זמין</>
+          }
+        </button>
+      </div>
+
+      <div className="px-4 py-3 flex flex-col gap-2.5">
+        {/* Languages */}
+        <div className="flex flex-wrap gap-1">
+          {data.languages.map(code => {
+            const lang = allLanguages.find(l => l.code === code);
+            return lang ? (
+              <span key={code} className="text-[0.65rem] px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/10">
+                {lang.flag} {lang.name}
+              </span>
+            ) : null;
+          })}
+        </div>
+
+        {/* Hours */}
+        {!data.is_24_7 && data.start_time && (
+          <p className="text-xs text-white/45 flex items-center gap-1">
+            <Clock size={11} />
+            {formatTime(data.start_time)} – {formatTime(data.end_time)}
+          </p>
+        )}
+
+        {/* Delete */}
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-xs text-red-400/60 hover:text-red-400 font-semibold transition-colors text-right mt-0.5"
+          >
+            הסר פרופיל מהמערכת
+          </button>
+        ) : (
+          <div className="flex gap-2 mt-0.5">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-white/15 text-white/60 active:scale-95 transition-all"
+            >
+              ביטול
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={saving}
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-red-400/40 text-red-300 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1"
+              style={{ background: 'rgba(239,68,68,0.15)' }}
+            >
+              {saving ? <Loader2 size={12} className="animate-spin" /> : 'מחק לצמיתות'}
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main Modal ────────────────────────────────────────────────────────────────
 
 type View = 'intro' | 'languages' | 'translators' | 'register';
@@ -831,6 +1018,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [langSearch, setLangSearch]     = useState('');
   const [showInfo, setShowInfo]         = useState(false);
   const [registerMode, setRegisterMode] = useState<'new' | 'checking' | 'edit'>('new');
+  const [myTranslatorId, setMyTranslatorId] = useState<string | null>(() => localStorage.getItem('lb_translator_id'));
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
 
@@ -980,6 +1168,19 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           >
             <ChevronRight size={22} />
           </button>
+        ) : view === 'languages' ? (
+          <button
+            onClick={() => setView('register')}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold text-white/90 border border-white/25 active:scale-95 transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.09)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.15)',
+            }}
+          >
+            <UserPlus size={15} />
+            הצטרף
+          </button>
         ) : (
           <div className="w-10" />
         )}
@@ -1008,10 +1209,11 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view !== 'intro' && (
             <button
               onClick={() => setShowInfo(true)}
-              className="p-2 rounded-xl text-white/60 active:bg-white/10"
-              aria-label="מידע"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-white/75 active:bg-white/10 transition-all"
+              aria-label="מידע על השירות"
             >
-              <Info size={20} />
+              <Info size={18} />
+              <span className="text-xs font-bold">מהו?</span>
             </button>
           )}
           <button
@@ -1065,15 +1267,34 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               </div>
 
               {/* Body */}
-              <div className="px-5 pb-6">
+              <div className="px-5 pb-6 flex flex-col gap-3">
                 <div
                   className="rounded-2xl px-4 py-4"
                   style={{ background: 'rgba(255,255,255,0.08)' }}
                 >
-                  <p className="text-white/90 text-sm leading-relaxed font-medium text-right">
-                    במקרה חירום רפואי שבו קיים מחסום שפה מול המטופל, ניתן לאתר במהירות מתנדבים דוברי שפות שיסייעו בתיווך המידע הרפואי.
-                    {' '}בחר שפה, אתר מתרגם פנוי (נקודה ירוקה) וצור קשר בשיחה או בוואטסאפ.
+                  <p className="text-white/90 text-[0.9rem] leading-relaxed font-semibold text-right">
+                    שירות זה מחבר בזמן אמת בין חובשים בשטח למתרגמים מתנדבים מתוך קהילת הכוננים, על מנת להעניק טיפול רפואי מדויק למטופלים שאינם דוברי עברית.
                   </p>
+                </div>
+                <div className="flex flex-col gap-2 px-1">
+                  <div className="flex items-start gap-2.5 text-right">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={11} className="text-emerald-300" />
+                    </div>
+                    <p className="text-white/70 text-sm leading-snug">בחר שפה מהרשימה ואתר מתרגם פנוי (נקודה ירוקה)</p>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-right">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={11} className="text-emerald-300" />
+                    </div>
+                    <p className="text-white/70 text-sm leading-snug">צור קשר בשיחת טלפון או בוואטסאפ בלחיצת כפתור</p>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-right">
+                    <div className="w-5 h-5 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                      <UserPlus size={11} className="text-blue-300" />
+                    </div>
+                    <p className="text-white/70 text-sm leading-snug">גם אתה יכול להצטרף לצוות המתרגמים ולהיות זמין לסייע</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1096,6 +1317,19 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view === 'languages' && (
             <motion.div key="languages" {...PAGE}>
               <div className="p-4" style={{ paddingBottom: 'max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' }}>
+
+                {/* My Profile Card */}
+                {myTranslatorId && (
+                  <div className="mb-4">
+                    <MyProfileCard
+                      id={myTranslatorId}
+                      allLanguages={allLanguages}
+                      onDeleted={() => setMyTranslatorId(null)}
+                      onUpdated={fetchAllTranslators}
+                    />
+                  </div>
+                )}
+
                 <div className="relative mb-4">
                   <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <input
@@ -1133,22 +1367,6 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   </div>
                 )}
 
-                {/* Join button — always visible */}
-                {!loadingAll && (
-                  <button
-                    onClick={() => setView('register')}
-                    className="w-full mt-4 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-white/95"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(124,58,237,0.25) 100%)',
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      backdropFilter: 'blur(12px)',
-                      boxShadow: '0 4px 20px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                    }}
-                  >
-                    <UserPlus size={20} />
-                    הצטרף לצוות המתרגמים
-                  </button>
-                )}
               </div>
             </motion.div>
           )}
@@ -1222,11 +1440,12 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               <RegisterForm
                 allLanguages={allLanguages}
                 onModeChange={setRegisterMode}
-                onSuccess={(langs) => {
+                onSuccess={(langs, newId) => {
+                  if (newId) setMyTranslatorId(newId);
                   // Optimistic update for immediate count reflection
                   setAllTranslators(prev => [
                     ...prev,
-                    { id: 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
+                    { id: newId ?? 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
                   ]);
                   setRegisterMode('new');
                   setView('languages');
