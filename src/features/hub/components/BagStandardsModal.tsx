@@ -304,6 +304,13 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         <div className="w-10" />
       </div>
 
+      {/* Ministry of Health standard sub-header */}
+      <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.03] backdrop-blur-sm">
+        <p className="text-center text-[0.7rem] font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase">
+          על פי תקן משרד הבריאות
+        </p>
+      </div>
+
       {/* Bag selection cards */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {BAGS.map((bag) => (

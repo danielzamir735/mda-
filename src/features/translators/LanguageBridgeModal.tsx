@@ -377,9 +377,11 @@ function AddLanguageWidget() {
 function RegisterForm({
   allLanguages,
   onSuccess,
+  onModeChange,
 }: {
   allLanguages: Language[];
   onSuccess: (langs: string[]) => void;
+  onModeChange?: (mode: 'new' | 'checking' | 'edit') => void;
 }) {
   const [fullName, setFullName]             = useState('');
   const [phone, setPhone]                   = useState('');
@@ -400,6 +402,7 @@ function RegisterForm({
   const phoneTimerRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => { if (phoneTimerRef.current) clearTimeout(phoneTimerRef.current); }, []);
+  useEffect(() => { onModeChange?.(mode); }, [mode]); // eslint-disable-line
 
   const phoneMatch    = phone.trim() !== '' && phone.trim() === phoneConfirm.trim();
   const phoneMismatch = phoneConfirm.trim() !== '' && phone.trim() !== phoneConfirm.trim();
@@ -543,7 +546,7 @@ function RegisterForm({
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5 pb-10">
+    <div className="flex flex-col gap-5 px-4 py-5" style={{ paddingBottom: 'max(5rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' }}>
 
       {/* Identity recognition banner */}
       <AnimatePresence>
@@ -718,7 +721,7 @@ function RegisterForm({
             }}
           >
             <span className="text-2xl">🕐</span>
-            <span className="text-sm font-black text-white">בחירת שעות</span>
+            <span className="text-sm font-black text-white">בחירת שעות ידנית</span>
             {!is24_7 && (
               <span className="text-[0.65rem] text-blue-400 font-semibold">נבחר ✓</span>
             )}
@@ -782,7 +785,7 @@ function RegisterForm({
               style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
-              {loading ? 'שומר...' : 'עדכן שינויים'}
+              {loading ? 'שומר...' : 'עדכן פרטים'}
             </button>
             <button
               onClick={handleDelete} disabled={loading}
@@ -801,7 +804,7 @@ function RegisterForm({
               style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
-              {loading ? 'שומר...' : 'הצטרף לצוות'}
+              {loading ? 'שומר...' : 'הצטרף לצוות המתרגמים'}
             </button>
           </motion.div>
         )}
@@ -827,6 +830,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [loadingAll, setLoadingAll]     = useState(false);
   const [langSearch, setLangSearch]     = useState('');
   const [showInfo, setShowInfo]         = useState(false);
+  const [registerMode, setRegisterMode] = useState<'new' | 'checking' | 'edit'>('new');
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
 
@@ -925,6 +929,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setView('languages');
     setSelectedLang(null);
     setTranslators([]);
+    setRegisterMode('new');
   };
 
   // Reset when modal closes
@@ -985,6 +990,12 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               <span className="text-2xl">{selectedLang.flag}</span>
               <h1 className="text-lg font-black text-white">{selectedLang.name}</h1>
             </div>
+          ) : view === 'register' ? (
+            <h1 className="text-lg font-black text-white leading-tight">
+              {registerMode === 'edit' ? 'עדכון או הסרת פרופיל' : 'הצטרף לצוות המתרגמים'}
+            </h1>
+          ) : view === 'languages' ? (
+            <h1 className="text-base font-black text-white leading-snug">בחר שפה למציאת מתרגמים</h1>
           ) : (
             <div className="flex items-center justify-center gap-2">
               <Globe size={20} className="text-blue-400" />
@@ -1070,21 +1081,6 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Header text — only for language grid */}
-      {view === 'languages' && (
-        <div
-          className="shrink-0 px-5 pt-4 pb-4 border-b border-white/10"
-          style={{
-            background: 'linear-gradient(180deg, rgba(15,15,25,0.72) 0%, rgba(15,15,25,0.55) 100%)',
-            backdropFilter: 'blur(18px) saturate(1.4)',
-          }}
-        >
-          <p className="text-center font-black text-white text-[1.05rem] leading-snug">
-            בחר שפה למציאת מתרגמים זמינים בקהילה
-          </p>
-        </div>
-      )}
-
       {/* Scrollable body with animated views */}
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
@@ -1099,7 +1095,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {/* ── Language Grid ── */}
           {view === 'languages' && (
             <motion.div key="languages" {...PAGE}>
-              <div className="p-4 pb-8">
+              <div className="p-4" style={{ paddingBottom: 'max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' }}>
                 <div className="relative mb-4">
                   <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <input
@@ -1225,12 +1221,14 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
             <motion.div key="register" {...PAGE}>
               <RegisterForm
                 allLanguages={allLanguages}
+                onModeChange={setRegisterMode}
                 onSuccess={(langs) => {
                   // Optimistic update for immediate count reflection
                   setAllTranslators(prev => [
                     ...prev,
                     { id: 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null }
                   ]);
+                  setRegisterMode('new');
                   setView('languages');
                   fetchAllTranslators();
                 }}

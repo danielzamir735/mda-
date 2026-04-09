@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Flame, Share2, Droplets } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import ReactGA from 'react-ga4';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 type AgeGroup = 'adult' | 'child';
@@ -16,23 +17,34 @@ const PARTS: Part[] = [
   { id: 'left_arm',   label: "יד ש'",     adult: 9,  child: 9  },
   { id: 'right_leg',  label: "רגל י'",    adult: 18, child: 14 },
   { id: 'left_leg',   label: "רגל ש'",    adult: 18, child: 14 },
-  { id: 'genitals',   label: 'איברי מין', adult: 1,  child: 1  },
+  { id: 'genitals',      label: 'איברי מין',       adult: 1,  child: 1  },
+  { id: 'right_arm_back', label: "יד אחורית י'",  adult: 4,  child: 4  },
+  { id: 'left_arm_back',  label: "יד אחורית ש'",  adult: 4,  child: 4  },
+  { id: 'right_leg_back', label: "רגל אחורית י'", adult: 9,  child: 7  },
+  { id: 'left_leg_back',  label: "רגל אחורית ש'", adult: 9,  child: 7  },
 ];
 
 const EXTRAS = ['upper_back', 'lower_back', 'genitals'];
+const POSTERIOR_LIMBS = ['right_arm_back', 'left_arm_back', 'right_leg_back', 'left_leg_back'];
 const byId = (id: string) => PARTS.find(p => p.id === id)!;
 
 export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('adult');
+
+  useEffect(() => {
+    if (isOpen) ReactGA.event('modal_view', { modal: 'burns_calculator' });
+  }, [isOpen]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [weight, setWeight] = useState('');
   const [burnOverride, setBurnOverride] = useState('');
 
   if (!isOpen) return null;
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
     setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    ReactGA.event('burn_body_part_toggle', { part: id, age_group: ageGroup });
+  };
 
   const handleAge = (ag: AgeGroup) => { setAgeGroup(ag); setSelected(new Set()); };
 
@@ -167,6 +179,26 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
               </button>
             );
           })}
+        </div>
+
+        {/* Posterior limb chips */}
+        <div className="w-full flex flex-col gap-1.5" dir="rtl">
+          <p className="text-[0.65rem] font-bold text-gray-400 dark:text-emt-muted uppercase tracking-widest text-center">גפיים אחוריות</p>
+          <div className="flex gap-2 flex-wrap justify-center">
+            {POSTERIOR_LIMBS.map(id => {
+              const p = byId(id);
+              return (
+                <button key={id} onClick={() => toggle(id)}
+                  className={['px-3 py-2 rounded-xl border font-bold text-sm transition-all active:scale-95',
+                    selected.has(id)
+                      ? 'border-emt-red/50 bg-emt-red/10 text-emt-red'
+                      : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
+                  ].join(' ')}>
+                  {p.label} <span className="text-xs opacity-60">({p[ageGroup]}%)</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Total */}
