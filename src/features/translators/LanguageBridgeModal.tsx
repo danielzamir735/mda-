@@ -134,7 +134,7 @@ function formatTime(t: string | null): string {
 
 // ─── Intro Screen ──────────────────────────────────────────────────────────────
 
-function IntroScreen({ onStart }: { onStart: () => void }) {
+function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCount: number }) {
   const handleStart = () => {
     localStorage.setItem('lb_intro_seen', '1');
     onStart();
@@ -194,6 +194,31 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       >
         קדימה, בואו נתחיל
       </motion.button>
+
+      {assistCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.35 } }}
+          className="w-full max-w-xs rounded-2xl px-4 py-3 text-center"
+          style={{
+            background: 'rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.13)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <motion.p
+            key={assistCount}
+            initial={{ scale: 1.18 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+            className="text-2xl font-black text-white tabular-nums"
+          >
+            {assistCount.toLocaleString('he-IL')}
+          </motion.p>
+          <p className="text-xs text-white/50 mt-0.5 font-semibold">שיחות סיוע בוצעו דרך האפליקציה</p>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -210,12 +235,13 @@ function WhatsAppIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function TranslatorCard({ translator, available, isEmergency, allLanguages, selectedLangName }: {
+function TranslatorCard({ translator, available, isEmergency, allLanguages, selectedLangName, onContact }: {
   translator: Translator;
   available: boolean;
   isEmergency?: boolean;
   allLanguages: Language[];
   selectedLangName?: string;
+  onContact?: () => void;
 }) {
   const phone = translator.phone_number.replace(/\D/g, '');
   const waNumber = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
@@ -294,6 +320,7 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
           onClick={e => {
             e.stopPropagation();
             ReactGA.event('contact_translator', { method: 'call', language: selectedLangName ?? '' });
+            onContact?.();
           }}
           className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
@@ -308,6 +335,7 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
           onClick={e => {
             e.stopPropagation();
             ReactGA.event('contact_translator', { method: 'whatsapp', language: selectedLangName ?? '' });
+            onContact?.();
           }}
           className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
@@ -1195,6 +1223,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const [registerMode, setRegisterMode] = useState<'new' | 'checking' | 'edit'>('new');
   const [myTranslatorId, setMyTranslatorId] = useState<string | null>(() => localStorage.getItem('lb_translator_id'));
   const [prefillPhone, setPrefillPhone] = useState<string | undefined>(undefined);
+  const [assistCount, setAssistCount]   = useState(0);
 
   const allLanguages = [...STATIC_LANGUAGES, ...customLanguages];
 
@@ -1262,13 +1291,28 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     }
   }, []);
 
+  const fetchAssistCount = useCallback(async () => {
+    const { data } = await supabase
+      .from('global_counters')
+      .select('count')
+      .eq('id', 'translation_assists')
+      .single();
+    if (data) setAssistCount(data.count as number);
+  }, []);
+
+  const incrementCounter = useCallback(async () => {
+    setAssistCount(prev => prev + 1);
+    await supabase.rpc('increment_counter', { counter_id: 'translation_assists' });
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       ReactGA.event('modal_view', { modal: 'language_bridge' });
       fetchAllTranslators();
       fetchCustomLanguages();
+      fetchAssistCount();
     }
-  }, [isOpen, fetchAllTranslators, fetchCustomLanguages]);
+  }, [isOpen, fetchAllTranslators, fetchCustomLanguages, fetchAssistCount]);
 
   const fetchForLanguage = useCallback(async (langCode: string) => {
     setLoadingList(true);
@@ -1485,7 +1529,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {/* ── Intro ── */}
           {view === 'intro' && (
             <motion.div key="intro" {...INTRO_PAGE}>
-              <IntroScreen onStart={() => setView('languages')} />
+              <IntroScreen onStart={() => setView('languages')} assistCount={assistCount} />
             </motion.div>
           )}
 
@@ -1582,7 +1626,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {available.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
+                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}
@@ -1622,7 +1666,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {emergencyBackups.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} />
+                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}

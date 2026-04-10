@@ -11,7 +11,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (isOpen) {
       setDisplayCount(0);
-      const controls = animate(0, 3000, {
+      const controls = animate(0, 5000, {
         duration: 2.8,
         ease: [0.16, 1, 0.3, 1],
         onUpdate: (v) => setDisplayCount(Math.floor(v)),
@@ -93,7 +93,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 {displayCount.toLocaleString('he-IL')}
                 <span className="text-rose-400">+</span>
               </motion.div>
-              <p className="text-sm text-white/50 mt-1 font-medium">חובשים כבר משתמשים באפליקציה</p>
+              <p className="text-sm text-white/50 mt-1 font-medium">משתמשים כבר כאן</p>
             </div>
 
             {/* Copy */}
