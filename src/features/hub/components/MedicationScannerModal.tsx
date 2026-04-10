@@ -184,7 +184,6 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
     setState('loading');
     setResultText('');
-
     setPreview(null);
 
     try {
@@ -196,8 +195,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       setResultText(text);
       setState('result');
       saveToHistory(query, text);
-    } catch {
-
+    } catch (err) {
+      console.error('[MedicationScannerModal] Text search API error:', err);
       setState('error');
     }
   };
@@ -229,8 +228,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       setResultText(text);
       setState('result');
       saveToHistory(extractMedName(text), text);
-    } catch {
-
+    } catch (err) {
+      console.error('[MedicationScannerModal] Image scan API error:', err);
       setState('error');
     }
   };
@@ -385,8 +384,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         {state === 'error' && (
           <div className="rounded-2xl border border-emt-yellow/30 bg-emt-yellow/10 p-4 flex flex-col items-center gap-3 text-center">
             <AlertCircle size={32} className="text-emt-yellow" />
-            <p className="text-emt-yellow font-bold text-base">שגיאה עקב עומס בשרתים</p>
-            <p className="text-emt-muted text-sm">נסה שוב מאוחר יותר</p>
+            <p className="text-emt-yellow font-bold text-base">שגיאה בטעינת המידע</p>
+            <p className="text-emt-muted text-sm">לא ניתן היה לאחזר את המידע. אנא בדוק חיבור לאינטרנט ונסה שוב.</p>
             <button
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
