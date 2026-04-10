@@ -9,6 +9,7 @@ import LegalDisclaimerModal from './components/LegalDisclaimerModal';
 import UpdateModal from './components/UpdateModal';
 import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
 import FullInstallModal from './features/pwa/FullInstallModal';
+import MigrationBanner from './components/MigrationBanner';
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -87,6 +88,7 @@ export default function App() {
         {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
         {/* PWA modals only after legal disclaimer is dismissed */}
         {!legalOpen && <FullInstallModal />}
+        <MigrationBanner />
       </BrowserRouter>
     </PwaInstallProvider>
   );
