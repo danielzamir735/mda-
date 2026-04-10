@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -28,6 +28,7 @@ interface Props {
 type HubItem = {
   id: string;
   label: string;
+  subtitle?: string;
   icon: LucideIcon;
   color: string;
   border: string;
@@ -165,9 +166,28 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
   },
+  {
+    id: 'whatsapp-community',
+    label: 'קהילת חובש +',
+    subtitle: 'הצטרפו לקהילה שלנו',
+    icon: Users,
+    color: 'text-green-400',
+    border: 'border-green-400/30',
+    bg: 'bg-green-400/10',
+    href: 'https://chat.whatsapp.com/YOUR_PLACEHOLDER',
+  },
+  {
+    id: 'simulators',
+    label: 'סימולטורים ללמידה',
+    subtitle: 'אימון ושמירה על כשירות',
+    icon: HeartPulse,
+    color: 'text-rose-400',
+    border: 'border-rose-400/30',
+    bg: 'bg-rose-400/10',
+  },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'whatsapp-community', 'simulators']);
 
 export default function HubModal({
   isOpen,
@@ -189,6 +209,7 @@ export default function HubModal({
   onMedicationScannerOpen,
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
+  const [showSimulators, setShowSimulators] = useState(false);
   const { openFullModal } = usePwaInstall();
 
   useEffect(() => {
@@ -218,6 +239,7 @@ export default function HubModal({
     if (id === 'accessibility') onAccessibilityOpen();
     if (id === 'breathing') onBreathingOpen();
     if (id === 'medication-scanner') onMedicationScannerOpen();
+    if (id === 'simulators') setShowSimulators(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
@@ -241,7 +263,7 @@ export default function HubModal({
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
-          {HUB_ITEMS.map(({ id, label, icon: Icon, color, border, bg, href }) => {
+          {HUB_ITEMS.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
             const enabled = ENABLED.has(id);
             const sharedClass = [
               'flex flex-col items-center justify-center gap-2',
@@ -257,6 +279,9 @@ export default function HubModal({
                 )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
+                {subtitle && (
+                  <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
+                )}
                 {id === 'install-app' && (
                   <span className="text-xs text-slate-400 text-center leading-tight">
                     גישה ללא רשת
@@ -310,6 +335,91 @@ export default function HubModal({
         </HapticButton>
 
       </div>
+
+      {/* Simulators Modal */}
+      {showSimulators && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+          {/* Header */}
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+            <div className="flex items-center gap-2">
+              <HeartPulse size={22} className="text-rose-400" />
+              <div>
+                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">סימולטורים ללמידה</h2>
+                <p className="text-gray-500 dark:text-emt-muted text-xs">אימון ושמירה על כשירות</p>
+              </div>
+            </div>
+            <HapticButton
+              onClick={() => setShowSimulators(false)}
+              pressScale={0.88}
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                         flex items-center justify-center
+                         text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+              aria-label="סגור"
+            >
+              <X size={20} />
+            </HapticButton>
+          </div>
+
+          {/* Simulator list */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            {[
+              {
+                label: 'סימולטור החייאה',
+                sublabel: 'Lifesaver — תרגול CPR אינטראקטיבי',
+                url: 'https://life-saver.org.uk/',
+                color: 'text-rose-400',
+                border: 'border-rose-400/30',
+                bg: 'bg-rose-400/5',
+                iconBg: 'bg-rose-400/20 border-rose-400/40',
+              },
+              {
+                label: "סימולטור אק\"ג וקצבי לב",
+                sublabel: 'Practical Clinical Skills — קריאת אק"ג',
+                url: 'https://www.practicalclinicalskills.com/',
+                color: 'text-sky-400',
+                border: 'border-sky-400/30',
+                bg: 'bg-sky-400/5',
+                iconBg: 'bg-sky-400/20 border-sky-400/40',
+              },
+              {
+                label: 'תרגול מקרים והחייאה',
+                sublabel: 'RevivR (BHF) — תרגול בהדרכה',
+                url: 'https://revivr.bhf.org.uk/',
+                color: 'text-emerald-400',
+                border: 'border-emerald-400/30',
+                bg: 'bg-emerald-400/5',
+                iconBg: 'bg-emerald-400/20 border-emerald-400/40',
+              },
+              {
+                label: 'אימון זיהוי מחלות',
+                sublabel: 'נחש את המחלה — אבחון קליני',
+                url: 'https://diseaseguess.azurewebsites.net/welcome',
+                color: 'text-violet-400',
+                border: 'border-violet-400/30',
+                bg: 'bg-violet-400/5',
+                iconBg: 'bg-violet-400/20 border-violet-400/40',
+              },
+            ].map(({ label, sublabel, url, color, border, bg, iconBg }) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-95 transition-transform text-right`}
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${iconBg}`}>
+                  <HeartPulse size={22} className={color} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`${color} font-bold text-base leading-tight`}>{label}</p>
+                  <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5 leading-tight">{sublabel}</p>
+                </div>
+                <ExternalLink size={16} className="text-gray-400 dark:text-emt-muted shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
