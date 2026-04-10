@@ -6,6 +6,16 @@ interface Props {
   onPhoto: (dataUrl: string) => void;
 }
 
+const VIDEO_CONSTRAINTS: MediaStreamConstraints = {
+  video: {
+    facingMode: { ideal: 'environment' },
+    width: { ideal: 9999 },
+    height: { ideal: 9999 },
+    advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
+  },
+  audio: false,
+};
+
 export default function CameraCapture({ onClose, onPhoto }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -13,19 +23,16 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
 
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
   const startCamera = useCallback(() => {
     setReady(false);
     setError(null);
     navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 4096 },
-          height: { ideal: 2160 },
-          advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
-        },
-        audio: false,
-      })
+      .getUserMedia(VIDEO_CONSTRAINTS)
       .then((s) => {
         streamRef.current = s;
         if (videoRef.current) {
@@ -39,15 +46,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   useEffect(() => {
     let mounted = true;
     navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 4096 },
-          height: { ideal: 2160 },
-          advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
-        },
-        audio: false,
-      })
+      .getUserMedia(VIDEO_CONSTRAINTS)
       .then((s) => {
         if (!mounted) { s.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = s;
@@ -65,26 +64,23 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
     };
   }, []);
 
-  const stopStream = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-  };
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     stopStream();
     onClose();
-  };
+  }, [stopStream, onClose]);
 
   const capture = () => {
     if (!videoRef.current || !ready) return;
     try {
+      const video = videoRef.current;
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('canvas context unavailable');
-      ctx.drawImage(videoRef.current, 0, 0);
-      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // PNG = lossless, maximum quality
+      const dataUrl = canvas.toDataURL('image/png');
       stopStream();
       setCapturedUrl(dataUrl);
     } catch {
@@ -99,16 +95,17 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
 
   const usePhoto = () => {
     if (!capturedUrl) return;
-    const url = capturedUrl;
-    stopStream();
-    onPhoto(url);
+    onPhoto(capturedUrl);
     onClose();
   };
 
   // ── Preview mode ──────────────────────────────────────────────
   if (capturedUrl) {
     return (
-      <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+      <div
+        className="fixed inset-0 z-[60] bg-black"
+        style={{ height: '100dvh' }}
+      >
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
@@ -123,10 +120,14 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
         <img
           src={capturedUrl}
           alt="תמונה שצולמה"
-          className="flex-1 w-full object-contain"
+          className="absolute inset-0 w-full h-full object-contain"
+          style={{ bottom: '120px' }}
         />
 
-        <div className="flex gap-4 justify-center items-center pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] bg-black">
+        <div
+          className="absolute bottom-0 left-0 right-0 flex gap-4 justify-center items-center bg-black"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)', paddingTop: '20px', minHeight: '100px' }}
+        >
           <button
             onClick={retake}
             className="flex items-center gap-2 px-6 py-3 rounded-full
@@ -152,7 +153,10 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
 
   // ── Camera / viewfinder mode ──────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+    <div
+      className="fixed inset-0 z-[60] bg-black"
+      style={{ height: '100dvh' }}
+    >
       <button
         onClick={handleClose}
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
@@ -165,7 +169,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
       </button>
 
       {error ? (
-        <div className="flex-1 flex items-center justify-center px-8">
+        <div className="absolute inset-0 flex items-center justify-center px-8">
           <p className="text-white text-center text-base">{error}</p>
         </div>
       ) : (
@@ -174,11 +178,11 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
           autoPlay
           playsInline
           muted
-          className="flex-1 w-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
         />
       )}
 
-      <div className="absolute bottom-10 inset-x-0 flex justify-center">
+      <div className="absolute bottom-12 inset-x-0 flex justify-center">
         <button
           onClick={capture}
           disabled={!ready || !!error}
