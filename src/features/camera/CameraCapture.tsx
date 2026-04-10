@@ -99,7 +99,9 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
 
   const usePhoto = () => {
     if (!capturedUrl) return;
-    onPhoto(capturedUrl);
+    const url = capturedUrl;
+    stopStream();
+    onPhoto(url);
     onClose();
   };
 
@@ -124,7 +126,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
           className="flex-1 w-full object-contain"
         />
 
-        <div className="flex gap-4 justify-center items-center pt-4 pb-[max(2.5rem,env(safe-area-inset-bottom,0px)+1.5rem)] bg-black">
+        <div className="flex gap-4 justify-center items-center pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] bg-black">
           <button
             onClick={retake}
             className="flex items-center gap-2 px-6 py-3 rounded-full
