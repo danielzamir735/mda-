@@ -48,6 +48,13 @@ export default function App() {
     };
   }, []);
 
+  // Redirect old domain users to new domain
+  useEffect(() => {
+    if (window.location.hostname === 'mda-phi.vercel.app') {
+      window.location.replace('https://hovesh-plus.vercel.app' + window.location.pathname + window.location.search);
+    }
+  }, []);
+
   useEffect(() => {
     const html = document.documentElement;
     if (theme === 'dark') html.classList.add('dark');
