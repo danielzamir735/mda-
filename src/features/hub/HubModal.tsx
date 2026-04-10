@@ -216,7 +216,15 @@ export default function HubModal({
       setHasSeenWhatsNew(true);
     }
   }, []);
+
+  // Reset simulators view when hub closes so re-opening always shows the tools menu
+  useEffect(() => {
+    if (!isOpen) setShowSimulators(false);
+  }, [isOpen]);
+
   useModalBackHandler(isOpen, onClose);
+  // Give simulators its own back-button layer so back returns to the tools menu, not home
+  useModalBackHandler(showSimulators, () => setShowSimulators(false));
   if (!isOpen) return null;
 
   const handleItemClick = (id: string) => {
