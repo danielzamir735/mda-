@@ -1292,11 +1292,13 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   }, []);
 
   const fetchAssistCount = useCallback(async () => {
-    const { data } = await supabase
+    console.log('[LB] fetchAssistCount: querying global_counters...');
+    const { data, error } = await supabase
       .from('global_counters')
       .select('count')
       .eq('id', 'translation_assists')
       .single();
+    console.log('[LB] fetchAssistCount result:', { data, error });
     if (data) setAssistCount(data.count as number);
   }, []);
 
@@ -1537,6 +1539,32 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view === 'languages' && (
             <motion.div key="languages" {...PAGE}>
               <div className="p-4" style={{ paddingBottom: 'max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' }}>
+
+                {/* Assist counter badge */}
+                {assistCount > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.1 } }}
+                    className="flex items-center justify-center gap-2 mb-4 rounded-2xl px-4 py-2.5"
+                    style={{
+                      background: 'rgba(255,255,255,0.07)',
+                      backdropFilter: 'blur(16px)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <motion.span
+                      key={assistCount}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                      className="text-base font-black text-white tabular-nums"
+                    >
+                      {assistCount.toLocaleString('he-IL')}
+                    </motion.span>
+                    <span className="text-xs text-white/55 font-semibold">שיחות סיוע בוצעו דרך המערכת</span>
+                  </motion.div>
+                )}
 
                 {/* My Profile Card */}
                 {myTranslatorId && (
