@@ -124,7 +124,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
           className="flex-1 w-full object-contain"
         />
 
-        <div className="flex gap-4 justify-center items-center pb-10 pt-4 bg-black">
+        <div className="flex gap-4 justify-center items-center pt-4 pb-[max(2.5rem,env(safe-area-inset-bottom,0px)+1.5rem)] bg-black">
           <button
             onClick={retake}
             className="flex items-center gap-2 px-6 py-3 rounded-full
@@ -132,7 +132,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
                        active:scale-95 transition-transform"
           >
             <RotateCcw size={18} />
-            מחק / צלם מחדש
+            צלם מחדש
           </button>
           <button
             onClick={usePhoto}
@@ -141,7 +141,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
                        active:scale-95 transition-transform"
           >
             <Check size={18} strokeWidth={3} />
-            שימוש בתמונה
+            אישור
           </button>
         </div>
       </div>
