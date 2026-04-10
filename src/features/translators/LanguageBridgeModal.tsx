@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
@@ -132,6 +132,29 @@ function formatTime(t: string | null): string {
   return t ? t.slice(0, 5) : '';
 }
 
+// ─── Count-Up Number ───────────────────────────────────────────────────────────
+
+function CountUpNumber({ value, className, style }: { value: number; className?: string; style?: CSSProperties }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!value) return;
+    const duration = 1400;
+    const start = performance.now();
+    let frame: number;
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return <span className={className} style={style}>{display.toLocaleString('he-IL')}</span>;
+}
+
 // ─── Intro Screen ──────────────────────────────────────────────────────────────
 
 function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCount: number }) {
@@ -199,24 +222,30 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.35 } }}
-          className="w-full max-w-xs rounded-2xl px-4 py-3 text-center"
+          className="w-full max-w-xs rounded-2xl px-5 py-4 flex flex-col items-center gap-1.5"
           style={{
-            background: 'rgba(255,255,255,0.07)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.13)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.09)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            boxShadow: '0 8px 32px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.15)',
           }}
         >
-          <motion.p
-            key={assistCount}
-            initial={{ scale: 1.18 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
-            className="text-2xl font-black text-white tabular-nums"
-          >
-            {assistCount.toLocaleString('he-IL')}
-          </motion.p>
-          <p className="text-xs text-white/50 mt-0.5 font-semibold">שיחות סיוע בוצעו דרך האפליקציה</p>
+          <div className="flex items-center gap-2.5 justify-center">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.8)' }} />
+            </span>
+            <CountUpNumber
+              value={assistCount}
+              className="text-3xl font-black tabular-nums"
+              style={{
+                background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            />
+          </div>
+          <p className="text-xs text-white/55 font-semibold">שיחות סיוע בוצעו דרך המערכת</p>
         </motion.div>
       )}
     </div>
@@ -1489,33 +1518,44 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               </div>
 
               {/* Body */}
-              <div className="px-5 pb-6 flex flex-col gap-3">
+              <div className="px-6 pb-8 flex flex-col items-center gap-4 text-center">
+                {/* 3D-style globe icon */}
                 <div
-                  className="rounded-2xl px-4 py-4"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{
+                    background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+                    boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
+                  }}
+                >
+                  <Globe size={30} className="text-white" />
+                </div>
+
+                <div
+                  className="rounded-2xl px-4 py-4 w-full"
                   style={{ background: 'rgba(255,255,255,0.08)' }}
                 >
-                  <p className="text-white/90 text-[0.9rem] leading-relaxed font-semibold text-right">
+                  <p className="text-white/90 text-[0.9rem] leading-[1.75] font-semibold text-center">
                     שירות זה מחבר בזמן אמת בין חובשים בשטח למתרגמים מתנדבים מתוך קהילת הכוננים, על מנת להעניק טיפול רפואי מדויק למטופלים שאינם דוברי עברית.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 px-1">
-                  <div className="flex items-start gap-2.5 text-right">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center gap-2.5 justify-center">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0">
                       <Check size={11} className="text-emerald-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug">בחר שפה מהרשימה ואתר מתרגם פנוי (נקודה ירוקה)</p>
+                    <p className="text-white/70 text-sm leading-snug text-right">בחר שפה מהרשימה ואתר מתרגם פנוי (נקודה ירוקה)</p>
                   </div>
-                  <div className="flex items-start gap-2.5 text-right">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="flex items-center gap-2.5 justify-center">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0">
                       <Check size={11} className="text-emerald-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug">צור קשר בשיחת טלפון או בוואטסאפ בלחיצת כפתור</p>
+                    <p className="text-white/70 text-sm leading-snug text-right">צור קשר בשיחת טלפון או בוואטסאפ בלחיצת כפתור</p>
                   </div>
-                  <div className="flex items-start gap-2.5 text-right">
-                    <div className="w-5 h-5 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="flex items-center gap-2.5 justify-center">
+                    <div className="w-5 h-5 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
                       <UserPlus size={11} className="text-blue-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug">גם אתה יכול להצטרף לצוות המתרגמים ולהיות זמין לסייע</p>
+                    <p className="text-white/70 text-sm leading-snug text-right">גם אתה יכול להצטרף לצוות המתרגמים ולהיות זמין לסייע</p>
                   </div>
                 </div>
               </div>
@@ -1545,24 +1585,28 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.1 } }}
-                    className="flex items-center justify-center gap-2 mb-4 rounded-2xl px-4 py-2.5"
+                    className="flex items-center justify-center gap-3 mb-4 rounded-2xl px-4 py-3"
                     style={{
-                      background: 'rgba(255,255,255,0.07)',
-                      backdropFilter: 'blur(16px)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.09)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      boxShadow: '0 4px 24px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.12)',
                     }}
                   >
-                    <motion.span
-                      key={assistCount}
-                      initial={{ scale: 1.2 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
-                      className="text-base font-black text-white tabular-nums"
-                    >
-                      {assistCount.toLocaleString('he-IL')}
-                    </motion.span>
-                    <span className="text-xs text-white/55 font-semibold">שיחות סיוע בוצעו דרך המערכת</span>
+                    <span className="relative flex h-2.5 w-2.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.8)' }} />
+                    </span>
+                    <CountUpNumber
+                      value={assistCount}
+                      className="text-lg font-black tabular-nums"
+                      style={{
+                        background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    />
+                    <span className="text-xs text-white/60 font-semibold">שיחות סיוע בוצעו דרך המערכת</span>
                   </motion.div>
                 )}
 
