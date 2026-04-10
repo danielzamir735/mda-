@@ -2,12 +2,6 @@
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "mda-phi.vercel.app"
-        }
-      ],
       "destination": "https://hovesh-plus.vercel.app/$1",
       "permanent": true
     }
