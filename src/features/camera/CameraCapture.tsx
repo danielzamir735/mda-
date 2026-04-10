@@ -22,6 +22,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -70,21 +71,32 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   }, [stopStream, onClose]);
 
   const capture = () => {
-    if (!videoRef.current || !ready) return;
+    if (!videoRef.current || !ready || capturing) return;
+    setCapturing(true);
     try {
       const video = videoRef.current;
+      // Cap at 2560px max — still excellent quality, fast JPEG encode, fits localStorage
+      const MAX_DIM = 2560;
+      let w = video.videoWidth;
+      let h = video.videoHeight;
+      if (w > MAX_DIM || h > MAX_DIM) {
+        const scale = MAX_DIM / Math.max(w, h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('canvas context unavailable');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      // PNG = lossless, maximum quality
-      const dataUrl = canvas.toDataURL('image/png');
+      ctx.drawImage(video, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       stopStream();
       setCapturedUrl(dataUrl);
     } catch {
       setError('שגיאה בצילום. אנא נסה שוב.');
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -95,7 +107,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
 
   const usePhoto = () => {
     if (!capturedUrl) return;
-    onPhoto(capturedUrl);
+    try { onPhoto(capturedUrl); } catch { /* store error — still close */ }
     onClose();
   };
 
@@ -185,14 +197,15 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
       <div className="absolute bottom-12 inset-x-0 flex justify-center">
         <button
           onClick={capture}
-          disabled={!ready || !!error}
+          disabled={!ready || !!error || capturing}
           className="w-20 h-20 rounded-full border-4 border-white
                      flex items-center justify-center
-                     active:scale-90 transition-all duration-150
+                     transition-all duration-150
                      disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
-            background: 'rgba(255,255,255,0.2)',
+            background: capturing ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)',
             backdropFilter: 'blur(4px)',
+            transform: capturing ? 'scale(0.88)' : undefined,
           }}
           aria-label="צלם תמונה"
         />
