@@ -105,7 +105,10 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <Flame size={22} className="text-emt-red" />
             </div>
             <div className="flex-1">
-              <p className="text-emt-red font-bold text-base">מחשבון כוויות</p>
+              <div className="flex items-center gap-2">
+                <p className="text-emt-red font-bold text-base">מחשבון כוויות</p>
+                <span className="text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-400/30 px-2 py-0.5 rounded-full">בפיתוח</span>
+              </div>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 כלל תשעיות — שטח גוף עם כוויות
               </p>

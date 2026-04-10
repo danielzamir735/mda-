@@ -174,7 +174,6 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/10',
-    href: 'https://chat.whatsapp.com/YOUR_PLACEHOLDER',
   },
   {
     id: 'simulators',
@@ -187,7 +186,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'whatsapp-community', 'simulators']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators']);
 
 export default function HubModal({
   isOpen,
@@ -288,7 +287,7 @@ export default function HubModal({
                   </span>
                 )}
                 {!enabled && (
-                  <span className="text-xs font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">
+                  <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
                     בקרוב
                   </span>
                 )}
@@ -374,8 +373,8 @@ export default function HubModal({
               },
               {
                 label: "סימולטור אק\"ג וקצבי לב",
-                sublabel: 'Practical Clinical Skills — קריאת אק"ג',
-                url: 'https://www.practicalclinicalskills.com/',
+                sublabel: 'SkillStat — סימולטור אק"ג אינטראקטיבי',
+                url: 'https://www.skillstat.com/tools/ecg-simulator/',
                 color: 'text-sky-400',
                 border: 'border-sky-400/30',
                 bg: 'bg-sky-400/5',
