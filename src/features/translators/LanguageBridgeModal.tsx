@@ -220,8 +220,8 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
   const phone = translator.phone_number.replace(/\D/g, '');
   const waNumber = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
   const waMessage = selectedLangName
-    ? `שלום, אני חובש מאפליקציית "חובש +". אני נמצא כרגע בטיפול רפואי וזקוק לעזרה בתרגום לשפת ה-${selectedLangName}. האם אתה פנוי לסייע כעת?`
-    : 'שלום, אני חובש מאפליקציית "חובש +". אני זקוק לעזרה בתרגום. האם אתה פנוי לסייע כעת?';
+    ? `שלום, הודעה זו נשלחה דרך אפליקציית חובש +. קיים צורך דחוף בסיוע בתרגום לשפה ה-${selectedLangName} עבור מטופל בשטח. האם ניתן לסייע כעת?`
+    : 'שלום, הודעה זו נשלחה דרך אפליקציית חובש +. קיים צורך דחוף בסיוע בתרגום עבור מטופל בשטח. האם ניתן לסייע כעת?';
   const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
