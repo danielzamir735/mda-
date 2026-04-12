@@ -1694,8 +1694,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.15 } }}
                   className="flex items-center gap-3 mb-4 rounded-2xl px-4 py-3.5"
                   style={{
-                    background: 'linear-gradient(135deg, #7B1D2C 0%, #9B2B3F 100%)',
-                    boxShadow: '0 4px 20px rgba(123,29,44,0.45), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    background: 'linear-gradient(135deg, rgba(130,35,52,0.65) 0%, rgba(158,48,68,0.55) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(200,80,100,0.2)',
+                    boxShadow: '0 4px 20px rgba(130,35,52,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
                   }}
                 >
                   <p dir="rtl" className="flex-1 text-white text-xs leading-relaxed font-black">
