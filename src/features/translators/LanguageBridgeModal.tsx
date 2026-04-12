@@ -1163,9 +1163,13 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
 
   const handleDelete = async () => {
     setSaving(true);
-    await supabase.from('translators').delete().eq('id', id);
-    localStorage.removeItem('lb_translator_id');
+    const { error: dbError } = await supabase.from('translators').delete().eq('id', id);
     setSaving(false);
+    if (dbError) {
+      console.error('[LB] Delete error:', dbError);
+      return;
+    }
+    localStorage.removeItem('lb_translator_id');
     onDeleted();
   };
 
