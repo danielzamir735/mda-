@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Flame, Share2, Droplets } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import ReactGA from 'react-ga4';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 type AgeGroup = 'adult' | 'child';
@@ -39,6 +40,28 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const [weight, setWeight] = useState('');
   const [burnOverride, setBurnOverride] = useState('');
 
+  // Compute derived values before the early-return guard so hooks below stay unconditional
+  const total = PARTS.reduce((sum, p) => selected.has(p.id) ? sum + p[ageGroup] : sum, 0);
+  const parklandBurn = burnOverride !== '' ? parseFloat(burnOverride) : total;
+  const parklandWeight = parseFloat(weight);
+  const parklandResult =
+    parklandWeight > 0 && parklandBurn > 0
+      ? (4 * parklandWeight * parklandBurn) / 1000
+      : null;
+
+  // Track calculate_burns once each time the Parkland result first becomes non-null
+  const resultTrackedRef = useRef(false);
+  useEffect(() => {
+    if (parklandResult !== null) {
+      if (!resultTrackedRef.current) {
+        resultTrackedRef.current = true;
+        trackEvent('calculate_burns', { total_percentage: parklandBurn });
+      }
+    } else {
+      resultTrackedRef.current = false;
+    }
+  }, [parklandResult, parklandBurn]);
+
   if (!isOpen) return null;
 
   const toggle = (id: string) => {
@@ -48,21 +71,13 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
 
   const handleAge = (ag: AgeGroup) => { setAgeGroup(ag); setSelected(new Set()); };
 
-  const total = PARTS.reduce((sum, p) => selected.has(p.id) ? sum + p[ageGroup] : sum, 0);
   const severity = total === 0 ? null : total < 10 ? 'קל' : total < 25 ? 'בינוני' : 'חמור';
   const sevColor  = total < 10 ? 'text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
   const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-400' : 'bg-emt-red/20 text-emt-red';
 
-  // Parkland formula
-  const parklandBurn = burnOverride !== '' ? parseFloat(burnOverride) : total;
-  const parklandWeight = parseFloat(weight);
-  const parklandResult =
-    parklandWeight > 0 && parklandBurn > 0
-      ? (4 * parklandWeight * parklandBurn) / 1000
-      : null;
-
   const handleShare = () => {
     if (!navigator.share) return;
+    trackEvent('app_share_clicked', { context: 'burns_calculator' });
     navigator.share({
       title: 'חישוב פרקלנד',
       text: `מטופל: משקל ${parklandWeight} ק"ג, כוויות ${parklandBurn}%. נוזלים נדרשים (פרקלנד): ${parklandResult?.toFixed(2)} ליטר.`,

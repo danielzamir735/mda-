@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
+import { trackEvent } from '../../utils/analytics';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -106,6 +107,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
   const handleInstall = async () => {
     if (!installPromptEvent) return;
+    trackEvent('pwa_install_clicked');
     await installPromptEvent.prompt();
     const { outcome } = await installPromptEvent.userChoice;
     if (outcome === 'accepted') {

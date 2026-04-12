@@ -14,6 +14,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useTranslation } from '../../hooks/useTranslation';
+import { trackEvent } from '../../utils/analytics';
 import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
 import CalculatorsModal from '../hub/components/CalculatorsModal';
@@ -106,6 +107,7 @@ export default function VitalsFeature() {
 
   const handleResult = useCallback((value: number) => {
     setResult(value);
+    trackEvent('vitals_recorded', { type: activeCard, value });
     if (activeCard === 'heart') {
       setLastResultHeart(value);
       setDraftHeartRate(String(value));
@@ -162,9 +164,9 @@ export default function VitalsFeature() {
         onGalleryOpen={() => setGalleryOpen(true)}
         onNotesOpen={() => setNotesOpen(true)}
         onVitalsOpen={() => setVitalsHistoryOpen(true)}
-        onHubOpen={() => setHubOpen(true)}
+        onHubOpen={() => { trackEvent('nav_tab_clicked', { tab: 'tools' }); setHubOpen(true); }}
         onSupportOpen={() => setSupportOpen(true)}
-        onLanguageBridgeOpen={() => setLanguageBridgeOpen(true)}
+        onLanguageBridgeOpen={() => { trackEvent('nav_tab_clicked', { tab: 'translation' }); setLanguageBridgeOpen(true); }}
       />
 
       <footer className="shrink-0 text-center pt-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>

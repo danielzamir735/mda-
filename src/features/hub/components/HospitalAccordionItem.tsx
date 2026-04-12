@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, Phone, PhoneCall, Navigation, X } from 'lucide-react';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { trackEvent } from '../../../utils/analytics';
 
 export interface Hospital {
   name: string;
@@ -121,6 +122,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
 
                 <a
                   href={navUrl(hospital.navQueries.general)}
+                  onClick={() => trackEvent('hospital_navigation_clicked', { hospital_name: hospital.name, type: 'Adult' })}
                   className="flex items-center gap-3 w-full rounded-xl px-4 py-4
                              bg-blue-600 dark:bg-blue-600 border border-blue-500
                              active:scale-95 transition-transform"
@@ -131,6 +133,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
 
                 <a
                   href={navUrl(hospital.navQueries.pediatric)}
+                  onClick={() => trackEvent('hospital_navigation_clicked', { hospital_name: hospital.name, type: 'Child' })}
                   className="flex items-center gap-3 w-full rounded-xl px-4 py-4
                              bg-emerald-600 dark:bg-emerald-600 border border-emerald-500
                              active:scale-95 transition-transform"
@@ -142,6 +145,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                 {hospital.navQueries.maternity && (
                   <a
                     href={navUrl(hospital.navQueries.maternity)}
+                    onClick={() => trackEvent('hospital_navigation_clicked', { hospital_name: hospital.name, type: 'Maternity' })}
                     className="flex items-center gap-3 w-full rounded-xl px-4 py-4
                                bg-purple-600 dark:bg-purple-600 border border-purple-500
                                active:scale-95 transition-transform"
@@ -167,6 +171,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
             /* Single direct nav link — searches hospital name + city */
             <a
               href={navUrl('מיון ' + hospital.name + ' ' + hospital.city)}
+              onClick={() => trackEvent('hospital_navigation_clicked', { hospital_name: hospital.name, type: 'Adult' })}
               className="flex items-center gap-3 w-full rounded-xl px-4 py-3.5
                          bg-blue-600/15 border border-blue-500/40
                          active:scale-95 transition-transform"

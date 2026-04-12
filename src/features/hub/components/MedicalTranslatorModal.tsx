@@ -5,6 +5,7 @@ import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
   type Lang,
 } from '../data/medicalTranslationsData';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -156,7 +157,10 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
               <HapticButton
                 key={l}
                 pressScale={0.95}
-                onClick={() => setSelectedLang(l)}
+                onClick={() => {
+                  trackEvent('translation_started', { source_lang: 'he', target_lang: l });
+                  setSelectedLang(l);
+                }}
                 className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border
                            bg-white dark:bg-emt-gray flex items-center gap-4
                            active:border-orange-400/60 active:bg-orange-400/10"
