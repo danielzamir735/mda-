@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
-  HelpCircle, ShieldCheck, Trash2, Users, Video,
+  HelpCircle, ShieldCheck, Trash2, Users, Video, Share2,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -1683,6 +1683,44 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     <span className="text-xs text-white/60 font-semibold">שיחות סיוע בוצעו דרך המערכת</span>
                   </motion.div>
                 )}
+
+                {/* Recruitment share banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.15 } }}
+                  className="flex items-center gap-3 mb-4 rounded-2xl px-4 py-3"
+                  style={{
+                    background: 'rgba(255,255,255,0.07)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255,255,255,0.13)',
+                  }}
+                >
+                  <p dir="rtl" className="flex-1 text-white/60 text-xs leading-relaxed font-semibold">
+                    מכיר/ה מישהו שיכול לאייש אחת מהשפות? שלחו לו/ה את הקישור לאפליקציה
+                  </p>
+                  <button
+                    onClick={async () => {
+                      const shareData = {
+                        title: 'חובש+',
+                        text: 'מצטרפים למערך התרגום של חובש+ ומצילים חיים בזמן אמת. להרשמה:',
+                        url: 'https://hovesh-plus.vercel.app/',
+                      };
+                      try {
+                        if (navigator.share) {
+                          await navigator.share(shareData);
+                        } else {
+                          await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                          alert('הקישור הועתק ללוח!');
+                        }
+                      } catch { /* user cancelled */ }
+                    }}
+                    className="shrink-0 flex flex-col items-center gap-0.5 active:opacity-70 active:scale-90 transition-all"
+                    aria-label="שיתוף"
+                  >
+                    <Share2 size={18} className="text-blue-400" />
+                    <span className="text-[9px] font-bold text-blue-400 whitespace-nowrap">שתף</span>
+                  </button>
+                </motion.div>
 
                 {/* My Profile Card */}
                 {myTranslatorId && (
