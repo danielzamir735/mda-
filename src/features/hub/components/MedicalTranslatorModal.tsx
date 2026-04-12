@@ -7,7 +7,7 @@ import {
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
 
-interface Props { isOpen: boolean; onClose: () => void; }
+interface Props { isOpen: boolean; onClose: () => void; initialLang?: ExtendedLang; }
 
 const ALL_LANGS: Lang[] = ['en', 'ru', 'ar', 'fr', 'am'];
 const SIGN_LANG_CODE = 'sl' as const;
@@ -31,7 +31,7 @@ const LANG_LABELS_HE: Record<Lang, string> = {
 };
 
 // ── Recruitment Banner ─────────────────────────────────────────────────────────
-function RecruitmentBanner() {
+export function RecruitmentBanner() {
   const handleShare = async () => {
     trackInteraction('emergency_recruitment_share', 'recruitment');
     const shareData = {
@@ -69,8 +69,8 @@ function RecruitmentBanner() {
   );
 }
 
-export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
-  const [selectedLang, setSelectedLang] = useState<ExtendedLang | null>(null);
+export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }: Props) {
+  const [selectedLang, setSelectedLang] = useState<ExtendedLang | null>(initialLang ?? null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -110,6 +110,12 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
     setExpanded(null);
     onClose();
   };
+
+  // Sync selectedLang to initialLang when modal opens
+  useEffect(() => {
+    if (isOpen) setSelectedLang(initialLang ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Task 1: Step-by-step hardware back button
   // Push base history entry when modal opens; register popstate handler

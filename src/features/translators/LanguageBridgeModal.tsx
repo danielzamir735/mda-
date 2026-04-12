@@ -135,7 +135,7 @@ function formatTime(t: string | null): string {
 
 // ─── Count-Up Number ───────────────────────────────────────────────────────────
 
-function CountUpNumber({ value, className, style }: { value: number; className?: string; style?: CSSProperties }) {
+export function CountUpNumber({ value, className, style }: { value: number; className?: string; style?: CSSProperties }) {
   const [display, setDisplay] = useState(0);
   const [pulseKey, setPulseKey] = useState(0);
 
