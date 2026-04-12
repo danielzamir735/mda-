@@ -1412,6 +1412,23 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setLoadingList(false);
   }, []);
 
+  // ── Real-time sync: any change to translators table refreshes all open modals ──
+  const selectedLangRef = useRef<Language | null>(null);
+  selectedLangRef.current = selectedLang;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const channel = supabase
+      .channel('lb_translators_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'translators' }, () => {
+        fetchAllTranslators();
+        const cur = selectedLangRef.current;
+        if (cur) fetchForLanguage(cur.code);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isOpen, fetchAllTranslators, fetchForLanguage]);
+
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   const handleLangSelect = (lang: Language) => {
@@ -1673,7 +1690,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     <MyProfileCard
                       id={myTranslatorId}
                       allLanguages={allLanguages}
-                      onDeleted={() => setMyTranslatorId(null)}
+                      onDeleted={() => { setMyTranslatorId(null); fetchAllTranslators(); }}
                       onUpdated={fetchAllTranslators}
                       onEdit={(phone) => { setPrefillPhone(phone); setView('register'); }}
                     />
@@ -1813,12 +1830,17 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                 onModeChange={setRegisterMode}
                 initialPhone={prefillPhone}
                 onSuccess={(langs, newId) => {
-                  if (newId) setMyTranslatorId(newId);
-                  // Optimistic update for immediate count reflection
-                  setAllTranslators(prev => [
-                    ...prev,
-                    { id: newId ?? 'optimistic', full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false }
-                  ]);
+                  if (newId) {
+                    setMyTranslatorId(newId);
+                    // Optimistic add for new registration only
+                    setAllTranslators(prev => [
+                      ...prev,
+                      { id: newId, full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false }
+                    ]);
+                  } else if (langs.length === 0) {
+                    // Deletion path — clear own id
+                    setMyTranslatorId(null);
+                  }
                   setPrefillPhone(undefined);
                   setRegisterMode('new');
                   setView('languages');

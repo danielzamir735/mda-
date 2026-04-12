@@ -52,8 +52,8 @@ export function RecruitmentBanner() {
   };
 
   return (
-    <div className="shrink-0 mx-4 my-2 flex items-center gap-2 rounded-xl bg-gray-100 dark:bg-gray-800/40 px-3 py-2 border border-gray-200 dark:border-gray-700/40">
-      <p dir="rtl" className="flex-1 text-gray-500 dark:text-gray-400 text-[11px] leading-relaxed">
+    <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-800/40">
+      <p dir="rtl" className="flex-1 text-gray-600 dark:text-blue-200 text-[11.5px] leading-relaxed">
         מכירים מישהו שיכול לסייע בתרגום? שלחו לו/ה את הקישור לאפליקציה
       </p>
       <HapticButton
@@ -62,8 +62,8 @@ export function RecruitmentBanner() {
         className="shrink-0 flex flex-col items-center gap-0.5 active:opacity-70"
         aria-label="שיתוף"
       >
-        <Share2 size={16} className="text-blue-400" />
-        <span className="text-[9px] font-bold text-blue-400 whitespace-nowrap">שתף</span>
+        <Share2 size={18} className="text-blue-500 dark:text-blue-400" />
+        <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 whitespace-nowrap">שתף</span>
       </HapticButton>
     </div>
   );
