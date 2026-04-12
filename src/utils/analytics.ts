@@ -14,3 +14,18 @@ export function trackEvent(
     // GA blocked by ad-blocker or not yet initialized — fail silently
   }
 }
+
+/**
+ * Centralized interaction tracker. Fires a `feature_interaction` event with
+ * standardized `feature_name` and `feature_category` parameters so every
+ * button/card in the app can be compared in a single GA4 report.
+ *
+ * @param featureName   Snake-case identifier, e.g. "burn_calculator"
+ * @param category      Logical group, e.g. "calculators"
+ */
+export function trackInteraction(featureName: string, category: string) {
+  trackEvent('feature_interaction', {
+    feature_name: featureName,
+    feature_category: category,
+  });
+}

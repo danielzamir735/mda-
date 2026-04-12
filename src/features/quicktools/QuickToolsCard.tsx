@@ -4,6 +4,7 @@ import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCameraStore } from '../../store/cameraStore';
+import { trackInteraction } from '../../utils/analytics';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -26,7 +27,7 @@ export default function QuickToolsCard() {
 
           {/* Camera */}
           <button
-            onClick={() => setCameraOpen(true)}
+            onClick={() => { trackInteraction('camera', 'main_tools'); setCameraOpen(true); }}
             className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label={t('camera')}
@@ -42,7 +43,7 @@ export default function QuickToolsCard() {
 
           {/* Add Vitals */}
           <button
-            onClick={() => setAddVitalsOpen(true)}
+            onClick={() => { trackInteraction('add_vitals', 'main_tools'); setAddVitalsOpen(true); }}
             className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label={t('addVitals')}

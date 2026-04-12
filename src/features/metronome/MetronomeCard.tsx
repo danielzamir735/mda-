@@ -2,7 +2,7 @@ import { Play, VolumeX, Volume2, Plus, Minus } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation } from '../../hooks/useTranslation';
-import { trackEvent } from '../../utils/analytics';
+import { trackEvent, trackInteraction } from '../../utils/analytics';
 
 export default function MetronomeCard() {
   useMetronome();
@@ -140,7 +140,7 @@ export default function MetronomeCard() {
       {!isPlaying ? (
         /* Start CPR */
         <button
-          onClick={() => { trackEvent('metronome_start', { bpm_value: bpm }); start(); }}
+          onClick={() => { trackInteraction('metronome_start', 'main_tools'); trackEvent('metronome_start', { bpm_value: bpm }); start(); }}
           className="w-14 h-14 rounded-full flex items-center justify-center
                      active:scale-90 transition-all duration-150"
           style={{
@@ -171,7 +171,7 @@ export default function MetronomeCard() {
 
           {/* End CPR */}
           <button
-            onClick={() => { trackEvent('metronome_stop', { bpm_value: bpm }); endCPR(); }}
+            onClick={() => { trackInteraction('metronome_stop', 'main_tools'); trackEvent('metronome_stop', { bpm_value: bpm }); endCPR(); }}
             className="w-full py-2.5 rounded-2xl flex items-center justify-center gap-2
                        font-black text-base active:scale-95 transition-all duration-150"
             style={{

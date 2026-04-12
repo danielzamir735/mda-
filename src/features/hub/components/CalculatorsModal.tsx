@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackInteraction } from '../../../utils/analytics';
 import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
 import BarPsiConverterModal from './BarPsiConverterModal';
 import BurnsCalculatorModal from './BurnsCalculatorModal';
@@ -46,7 +47,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
           {/* Contraction Timer — FIRST */}
           <button
-            onClick={() => setContractionOpen(true)}
+            onClick={() => { trackInteraction('contraction_timer', 'calculators'); setContractionOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
                        bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -63,7 +64,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* O2 Calculator */}
           <button
-            onClick={() => setO2Open(true)}
+            onClick={() => { trackInteraction('oxygen_calculator', 'calculators'); setO2Open(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-emt-blue/30
                        bg-emt-blue/10 p-4 active:scale-95 transition-transform text-right"
           >
@@ -80,7 +81,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* Bar / PSI Converter */}
           <button
-            onClick={() => setBarPsiOpen(true)}
+            onClick={() => { trackInteraction('bar_psi_converter', 'calculators'); setBarPsiOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
                        bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -97,7 +98,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* Burns Calculator */}
           <button
-            onClick={() => setBurnsOpen(true)}
+            onClick={() => { trackInteraction('burn_calculator', 'calculators'); setBurnsOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-emt-red/30
                        bg-emt-red/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -117,7 +118,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* Glasgow Coma Scale */}
           <button
-            onClick={() => setGcsOpen(true)}
+            onClick={() => { trackInteraction('glasgow_coma_scale', 'calculators'); setGcsOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-cyan-400/30
                        bg-cyan-400/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -134,7 +135,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* APGAR Calculator */}
           <button
-            onClick={() => setApgarOpen(true)}
+            onClick={() => { trackInteraction('apgar_calculator', 'calculators'); setApgarOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-pink-400/30
                        bg-pink-400/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -151,7 +152,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* Pediatric Dosage Calculator */}
           <button
-            onClick={() => setPediatricOpen(true)}
+            onClick={() => { trackInteraction('pediatric_dosage_calculator', 'calculators'); setPediatricOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
                        bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
           >

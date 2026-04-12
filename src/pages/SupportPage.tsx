@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { Heart, X, CheckCircle } from 'lucide-react';
+import { trackInteraction } from '../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -124,6 +125,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 done={donated}
                 onClick={() => {
                   if (navigator.vibrate) navigator.vibrate(50);
+                  trackInteraction('paybox_donation', 'support');
                   setDonated(true);
                   window.open('https://links.payboxapp.com/ikLxTdoky1b', '_blank');
                 }}

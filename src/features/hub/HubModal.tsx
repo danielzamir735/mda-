@@ -4,6 +4,7 @@ import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 import { usePwaInstall } from '../pwa/PwaInstallContext';
+import { trackInteraction } from '../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -227,7 +228,30 @@ export default function HubModal({
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
   if (!isOpen) return null;
 
+  const HUB_TRACKING: Record<string, [string, string]> = {
+    calculators:                  ['calculators_section',   'calculators'],
+    settings:                     ['settings',              'utility'],
+    clinical:                     ['vitals_reference_table','medical_knowledge'],
+    medhistory:                   ['background_illnesses',  'medical_knowledge'],
+    hospitals:                    ['hospital_info',         'emergency_info'],
+    updates:                      ['whats_new',             'navigation'],
+    'kit-standards':              ['bag_standards',         'tools'],
+    'medications-classification': ['medication_groups',     'medical_knowledge'],
+    'common-meds':                ['common_medications',    'medical_knowledge'],
+    'realtime-translate':         ['medical_translator',    'tools'],
+    'poison-centers':             ['poison_control_center', 'emergency_info'],
+    accessibility:                ['accessibility_settings','utility'],
+    breathing:                    ['breathing_synchronizer','tools'],
+    'medication-scanner':         ['medication_info',       'tools'],
+    simulators:                   ['learning_simulators',   'community_learning'],
+    'install-app':                ['pwa_install',           'utility'],
+    'whatsapp-community':         ['hovesh_plus_community', 'community_learning'],
+  };
+
   const handleItemClick = (id: string) => {
+    const tracking = HUB_TRACKING[id];
+    if (tracking) trackInteraction(tracking[0], tracking[1]);
+
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -310,6 +334,7 @@ export default function HubModal({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={sharedClass}
+                  onClick={() => trackInteraction('nearest_aed', 'emergency_info')}
                 >
                   {content}
                 </a>
@@ -332,7 +357,7 @@ export default function HubModal({
 
         {/* Feedback button */}
         <HapticButton
-          onClick={onFeedbackOpen}
+          onClick={() => { trackInteraction('send_feedback', 'utility'); onFeedbackOpen(); }}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
                      border border-emt-red/30 bg-emt-red/10
                      text-emt-red font-bold text-base"
@@ -374,6 +399,7 @@ export default function HubModal({
                 label: 'סימולטור החייאה',
                 sublabel: 'Lifesaver — תרגול CPR אינטראקטיבי',
                 url: 'https://life-saver.org.uk/',
+                trackName: 'simulator_cpr',
                 color: 'text-rose-400',
                 border: 'border-rose-400/30',
                 bg: 'bg-rose-400/5',
@@ -383,6 +409,7 @@ export default function HubModal({
                 label: "סימולטור אק\"ג וקצבי לב",
                 sublabel: 'SkillStat — סימולטור אק"ג אינטראקטיבי',
                 url: 'https://www.skillstat.com/tools/ecg-simulator/',
+                trackName: 'simulator_ecg',
                 color: 'text-sky-400',
                 border: 'border-sky-400/30',
                 bg: 'bg-sky-400/5',
@@ -392,6 +419,7 @@ export default function HubModal({
                 label: 'תרגול מקרים והחייאה',
                 sublabel: 'RevivR (BHF) — תרגול בהדרכה',
                 url: 'https://revivr.bhf.org.uk/',
+                trackName: 'simulator_revivr',
                 color: 'text-emerald-400',
                 border: 'border-emerald-400/30',
                 bg: 'bg-emerald-400/5',
@@ -401,18 +429,20 @@ export default function HubModal({
                 label: 'אימון זיהוי מחלות',
                 sublabel: 'נחש את המחלה — אבחון קליני',
                 url: 'https://diseaseguess.azurewebsites.net/welcome',
+                trackName: 'simulator_disease_guess',
                 color: 'text-violet-400',
                 border: 'border-violet-400/30',
                 bg: 'bg-violet-400/5',
                 iconBg: 'bg-violet-400/20 border-violet-400/40',
               },
-            ].map(({ label, sublabel, url, color, border, bg, iconBg }) => (
+            ].map(({ label, sublabel, url, trackName, color, border, bg, iconBg }) => (
               <a
                 key={url}
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-95 transition-transform text-right`}
+                onClick={() => trackInteraction(trackName, 'community_learning')}
               >
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${iconBg}`}>
                   <HeartPulse size={22} className={color} />
