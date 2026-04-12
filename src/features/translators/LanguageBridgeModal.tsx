@@ -1441,6 +1441,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     if (lang.code === 'isl') {
       ReactGA.event('sign_language_selected', {});
     }
+    setTranslators([]);
     setSelectedLang(lang);
     setView('translators');
     fetchForLanguage(lang.code);
@@ -1743,7 +1744,12 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     <MyProfileCard
                       id={myTranslatorId}
                       allLanguages={allLanguages}
-                      onDeleted={() => { setMyTranslatorId(null); fetchAllTranslators(); }}
+                      onDeleted={() => {
+                        setMyTranslatorId(null);
+                        setTranslators([]);
+                        fetchAllTranslators();
+                        if (selectedLang) fetchForLanguage(selectedLang.code);
+                      }}
                       onUpdated={fetchAllTranslators}
                       onEdit={(phone) => { setPrefillPhone(phone); setView('register'); }}
                     />
