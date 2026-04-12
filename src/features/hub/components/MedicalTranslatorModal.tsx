@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, ExternalLink, Share2, Video, Hand } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
@@ -7,11 +7,9 @@ import {
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
 
-interface Props { isOpen: boolean; onClose: () => void; initialLang?: ExtendedLang; }
+interface Props { isOpen: boolean; onClose: () => void; initialLang?: Lang; }
 
 const ALL_LANGS: Lang[] = ['en', 'ru', 'ar', 'fr', 'am'];
-const SIGN_LANG_CODE = 'sl' as const;
-type ExtendedLang = Lang | typeof SIGN_LANG_CODE;
 
 const TTS_LANGS: Record<string, string> = {
   en: 'en-US',
@@ -30,52 +28,13 @@ const LANG_LABELS_HE: Record<Lang, string> = {
   am: 'אמהרית',
 };
 
-// ── Recruitment Banner ─────────────────────────────────────────────────────────
-export function RecruitmentBanner() {
-  const handleShare = async () => {
-    trackInteraction('emergency_recruitment_share', 'recruitment');
-    const shareData = {
-      title: 'חובש+',
-      text: 'מצטרפים למערך התרגום של חובש+ ומצילים חיים בזמן אמת. להרשמה:',
-      url: 'https://hovesh-plus.vercel.app/',
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        alert('הקישור הועתק ללוח!');
-      }
-    } catch {
-      // user cancelled
-    }
-  };
-
-  return (
-    <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-800/40">
-      <p dir="rtl" className="flex-1 text-gray-600 dark:text-blue-200 text-[11.5px] leading-relaxed">
-        מכירים מישהו שיכול לסייע בתרגום? שלחו לו/ה את הקישור לאפליקציה
-      </p>
-      <HapticButton
-        pressScale={0.88}
-        onClick={handleShare}
-        className="shrink-0 flex flex-col items-center gap-0.5 active:opacity-70"
-        aria-label="שיתוף"
-      >
-        <Share2 size={18} className="text-blue-500 dark:text-blue-400" />
-        <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 whitespace-nowrap">שתף</span>
-      </HapticButton>
-    </div>
-  );
-}
-
 export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }: Props) {
-  const [selectedLang, setSelectedLang] = useState<ExtendedLang | null>(initialLang ?? null);
+  const [selectedLang, setSelectedLang] = useState<Lang | null>(initialLang ?? null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   // Refs for popstate handler — avoids stale closures
-  const selectedLangRef = useRef<ExtendedLang | null>(null);
+  const selectedLangRef = useRef<Lang | null>(null);
   const expandedRef = useRef<string | null>(null);
   const onCloseRef = useRef(onClose);
   // Tracks how many history entries this modal has pushed
@@ -182,8 +141,6 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
           <div className="flex items-center gap-2">
             <Languages size={20} className="text-orange-400" />
             <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרגום רפואי</h2>
-            {/* Sign Language visual cue */}
-            <span className="text-lg" title="שפת סימנים זמינה">🤟</span>
           </div>
           <HapticButton
             onClick={handleClose}
@@ -195,9 +152,6 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             <X size={20} />
           </HapticButton>
         </div>
-
-        {/* Recruitment Banner */}
-        <RecruitmentBanner />
 
         {/* Language Grid */}
         <div className="flex-1 overflow-y-auto flex flex-col items-center px-6 pb-8 pt-4 gap-4">
@@ -226,115 +180,14 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
               </HapticButton>
             ))}
 
-            {/* Sign Language option */}
-            <HapticButton
-              pressScale={0.95}
-              onClick={() => {
-                trackInteraction('sign_language_selected', 'translation');
-                setSelectedLang(SIGN_LANG_CODE);
-              }}
-              className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border
-                         bg-white dark:bg-emt-gray flex items-center gap-4
-                         active:border-orange-400/60 active:bg-orange-400/10"
-            >
-              <span className="text-4xl">🤟</span>
-              <span className="text-gray-900 dark:text-white font-bold text-2xl">שפת סימנים</span>
-            </HapticButton>
           </div>
         </div>
 
-      </div>
-    );
-  }
-
-  /* ── STEP 1.5: Sign Language Video Call Screen ── */
-  if (selectedLang === SIGN_LANG_CODE) {
-    return (
-      <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
-        {/* Header */}
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
-          <HapticButton
-            pressScale={0.9}
-            onClick={() => setSelectedLang(null)}
-            className="flex items-center gap-1.5 text-orange-400 font-bold text-sm"
-            aria-label="חזור לשפות"
-          >
-            <ArrowRight size={16} />
-            חזור
-          </HapticButton>
-          <div className="flex items-center gap-2">
-            <Hand size={18} className="text-emerald-400" />
-            <span className="text-gray-900 dark:text-emt-light font-bold text-base">שפת סימנים</span>
-          </div>
-          <HapticButton
-            onClick={handleClose}
-            pressScale={0.88}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                       flex items-center justify-center text-gray-500 dark:text-emt-muted"
-            aria-label="סגור"
-          >
-            <X size={20} />
-          </HapticButton>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center px-8 gap-10">
-          <div className="text-center flex flex-col gap-2">
-            <p dir="rtl" className="text-gray-900 dark:text-white font-bold text-xl">
-              מטופל חירש / כבד שמיעה?
-            </p>
-            <p dir="rtl" className="text-gray-500 dark:text-emt-muted text-base leading-relaxed">
-              הפעילו שיחת וידאו לתקשורת ישירה בשפת הסימנים
-            </p>
-          </div>
-
-          {/* Pulsating video call button */}
-          <div className="relative flex items-center justify-center">
-            <div
-              className="absolute rounded-full bg-green-500/15 animate-ping"
-              style={{ width: 160, height: 160 }}
-            />
-            <div
-              className="absolute rounded-full bg-green-500/20"
-              style={{
-                width: 130,
-                height: 130,
-                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              }}
-            />
-            <HapticButton
-              pressScale={0.93}
-              onClick={() => {
-                trackInteraction('sign_language_whatsapp_video', 'translation');
-                window.open('https://wa.me/', '_blank');
-              }}
-              className="relative flex items-center justify-center rounded-full"
-              style={{
-                width: 100,
-                height: 100,
-                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                boxShadow: '0 0 48px rgba(37,211,102,0.55), 0 8px 32px rgba(0,0,0,0.3)',
-              }}
-              aria-label="שיחת וידאו WhatsApp"
-            >
-              <Video size={42} className="text-white" />
-            </HapticButton>
-          </div>
-
-          <div className="text-center flex flex-col gap-1">
-            <p dir="rtl" className="text-emerald-500 dark:text-emerald-400 font-black text-base">
-              פתח WhatsApp לשיחת וידאו
-            </p>
-            <p dir="rtl" className="text-gray-400 dark:text-emt-muted text-xs">
-              WhatsApp Video · ישירות עם המטופל
-            </p>
-          </div>
-        </div>
       </div>
     );
   }
 
   /* ── STEP 2: Questions Screen ── */
-  // At this point selectedLang is guaranteed to be a valid Lang (null and 'sl' are handled above)
   const activeLang = selectedLang as Lang;
 
   return (
