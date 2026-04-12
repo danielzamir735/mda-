@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
-import { Heart, X, CheckCircle, Users, HandHeart } from 'lucide-react';
+import { Heart, X, CheckCircle, HandHeart } from 'lucide-react';
 import { trackInteraction } from '../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
-
-const FACEBOOK_GROUP_URL = 'https://www.facebook.com/groups/hoveshplus'; // ← עדכן ל-URL האמיתי
 
 const PARTNER_INITIALS = ['ד״ר', 'מד', 'אי', 'ית', 'נו', 'שר', 'מי', 'עד', 'לי', 'רן'];
 
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donationDone, setDonationDone] = useState(false);
-  const [fbDone, setFbDone] = useState(false);
   const [displayCount, setDisplayCount] = useState(0);
 
   useEffect(() => {
@@ -29,7 +26,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) { setDonationDone(false); setFbDone(false); }
+    if (!isOpen) setDonationDone(false);
   }, [isOpen]);
 
   useEffect(() => {
@@ -90,7 +87,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               <h1 className="text-2xl font-black text-white text-center leading-tight">
                 חובש<span className="text-rose-400">+</span> מחפשים שותפים
               </h1>
-              <p className="text-white/55 text-xs text-center max-w-[260px]">
+              <p className="text-white/55 text-sm text-center max-w-[260px]">
                 לא תורמים – שותפים. כי בלעדיכם זה לא קורה.
               </p>
             </div>
@@ -149,13 +146,13 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               transition={{ delay: 0.35 }}
               className="text-center space-y-2 max-w-xs"
             >
-              <p className="text-white/75 text-sm leading-relaxed">
+              <p className="text-white/80 text-base leading-relaxed">
                 חובש+ פותחה בהתנדבות, אבל השרתים, הפיתוח והתחזוקה עולים כסף.
                 <br />
                 <span className="text-white font-semibold">שותף הוא מישהו שמאמין שגם חובש שדה מגיע לכלים טובים –</span> ועושה את זה לאפשרי.
               </p>
-              <p className="text-rose-300 font-bold text-sm">
-                הצטרפות לפייסבוק מעולה. תרומה קטנה? זה מה שמשאיר אותנו כאן.
+              <p className="text-rose-300 font-bold text-base">
+                תרומה קטנה? זה מה שמשאיר אותנו כאן.
               </p>
             </motion.div>
 
@@ -193,19 +190,6 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 }}
               />
 
-              {/* Secondary – Facebook */}
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  trackInteraction('facebook_community_join', 'support');
-                  setFbDone(true);
-                  window.open(FACEBOOK_GROUP_URL, '_blank');
-                }}
-                className="relative w-full py-3.5 rounded-2xl font-bold text-base text-white overflow-hidden border border-white/15 bg-white/8 active:bg-white/12 transition-colors flex items-center justify-center gap-2"
-              >
-                <Users size={18} className="text-blue-400" />
-                <span>{fbDone ? 'בדרך לקהילה 👋' : 'הצטרפו לקהילה שלנו בפייסבוק'}</span>
-              </motion.button>
             </motion.div>
 
             {/* Fine print */}
@@ -213,7 +197,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-white/25 text-[10px] text-center max-w-xs"
+              className="text-white/30 text-xs text-center max-w-xs"
             >
               כל תרומה, גם הקטנה ביותר, עוזרת לנו להמשיך לפתח ולשמור על האפליקציה חופשית לכולם.
             </motion.p>
@@ -256,7 +240,7 @@ function ShinyButton({ label, sublabel, gradient, done, icon, onClick }: {
               {label}
             </span>
             {sublabel && (
-              <span className="text-white/70 text-xs font-medium">{sublabel}</span>
+              <span className="text-white/70 text-sm font-medium">{sublabel}</span>
             )}
           </motion.span>
         )}
