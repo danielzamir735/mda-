@@ -6,9 +6,9 @@ import { trackInteraction } from '../utils/analytics';
 interface Props { isOpen: boolean; onClose: () => void; }
 
 const REASONS = [
-  { icon: Server,  color: 'text-sky-400',   bg: 'bg-sky-400/10',   border: 'border-sky-400/20',   title: 'שרתים', desc: 'זמינות 24/7 גם בלחץ' },
-  { icon: Zap,     color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20', title: 'פיתוח', desc: 'יכולות חדשות כל הזמן' },
-  { icon: Lock,    color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', title: 'חינמי', desc: 'נגיש לכל חובש שדה' },
+  { icon: Server,  color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'שרתים', desc: 'זמינות 24/7 גם בלחץ' },
+  { icon: Zap,     color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'פיתוח', desc: 'יכולות חדשות כל הזמן' },
+  { icon: Lock,    color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'חינמי', desc: 'נגיש לכל חובש שדה' },
 ];
 
 export default function SupportModal({ isOpen, onClose }: Props) {
@@ -92,7 +92,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   transition={{ delay: 0.22 + i * 0.08 }}
                   className={`rounded-2xl border ${border} ${bg} flex flex-col items-center gap-1.5 py-4 px-2`}
                 >
-                  <Icon size={22} className={color} />
+                  <Icon size={18} className={color} />
                   <span className="text-white font-bold text-sm">{title}</span>
                   <span className="text-white/50 text-[11px] text-center leading-tight">{desc}</span>
                 </motion.div>
@@ -108,7 +108,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
             >
               <p className="text-white/80 text-base leading-relaxed">
                 חובש+ פותחה בהתנדבות, אבל השרתים, הפיתוח והתחזוקה עולים כסף.
-                {' '}<span className="text-white font-semibold">שותף הוא מישהו שמאמין שגם חובש שדה מגיע לכלים טובים –</span> ועושה את זה לאפשרי.
+                {' '}כדי שנמשיך להיות כאן – בשטח, בזמן אמת, בחינם – אנחנו צריכים אתכם.
               </p>
               <p className="text-rose-300 font-bold text-base">
                 תרומה קטנה? זה מה שמשאיר אותנו כאן.
