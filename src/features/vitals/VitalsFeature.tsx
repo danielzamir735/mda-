@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Hand, Video } from 'lucide-react';
 import VitalsCard from './components/VitalsCard';
 import CalculatorModal from './components/CalculatorModal';
 import ResultPopup from './components/ResultPopup';
@@ -27,9 +26,7 @@ import WhatsNewModal from '../hub/components/WhatsNewModal';
 import BagStandardsModal from '../hub/components/BagStandardsModal';
 import MedicationsModal from '../quicktools/MedicationsModal';
 import CommonMedsModal from '../hub/components/CommonMedsModal';
-import MedicalTranslatorModal, { RecruitmentBanner } from '../hub/components/MedicalTranslatorModal';
-import { CountUpNumber } from '../translators/LanguageBridgeModal';
-import { supabase } from '../../lib/supabase';
+import MedicalTranslatorModal from '../hub/components/MedicalTranslatorModal';
 import PoisonCentersModal from '../hub/components/PoisonCentersModal';
 import AccessibilityModal from '../hub/components/AccessibilityModal';
 import BreathingSynchronizer from '../hub/components/BreathingSynchronizer';
@@ -81,17 +78,6 @@ export default function VitalsFeature() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [languageBridgeOpen, setLanguageBridgeOpen] = useState(false);
-  const [translatorInitialLang, setTranslatorInitialLang] = useState<'sl' | undefined>(undefined);
-  const [assistCount, setAssistCount] = useState(0);
-
-  useEffect(() => {
-    supabase
-      .from('global_counters')
-      .select('count')
-      .eq('id', 'translation_assists')
-      .single()
-      .then(({ data }) => { if (data) setAssistCount(data.count as number); });
-  }, []);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
@@ -144,25 +130,6 @@ export default function VitalsFeature() {
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark safe-area-top" style={bgColor ? { backgroundColor: bgColor } : {}}>
 
-      {/* ── Recruitment Banner ── */}
-      <RecruitmentBanner />
-
-      {/* ── Community Counter ── */}
-      {assistCount > 0 && (
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-900 border-b border-gray-700">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" style={{ boxShadow: '0 0 5px rgba(52,211,153,0.9)' }} />
-          </span>
-          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">קהילת חובש+ בתנופה</span>
-          <CountUpNumber
-            value={assistCount}
-            className="text-sm font-black tabular-nums"
-            style={{ background: 'linear-gradient(135deg,#34d399 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          />
-          <span className="text-gray-400 text-[9px] font-semibold">אינטראקציות רפואיות מצילות חיים</span>
-        </div>
-      )}
 
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
         {!isMetronomePlaying && (
@@ -193,26 +160,6 @@ export default function VitalsFeature() {
         <MetronomeCard />
         <QuickToolsCard />
 
-        {/* ── Sign Language Quick Access ── */}
-        <button
-          type="button"
-          onClick={() => {
-            trackInteraction('sign_language_shortcut', 'main_screen');
-            setTranslatorInitialLang('sl');
-            setTranslatorOpen(true);
-          }}
-          className="col-span-2 flex items-center gap-3 rounded-2xl border-2 border-emerald-400/40
-                     bg-emerald-400/5 dark:bg-emerald-400/10 px-5 py-3 active:scale-[0.97] transition-transform"
-        >
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500 shrink-0">
-            <Video size={20} className="text-white" />
-          </div>
-          <div className="flex flex-col items-start flex-1 min-w-0" dir="rtl">
-            <span className="text-gray-900 dark:text-white font-black text-base">שפת סימנים</span>
-            <span className="text-emerald-500 dark:text-emerald-400 text-xs font-semibold">שיחת וידאו ישירה למטופל חירש</span>
-          </div>
-          <Hand size={22} className="text-emerald-400 shrink-0" />
-        </button>
       </main>
 
       {isMetronomePlaying && <CPRTimerOverlay />}
@@ -315,8 +262,7 @@ export default function VitalsFeature() {
       <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
       <MedicalTranslatorModal
         isOpen={translatorOpen}
-        initialLang={translatorInitialLang}
-        onClose={() => { setTranslatorOpen(false); setTranslatorInitialLang(undefined); setHubOpen(true); }}
+        onClose={() => { setTranslatorOpen(false); setHubOpen(true); }}
       />
       <PoisonCentersModal isOpen={poisonCentersOpen} onClose={() => { setPoisonCentersOpen(false); setHubOpen(true); }} />
       <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />

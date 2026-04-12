@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
-  HelpCircle, ShieldCheck, Trash2, Users,
+  HelpCircle, ShieldCheck, Trash2, Users, Video,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -294,12 +294,13 @@ function WhatsAppIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function TranslatorCard({ translator, available, isEmergency, allLanguages, selectedLangName, onContact }: {
+function TranslatorCard({ translator, available, isEmergency, allLanguages, selectedLangName, isSignLanguage, onContact }: {
   translator: Translator;
   available: boolean;
   isEmergency?: boolean;
   allLanguages: Language[];
   selectedLangName?: string;
+  isSignLanguage?: boolean;
   onContact?: () => void;
 }) {
   const phone = translator.phone_number.replace(/\D/g, '');
@@ -374,19 +375,37 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
 
       {/* Dual action buttons */}
       <div className="shrink-0 flex items-center gap-2">
-        <a
-          href={`tel:${translator.phone_number}`}
-          onClick={e => {
-            e.stopPropagation();
-            ReactGA.event('contact_translator', { method: 'call', language: selectedLangName ?? '' });
-            onContact?.();
-          }}
-          className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
-          style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
-          aria-label="התקשר"
-        >
-          <Phone size={17} fill="white" />
-        </a>
+        {isSignLanguage ? (
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => {
+              e.stopPropagation();
+              ReactGA.event('contact_translator', { method: 'whatsapp_video', language: selectedLangName ?? '' });
+              onContact?.();
+            }}
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
+            style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
+            aria-label="שיחת וידאו WhatsApp"
+          >
+            <Video size={17} />
+          </a>
+        ) : (
+          <a
+            href={`tel:${translator.phone_number}`}
+            onClick={e => {
+              e.stopPropagation();
+              ReactGA.event('contact_translator', { method: 'call', language: selectedLangName ?? '' });
+              onContact?.();
+            }}
+            className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
+            style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
+            aria-label="התקשר"
+          >
+            <Phone size={17} fill="white" />
+          </a>
+        )}
         <a
           href={waUrl}
           target="_blank"
@@ -1736,7 +1755,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {available.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} onContact={incrementCounter} />
+                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}
@@ -1776,7 +1795,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           </span>
                         </div>
                         {emergencyBackups.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} onContact={incrementCounter} />
+                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}

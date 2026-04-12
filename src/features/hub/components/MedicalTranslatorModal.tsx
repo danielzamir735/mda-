@@ -52,18 +52,18 @@ export function RecruitmentBanner() {
   };
 
   return (
-    <div className="shrink-0 flex items-start gap-3 bg-gray-800 px-4 py-3 border-b border-gray-700">
-      <p dir="rtl" className="flex-1 text-white text-xs font-bold leading-relaxed">
-        חובש/ת יקר/ה, מדובר בהצלת חיים ופיקוח נפש. מכירים אדם שיכול לאייש ולתת מענה באחת מהשפות במערכת? זו האחריות של כולנו. שלחו לו את הקישור עכשיו.
+    <div className="shrink-0 mx-4 my-2 flex items-center gap-2 rounded-xl bg-gray-100 dark:bg-gray-800/40 px-3 py-2 border border-gray-200 dark:border-gray-700/40">
+      <p dir="rtl" className="flex-1 text-gray-500 dark:text-gray-400 text-[11px] leading-relaxed">
+        מכירים מישהו שיכול לסייע בתרגום? שלחו לו/ה את הקישור לאפליקציה
       </p>
       <HapticButton
         pressScale={0.88}
         onClick={handleShare}
-        className="shrink-0 flex flex-col items-center gap-0.5 text-white active:opacity-70"
-        aria-label="שיתוף להצלת חיים"
+        className="shrink-0 flex flex-col items-center gap-0.5 active:opacity-70"
+        aria-label="שיתוף"
       >
-        <Share2 size={20} className="text-emerald-400" />
-        <span className="text-[9px] font-black text-emerald-400 whitespace-nowrap">שיתוף</span>
+        <Share2 size={16} className="text-blue-400" />
+        <span className="text-[9px] font-bold text-blue-400 whitespace-nowrap">שתף</span>
       </HapticButton>
     </div>
   );
@@ -233,17 +233,12 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
                 trackInteraction('sign_language_selected', 'translation');
                 setSelectedLang(SIGN_LANG_CODE);
               }}
-              className="w-full py-5 px-6 rounded-2xl border-2 border-emerald-400/40
-                         bg-emerald-400/5 dark:bg-emerald-400/10 flex items-center gap-4
-                         active:border-emerald-400/60 active:bg-emerald-400/20"
+              className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border
+                         bg-white dark:bg-emt-gray flex items-center gap-4
+                         active:border-orange-400/60 active:bg-orange-400/10"
             >
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Hand size={32} className="text-emerald-400" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-gray-900 dark:text-white font-bold text-2xl">שפת סימנים</span>
-                <span className="text-emerald-500 dark:text-emerald-400 text-xs font-semibold">שיחת וידאו ישירה</span>
-              </div>
+              <span className="text-4xl">🤟</span>
+              <span className="text-gray-900 dark:text-white font-bold text-2xl">שפת סימנים</span>
             </HapticButton>
           </div>
         </div>
@@ -309,18 +304,17 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             <HapticButton
               pressScale={0.93}
               onClick={() => {
-                trackInteraction('sign_language_video_call', 'translation');
-                // Try FaceTime; works on iOS/macOS
-                window.open('facetime://', '_self');
+                trackInteraction('sign_language_whatsapp_video', 'translation');
+                window.open('https://wa.me/', '_blank');
               }}
               className="relative flex items-center justify-center rounded-full"
               style={{
                 width: 100,
                 height: 100,
-                background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
-                boxShadow: '0 0 48px rgba(34,197,94,0.55), 0 8px 32px rgba(0,0,0,0.3)',
+                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                boxShadow: '0 0 48px rgba(37,211,102,0.55), 0 8px 32px rgba(0,0,0,0.3)',
               }}
-              aria-label="התחל שיחת וידאו"
+              aria-label="שיחת וידאו WhatsApp"
             >
               <Video size={42} className="text-white" />
             </HapticButton>
@@ -328,10 +322,10 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
 
           <div className="text-center flex flex-col gap-1">
             <p dir="rtl" className="text-emerald-500 dark:text-emerald-400 font-black text-base">
-              הקש להפעלת שיחת וידאו
+              פתח WhatsApp לשיחת וידאו
             </p>
             <p dir="rtl" className="text-gray-400 dark:text-emt-muted text-xs">
-              FaceTime · WhatsApp · כל אפליקציית וידאו
+              WhatsApp Video · ישירות עם המטופל
             </p>
           </div>
         </div>
