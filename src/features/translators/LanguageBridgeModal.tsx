@@ -383,6 +383,7 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
             onClick={e => {
               e.stopPropagation();
               ReactGA.event('contact_translator', { method: 'whatsapp_video', language: selectedLangName ?? '' });
+              ReactGA.event('video_call_clicked', { language: selectedLangName ?? '' });
               onContact?.();
             }}
             className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
@@ -1433,6 +1434,9 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   const handleLangSelect = (lang: Language) => {
     ReactGA.event('language_select', { language_code: lang.code, language_name: lang.name });
+    if (lang.code === 'isl') {
+      ReactGA.event('sign_language_selected', {});
+    }
     setSelectedLang(lang);
     setView('translators');
     fetchForLanguage(lang.code);
@@ -1688,21 +1692,21 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                 <motion.div
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.15 } }}
-                  className="flex items-center gap-3 mb-4 rounded-2xl px-4 py-3"
+                  className="flex items-center gap-3 mb-4 rounded-2xl px-4 py-3.5"
                   style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255,255,255,0.13)',
+                    background: 'linear-gradient(135deg, #7B1D2C 0%, #9B2B3F 100%)',
+                    boxShadow: '0 4px 20px rgba(123,29,44,0.45), inset 0 1px 0 rgba(255,255,255,0.12)',
                   }}
                 >
-                  <p dir="rtl" className="flex-1 text-white/60 text-xs leading-relaxed font-semibold">
-                    מכיר/ה מישהו שיכול לאייש אחת מהשפות? שלחו לו/ה את הקישור לאפליקציה
+                  <p dir="rtl" className="flex-1 text-white text-xs leading-relaxed font-black">
+                    עזרו לנו לאייש כל שפה. מכירים מישהו שדובר את השפות האלו? שתפו אותו עכשיו. יחד נציל חיים.
                   </p>
                   <button
                     onClick={async () => {
+                      ReactGA.event('emergency_recruitment_share', { source: 'language_grid_banner' });
                       const shareData = {
                         title: 'חובש+',
-                        text: 'מצטרפים למערך התרגום של חובש+ ומצילים חיים בזמן אמת. להרשמה:',
+                        text: 'עוזרים להנגיש את הרפואה לכולם - הצטרפו למערך התרגום של חובש+!',
                         url: 'https://hovesh-plus.vercel.app/',
                       };
                       try {
@@ -1714,11 +1718,16 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         }
                       } catch { /* user cancelled */ }
                     }}
-                    className="shrink-0 flex flex-col items-center gap-0.5 active:opacity-70 active:scale-90 transition-all"
+                    className="shrink-0 flex flex-col items-center gap-1 active:opacity-70 active:scale-90 transition-all"
                     aria-label="שיתוף"
                   >
-                    <Share2 size={18} className="text-blue-400" />
-                    <span className="text-[9px] font-bold text-blue-400 whitespace-nowrap">שתף</span>
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(255,255,255,0.22)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+                    >
+                      <Share2 size={18} className="text-white" />
+                    </div>
+                    <span className="text-[9px] font-black text-white/90 whitespace-nowrap">שתף</span>
                   </button>
                 </motion.div>
 
