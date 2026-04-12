@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
-  HelpCircle, ShieldCheck, Trash2,
+  HelpCircle, ShieldCheck, Trash2, Users,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -222,28 +222,39 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.35 } }}
-          className="w-full max-w-xs rounded-2xl px-5 py-4 flex flex-col items-center gap-1.5"
+          className="w-full max-w-xs rounded-2xl px-5 py-4 flex flex-col gap-3"
           style={{
-            background: 'rgba(255,255,255,0.09)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.18)',
-            boxShadow: '0 8px 32px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.15)',
+            background: 'rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(52,211,153,0.3)',
+            boxShadow: '0 8px 32px rgba(52,211,153,0.12), inset 0 1px 0 rgba(255,255,255,0.12)',
           }}
         >
-          <div className="flex items-center gap-2.5 justify-center">
-            <span className="relative flex h-2.5 w-2.5">
+          {/* Live label */}
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.8)' }} />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.9)' }} />
             </span>
+            <span className="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest">Live Community Pulse</span>
+          </div>
+          {/* Number + Users icon */}
+          <div className="flex items-center justify-between">
             <CountUpNumber
               value={assistCount}
               className="text-3xl font-black tabular-nums"
               style={{
-                background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+                background: 'linear-gradient(135deg, #34d399 0%, #38bdf8 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
             />
+            <div
+              className="flex items-center justify-center w-10 h-10 rounded-xl"
+              style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.2)' }}
+            >
+              <Users size={20} className="text-emerald-400" />
+            </div>
           </div>
           <p className="text-xs text-white/55 font-semibold">שיחות סיוע בוצעו דרך המערכת</p>
         </motion.div>
@@ -404,9 +415,9 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
   );
 }
 
-// ─── Add Missing Language Widget ───────────────────────────────────────────────
+// ─── Language Request Form ─────────────────────────────────────────────────────
 
-function AddLanguageWidget() {
+function LanguageRequestForm() {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -844,6 +855,14 @@ function RegisterForm({
           {filteredFormLangs.length === 0 && (
             <p className="col-span-4 text-center text-sm text-white/40 py-4">לא נמצאה שפה</p>
           )}
+        </div>
+
+        {/* Language Request */}
+        <div className="flex flex-col gap-2 mt-1" dir="rtl">
+          <p className="text-[0.72rem] text-white/45 text-center leading-relaxed">
+            לא מוצאים את שפת האם שלכם? שלחו בקשה להוספה ונדאג לצרף אתכם.
+          </p>
+          <LanguageRequestForm />
         </div>
       </div>
 
@@ -1642,7 +1661,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     <p className="text-center text-sm text-gray-400 dark:text-gray-500">
                       לא נמצאה שפה תואמת
                     </p>
-                    <AddLanguageWidget />
+                    <LanguageRequestForm />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
@@ -1656,7 +1675,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         />
                       ))}
                     </div>
-                    <AddLanguageWidget />
+                    <LanguageRequestForm />
                   </div>
                 )}
 
