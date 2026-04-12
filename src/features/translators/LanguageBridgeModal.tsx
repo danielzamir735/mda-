@@ -37,6 +37,7 @@ interface Language {
 // ─── 52 Languages ─────────────────────────────────────────────────────────────
 
 const STATIC_LANGUAGES: Language[] = [
+  { code: 'isl',   name: 'שפת סימנים',         flag: '🤟' },
   { code: 'ru',    name: 'רוסית',              flag: '🇷🇺' },
   { code: 'ar',    name: 'ערבית',              flag: '🇸🇦' },
   { code: 'am',    name: 'אמהרית',             flag: '🇪🇹' },
@@ -136,6 +137,7 @@ function formatTime(t: string | null): string {
 
 function CountUpNumber({ value, className, style }: { value: number; className?: string; style?: CSSProperties }) {
   const [display, setDisplay] = useState(0);
+  const [pulseKey, setPulseKey] = useState(0);
 
   useEffect(() => {
     if (!value) return;
@@ -146,13 +148,28 @@ function CountUpNumber({ value, className, style }: { value: number; className?:
       const progress = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(value * eased));
-      if (progress < 1) frame = requestAnimationFrame(tick);
+      if (progress < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        // Trigger pulse animation when count-up completes
+        setPulseKey(k => k + 1);
+      }
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [value]);
 
-  return <span className={className} style={style}>{display.toLocaleString('he-IL')}</span>;
+  return (
+    <motion.span
+      key={pulseKey}
+      className={className}
+      style={style}
+      animate={pulseKey > 0 ? { scale: [1, 1.18, 0.96, 1] } : {}}
+      transition={{ duration: 0.55, ease: 'easeInOut' }}
+    >
+      {display.toLocaleString('he-IL')}
+    </motion.span>
+  );
 }
 
 // ─── Intro Screen ──────────────────────────────────────────────────────────────
@@ -236,7 +253,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.9)' }} />
             </span>
-            <span className="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest">Live Community Pulse</span>
+            <span className="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest">קהילת חובש+ בתנופה</span>
           </div>
           {/* Number + Users icon */}
           <div className="flex items-center justify-between">
@@ -256,7 +273,9 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               <Users size={20} className="text-emerald-400" />
             </div>
           </div>
-          <p className="text-xs text-white/55 font-semibold">שיחות סיוע בוצעו דרך המערכת</p>
+          <p className="text-xs text-white/55 font-semibold leading-relaxed">
+            אינטראקציות רפואיות מצילות חיים בוצעו עד כה
+          </p>
         </motion.div>
       )}
     </div>

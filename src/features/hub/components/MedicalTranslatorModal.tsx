@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, ExternalLink } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink, Share2, Video, Hand } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
   type Lang,
 } from '../data/medicalTranslationsData';
-import { trackEvent } from '../../../utils/analytics';
+import { trackEvent, trackInteraction } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
 const ALL_LANGS: Lang[] = ['en', 'ru', 'ar', 'fr', 'am'];
+const SIGN_LANG_CODE = 'sl' as const;
+type ExtendedLang = Lang | typeof SIGN_LANG_CODE;
 
 const TTS_LANGS: Record<string, string> = {
   en: 'en-US',
@@ -28,14 +30,52 @@ const LANG_LABELS_HE: Record<Lang, string> = {
   am: 'אמהרית',
 };
 
+// ── Recruitment Banner ─────────────────────────────────────────────────────────
+function RecruitmentBanner() {
+  const handleShare = async () => {
+    trackInteraction('emergency_recruitment_share', 'recruitment');
+    const shareData = {
+      title: 'חובש+',
+      text: 'מצטרפים למערך התרגום של חובש+ ומצילים חיים בזמן אמת. להרשמה:',
+      url: 'https://hovesh-plus.vercel.app/',
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        alert('הקישור הועתק ללוח!');
+      }
+    } catch {
+      // user cancelled
+    }
+  };
+
+  return (
+    <div className="shrink-0 flex items-start gap-3 bg-gray-800 px-4 py-3 border-b border-gray-700">
+      <p dir="rtl" className="flex-1 text-white text-xs font-bold leading-relaxed">
+        חובש/ת יקר/ה, מדובר בהצלת חיים ופיקוח נפש. מכירים אדם שיכול לאייש ולתת מענה באחת מהשפות במערכת? זו האחריות של כולנו. שלחו לו את הקישור עכשיו.
+      </p>
+      <HapticButton
+        pressScale={0.88}
+        onClick={handleShare}
+        className="shrink-0 flex flex-col items-center gap-0.5 text-white active:opacity-70"
+        aria-label="שיתוף להצלת חיים"
+      >
+        <Share2 size={20} className="text-emerald-400" />
+        <span className="text-[9px] font-black text-emerald-400 whitespace-nowrap">שיתוף</span>
+      </HapticButton>
+    </div>
+  );
+}
 
 export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
-  const [selectedLang, setSelectedLang] = useState<Lang | null>(null);
+  const [selectedLang, setSelectedLang] = useState<ExtendedLang | null>(null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   // Refs for popstate handler — avoids stale closures
-  const selectedLangRef = useRef<Lang | null>(null);
+  const selectedLangRef = useRef<ExtendedLang | null>(null);
   const expandedRef = useRef<string | null>(null);
   const onCloseRef = useRef(onClose);
   // Tracks how many history entries this modal has pushed
@@ -126,6 +166,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
   const filtered = category === 'הכל' ? PHRASES : PHRASES.filter(p => p.category === category);
   const expandedPhrase = PHRASES.find(p => p.id === expanded);
 
+
   /* ── STEP 1: Language Selection ── */
   if (selectedLang === null) {
     return (
@@ -135,6 +176,8 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           <div className="flex items-center gap-2">
             <Languages size={20} className="text-orange-400" />
             <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרגום רפואי</h2>
+            {/* Sign Language visual cue */}
+            <span className="text-lg" title="שפת סימנים זמינה">🤟</span>
           </div>
           <HapticButton
             onClick={handleClose}
@@ -147,9 +190,12 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           </HapticButton>
         </div>
 
+        {/* Recruitment Banner */}
+        <RecruitmentBanner />
+
         {/* Language Grid */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 gap-4">
-          <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest mb-2">
+        <div className="flex-1 overflow-y-auto flex flex-col items-center px-6 pb-8 pt-4 gap-4">
+          <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest">
             בחר שפה
           </p>
           <div className="w-full grid grid-cols-1 gap-3">
@@ -159,6 +205,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
                 pressScale={0.95}
                 onClick={() => {
                   trackEvent('translation_started', { source_lang: 'he', target_lang: l });
+                  trackInteraction('translation_language_select', 'translation');
                   setSelectedLang(l);
                 }}
                 className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border
@@ -172,6 +219,26 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
                 </span>
               </HapticButton>
             ))}
+
+            {/* Sign Language option */}
+            <HapticButton
+              pressScale={0.95}
+              onClick={() => {
+                trackInteraction('sign_language_selected', 'translation');
+                setSelectedLang(SIGN_LANG_CODE);
+              }}
+              className="w-full py-5 px-6 rounded-2xl border-2 border-emerald-400/40
+                         bg-emerald-400/5 dark:bg-emerald-400/10 flex items-center gap-4
+                         active:border-emerald-400/60 active:bg-emerald-400/20"
+            >
+              <div className="w-10 h-10 flex items-center justify-center">
+                <Hand size={32} className="text-emerald-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-gray-900 dark:text-white font-bold text-2xl">שפת סימנים</span>
+                <span className="text-emerald-500 dark:text-emerald-400 text-xs font-semibold">שיחת וידאו ישירה</span>
+              </div>
+            </HapticButton>
           </div>
         </div>
 
@@ -179,7 +246,97 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
     );
   }
 
+  /* ── STEP 1.5: Sign Language Video Call Screen ── */
+  if (selectedLang === SIGN_LANG_CODE) {
+    return (
+      <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
+        {/* Header */}
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+          <HapticButton
+            pressScale={0.9}
+            onClick={() => setSelectedLang(null)}
+            className="flex items-center gap-1.5 text-orange-400 font-bold text-sm"
+            aria-label="חזור לשפות"
+          >
+            <ArrowRight size={16} />
+            חזור
+          </HapticButton>
+          <div className="flex items-center gap-2">
+            <Hand size={18} className="text-emerald-400" />
+            <span className="text-gray-900 dark:text-emt-light font-bold text-base">שפת סימנים</span>
+          </div>
+          <HapticButton
+            onClick={handleClose}
+            pressScale={0.88}
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                       flex items-center justify-center text-gray-500 dark:text-emt-muted"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </HapticButton>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-8 gap-10">
+          <div className="text-center flex flex-col gap-2">
+            <p dir="rtl" className="text-gray-900 dark:text-white font-bold text-xl">
+              מטופל חירש / כבד שמיעה?
+            </p>
+            <p dir="rtl" className="text-gray-500 dark:text-emt-muted text-base leading-relaxed">
+              הפעילו שיחת וידאו לתקשורת ישירה בשפת הסימנים
+            </p>
+          </div>
+
+          {/* Pulsating video call button */}
+          <div className="relative flex items-center justify-center">
+            <div
+              className="absolute rounded-full bg-green-500/15 animate-ping"
+              style={{ width: 160, height: 160 }}
+            />
+            <div
+              className="absolute rounded-full bg-green-500/20"
+              style={{
+                width: 130,
+                height: 130,
+                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              }}
+            />
+            <HapticButton
+              pressScale={0.93}
+              onClick={() => {
+                trackInteraction('sign_language_video_call', 'translation');
+                // Try FaceTime; works on iOS/macOS
+                window.open('facetime://', '_self');
+              }}
+              className="relative flex items-center justify-center rounded-full"
+              style={{
+                width: 100,
+                height: 100,
+                background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
+                boxShadow: '0 0 48px rgba(34,197,94,0.55), 0 8px 32px rgba(0,0,0,0.3)',
+              }}
+              aria-label="התחל שיחת וידאו"
+            >
+              <Video size={42} className="text-white" />
+            </HapticButton>
+          </div>
+
+          <div className="text-center flex flex-col gap-1">
+            <p dir="rtl" className="text-emerald-500 dark:text-emerald-400 font-black text-base">
+              הקש להפעלת שיחת וידאו
+            </p>
+            <p dir="rtl" className="text-gray-400 dark:text-emt-muted text-xs">
+              FaceTime · WhatsApp · כל אפליקציית וידאו
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ── STEP 2: Questions Screen ── */
+  // At this point selectedLang is guaranteed to be a valid Lang (null and 'sl' are handled above)
+  const activeLang = selectedLang as Lang;
+
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Header */}
@@ -195,10 +352,10 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
         </HapticButton>
 
         <div className="flex items-center gap-2">
-          <span className="text-lg">{LANG_FLAGS[selectedLang]}</span>
+          <span className="text-lg">{LANG_FLAGS[activeLang]}</span>
           {/* Task 4: Hebrew name in the phrase list header too */}
           <span className="text-gray-900 dark:text-emt-light font-bold text-base">
-            {LANG_LABELS_HE[selectedLang]}
+            {LANG_LABELS_HE[activeLang]}
           </span>
         </div>
 
@@ -238,7 +395,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           <HapticButton
             key={phrase.id}
             pressScale={0.97}
-            onClick={() => { setExpanded(phrase.id); speakText(phrase[selectedLang], selectedLang); }}
+            onClick={() => { setExpanded(phrase.id); speakText(phrase[activeLang], activeLang); }}
             className="w-full text-right rounded-2xl border border-gray-200 dark:border-emt-border
                        bg-white dark:bg-emt-gray p-4 flex items-center justify-between gap-3"
           >
@@ -249,15 +406,15 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
               </p>
               {/* Translated — smaller subtitle */}
               <p
-                dir={LANG_DIR[selectedLang]}
+                dir={LANG_DIR[activeLang]}
                 className="text-gray-400 dark:text-emt-muted text-sm mt-1 leading-snug"
               >
-                {phrase[selectedLang]}
+                {phrase[activeLang]}
               </p>
             </div>
             <HapticButton
               pressScale={0.85}
-              onClick={e => { e.stopPropagation(); speakText(phrase[selectedLang], selectedLang); }}
+              onClick={e => { e.stopPropagation(); speakText(phrase[activeLang], activeLang); }}
               className="shrink-0 w-10 h-10 rounded-full bg-orange-400/20 border border-orange-400/40
                          flex items-center justify-center text-orange-400"
               aria-label="השמע"
@@ -276,20 +433,20 @@ export default function MedicalTranslatorModal({ isOpen, onClose }: Props) {
           onClick={handleCloseExpanded}
         >
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-2xl">{LANG_FLAGS[selectedLang]}</span>
+            <span className="text-2xl">{LANG_FLAGS[activeLang]}</span>
             <p className="text-orange-400 text-sm font-bold uppercase tracking-widest">
-              {LANG_LABELS_HE[selectedLang]}
+              {LANG_LABELS_HE[activeLang]}
             </p>
           </div>
           <p
-            dir={LANG_DIR[selectedLang]}
+            dir={LANG_DIR[activeLang]}
             className="text-white font-bold text-4xl text-center leading-relaxed mb-8"
           >
-            {expandedPhrase[selectedLang]}
+            {expandedPhrase[activeLang]}
           </p>
           <HapticButton
             pressScale={0.9}
-            onClick={e => { e.stopPropagation(); speakText(expandedPhrase[selectedLang], selectedLang); }}
+            onClick={e => { e.stopPropagation(); speakText(expandedPhrase[activeLang], activeLang); }}
             className="mb-8 px-6 py-3 rounded-2xl bg-orange-400/20 border border-orange-400/50
                        flex items-center gap-2 text-orange-400 font-bold text-base"
             aria-label="השמע"
