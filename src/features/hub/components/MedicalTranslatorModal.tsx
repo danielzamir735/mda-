@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, ExternalLink } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink, Brain } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
   type Lang,
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
+import FlashcardTrainer from '../../../components/FlashcardTrainer';
 
 interface Props { isOpen: boolean; onClose: () => void; initialLang?: Lang; }
 
@@ -32,6 +33,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   const [selectedLang, setSelectedLang] = useState<Lang | null>(initialLang ?? null);
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [trainerOpen, setTrainerOpen] = useState(false);
 
   // Refs for popstate handler — avoids stale closures
   const selectedLangRef = useRef<Lang | null>(null);
@@ -130,6 +132,9 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
 
   const filtered = category === 'הכל' ? PHRASES : PHRASES.filter(p => p.category === category);
   const expandedPhrase = PHRASES.find(p => p.id === expanded);
+
+  const buildFlashcards = (lang: Lang) =>
+    PHRASES.map(p => ({ front: p.he, back: p[lang] }));
 
 
   /* ── STEP 1: Language Selection ── */
@@ -244,6 +249,24 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
 
       {/* Phrase Cards */}
       <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-3">
+
+        {/* Flashcard trainer */}
+        <HapticButton
+          pressScale={0.97}
+          onClick={() => setTrainerOpen(true)}
+          className="w-full rounded-2xl border border-orange-400/30 bg-orange-500/8 dark:bg-orange-500/10
+                     backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
+        >
+          <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center shrink-0">
+            <Brain size={20} className="text-orange-400" />
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-orange-200 font-bold text-base leading-tight">אימון שינון — ביטויים רפואיים</span>
+            <span className="text-orange-300/50 text-xs mt-0.5">{PHRASES.length} כרטיסיות · עברית → {LANG_FLAGS[activeLang]}</span>
+          </div>
+          <div className="mr-auto text-orange-400/40 text-lg">←</div>
+        </HapticButton>
+
         {filtered.map(phrase => (
           <HapticButton
             key={phrase.id}
@@ -329,6 +352,13 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
           {/* Task 3: Enlarged 'click to close' text */}
           <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
         </div>
+      )}
+
+      {trainerOpen && (
+        <FlashcardTrainer
+          data={buildFlashcards(activeLang)}
+          onClose={() => setTrainerOpen(false)}
+        />
       )}
     </div>
   );

@@ -1,10 +1,29 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 import { usePwaInstall } from '../pwa/PwaInstallContext';
 import { trackInteraction } from '../../utils/analytics';
+import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
+
+const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
+  { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
+  { front: 'עומק לחיצות CPR — מבוגר', back: '5–6 ס"מ' },
+  { front: 'עומק לחיצות CPR — ילד (מעל גיל שנה)', back: '≈ 5 ס"מ (שליש עומק החזה)' },
+  { front: 'יחס לחיצות:נשימות — מחייה אחד', back: '30:2' },
+  { front: 'יחס לחיצות:נשימות — שני מחיים (ילד)', back: '15:2' },
+  { front: 'קצבים בעלי דפיברילציה', back: 'VF · pVT (פרפור חדרים / טכיקרדיה חדרית ללא דופק)' },
+  { front: 'אנרגיה ראשונה לדפיברילציה (דו-פאזי)', back: '150–200 ג\'ול (לפי הוראת היצרן)' },
+  { front: 'כל כמה זמן מזריקים אדרנלין ב-CPR?', back: 'כל 3–5 דקות (1 מ"ג IV/IO)' },
+  { front: 'אינדיקציה ל-RSI בשדה', back: 'חסימת דרכי אוויר, GCS ≤ 8, נשימה לא מספיקה' },
+  { front: 'ציון APGAR — 5 פרמטרים', back: 'Appearance · Pulse · Grimace · Activity · Respiration' },
+  { front: 'מהו שוק חסימתי (Obstructive Shock)?', back: 'חסימה פיזית לזרימת דם: טמפונדה, פנאומוטורקס מתח, תסחיף ריאתי' },
+  { front: 'טריאס בק — סימני טמפונדה', back: 'צלילות לב מופחתת · ורידי צוואר נפוחים · לחץ דם נמוך' },
+  { front: 'Glasgow Coma Scale — טווח', back: '3 (מינימום) עד 15 (תקין)' },
+  { front: 'סימני שוק — 5 עיקריים', back: 'דופק מהיר וחלש · לחץ דם נמוך · חיוורון/הזעה · בלבול · שתן מועט' },
+  { front: 'מינון אסקורין (Aspirin) ב-ACS', back: '300 מ"ג ללעיסה' },
+];
 
 interface Props {
   isOpen: boolean;
@@ -210,6 +229,7 @@ export default function HubModal({
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
+  const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const { openFullModal } = usePwaInstall();
 
   useEffect(() => {
@@ -394,6 +414,24 @@ export default function HubModal({
 
           {/* Simulator list */}
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+
+            {/* Flashcard trainer */}
+            <HapticButton
+              pressScale={0.97}
+              onClick={() => setSimFlashcardOpen(true)}
+              className="w-full rounded-2xl border border-rose-400/30 bg-rose-500/8 dark:bg-rose-500/10
+                         backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center shrink-0">
+                <Brain size={20} className="text-rose-400" />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-rose-200 font-bold text-base leading-tight">אימון שינון — פרוטוקולים</span>
+                <span className="text-rose-300/50 text-xs mt-0.5">{SIMULATOR_FLASHCARDS.length} כרטיסיות · CPR, שוק, תרופות</span>
+              </div>
+              <div className="mr-auto text-rose-400/40 text-lg">←</div>
+            </HapticButton>
+
             {[
               {
                 label: 'סימולטור החייאה',
@@ -456,6 +494,10 @@ export default function HubModal({
             ))}
           </div>
         </div>
+      )}
+
+      {simFlashcardOpen && (
+        <FlashcardTrainer data={SIMULATOR_FLASHCARDS} onClose={() => setSimFlashcardOpen(false)} />
       )}
     </div>
   );
