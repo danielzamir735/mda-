@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen, ChevronDown } from 'lucide-react';
+import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen, ChevronDown, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { MEDICAL_CATEGORIES, TABLET_CATEGORIES } from '../data/medicalTerms';
 import { useMedicalHistoryStore } from '../../../store/medicalHistoryStore';
+import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
+
+const FLASHCARD_DATA: FlashcardItem[] = MEDICAL_CATEGORIES.flatMap((cat) =>
+  cat.terms.map((t) => ({
+    front: t.he,
+    back: t.description ? `${t.en} — ${t.description}` : t.en,
+  }))
+);
 
 interface Props {
   isOpen: boolean;
@@ -16,6 +24,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   const [newEn, setNewEn] = useState('');
   const [view, setView] = useState<'general' | 'tablet'>('general');
   const [expandedDiseaseId, setExpandedDiseaseId] = useState<string | null>(null);
+  const [trainerOpen, setTrainerOpen] = useState(false);
   const { customItems, addItem, removeItem } = useMedicalHistoryStore();
 
   if (!isOpen) return null;
@@ -109,6 +118,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
@@ -174,6 +184,26 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+
+        {/* Flashcard trainer trigger — general view only */}
+        {view === 'general' && (
+          <button
+            onClick={() => setTrainerOpen(true)}
+            className="w-full rounded-2xl border border-purple-400/30 bg-purple-500/8 dark:bg-purple-500/10
+                       backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
+                       active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
+              <Brain size={20} className="text-purple-400" />
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-purple-200 font-bold text-base leading-tight">התחל אימון שינון</span>
+              <span className="text-purple-300/50 text-xs mt-0.5">{FLASHCARD_DATA.length} כרטיסיות · מחלות רקע</span>
+            </div>
+            <div className="mr-auto text-purple-400/40 text-lg">←</div>
+          </button>
+        )}
+
         {view === 'tablet' ? (
           <>
             <p className="text-xs text-gray-400 dark:text-emt-muted pr-1">
@@ -306,5 +336,10 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
         </div>}
       </div>
     </div>
+
+    {trainerOpen && (
+      <FlashcardTrainer data={FLASHCARD_DATA} onClose={() => setTrainerOpen(false)} />
+    )}
+    </>
   );
 }

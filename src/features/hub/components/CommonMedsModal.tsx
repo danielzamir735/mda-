@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, Pill, Search } from 'lucide-react';
+import { X, Pill, Search, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
 
 interface Med {
   name: string;
@@ -70,6 +71,13 @@ const CATEGORIES: Category[] = [
   },
 ];
 
+const FLASHCARD_DATA: FlashcardItem[] = CATEGORIES.flatMap((cat) =>
+  cat.items.map((m) => ({
+    front: `${m.name} (${m.generic})`,
+    back: m.indication,
+  }))
+);
+
 function MedCard({ name, generic, indication, divider = '' }: Med & { divider?: string }) {
   return (
     <div className={`px-4 py-3 ${divider}`}>
@@ -90,6 +98,7 @@ interface Props {
 export default function CommonMedsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [query, setQuery] = useState('');
+  const [trainerOpen, setTrainerOpen] = useState(false);
   if (!isOpen) return null;
 
   const q = query.trim().toLowerCase();
@@ -105,6 +114,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
     : null;
 
   return (
+    <>
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
@@ -142,6 +152,24 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+
+        {/* Flashcard trainer trigger */}
+        <button
+          onClick={() => setTrainerOpen(true)}
+          className="w-full rounded-2xl border border-emerald-400/30 bg-emerald-500/8 dark:bg-emerald-500/10
+                     backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
+                     active:scale-[0.98] transition-transform"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
+            <Brain size={20} className="text-emerald-400" />
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-emerald-200 font-bold text-base leading-tight">התחל אימון שינון</span>
+            <span className="text-emerald-300/50 text-xs mt-0.5">{FLASHCARD_DATA.length} כרטיסיות · תרופות נפוצות</span>
+          </div>
+          <div className="mr-auto text-emerald-400/40 text-lg">←</div>
+        </button>
+
         {filtered ? (
           filtered.length === 0 ? (
             <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
@@ -176,5 +204,10 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
         )}
       </div>
     </div>
+
+    {trainerOpen && (
+      <FlashcardTrainer data={FLASHCARD_DATA} onClose={() => setTrainerOpen(false)} />
+    )}
+    </>
   );
 }
