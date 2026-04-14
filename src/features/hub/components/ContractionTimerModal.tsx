@@ -145,9 +145,9 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           onClick={onClose}
           className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
           style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-          aria-label="חזור"
+          aria-label="סגור"
         >
-          <ChevronRight size={22} className="text-white/80" />
+          <X size={20} className="text-white/80" />
         </button>
 
         <div className="flex items-center gap-2.5">
