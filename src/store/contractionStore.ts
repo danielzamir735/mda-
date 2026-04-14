@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface Contraction {
-  id: number;
-  duration: number;       // seconds — how long the contraction lasted
-  interval: number | null; // seconds from previous contraction's START to this one's START
+  id: number;               // Date.now() at end — used as unique key and end timestamp
+  duration: number;         // seconds — how long the contraction lasted
+  interval: number | null;  // seconds from previous contraction's START to this one's START
 }
 
 interface ContractionState {
@@ -14,6 +14,7 @@ interface ContractionState {
   lastStartMs: number | null; // Date.now() when the previous contraction started
   startContraction: () => void;
   endContraction: () => void;
+  deleteContraction: (id: number) => void;
   reset: () => void;
 }
 
@@ -40,9 +41,12 @@ export const useContractionStore = create<ContractionState>()(
           active: false,
           lastStartMs: startMs,
           startMs: null,
-          contractions: [{ id: now, duration, interval }, ...contractions].slice(0, 10),
+          contractions: [{ id: now, duration, interval }, ...contractions],
         });
       },
+
+      deleteContraction: (id: number) =>
+        set(state => ({ contractions: state.contractions.filter(c => c.id !== id) })),
 
       reset: () => set({
         contractions: [],

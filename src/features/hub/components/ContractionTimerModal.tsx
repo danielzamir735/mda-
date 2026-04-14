@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Timer, History, X } from 'lucide-react';
+import { ChevronRight, Timer, History, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContractionStore } from '../../../store/contractionStore';
 
@@ -23,11 +23,22 @@ function playBeep(frequency = 660, duration = 0.12, volume = 0.07) {
   } catch { /* blocked or unsupported — stay silent */ }
 }
 
-// ── Time formatter ─────────────────────────────────────────────────────────
+// ── Time formatters ────────────────────────────────────────────────────────
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}ש'`;
+}
+
+/** Display the wall-clock time + date for a contraction (derived from its end timestamp) */
+function fmtTimestamp(endMs: number, durationSec: number): string {
+  const startMs = endMs - durationSec * 1000;
+  const d = new Date(startMs);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${hh}:${mm}  ${day}/${month}`;
 }
 
 interface Props { isOpen: boolean; onClose: () => void; }
@@ -35,7 +46,7 @@ interface Props { isOpen: boolean; onClose: () => void; }
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   const {
     contractions, active, startMs,
-    startContraction, endContraction, reset,
+    startContraction, endContraction, deleteContraction, reset,
   } = useContractionStore();
 
   const [elapsed, setElapsed] = useState(() =>
@@ -345,85 +356,99 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* ── History Bottom Sheet ─────────────────────────────────────────── */}
+      {/* ── History Full-Screen Overlay ──────────────────────────────────── */}
       <AnimatePresence>
         {showHistory && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="backdrop"
-              className="fixed inset-0 z-[80]"
-              style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowHistory(false)}
-            />
-
-            {/* Sheet */}
-            <motion.div
-              key="sheet"
-              className="fixed bottom-0 left-0 right-0 z-[90] rounded-t-3xl flex flex-col overflow-hidden"
+          <motion.div
+            key="history-screen"
+            className="fixed inset-0 z-[80] flex flex-col"
+            style={{ background: 'linear-gradient(160deg, #0d0b1e 0%, #1a1040 45%, #0f1a2e 100%)' }}
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          >
+            {/* Header */}
+            <div
+              className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3"
               style={{
-                background: 'rgba(14,11,30,0.97)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                maxHeight: '78vh',
+                background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(24px)',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
               }}
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }} />
-              </div>
-
-              {/* Sheet header */}
-              <div
-                className="flex items-center justify-between px-5 py-3 shrink-0"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+              <button
+                onClick={() => setShowHistory(false)}
+                className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+                aria-label="חזור"
               >
-                <div className="flex items-center gap-2">
-                  <History size={18} className="text-purple-300" />
-                  <h3 className="text-white font-bold text-lg">היסטוריית צירים</h3>
-                </div>
-                <button
-                  onClick={() => setShowHistory(false)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                  style={{ background: 'rgba(255,255,255,0.07)' }}
-                >
-                  <X size={16} className="text-white/50" />
-                </button>
+                <ChevronRight size={22} className="text-white/80" />
+              </button>
+
+              <div className="flex items-center gap-2">
+                <History size={18} className="text-purple-300" />
+                <h3 className="text-white font-bold text-xl">היסטוריית צירים</h3>
               </div>
 
-              {/* Column headers */}
               <div
-                className="grid grid-cols-3 px-5 py-2.5 shrink-0 text-xs font-bold uppercase tracking-wider"
-                style={{ color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.02)' }}
+                className="px-3 py-1.5 rounded-full text-sm font-bold tabular-nums"
+                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', color: '#c4b5fd' }}
               >
-                <span>#</span>
-                <span className="text-center">משך</span>
-                <span className="text-center">מרווח</span>
+                {contractions.length}
               </div>
+            </div>
 
-              {/* Rows */}
-              <div className="overflow-y-auto flex-1">
+            {/* Column headers */}
+            <div
+              className="shrink-0 grid px-5 py-2.5 text-xs font-bold tracking-wider"
+              style={{
+                gridTemplateColumns: '2rem 1fr 1fr 1fr 2rem',
+                color: 'rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.02)',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <span>#</span>
+              <span className="text-center">שעה</span>
+              <span className="text-center">משך</span>
+              <span className="text-center">מרווח</span>
+              <span />
+            </div>
+
+            {/* Scrollable rows */}
+            <div className="flex-1 overflow-y-auto">
+              <AnimatePresence initial={false}>
                 {contractions.map((c, i) => (
                   <motion.div
                     key={c.id}
-                    initial={{ opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.035 }}
-                    className="grid grid-cols-3 px-5 py-3.5"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                    layout
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="grid items-center px-5 py-3.5"
+                    style={{
+                      gridTemplateColumns: '2rem 1fr 1fr 1fr 2rem',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    }}
                   >
-                    <span className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {/* # */}
+                    <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       {contractions.length - i}
                     </span>
-                    <span className="text-center font-black text-green-400 text-base">
+
+                    {/* Timestamp */}
+                    <span className="text-center text-xs font-medium tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                      {fmtTimestamp(c.id, c.duration)}
+                    </span>
+
+                    {/* Duration */}
+                    <span className="text-center font-black text-base text-green-400">
                       {fmt(c.duration)}
                     </span>
+
+                    {/* Interval */}
                     <span
                       className={`text-center font-black text-base ${
                         c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'
@@ -431,11 +456,28 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     >
                       {c.interval !== null ? fmt(c.interval) : '—'}
                     </span>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => deleteContraction(c.id)}
+                      className="flex items-center justify-center w-8 h-8 rounded-full active:scale-90 transition-all"
+                      style={{ background: 'rgba(239,35,60,0.08)' }}
+                      aria-label="מחק ציר"
+                    >
+                      <Trash2 size={14} className="text-red-400/60" />
+                    </button>
                   </motion.div>
                 ))}
-              </div>
-            </motion.div>
-          </>
+              </AnimatePresence>
+
+              {contractions.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-48 gap-3">
+                  <History size={32} className="text-white/15" />
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>אין צירים מוקלטים</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
