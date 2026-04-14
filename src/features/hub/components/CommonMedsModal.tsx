@@ -26,13 +26,21 @@ const CATEGORIES: Category[] = [
     bg: 'bg-red-400/5',
     divider: 'border-b border-red-400/20',
     items: [
-      { name: 'אספירין / קרטיה / מיקרופירין', generic: 'Aspirin', indication: 'מדלל דם (מונע צימוד טסיות), למניעת התקפי לב ושבץ' },
-      { name: 'קרדילוק', generic: 'Bisoprolol', indication: 'הורדת דופק ולחץ דם (חסם בטא)' },
-      { name: 'אליקוויס / קסרלטו', generic: 'Apixaban / Rivaroxaban', indication: 'נוגדי קרישה (מדללי דם חזקים), לפרפור עליות או קרישי דם' },
-      { name: 'פלביקס', generic: 'Clopidogrel', indication: 'מדלל דם, לרוב לאחר צנתור או אירוע מוחי' },
-      { name: 'טריטייס / רמיפריל', generic: 'Ramipril', indication: 'הורדת לחץ דם (מעכב ACE), אי ספיקת לב' },
-      { name: 'נורווסק / אמלודיפין', generic: 'Amlodipine', indication: 'הורדת לחץ דם (חסם תעלות סידן)' },
-      { name: 'פוסיד / קלוריל', generic: 'Furosemide / Thiazide', indication: 'תרופות משתנות - לבצקות, אי ספיקת לב ויתר לחץ דם' },
+      { name: 'קרדילוק (Cardiloc)', generic: 'Bisoprolol', indication: 'הורדת לחץ דם, האטת דופק (חוסמי בטא)' },
+      { name: 'אמלודיפין / נורבסק', generic: 'Amlodipine', indication: 'הורדת לחץ דם (חוסמי תעלות סידן)' },
+      { name: 'פוסיד / קלארין', generic: 'Furosemide', indication: 'טיפול בבצקות ואי ספיקת לב, הוצאת נוזלים בשתן' },
+    ],
+  },
+  {
+    title: 'מדללי דם',
+    color: 'text-rose-400',
+    border: 'border-rose-400/30',
+    bg: 'bg-rose-400/5',
+    divider: 'border-b border-rose-400/20',
+    items: [
+      { name: 'קרטיה / מיקרופירין', generic: 'Aspirin', indication: 'מניעת קרישי דם (מונע צימות טסיות)' },
+      { name: 'אליקוויס / קסרלטו', generic: 'Apixaban / Rivaroxaban', indication: 'מדללי דם חדשים (NOAC) למניעת קרישים (לרוב בפרפור עליות)' },
+      { name: 'פלאביקס', generic: 'Clopidogrel', indication: 'מניעת קרישי דם (לרוב לאחר צנתור)' },
     ],
   },
   {
@@ -42,21 +50,9 @@ const CATEGORIES: Category[] = [
     bg: 'bg-amber-400/5',
     divider: 'border-b border-amber-400/20',
     items: [
-      { name: "גלוקופאג' / יוקריאס", generic: 'Metformin', indication: 'סוכרת סוג 2' },
-      { name: "ג'ארדיאנס / פורסיגה", generic: 'Empagliflozin / Dapagliflozin', indication: 'סוכרת, וגם אי ספיקת לב' },
-      { name: 'אינסולין', generic: 'Insulin', indication: 'סוכרת (תלוית אינסולין)' },
-      { name: 'אלטרוקסין / יותירוקס', generic: 'Levothyroxine', indication: 'תת-פעילות בלוטת התריס' },
-    ],
-  },
-  {
-    title: 'כולסטרול ועיכול',
-    color: 'text-emerald-400',
-    border: 'border-emerald-400/30',
-    bg: 'bg-emerald-400/5',
-    divider: 'border-b border-emerald-400/20',
-    items: [
-      { name: 'ליפיטור / סימבסטטין', generic: 'Statins', indication: 'הורדת כולסטרול ושומנים בדם' },
-      { name: 'אומפרדקס / לוסק', generic: 'Omeprazole', indication: 'הפחתת חומציות בקיבה (צרבות, כיב קיבה)' },
+      { name: "מטפורמין / גלוקופאז'", generic: 'Metformin', indication: 'איזון סוכר בדם (סוכרת סוג 2)' },
+      { name: "ג'ארדיאנס", generic: 'Empagliflozin', indication: 'הפרשת סוכר בשתן, מגן על הלב והכליות' },
+      { name: 'אלטרוקסין / יוטירוקס', generic: 'Levothyroxine', indication: 'הורמון חלופי לתת-פעילות בלוטת התריס' },
     ],
   },
   {
@@ -66,15 +62,38 @@ const CATEGORIES: Category[] = [
     bg: 'bg-sky-400/5',
     divider: 'border-b border-sky-400/20',
     items: [
-      { name: 'ונטולין / סימביקורט / אירובנט', generic: 'Inhalers', indication: 'מרחיבי סמפונות לאסטמה או COPD' },
+      { name: 'ונטולין / אירובנט', generic: 'Salbutamol / Ipratropium', indication: 'הרחבת סמפונות (אסטמה / COPD)' },
+      { name: 'סימביקורט', generic: 'Budesonide + Formoterol', indication: 'משאף משולב: סטרואידים + מרחיב סמפונות ארוך טווח' },
+    ],
+  },
+  {
+    title: 'שיכוך כאבים',
+    color: 'text-violet-400',
+    border: 'border-violet-400/30',
+    bg: 'bg-violet-400/5',
+    divider: 'border-b border-violet-400/20',
+    items: [
+      { name: 'אופטלגין', generic: 'Metamizole', indication: 'הורדת חום ושיכוך כאב בינוני-חזק' },
+      { name: 'טרמדקס / טרמאל', generic: 'Tramadol', indication: 'משכך כאבים נרקוטי קל-בינוני' },
+    ],
+  },
+  {
+    title: 'שומנים ועיכול',
+    color: 'text-emerald-400',
+    border: 'border-emerald-400/30',
+    bg: 'bg-emerald-400/5',
+    divider: 'border-b border-emerald-400/20',
+    items: [
+      { name: 'ליפיטור / סימבסטטין', generic: 'Atorvastatin / Simvastatin', indication: 'הורדת כולסטרול בדם' },
+      { name: 'אומפרדקס / לוסק', generic: 'Omeprazole', indication: 'הורדת חומציות בקיבה (צרבות, כיבים)' },
     ],
   },
 ];
 
 const FLASHCARD_DATA: FlashcardItem[] = CATEGORIES.flatMap((cat) =>
   cat.items.map((m) => ({
-    front: `${m.name} (${m.generic})`,
-    back: m.indication,
+    front: m.name,
+    back: `${m.indication}\n(${m.generic})`,
   }))
 );
 
