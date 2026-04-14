@@ -494,7 +494,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-emt-muted px-4 leading-relaxed">
-          המידע מסופק על ידי AI ואינו מהווה המלצה רפואית. לתמיד התייעץ עם גורם מוסמך.
+          המידע מסופק על ידי AI ואינו מהווה המלצה רפואית. יש להיוועץ תמיד עם גורם מוסמך.
         </p>
       </div>
     </div>

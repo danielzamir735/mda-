@@ -8,7 +8,7 @@ interface Props { isOpen: boolean; onClose: () => void; }
 const REASONS = [
   { icon: Server,  color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'שרתים', desc: 'זמינות 24/7 גם בלחץ' },
   { icon: Zap,     color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'פיתוח', desc: 'יכולות חדשות כל הזמן' },
-  { icon: Lock,    color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'חינמי', desc: 'נגיש לכל חובש שדה' },
+  { icon: Lock,    color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'חינמי', desc: 'נגיש לכל חובש' },
 ];
 
 export default function SupportModal({ isOpen, onClose }: Props) {

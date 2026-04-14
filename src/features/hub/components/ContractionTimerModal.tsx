@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Timer, History, X, Trash2 } from 'lucide-react';
+import { ChevronRight, Timer, History, X, Trash2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContractionStore } from '../../../store/contractionStore';
+import type { ContractionSession } from '../../../store/contractionStore';
 
 // ── Audio feedback via Web Audio API (no file needed, silent on error) ─────
 function playBeep(frequency = 660, duration = 0.12, volume = 0.07) {
@@ -45,14 +46,15 @@ interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   const {
-    contractions, active, startMs,
-    startContraction, endContraction, deleteContraction, reset,
+    contractions, sessions, active, startMs,
+    startContraction, endContraction, deleteSession, reset,
   } = useContractionStore();
 
   const [elapsed, setElapsed] = useState(() =>
     active && startMs ? Math.floor((Date.now() - startMs) / 1000) : 0,
   );
   const [showHistory, setShowHistory] = useState(false);
+  const [expandedSession, setExpandedSession] = useState<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // ── Elapsed timer ──────────────────────────────────────────────────────
@@ -192,21 +194,19 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
         {/* Instruction text */}
         <AnimatePresence mode="wait">
-          <motion.p
-            key={active ? 'active-lbl' : 'idle-lbl'}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.25 }}
-            className="text-center font-bold text-lg tracking-wide"
-            style={{ color: active ? '#fca5a5' : 'rgba(255,255,255,0.55)' }}
-          >
-            {active
-              ? 'ציר פעיל — לחץ לסיום'
-              : contractions.length === 0
-                ? 'לחץ כשמתחיל ציר'
-                : 'מחכה לציר הבא...'}
-          </motion.p>
+          {(active || contractions.length === 0) && (
+            <motion.p
+              key={active ? 'active-lbl' : 'idle-lbl'}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.25 }}
+              className="text-center font-bold text-lg tracking-wide"
+              style={{ color: active ? '#fca5a5' : 'rgba(255,255,255,0.55)' }}
+            >
+              {active ? 'ציר פעיל — לחץ לסיום' : 'לחץ כשמתחיל ציר'}
+            </motion.p>
+          )}
         </AnimatePresence>
 
         {/* ── Stats cards ──────────────────────────────────────────────── */}
@@ -378,7 +378,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               }}
             >
               <button
-                onClick={() => setShowHistory(false)}
+                onClick={() => { setShowHistory(false); setExpandedSession(null); }}
                 className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
                 style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
                 aria-label="חזור"
@@ -388,92 +388,39 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
               <div className="flex items-center gap-2">
                 <History size={18} className="text-purple-300" />
-                <h3 className="text-white font-bold text-xl">היסטוריית צירים</h3>
+                <h3 className="text-white font-bold text-xl">היסטוריית סשנים</h3>
               </div>
 
               <div
                 className="px-3 py-1.5 rounded-full text-sm font-bold tabular-nums"
                 style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', color: '#c4b5fd' }}
               >
-                {contractions.length}
+                {sessions.length}
               </div>
             </div>
 
-            {/* Column headers */}
-            <div
-              className="shrink-0 grid px-5 py-2.5 text-xs font-bold tracking-wider"
-              style={{
-                gridTemplateColumns: '2rem 1fr 1fr 1fr 2rem',
-                color: 'rgba(255,255,255,0.35)',
-                background: 'rgba(255,255,255,0.02)',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <span>#</span>
-              <span className="text-center">שעה</span>
-              <span className="text-center">משך</span>
-              <span className="text-center">מרווח</span>
-              <span />
-            </div>
-
-            {/* Scrollable rows */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Scrollable session list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               <AnimatePresence initial={false}>
-                {contractions.map((c, i) => (
-                  <motion.div
-                    key={c.id}
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ duration: 0.22 }}
-                    className="grid items-center px-5 py-3.5"
-                    style={{
-                      gridTemplateColumns: '2rem 1fr 1fr 1fr 2rem',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    }}
-                  >
-                    {/* # */}
-                    <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      {contractions.length - i}
-                    </span>
-
-                    {/* Timestamp */}
-                    <span className="text-center text-xs font-medium tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                      {fmtTimestamp(c.id, c.duration)}
-                    </span>
-
-                    {/* Duration */}
-                    <span className="text-center font-black text-base text-green-400">
-                      {fmt(c.duration)}
-                    </span>
-
-                    {/* Interval */}
-                    <span
-                      className={`text-center font-black text-base ${
-                        c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'
-                      }`}
-                    >
-                      {c.interval !== null ? fmt(c.interval) : '—'}
-                    </span>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => deleteContraction(c.id)}
-                      className="flex items-center justify-center w-8 h-8 rounded-full active:scale-90 transition-all"
-                      style={{ background: 'rgba(239,35,60,0.08)' }}
-                      aria-label="מחק ציר"
-                    >
-                      <Trash2 size={14} className="text-red-400/60" />
-                    </button>
-                  </motion.div>
+                {sessions.map((session, si) => (
+                  <SessionCard
+                    key={session.id}
+                    session={session}
+                    index={sessions.length - si}
+                    isExpanded={expandedSession === session.id}
+                    onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
+                    onDelete={() => deleteSession(session.id)}
+                  />
                 ))}
               </AnimatePresence>
 
-              {contractions.length === 0 && (
+              {sessions.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-48 gap-3">
                   <History size={32} className="text-white/15" />
-                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>אין צירים מוקלטים</p>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>אין סשנים שמורים</p>
+                  <p className="text-xs text-center max-w-[200px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                    לחץ "איפוס" לשמירת הסשן הנוכחי
+                  </p>
                 </div>
               )}
             </div>
@@ -481,5 +428,133 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ── Session card component ─────────────────────────────────────────────────
+interface SessionCardProps {
+  session: ContractionSession;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+}
+
+function SessionCard({ session, index, isExpanded, onToggle, onDelete }: SessionCardProps) {
+  const d = new Date(session.savedAt);
+  const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}  ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const count = session.contractions.length;
+  const avgDur = count
+    ? Math.round(session.contractions.reduce((s, c) => s + c.duration, 0) / count)
+    : 0;
+  const withInterval = session.contractions.filter(c => c.interval !== null);
+  const avgInt = withInterval.length
+    ? Math.round(withInterval.reduce((s, c) => s + (c.interval ?? 0), 0) / withInterval.length)
+    : null;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.22 }}
+      className="rounded-2xl overflow-hidden"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
+    >
+      {/* Session header row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        {/* Index badge */}
+        <div
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-black"
+          style={{ background: 'rgba(167,139,250,0.15)', color: '#c4b5fd' }}
+        >
+          {index}
+        </div>
+
+        {/* Info */}
+        <button onClick={onToggle} className="flex-1 flex flex-col items-start gap-0.5 text-right">
+          <span className="text-white/80 text-sm font-bold tabular-nums">{dateStr}</span>
+          <span className="text-white/40 text-xs">
+            {count} צירים · ממוצע {fmt(avgDur)}
+            {avgInt !== null && ` · מרווח ${fmt(avgInt)}`}
+          </span>
+        </button>
+
+        {/* Expand toggle */}
+        <button onClick={onToggle} className="p-1.5 rounded-full active:scale-90 transition-transform" aria-label="הרחב">
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={16} className="text-white/40" />
+          </motion.div>
+        </button>
+
+        {/* Delete session */}
+        <button
+          onClick={onDelete}
+          className="p-1.5 rounded-full active:scale-90 transition-all"
+          style={{ background: 'rgba(239,35,60,0.08)' }}
+          aria-label="מחק סשן"
+        >
+          <Trash2 size={14} className="text-red-400/60" />
+        </button>
+      </div>
+
+      {/* Expanded contraction rows */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            {/* Column headers */}
+            <div
+              className="grid px-4 py-2 text-xs font-bold tracking-wider"
+              style={{
+                gridTemplateColumns: '2rem 1fr 1fr 1fr',
+                color: 'rgba(255,255,255,0.3)',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(0,0,0,0.15)',
+              }}
+            >
+              <span>#</span>
+              <span className="text-center">שעה</span>
+              <span className="text-center">משך</span>
+              <span className="text-center">מרווח</span>
+            </div>
+
+            {session.contractions.map((c, i) => (
+              <div
+                key={c.id}
+                className="grid items-center px-4 py-2.5"
+                style={{
+                  gridTemplateColumns: '2rem 1fr 1fr 1fr',
+                  borderTop: '1px solid rgba(255,255,255,0.04)',
+                }}
+              >
+                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {session.contractions.length - i}
+                </span>
+                <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  {fmtTimestamp(c.id, c.duration)}
+                </span>
+                <span className="text-center font-black text-sm text-green-400">
+                  {fmt(c.duration)}
+                </span>
+                <span
+                  className={`text-center font-black text-sm ${
+                    c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'
+                  }`}
+                >
+                  {c.interval !== null ? fmt(c.interval) : '—'}
+                </span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
