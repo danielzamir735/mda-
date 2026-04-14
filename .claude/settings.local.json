@@ -44,7 +44,10 @@
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(node_modules/.bin/tsc:*)"
+      "Bash(node_modules/.bin/tsc:*)",
+      "Bash(ls *.config*)",
+      "Bash(ls tailwind*)",
+      "Bash(npx vite:*)"
     ]
   },
   "hooks": {
