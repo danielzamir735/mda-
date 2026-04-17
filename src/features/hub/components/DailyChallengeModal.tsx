@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Trophy, Zap, Brain, CheckCircle, XCircle, Loader2, RefreshCw, ChevronRight } from 'lucide-react';
+import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, ChevronRight } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
