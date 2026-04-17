@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -43,6 +43,7 @@ interface Props {
   onAccessibilityOpen: () => void;
   onBreathingOpen: () => void;
   onMedicationScannerOpen: () => void;
+  onSoulDepartureOpen: () => void;
 }
 
 type HubItem = {
@@ -204,9 +205,18 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
   },
+  {
+    id: 'soul-departure',
+    label: 'תפילה ליציאת נשמה',
+    subtitle: 'הנחיות ותפילות',
+    icon: Star,
+    color: 'text-amber-400',
+    border: 'border-amber-400/30',
+    bg: 'bg-amber-400/10',
+  },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators']);
+const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure']);
 
 export default function HubModal({
   isOpen,
@@ -226,6 +236,7 @@ export default function HubModal({
   onAccessibilityOpen,
   onBreathingOpen,
   onMedicationScannerOpen,
+  onSoulDepartureOpen,
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
@@ -264,6 +275,7 @@ export default function HubModal({
     breathing:                    ['breathing_synchronizer','tools'],
     'medication-scanner':         ['medication_info',       'tools'],
     simulators:                   ['learning_simulators',   'community_learning'],
+    'soul-departure':             ['soul_departure_prayer', 'tools'],
     'install-app':                ['pwa_install',           'utility'],
     'whatsapp-community':         ['hovesh_plus_community', 'community_learning'],
   };
@@ -290,6 +302,7 @@ export default function HubModal({
     if (id === 'accessibility') onAccessibilityOpen();
     if (id === 'breathing') onBreathingOpen();
     if (id === 'medication-scanner') onMedicationScannerOpen();
+    if (id === 'soul-departure') onSoulDepartureOpen();
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
