@@ -31,6 +31,7 @@ import PoisonCentersModal from '../hub/components/PoisonCentersModal';
 import AccessibilityModal from '../hub/components/AccessibilityModal';
 import BreathingSynchronizer from '../hub/components/BreathingSynchronizer';
 import MedicationScannerModal from '../hub/components/MedicationScannerModal';
+import DailyChallengeModal from '../hub/components/DailyChallengeModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
@@ -75,6 +76,7 @@ export default function VitalsFeature() {
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [breathingOpen, setBreathingOpen] = useState(false);
   const [medicationScannerOpen, setMedicationScannerOpen] = useState(false);
+  const [dailyChallengeOpen, setDailyChallengeOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [languageBridgeOpen, setLanguageBridgeOpen] = useState(false);
@@ -227,6 +229,7 @@ export default function VitalsFeature() {
         onAccessibilityOpen={() => setAccessibilityOpen(true)}
         onBreathingOpen={() => setBreathingOpen(true)}
         onMedicationScannerOpen={() => setMedicationScannerOpen(true)}
+        onDailyChallengeOpen={() => setDailyChallengeOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -268,6 +271,7 @@ export default function VitalsFeature() {
       <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />
       <BreathingSynchronizer isOpen={breathingOpen} onClose={() => { setBreathingOpen(false); setHubOpen(true); }} />
       <MedicationScannerModal isOpen={medicationScannerOpen} onClose={() => { setMedicationScannerOpen(false); setHubOpen(true); }} />
+      <DailyChallengeModal isOpen={dailyChallengeOpen} onClose={() => { setDailyChallengeOpen(false); setHubOpen(true); }} />
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />

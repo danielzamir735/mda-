@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -43,6 +43,7 @@ interface Props {
   onAccessibilityOpen: () => void;
   onBreathingOpen: () => void;
   onMedicationScannerOpen: () => void;
+  onDailyChallengeOpen: () => void;
 }
 
 type HubItem = {
@@ -57,6 +58,15 @@ type HubItem = {
 };
 
 const HUB_ITEMS: HubItem[] = [
+  {
+    id: 'daily-challenge',
+    label: 'האתגר היומי',
+    subtitle: 'BLS + ALS · שאלות יומיות',
+    icon: Trophy,
+    color: 'text-yellow-400',
+    border: 'border-yellow-400/40',
+    bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+  },
   {
     id: 'medhistory',
     label: 'מחלות רקע נפוצות',
@@ -206,7 +216,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators']);
+const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators']);
 
 export default function HubModal({
   isOpen,
@@ -226,6 +236,7 @@ export default function HubModal({
   onAccessibilityOpen,
   onBreathingOpen,
   onMedicationScannerOpen,
+  onDailyChallengeOpen,
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
@@ -249,6 +260,7 @@ export default function HubModal({
   if (!isOpen) return null;
 
   const HUB_TRACKING: Record<string, [string, string]> = {
+    'daily-challenge':            ['daily_challenge',        'learning'],
     calculators:                  ['calculators_section',   'calculators'],
     settings:                     ['settings',              'utility'],
     clinical:                     ['vitals_reference_table','medical_knowledge'],
@@ -290,6 +302,7 @@ export default function HubModal({
     if (id === 'accessibility') onAccessibilityOpen();
     if (id === 'breathing') onBreathingOpen();
     if (id === 'medication-scanner') onMedicationScannerOpen();
+    if (id === 'daily-challenge') onDailyChallengeOpen();
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
@@ -327,6 +340,11 @@ export default function HubModal({
               <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
                 {id === 'updates' && !hasSeenWhatsNew && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse z-10" />
+                )}
+                {id === 'daily-challenge' && (
+                  <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full z-10 shadow-lg">
+                    New
+                  </span>
                 )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
