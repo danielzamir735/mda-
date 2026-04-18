@@ -231,11 +231,8 @@ export default function VitalsFeature() {
         onAccessibilityOpen={() => setAccessibilityOpen(true)}
         onBreathingOpen={() => setBreathingOpen(true)}
         onMedicationScannerOpen={() => setMedicationScannerOpen(true)}
-<<<<<<< HEAD
         onDailyChallengeOpen={() => setDailyChallengeOpen(true)}
-=======
         onSoulDepartureOpen={() => setSoulDepartureOpen(true)}
->>>>>>> main
       />
 
       <AmbulanceChecklistModal

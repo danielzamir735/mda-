@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy } from 'lucide-react';
-=======
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Star } from 'lucide-react';
->>>>>>> main
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -47,11 +43,8 @@ interface Props {
   onAccessibilityOpen: () => void;
   onBreathingOpen: () => void;
   onMedicationScannerOpen: () => void;
-<<<<<<< HEAD
   onDailyChallengeOpen: () => void;
-=======
   onSoulDepartureOpen: () => void;
->>>>>>> main
 }
 
 type HubItem = {
@@ -233,11 +226,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-<<<<<<< HEAD
-const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators']);
-=======
-const ENABLED = new Set(['calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure']);
->>>>>>> main
+const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure']);
 
 export default function HubModal({
   isOpen,
@@ -257,11 +246,8 @@ export default function HubModal({
   onAccessibilityOpen,
   onBreathingOpen,
   onMedicationScannerOpen,
-<<<<<<< HEAD
   onDailyChallengeOpen,
-=======
   onSoulDepartureOpen,
->>>>>>> main
 }: Props) {
   const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
@@ -328,11 +314,8 @@ export default function HubModal({
     if (id === 'accessibility') onAccessibilityOpen();
     if (id === 'breathing') onBreathingOpen();
     if (id === 'medication-scanner') onMedicationScannerOpen();
-<<<<<<< HEAD
     if (id === 'daily-challenge') onDailyChallengeOpen();
-=======
     if (id === 'soul-departure') onSoulDepartureOpen();
->>>>>>> main
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
