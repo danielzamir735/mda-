@@ -130,74 +130,74 @@ async function generateQuestion(cat: Category): Promise<Question> {
 }
 
 // ─── Supabase — daily_questions ───────────────────────────────────────────────
+// Schema: question_date (date), question_type (text), content (jsonb)
 
 async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
-  console.log(`[DailyChallenge] fetchOrCreateQuestion — category=${cat} date=${TODAY}`);
+  console.log(`[DailyChallenge] fetchOrCreateQuestion — question_type=${cat} question_date=${TODAY}`);
 
   // 1. Check DB for today's question
   const { data: existing, error: fetchError } = await supabase
     .from('daily_questions')
-    .select('question, options, correct_index, explanation')
-    .eq('challenge_date', TODAY)
-    .eq('category', cat)
+    .select('*')
+    .eq('question_date', TODAY)
+    .eq('question_type', cat)
     .maybeSingle();
 
   if (fetchError) {
-    console.error('[DailyChallenge] DB fetch error (daily_questions):', fetchError.message, fetchError.details, fetchError.hint, fetchError.code);
+    console.error('[DailyChallenge] DB fetch error:', fetchError.message, fetchError.details, fetchError.hint, fetchError.code);
   }
   console.log('[DailyChallenge] DB fetch result:', { existing, fetchError });
 
-  if (existing) {
+  if (existing?.content) {
     console.log('[DailyChallenge] Found existing question in DB, returning it.');
+    const c = existing.content as Question;
     return {
-      question: existing.question,
-      options: Array.isArray(existing.options) ? existing.options : JSON.parse(existing.options),
-      correct_index: existing.correct_index,
-      explanation: existing.explanation,
+      question: c.question,
+      options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
+      correct_index: c.correct_index,
+      explanation: c.explanation,
     };
   }
 
-  // 2. Generate with Gemini, then store atomically (upsert on unique date+category)
+  // 2. Generate with Gemini, then store atomically (upsert on unique date+type)
   console.log('[DailyChallenge] No DB row found — generating with Gemini...');
   const generated = await generateQuestion(cat);
   console.log('[DailyChallenge] Gemini returned:', generated);
 
   const payload = {
-    challenge_date: TODAY,
-    category: cat,
-    question: generated.question,
-    options: generated.options,
-    correct_index: generated.correct_index,
-    explanation: generated.explanation,
+    question_date: TODAY,
+    question_type: cat,
+    content: generated,
   };
   console.log('[DailyChallenge] Upserting to daily_questions:', payload);
 
   const { data: upsertData, error: upsertError } = await supabase
     .from('daily_questions')
-    .upsert(payload, { onConflict: 'challenge_date,category', ignoreDuplicates: true })
+    .upsert(payload, { onConflict: 'question_date,question_type', ignoreDuplicates: true })
     .select();
 
   console.log('[DailyChallenge] Upsert result:', { upsertData, upsertError });
   if (upsertError) {
-    console.error('[DailyChallenge] UPSERT ERROR:', upsertError.message, upsertError.details, upsertError.hint);
+    console.error('[DailyChallenge] UPSERT ERROR:', upsertError.message, upsertError.details, upsertError.hint, upsertError.code);
   }
 
   // 3. Re-fetch in case another client beat us (race condition → use DB row)
   const { data: canonical, error: refetchError } = await supabase
     .from('daily_questions')
-    .select('question, options, correct_index, explanation')
-    .eq('challenge_date', TODAY)
-    .eq('category', cat)
+    .select('*')
+    .eq('question_date', TODAY)
+    .eq('question_type', cat)
     .maybeSingle();
 
   console.log('[DailyChallenge] Re-fetch after upsert:', { canonical, refetchError });
 
-  if (canonical) {
+  if (canonical?.content) {
+    const c = canonical.content as Question;
     return {
-      question: canonical.question,
-      options: Array.isArray(canonical.options) ? canonical.options : JSON.parse(canonical.options),
-      correct_index: canonical.correct_index,
-      explanation: canonical.explanation,
+      question: c.question,
+      options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
+      correct_index: c.correct_index,
+      explanation: c.explanation,
     };
   }
 
@@ -205,7 +205,8 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
   return generated;
 }
 
-// ─── Supabase — daily_challenge_responses ────────────────────────────────────
+// ─── Supabase — daily_responses ──────────────────────────────────────────────
+// Schema: session_id, question_type, question_date, is_correct, time_taken, answer_index
 
 async function saveResponse(
   category: Category,
@@ -214,15 +215,15 @@ async function saveResponse(
   answer_index: number,
 ): Promise<void> {
   try {
-    const { error } = await supabase.from('daily_challenge_responses').insert({
+    const { error } = await supabase.from('daily_responses').insert({
       session_id: getSessionId(),
-      category,
-      challenge_date: TODAY,
+      question_type: category,
+      question_date: TODAY,
       is_correct,
       time_taken,
       answer_index,
     });
-    if (error) console.error('[DailyChallenge] saveResponse error:', error.message, error.details, error.hint);
+    if (error) console.error('[DailyChallenge] saveResponse error:', error.message, error.details, error.hint, error.code);
   } catch (err) {
     console.error('[DailyChallenge] saveResponse exception:', err);
   }
@@ -230,12 +231,12 @@ async function saveResponse(
 
 async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const { data, error } = await supabase
-    .from('daily_challenge_responses')
+    .from('daily_responses')
     .select('is_correct, answer_index')
-    .eq('category', category)
-    .eq('challenge_date', TODAY);
+    .eq('question_type', category)
+    .eq('question_date', TODAY);
 
-  if (error) console.error('[DailyChallenge] fetchGlobalStats error:', error.message, error.details, error.hint);
+  if (error) console.error('[DailyChallenge] fetchGlobalStats error:', error.message, error.details, error.hint, error.code);
   if (error || !data) return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
 
   const answer_counts = [0, 0, 0, 0];
