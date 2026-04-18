@@ -434,7 +434,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 }}
-                  className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 border ${
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3 border ${
                     selectedIndex === question.correct_index
                       ? 'bg-green-500/15 border-green-500/30'
                       : 'bg-red-500/15 border-red-500/30'
@@ -445,12 +445,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   ) : (
                     <XCircle size={22} className="text-red-400 shrink-0" />
                   )}
-                  <div className="flex-1">
-                    <span className={`font-black text-base ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+                  <div className="flex-1 text-center">
+                    <span className={`font-black text-lg ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
                       {selectedIndex === question.correct_index ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
                     </span>
                     {timeTaken !== null && (
-                      <div className="flex items-center gap-1 mt-0.5 text-emt-muted/60 text-[11px]">
+                      <div className="flex items-center justify-center gap-1 mt-0.5 text-emt-muted/60 text-xs">
                         <Clock size={10} />
                         <span>ענית תוך {timeTaken} שניות</span>
                       </div>
@@ -461,20 +461,20 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
               {/* Question card */}
               <div className="rounded-3xl bg-white/5 border border-white/10 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide ${
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className={`px-2.5 py-1 rounded-full text-xs font-black tracking-wide ${
                     category === 'bls' ? 'bg-blue-500/20 text-blue-300' : 'bg-red-500/20 text-red-300'
                   }`}>
                     {category ? CATEGORY_LABELS[category] : ''}
                   </div>
                   {isAnswered && (
-                    <div className="flex items-center gap-1 text-amber-400/60 text-[11px]">
+                    <div className="flex items-center gap-1 text-amber-400/60 text-xs">
                       <Trophy size={11} />
                       <span>ענית היום</span>
                     </div>
                   )}
                 </div>
-                <p className="text-emt-light font-bold text-lg leading-snug">
+                <p className="text-emt-light font-bold text-xl leading-snug text-center">
                   {question.question}
                 </p>
               </div>
@@ -517,7 +517,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       }`}>
                         {['א', 'ב', 'ג', 'ד'][idx]}
                       </span>
-                      <span className="flex-1 text-sm font-semibold leading-snug break-words min-w-0">{option}</span>
+                      <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">{option}</span>
                       {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
                       {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
                     </HapticButton>
@@ -534,12 +534,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     transition={{ duration: 0.3, delay: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="rounded-2xl bg-amber-400/8 border border-amber-400/25 p-4 flex gap-3">
-                      <Brain size={18} className="text-amber-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-amber-300 font-bold text-sm mb-1">הסבר קליני</p>
-                        <p className="text-emt-muted text-sm leading-relaxed break-words">{question.explanation}</p>
-                      </div>
+                    <div className="rounded-2xl bg-amber-400/8 border border-amber-400/25 p-5 flex flex-col items-center gap-2 text-center">
+                      <Brain size={22} className="text-amber-400" />
+                      <p className="text-amber-300 font-bold text-base">הסבר קליני</p>
+                      <p className="text-emt-muted text-base leading-relaxed break-words">{question.explanation}</p>
                     </div>
                   </motion.div>
                 )}
