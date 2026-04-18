@@ -132,15 +132,20 @@ async function generateQuestion(cat: Category): Promise<Question> {
 // ─── Supabase — daily_questions ───────────────────────────────────────────────
 
 async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
+  console.log(`[DailyChallenge] fetchOrCreateQuestion — category=${cat} date=${TODAY}`);
+
   // 1. Check DB for today's question
-  const { data: existing } = await supabase
+  const { data: existing, error: fetchError } = await supabase
     .from('daily_questions')
     .select('question, options, correct_index, explanation')
     .eq('challenge_date', TODAY)
     .eq('category', cat)
     .maybeSingle();
 
+  console.log('[DailyChallenge] DB fetch result:', { existing, fetchError });
+
   if (existing) {
+    console.log('[DailyChallenge] Found existing question in DB, returning it.');
     return {
       question: existing.question,
       options: Array.isArray(existing.options) ? existing.options : JSON.parse(existing.options),
@@ -150,26 +155,39 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
   }
 
   // 2. Generate with Gemini, then store atomically (upsert on unique date+category)
+  console.log('[DailyChallenge] No DB row found — generating with Gemini...');
   const generated = await generateQuestion(cat);
-  await supabase.from('daily_questions').upsert(
-    {
-      challenge_date: TODAY,
-      category: cat,
-      question: generated.question,
-      options: generated.options,
-      correct_index: generated.correct_index,
-      explanation: generated.explanation,
-    },
-    { onConflict: 'challenge_date,category', ignoreDuplicates: true }
-  );
+  console.log('[DailyChallenge] Gemini returned:', generated);
+
+  const payload = {
+    challenge_date: TODAY,
+    category: cat,
+    question: generated.question,
+    options: generated.options,
+    correct_index: generated.correct_index,
+    explanation: generated.explanation,
+  };
+  console.log('[DailyChallenge] Upserting to daily_questions:', payload);
+
+  const { data: upsertData, error: upsertError } = await supabase
+    .from('daily_questions')
+    .upsert(payload, { onConflict: 'challenge_date,category', ignoreDuplicates: true })
+    .select();
+
+  console.log('[DailyChallenge] Upsert result:', { upsertData, upsertError });
+  if (upsertError) {
+    console.error('[DailyChallenge] UPSERT ERROR:', upsertError.message, upsertError.details, upsertError.hint);
+  }
 
   // 3. Re-fetch in case another client beat us (race condition → use DB row)
-  const { data: canonical } = await supabase
+  const { data: canonical, error: refetchError } = await supabase
     .from('daily_questions')
     .select('question, options, correct_index, explanation')
     .eq('challenge_date', TODAY)
     .eq('category', cat)
     .maybeSingle();
+
+  console.log('[DailyChallenge] Re-fetch after upsert:', { canonical, refetchError });
 
   if (canonical) {
     return {
@@ -180,6 +198,7 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
     };
   }
 
+  console.warn('[DailyChallenge] Re-fetch returned nothing — falling back to generated question.');
   return generated;
 }
 
