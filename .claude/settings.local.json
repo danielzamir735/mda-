@@ -48,7 +48,8 @@
       "Bash(ls *.config*)",
       "Bash(ls tailwind*)",
       "Bash(npx vite:*)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "Bash(xargs ls *)"
     ]
   },
   "hooks": {
