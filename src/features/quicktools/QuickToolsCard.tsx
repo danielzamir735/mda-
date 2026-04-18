@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { Camera, Activity } from 'lucide-react';
+import { Camera, Activity, Trophy } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCameraStore } from '../../store/cameraStore';
 import { trackInteraction } from '../../utils/analytics';
+import DailyChallengeModal from '../hub/components/DailyChallengeModal';
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [addVitalsOpen, setAddVitalsOpen] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(false);
   const t = useTranslation();
   const addPhoto = useCameraStore((s) => s.addPhoto);
 
@@ -57,6 +59,22 @@ export default function QuickToolsCard() {
             <span className="text-emt-green text-sm font-bold">{t('addVitals')}</span>
           </button>
 
+          {/* Daily Challenge */}
+          <button
+            onClick={() => { trackInteraction('daily_challenge', 'main_tools'); setChallengeOpen(true); }}
+            className="flex items-center gap-3 px-3 py-2 rounded-2xl
+                       transition-all duration-200 active:scale-95"
+            aria-label="אתגר יומי"
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+                         border border-amber-400/40 bg-amber-400/10"
+            >
+              <Trophy size={18} className="text-amber-400" />
+            </div>
+            <span className="text-amber-400 text-sm font-bold">אתגר יומי</span>
+          </button>
+
         </div>
       </div>
 
@@ -70,6 +88,11 @@ export default function QuickToolsCard() {
       <AddVitalsModal
         isOpen={addVitalsOpen}
         onClose={() => setAddVitalsOpen(false)}
+      />
+
+      <DailyChallengeModal
+        isOpen={challengeOpen}
+        onClose={() => setChallengeOpen(false)}
       />
     </>
   );
