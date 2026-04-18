@@ -142,6 +142,9 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
     .eq('category', cat)
     .maybeSingle();
 
+  if (fetchError) {
+    console.error('[DailyChallenge] DB fetch error (daily_questions):', fetchError.message, fetchError.details, fetchError.hint, fetchError.code);
+  }
   console.log('[DailyChallenge] DB fetch result:', { existing, fetchError });
 
   if (existing) {
@@ -202,7 +205,7 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
   return generated;
 }
 
-// ─── Supabase — daily_responses ───────────────────────────────────────────────
+// ─── Supabase — daily_challenge_responses ────────────────────────────────────
 
 async function saveResponse(
   category: Category,
@@ -211,7 +214,7 @@ async function saveResponse(
   answer_index: number,
 ): Promise<void> {
   try {
-    await supabase.from('daily_responses').insert({
+    const { error } = await supabase.from('daily_challenge_responses').insert({
       session_id: getSessionId(),
       category,
       challenge_date: TODAY,
@@ -219,18 +222,20 @@ async function saveResponse(
       time_taken,
       answer_index,
     });
-  } catch {
-    // Non-critical
+    if (error) console.error('[DailyChallenge] saveResponse error:', error.message, error.details, error.hint);
+  } catch (err) {
+    console.error('[DailyChallenge] saveResponse exception:', err);
   }
 }
 
 async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const { data, error } = await supabase
-    .from('daily_responses')
+    .from('daily_challenge_responses')
     .select('is_correct, answer_index')
     .eq('category', category)
     .eq('challenge_date', TODAY);
 
+  if (error) console.error('[DailyChallenge] fetchGlobalStats error:', error.message, error.details, error.hint);
   if (error || !data) return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
 
   const answer_counts = [0, 0, 0, 0];
