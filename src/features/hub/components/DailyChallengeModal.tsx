@@ -29,6 +29,7 @@ interface DayCache {
 interface GlobalStats {
   total: number;
   correct: number;
+  answer_counts: number[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -137,7 +138,7 @@ async function fetchQuestion(cat: Category): Promise<Question> {
 
 // ─── Supabase helpers ──────────────────────────────────────────────────────────
 
-async function saveResponse(category: Category, is_correct: boolean, time_taken: number) {
+async function saveResponse(category: Category, is_correct: boolean, time_taken: number, answer_index: number) {
   try {
     await supabase.from('daily_challenge_responses').insert({
       session_id: getSessionId(),
@@ -145,6 +146,7 @@ async function saveResponse(category: Category, is_correct: boolean, time_taken:
       challenge_date: TODAY,
       is_correct,
       time_taken,
+      answer_index,
     });
   } catch {
     // Non-critical — don't surface to user
@@ -154,40 +156,61 @@ async function saveResponse(category: Category, is_correct: boolean, time_taken:
 async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const { data, error } = await supabase
     .from('daily_challenge_responses')
-    .select('is_correct')
+    .select('is_correct, answer_index')
     .eq('category', category)
     .eq('challenge_date', TODAY);
 
-  if (error || !data) return { total: 0, correct: 0 };
+  if (error || !data) return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+
+  const answer_counts = [0, 0, 0, 0];
+  data.forEach((r) => {
+    const ai = r.answer_index;
+    if (typeof ai === 'number' && ai >= 0 && ai <= 3) {
+      answer_counts[ai]++;
+    }
+  });
+
   return {
     total: data.length,
     correct: data.filter((r) => r.is_correct).length,
+    answer_counts,
   };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolean; onClick: () => void }) {
-  const colors = {
-    bls: active
-      ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/30'
-      : 'bg-blue-500/10 border-blue-500/30 text-blue-300',
-    als: active
-      ? 'bg-red-500 border-red-400 text-white shadow-lg shadow-red-500/30'
-      : 'bg-red-500/10 border-red-500/30 text-red-300',
+  const config = {
+    bls: {
+      active: 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400/60 text-white shadow-xl shadow-blue-500/40',
+      idle: 'bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/18',
+      dot: 'bg-blue-400',
+      icon: '🫀',
+    },
+    als: {
+      active: 'bg-gradient-to-br from-red-500 to-red-600 border-red-400/60 text-white shadow-xl shadow-red-500/40',
+      idle: 'bg-red-500/10 border-red-500/25 text-red-300 hover:bg-red-500/18',
+      dot: 'bg-red-400',
+      icon: '⚡',
+    },
   };
+  const c = config[cat];
 
   return (
     <HapticButton
       onClick={onClick}
       hapticPattern={10}
       pressScale={0.94}
-      className={`flex-1 py-3 rounded-2xl border font-black text-lg transition-all duration-200 ${colors[cat]}`}
+      className={`flex-1 py-4 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 ${active ? c.active : c.idle}`}
     >
-      <span className="block text-lg font-black">{CATEGORY_LABELS[cat]}</span>
-      <span className={`block text-[11px] font-semibold mt-0.5 ${active ? 'text-white/80' : 'opacity-60'}`}>
+      <span className="text-2xl leading-none">{c.icon}</span>
+      <span className="text-xl font-black leading-none mt-1">{CATEGORY_LABELS[cat]}</span>
+      <span className={`text-[11px] font-semibold ${active ? 'text-white/75' : 'opacity-55'}`}>
         {CATEGORY_FULL[cat]}
       </span>
+      {active && (
+        <span className="mt-1 w-1.5 h-1.5 rounded-full bg-white/70" />
+      )}
     </HapticButton>
   );
 }
@@ -199,6 +222,7 @@ function GlobalStatsPanel({ stats, category }: { stats: GlobalStats | null; cate
   const color = category === 'bls' ? 'text-blue-300' : 'text-red-300';
   const bgColor = category === 'bls' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20';
   const iconBg = category === 'bls' ? 'bg-blue-500/20' : 'bg-red-500/20';
+  const barColor = category === 'bls' ? 'bg-blue-400' : 'bg-red-400';
 
   return (
     <motion.div
@@ -228,11 +252,87 @@ function GlobalStatsPanel({ stats, category }: { stats: GlobalStats | null; cate
               initial={{ width: 0 }}
               animate={{ width: `${pct ?? 0}%` }}
               transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
-              className={`h-full rounded-full ${category === 'bls' ? 'bg-blue-400' : 'bg-red-400'}`}
+              className={`h-full rounded-full ${barColor}`}
             />
           </div>
         </>
       )}
+    </motion.div>
+  );
+}
+
+// Centered overlay shown automatically after answering
+function ExplanationOverlay({
+  question,
+  category,
+  onClose,
+}: {
+  question: Question;
+  category: Category;
+  onClose: () => void;
+}) {
+  const accentColor = category === 'bls' ? 'text-blue-300' : 'text-red-300';
+  const borderColor = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
+  const bgGlow = category === 'bls' ? 'from-blue-500/8' : 'from-red-500/8';
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-5"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Card */}
+      <motion.div
+        className={`relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-b ${bgGlow} to-emt-dark border ${borderColor} p-6 flex flex-col items-center gap-4 shadow-2xl`}
+        initial={{ scale: 0.88, y: 24, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.88, y: 24, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+        dir="rtl"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors"
+          aria-label="סגור הסבר"
+        >
+          <X size={14} />
+        </button>
+
+        {/* Icon + title */}
+        <div className="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
+          <Brain size={28} className="text-amber-400" />
+        </div>
+        <h3 className="text-amber-300 font-black text-2xl text-center">הסבר קליני</h3>
+
+        {/* Correct answer label */}
+        <div className={`px-3 py-1 rounded-full border text-xs font-bold ${borderColor} ${accentColor} bg-white/5`}>
+          {CATEGORY_LABELS[category]} — {CATEGORY_FULL[category]}
+        </div>
+
+        {/* Explanation text */}
+        <p className="text-emt-light text-lg leading-relaxed text-center font-medium">
+          {question.explanation}
+        </p>
+
+        {/* Dismiss button */}
+        <HapticButton
+          onClick={onClose}
+          hapticPattern={10}
+          pressScale={0.95}
+          className="mt-1 w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
+        >
+          הבנתי ✓
+        </HapticButton>
+      </motion.div>
     </motion.div>
   );
 }
@@ -253,7 +353,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
+  const [showExplanationOverlay, setShowExplanationOverlay] = useState(false);
   const questionStartRef = useRef<number | null>(null);
+  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -264,13 +366,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setSelectedIndex(null);
       setGlobalStats(null);
       setTimeTaken(null);
+      setShowExplanationOverlay(false);
     }
+    return () => {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    };
   }, [isOpen]);
 
   const loadCategory = useCallback(async (cat: Category) => {
     setCategory(cat);
     setGlobalStats(null);
     setTimeTaken(null);
+    setShowExplanationOverlay(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
     const cached = loadCache(cat);
@@ -320,7 +427,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     trackEvent('daily_challenge_answered', { category, is_correct: isCorrect });
 
-    await saveResponse(category, isCorrect, elapsed);
+    // Auto-show explanation overlay after a short delay
+    overlayTimerRef.current = setTimeout(() => setShowExplanationOverlay(true), 900);
+
+    await saveResponse(category, isCorrect, elapsed, index);
     const stats = await fetchGlobalStats(category);
     setGlobalStats(stats);
   }, [question, category, selectedIndex]);
@@ -486,6 +596,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   const isCorrect = idx === question.correct_index;
                   const showResult = isAnswered;
 
+                  // Per-answer percentage
+                  const chosenPct = globalStats && globalStats.total > 0
+                    ? Math.round((globalStats.answer_counts[idx] ?? 0) / globalStats.total * 100)
+                    : null;
+
                   let style =
                     'bg-emt-gray border-emt-border text-emt-light hover:bg-white/8 active:scale-[0.98]';
 
@@ -506,42 +621,74 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       disabled={isAnswered}
                       hapticPattern={isAnswered ? 0 : 10}
                       pressScale={isAnswered ? 1 : 0.97}
-                      className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${style}`}
+                      className={`w-full flex flex-col rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${style}`}
                     >
-                      <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
-                        showResult && isCorrect
-                          ? 'bg-green-500/30 border-green-400/60 text-green-300'
-                          : showResult && isSelected && !isCorrect
-                          ? 'bg-red-500/30 border-red-400/60 text-red-300'
-                          : 'bg-white/8 border-white/15 text-emt-muted'
-                      }`}>
-                        {['א', 'ב', 'ג', 'ד'][idx]}
-                      </span>
-                      <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">{option}</span>
-                      {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
-                      {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
+                      <div className="flex items-center gap-3 w-full">
+                        <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
+                          showResult && isCorrect
+                            ? 'bg-green-500/30 border-green-400/60 text-green-300'
+                            : showResult && isSelected && !isCorrect
+                            ? 'bg-red-500/30 border-red-400/60 text-red-300'
+                            : 'bg-white/8 border-white/15 text-emt-muted'
+                        }`}>
+                          {['א', 'ב', 'ג', 'ד'][idx]}
+                        </span>
+                        <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">{option}</span>
+                        {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
+                        {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
+                      </div>
+
+                      {/* Per-answer percentage bar */}
+                      {showResult && chosenPct !== null && (
+                        <motion.div
+                          className="mt-2.5 w-full"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 + idx * 0.06 }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] text-emt-muted/70">
+                              {chosenPct}% בחרו בתשובה זו
+                            </span>
+                            <span className="text-[11px] text-emt-muted/50">
+                              {globalStats?.answer_counts[idx] ?? 0} משיבים
+                            </span>
+                          </div>
+                          <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                            <motion.div
+                              className={`h-full rounded-full ${
+                                isCorrect ? 'bg-green-400' : isSelected ? 'bg-red-400' : 'bg-white/30'
+                              }`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${chosenPct}%` }}
+                              transition={{ duration: 0.5, delay: 0.4 + idx * 0.06, ease: 'easeOut' }}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
                     </HapticButton>
                   );
                 })}
               </div>
 
-              {/* Explanation (shown after answering) */}
-              <AnimatePresence>
-                {isAnswered && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    className="overflow-hidden"
+              {/* Re-open explanation button (after overlay was closed) */}
+              {isAnswered && !showExplanationOverlay && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <HapticButton
+                    onClick={() => setShowExplanationOverlay(true)}
+                    hapticPattern={10}
+                    pressScale={0.96}
+                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/25 px-4 py-3.5 text-amber-300 font-bold text-base"
                   >
-                    <div className="rounded-2xl bg-amber-400/8 border border-amber-400/25 p-5 flex flex-col items-center gap-2 text-center">
-                      <Brain size={22} className="text-amber-400" />
-                      <p className="text-amber-300 font-bold text-base">הסבר קליני</p>
-                      <p className="text-emt-muted text-base leading-relaxed break-words">{question.explanation}</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Brain size={18} />
+                    הצג הסבר קליני
+                  </HapticButton>
+                </motion.div>
+              )}
 
               {/* Global stats (shown after answering) */}
               {isAnswered && category && (
@@ -598,6 +745,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           השאלות מיוצרות על ידי AI למטרות לימוד בלבד. אינן תחליף להכשרה מקצועית מוסמכת.
         </p>
       </div>
+
+      {/* ── Clinical Explanation Overlay ── */}
+      <AnimatePresence>
+        {showExplanationOverlay && isAnswered && question && category && (
+          <ExplanationOverlay
+            question={question}
+            category={category}
+            onClose={() => setShowExplanationOverlay(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
