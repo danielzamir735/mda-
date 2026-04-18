@@ -198,47 +198,41 @@ function GlobalStatsPanel({ stats, category }: { stats: GlobalStats | null; cate
   const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
   const color = category === 'bls' ? 'text-blue-300' : 'text-red-300';
   const bgColor = category === 'bls' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20';
+  const iconBg = category === 'bls' ? 'bg-blue-500/20' : 'bg-red-500/20';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.3 }}
-      className={`rounded-2xl border p-4 flex items-center gap-4 ${bgColor}`}
+      className={`rounded-2xl border p-4 ${bgColor}`}
       dir="rtl"
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-        category === 'bls' ? 'bg-blue-500/20' : 'bg-red-500/20'
-      }`}>
-        <Users size={18} className={color} />
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+          <Users size={17} className={color} />
+        </div>
+        <p className="text-emt-muted text-xs font-semibold leading-snug">סטטיסטיקה גלובלית — היום</p>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-emt-muted text-xs font-semibold mb-1">סטטיסטיקה גלובלית — היום</p>
-        {stats.total === 0 ? (
-          <p className={`text-sm font-bold ${color}`}>היה הראשון לענות היום!</p>
-        ) : (
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className={`text-xl font-black ${color}`}>
-              {pct !== null ? `${pct}%` : '—'}
-            </span>
-            <span className="text-emt-muted text-xs">
-              ענו נכון מתוך {stats.total} משתתפים
-            </span>
-          </div>
-        )}
-        {stats.total > 0 && (
-          <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+
+      {stats.total === 0 ? (
+        <p className={`text-sm font-bold ${color}`}>היה הראשון לענות היום!</p>
+      ) : (
+        <>
+          <p className={`text-sm font-bold leading-snug break-words ${color}`}>
+            {pct !== null ? `${pct}%` : '—'} מהחובשים ענו נכון היום
+            <span className="text-emt-muted font-normal text-xs"> ({stats.total} משתתפים)</span>
+          </p>
+          <div className="mt-2.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${pct ?? 0}%` }}
               transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
-              className={`h-full rounded-full ${
-                category === 'bls' ? 'bg-blue-400' : 'bg-red-400'
-              }`}
+              className={`h-full rounded-full ${category === 'bls' ? 'bg-blue-400' : 'bg-red-400'}`}
             />
           </div>
-        )}
-      </div>
+        </>
+      )}
     </motion.div>
   );
 }
@@ -523,7 +517,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       }`}>
                         {['א', 'ב', 'ג', 'ד'][idx]}
                       </span>
-                      <span className="flex-1 text-sm font-semibold leading-snug">{option}</span>
+                      <span className="flex-1 text-sm font-semibold leading-snug break-words min-w-0">{option}</span>
                       {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
                       {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
                     </HapticButton>
@@ -544,7 +538,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       <Brain size={18} className="text-amber-400 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-amber-300 font-bold text-sm mb-1">הסבר קליני</p>
-                        <p className="text-emt-muted text-sm leading-relaxed">{question.explanation}</p>
+                        <p className="text-emt-muted text-sm leading-relaxed break-words">{question.explanation}</p>
                       </div>
                     </div>
                   </motion.div>
