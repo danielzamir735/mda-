@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, ChevronRight, Users, Clock } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
 import HapticButton from '../../../components/HapticButton';
+import { supabase } from '../../../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,12 @@ interface DayCache {
   date: string;
   question: Question;
   answered_index: number | null;
+  time_taken?: number;
+}
+
+interface GlobalStats {
+  total: number;
+  correct: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -45,16 +52,43 @@ const CATEGORY_FULL: Record<Category, string> = {
 
 const PROMPTS: Record<Category, string> = {
   bls:
-    'אתה מומחה להכשרת חובשים בישראל. צור שאלת בחינה עם בחירה מרובה בעברית על BLS (Basic Life Support) — שרשרת ההישרדות, CPR, AED, חסימת דרכי אוויר, החייאת ילדים/תינוקות.\n' +
-    'החזר *אך ורק* JSON תקני ללא פורמט markdown, ללא ```json, בדיוק כך:\n' +
+    'אתה מדריך מוסמך להכשרת חובשים בישראל עם ניסיון קליני עשיר. ' +
+    'צור שאלת "לחדד את החושים" (מסוג debate/edge-case) בעברית על BLS — ' +
+    'שרשרת ההישרדות, CPR, AED, ניהול דרכי אוויר, ילדים/תינוקות. ' +
+    'הדגש סיטואציה ריאלית שבה הטיפול הנכון מפתיע, סותר אינטואיציה, ' +
+    'או שנוי במחלוקת בפרוטוקולים (לדוגמה: מתי לא לבצע CPR, עדיפות AED מול CPR, ' +
+    'עומק לחיצות בהשמנת יתר, CPR בהיריון, שינויי גיל). ' +
+    'כל 4 האפשרויות חייבות להיראות סבירות — שגיאת מסיח קלאסית, פרוטוקול מיושן, ' +
+    'טעות נפוצה בשטח, ותשובה נכונה. ' +
+    'החזר *אך ורק* JSON תקני ללא פורמט markdown, בדיוק כך:\n' +
     '{"question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}\n' +
-    'correct_index הוא אינדקס (0-3) של התשובה הנכונה. explanation: שורה-שתיים בעברית.',
+    'explanation: 2-3 משפטים קליניים בעברית שמסבירים מדוע התשובות האחרות שגויות.',
+
   als:
-    'אתה מומחה להכשרת פרמדיקים בישראל. צור שאלת בחינה עם בחירה מרובה בעברית על ALS (Advanced Life Support) — ACLS, קצבים לב, מינוני תרופות (אדרנלין, אמיודרון, אטרופין), RSI, ניהול דרכי אוויר מתקדם, ST elevation.\n' +
-    'החזר *אך ורק* JSON תקני ללא פורמט markdown, ללא ```json, בדיוק כך:\n' +
+    'אתה מדריך פרמדיק מוסמך בישראל עם ניסיון בטיפול נמרץ שדה. ' +
+    'צור שאלת "לחדד את החושים" (מסוג debate/edge-case) בעברית על ALS — ' +
+    'ACLS, הפרעות קצב, מינוני תרופות (אדרנלין, אמיודרון, אטרופין, מגנזיום), ' +
+    'RSI ותרופות לאינטובציה, ST-elevation, ניהול דרכי אוויר מתקדם, ROSC. ' +
+    'הדגש סיטואציה קלינית שבה ההחלטה אינה טריוויאלית: מינון שגוי במצב קצה, ' +
+    'מתי לדחות אינטובציה, בחירה בין שני פרוטוקולים, תופעת לוואי קריטית. ' +
+    'כל 4 האפשרויות חייבות להיראות סבירות — הפרש קטן במינון, מתי לתת תרופה, ' +
+    'קצב שנראה דומה, עיתוי ההתערבות. ' +
+    'החזר *אך ורק* JSON תקני ללא פורמט markdown, בדיוק כך:\n' +
     '{"question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}\n' +
-    'correct_index הוא אינדקס (0-3) של התשובה הנכונה. explanation: שורה-שתיים בעברית.',
+    'explanation: 2-3 משפטים קליניים בעברית שמסבירים מדוע התשובות האחרות שגויות.',
 };
+
+// ─── Session ID (anonymous, persistent) ───────────────────────────────────────
+
+function getSessionId(): string {
+  const key = 'medic_session_id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
 
 // ─── Cache helpers ────────────────────────────────────────────────────────────
 
@@ -69,8 +103,8 @@ function loadCache(cat: Category): DayCache | null {
   }
 }
 
-function saveCache(cat: Category, question: Question, answered_index: number | null) {
-  const cache: DayCache = { date: TODAY, question, answered_index };
+function saveCache(cat: Category, question: Question, answered_index: number | null, time_taken?: number) {
+  const cache: DayCache = { date: TODAY, question, answered_index, time_taken };
   localStorage.setItem(CACHE_KEYS[cat], JSON.stringify(cache));
 }
 
@@ -101,6 +135,36 @@ async function fetchQuestion(cat: Category): Promise<Question> {
   return parsed;
 }
 
+// ─── Supabase helpers ──────────────────────────────────────────────────────────
+
+async function saveResponse(category: Category, is_correct: boolean, time_taken: number) {
+  try {
+    await supabase.from('daily_challenge_responses').insert({
+      session_id: getSessionId(),
+      category,
+      challenge_date: TODAY,
+      is_correct,
+      time_taken,
+    });
+  } catch {
+    // Non-critical — don't surface to user
+  }
+}
+
+async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
+  const { data, error } = await supabase
+    .from('daily_challenge_responses')
+    .select('is_correct')
+    .eq('category', category)
+    .eq('challenge_date', TODAY);
+
+  if (error || !data) return { total: 0, correct: 0 };
+  return {
+    total: data.length,
+    correct: data.filter((r) => r.is_correct).length,
+  };
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolean; onClick: () => void }) {
@@ -128,6 +192,57 @@ function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolea
   );
 }
 
+function GlobalStatsPanel({ stats, category }: { stats: GlobalStats | null; category: Category }) {
+  if (!stats) return null;
+
+  const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
+  const color = category === 'bls' ? 'text-blue-300' : 'text-red-300';
+  const bgColor = category === 'bls' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.3 }}
+      className={`rounded-2xl border p-4 flex items-center gap-4 ${bgColor}`}
+      dir="rtl"
+    >
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+        category === 'bls' ? 'bg-blue-500/20' : 'bg-red-500/20'
+      }`}>
+        <Users size={18} className={color} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-emt-muted text-xs font-semibold mb-1">סטטיסטיקה גלובלית — היום</p>
+        {stats.total === 0 ? (
+          <p className={`text-sm font-bold ${color}`}>היה הראשון לענות היום!</p>
+        ) : (
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className={`text-xl font-black ${color}`}>
+              {pct !== null ? `${pct}%` : '—'}
+            </span>
+            <span className="text-emt-muted text-xs">
+              ענו נכון מתוך {stats.total} משתתפים
+            </span>
+          </div>
+        )}
+        {stats.total > 0 && (
+          <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pct ?? 0}%` }}
+              transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
+              className={`h-full rounded-full ${
+                category === 'bls' ? 'bg-blue-400' : 'bg-red-400'
+              }`}
+            />
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -142,6 +257,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [view, setView] = useState<ViewState>('select');
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
+  const [timeTaken, setTimeTaken] = useState<number | null>(null);
+  const questionStartRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -150,11 +268,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setView('select');
       setQuestion(null);
       setSelectedIndex(null);
+      setGlobalStats(null);
+      setTimeTaken(null);
     }
   }, [isOpen]);
 
   const loadCategory = useCallback(async (cat: Category) => {
     setCategory(cat);
+    setGlobalStats(null);
+    setTimeTaken(null);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
     const cached = loadCache(cat);
@@ -162,9 +284,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setQuestion(cached.question);
       if (cached.answered_index !== null) {
         setSelectedIndex(cached.answered_index);
+        setTimeTaken(cached.time_taken ?? null);
         setView('answered');
+        fetchGlobalStats(cat).then(setGlobalStats);
       } else {
+        setSelectedIndex(null);
         setView('question');
+        questionStartRef.current = Date.now();
       }
       return;
     }
@@ -178,24 +304,31 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setQuestion(q);
       saveCache(cat, q, null);
       setView('question');
+      questionStartRef.current = Date.now();
     } catch (err) {
       console.error('[DailyChallengeModal] fetch error:', err);
       setView('error');
     }
   }, []);
 
-  const handleAnswer = useCallback((index: number) => {
+  const handleAnswer = useCallback(async (index: number) => {
     if (!question || !category || selectedIndex !== null) return;
+
+    const elapsed = questionStartRef.current
+      ? Math.round((Date.now() - questionStartRef.current) / 1000)
+      : 0;
 
     const isCorrect = index === question.correct_index;
     setSelectedIndex(index);
+    setTimeTaken(elapsed);
     setView('answered');
-    saveCache(category, question, index);
+    saveCache(category, question, index, elapsed);
 
-    trackEvent('daily_challenge_answered', {
-      category,
-      is_correct: isCorrect,
-    });
+    trackEvent('daily_challenge_answered', { category, is_correct: isCorrect });
+
+    await saveResponse(category, isCorrect, elapsed);
+    const stats = await fetchGlobalStats(category);
+    setGlobalStats(stats);
   }, [question, category, selectedIndex]);
 
   const handleRetry = useCallback(() => {
@@ -238,16 +371,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         {/* Category selector — always visible */}
         <div dir="rtl" className="flex gap-3">
-          <CategoryBadge
-            cat="bls"
-            active={category === 'bls'}
-            onClick={() => loadCategory('bls')}
-          />
-          <CategoryBadge
-            cat="als"
-            active={category === 'als'}
-            onClick={() => loadCategory('als')}
-          />
+          <CategoryBadge cat="bls" active={category === 'bls'} onClick={() => loadCategory('bls')} />
+          <CategoryBadge cat="als" active={category === 'als'} onClick={() => loadCategory('als')} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -266,11 +391,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <Brain size={36} className="text-amber-400/70" />
               </div>
               <p className="text-emt-muted text-center text-base font-semibold px-8">
-                בחר קטגוריה כדי לקבל את שאלת היום שלך
+                בחר קטגוריה כדי לחדד את החושים
               </p>
               <div className="flex items-center gap-1.5 text-amber-400/60 text-xs">
                 <Zap size={12} />
-                <span>שאלה חדשה כל יום</span>
+                <span>שאלת edge-case חדשה כל יום</span>
               </div>
             </motion.div>
           )}
@@ -291,7 +416,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   <Brain size={22} className="text-amber-400/70" />
                 </div>
               </div>
-              <p className="text-emt-muted text-sm font-semibold">מכין את שאלת היום...</p>
+              <p className="text-emt-muted text-sm font-semibold">מכין שאלה מאתגרת...</p>
               <p className="text-emt-muted/50 text-xs">
                 {category ? `${CATEGORY_LABELS[category]} — ${CATEGORY_FULL[category]}` : ''}
               </p>
@@ -326,9 +451,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   ) : (
                     <XCircle size={22} className="text-red-400 shrink-0" />
                   )}
-                  <span className={`font-black text-base ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-                    {selectedIndex === question.correct_index ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
-                  </span>
+                  <div className="flex-1">
+                    <span className={`font-black text-base ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+                      {selectedIndex === question.correct_index ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
+                    </span>
+                    {timeTaken !== null && (
+                      <div className="flex items-center gap-1 mt-0.5 text-emt-muted/60 text-[11px]">
+                        <Clock size={10} />
+                        <span>ענית תוך {timeTaken} שניות</span>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
 
@@ -410,7 +543,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <div className="rounded-2xl bg-amber-400/8 border border-amber-400/25 p-4 flex gap-3">
                       <Brain size={18} className="text-amber-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-amber-300 font-bold text-sm mb-1">הסבר</p>
+                        <p className="text-amber-300 font-bold text-sm mb-1">הסבר קליני</p>
                         <p className="text-emt-muted text-sm leading-relaxed">{question.explanation}</p>
                       </div>
                     </div>
@@ -418,12 +551,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 )}
               </AnimatePresence>
 
+              {/* Global stats (shown after answering) */}
+              {isAnswered && category && (
+                <GlobalStatsPanel stats={globalStats} category={category} />
+              )}
+
               {/* Switch category hint */}
               {isAnswered && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.7 }}
                   className="flex items-center justify-center gap-1.5 text-emt-muted/60 text-xs py-1"
                 >
                   <ChevronRight size={12} />
