@@ -37,8 +37,8 @@ interface GlobalStats {
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const CACHE_KEYS: Record<Category, string> = {
-  bls: 'daily_challenge_bls',
-  als: 'daily_challenge_als',
+  bls: 'daily_challenge_bls_v3',
+  als: 'daily_challenge_als_v3',
 };
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -79,7 +79,7 @@ const PROMPTS: Record<Category, string> = {
     'explanation: 2-3 משפטים קליניים בעברית שמסבירים מדוע התשובות האחרות שגויות.',
 };
 
-// ─── Session ID (anonymous, persistent) ───────────────────────────────────────
+// ─── Session ID ───────────────────────────────────────────────────────────────
 
 function getSessionId(): string {
   const key = 'medic_session_id';
@@ -91,7 +91,7 @@ function getSessionId(): string {
   return id;
 }
 
-// ─── Cache helpers ────────────────────────────────────────────────────────────
+// ─── Local cache helpers ──────────────────────────────────────────────────────
 
 function loadCache(cat: Category): DayCache | null {
   try {
@@ -105,21 +105,16 @@ function loadCache(cat: Category): DayCache | null {
 }
 
 function saveCache(cat: Category, question: Question, answered_index: number | null, time_taken?: number) {
-  const cache: DayCache = { date: TODAY, question, answered_index, time_taken };
-  localStorage.setItem(CACHE_KEYS[cat], JSON.stringify(cache));
+  localStorage.setItem(CACHE_KEYS[cat], JSON.stringify({ date: TODAY, question, answered_index, time_taken }));
 }
 
-// ─── Gemini helper ────────────────────────────────────────────────────────────
+// ─── Gemini ───────────────────────────────────────────────────────────────────
 
-function getModel() {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY is not defined in .env.local');
+async function generateQuestion(cat: Category): Promise<Question> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
+  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY missing');
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-}
-
-async function fetchQuestion(cat: Category): Promise<Question> {
-  const model = getModel();
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const result = await model.generateContent(PROMPTS[cat]);
   const raw = result.response.text().trim();
   const clean = raw.replace(/^```(?:json)?/m, '').replace(/```$/m, '').trim();
@@ -130,17 +125,74 @@ async function fetchQuestion(cat: Category): Promise<Question> {
     parsed.options.length !== 4 ||
     typeof parsed.correct_index !== 'number' ||
     typeof parsed.explanation !== 'string'
-  ) {
-    throw new Error('Invalid question format from AI');
-  }
+  ) throw new Error('Invalid question format from AI');
   return parsed;
 }
 
-// ─── Supabase helpers ──────────────────────────────────────────────────────────
+// ─── Supabase — daily_questions ───────────────────────────────────────────────
 
-async function saveResponse(category: Category, is_correct: boolean, time_taken: number, answer_index: number) {
+async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
+  // 1. Check DB for today's question
+  const { data: existing } = await supabase
+    .from('daily_questions')
+    .select('question, options, correct_index, explanation')
+    .eq('challenge_date', TODAY)
+    .eq('category', cat)
+    .maybeSingle();
+
+  if (existing) {
+    return {
+      question: existing.question,
+      options: Array.isArray(existing.options) ? existing.options : JSON.parse(existing.options),
+      correct_index: existing.correct_index,
+      explanation: existing.explanation,
+    };
+  }
+
+  // 2. Generate with Gemini, then store atomically (upsert on unique date+category)
+  const generated = await generateQuestion(cat);
+  await supabase.from('daily_questions').upsert(
+    {
+      challenge_date: TODAY,
+      category: cat,
+      question: generated.question,
+      options: generated.options,
+      correct_index: generated.correct_index,
+      explanation: generated.explanation,
+    },
+    { onConflict: 'challenge_date,category', ignoreDuplicates: true }
+  );
+
+  // 3. Re-fetch in case another client beat us (race condition → use DB row)
+  const { data: canonical } = await supabase
+    .from('daily_questions')
+    .select('question, options, correct_index, explanation')
+    .eq('challenge_date', TODAY)
+    .eq('category', cat)
+    .maybeSingle();
+
+  if (canonical) {
+    return {
+      question: canonical.question,
+      options: Array.isArray(canonical.options) ? canonical.options : JSON.parse(canonical.options),
+      correct_index: canonical.correct_index,
+      explanation: canonical.explanation,
+    };
+  }
+
+  return generated;
+}
+
+// ─── Supabase — daily_responses ───────────────────────────────────────────────
+
+async function saveResponse(
+  category: Category,
+  is_correct: boolean,
+  time_taken: number,
+  answer_index: number,
+): Promise<void> {
   try {
-    await supabase.from('daily_challenge_responses').insert({
+    await supabase.from('daily_responses').insert({
       session_id: getSessionId(),
       category,
       challenge_date: TODAY,
@@ -149,13 +201,13 @@ async function saveResponse(category: Category, is_correct: boolean, time_taken:
       answer_index,
     });
   } catch {
-    // Non-critical — don't surface to user
+    // Non-critical
   }
 }
 
 async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const { data, error } = await supabase
-    .from('daily_challenge_responses')
+    .from('daily_responses')
     .select('is_correct, answer_index')
     .eq('category', category)
     .eq('challenge_date', TODAY);
@@ -165,9 +217,7 @@ async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const answer_counts = [0, 0, 0, 0];
   data.forEach((r) => {
     const ai = r.answer_index;
-    if (typeof ai === 'number' && ai >= 0 && ai <= 3) {
-      answer_counts[ai]++;
-    }
+    if (typeof ai === 'number' && ai >= 0 && ai <= 3) answer_counts[ai]++;
   });
 
   return {
@@ -180,100 +230,54 @@ async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolean; onClick: () => void }) {
-  const config = {
+  const cfg = {
     bls: {
       active: 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400/60 text-white shadow-xl shadow-blue-500/40',
-      idle: 'bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/18',
-      dot: 'bg-blue-400',
+      idle: 'bg-blue-500/10 border-blue-500/25 text-blue-300',
       icon: '🫀',
     },
     als: {
       active: 'bg-gradient-to-br from-red-500 to-red-600 border-red-400/60 text-white shadow-xl shadow-red-500/40',
-      idle: 'bg-red-500/10 border-red-500/25 text-red-300 hover:bg-red-500/18',
-      dot: 'bg-red-400',
+      idle: 'bg-red-500/10 border-red-500/25 text-red-300',
       icon: '⚡',
     },
-  };
-  const c = config[cat];
+  }[cat];
 
   return (
     <HapticButton
       onClick={onClick}
       hapticPattern={10}
       pressScale={0.94}
-      className={`flex-1 py-4 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 ${active ? c.active : c.idle}`}
+      className={`flex-1 py-4 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 ${active ? cfg.active : cfg.idle}`}
     >
-      <span className="text-2xl leading-none">{c.icon}</span>
+      <span className="text-2xl leading-none">{cfg.icon}</span>
       <span className="text-xl font-black leading-none mt-1">{CATEGORY_LABELS[cat]}</span>
       <span className={`text-[11px] font-semibold ${active ? 'text-white/75' : 'opacity-55'}`}>
         {CATEGORY_FULL[cat]}
       </span>
-      {active && (
-        <span className="mt-1 w-1.5 h-1.5 rounded-full bg-white/70" />
-      )}
+      {active && <span className="mt-1 w-1.5 h-1.5 rounded-full bg-white/70" />}
     </HapticButton>
   );
 }
 
-function GlobalStatsPanel({ stats, category }: { stats: GlobalStats | null; category: Category }) {
-  if (!stats) return null;
-
-  const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
-  const color = category === 'bls' ? 'text-blue-300' : 'text-red-300';
-  const bgColor = category === 'bls' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20';
-  const iconBg = category === 'bls' ? 'bg-blue-500/20' : 'bg-red-500/20';
-  const barColor = category === 'bls' ? 'bg-blue-400' : 'bg-red-400';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.3 }}
-      className={`rounded-2xl border p-4 ${bgColor}`}
-      dir="rtl"
-    >
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-          <Users size={17} className={color} />
-        </div>
-        <p className="text-emt-muted text-xs font-semibold leading-snug">סטטיסטיקה גלובלית — היום</p>
-      </div>
-
-      {stats.total === 0 ? (
-        <p className={`text-sm font-bold ${color}`}>היה הראשון לענות היום!</p>
-      ) : (
-        <>
-          <p className={`text-sm font-bold leading-snug break-words ${color}`}>
-            {pct !== null ? `${pct}%` : '—'} מהחובשים ענו נכון היום
-            <span className="text-emt-muted font-normal text-xs"> ({stats.total} משתתפים)</span>
-          </p>
-          <div className="mt-2.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${pct ?? 0}%` }}
-              transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
-              className={`h-full rounded-full ${barColor}`}
-            />
-          </div>
-        </>
-      )}
-    </motion.div>
-  );
-}
-
-// Centered overlay shown automatically after answering
+// Clinical Explanation Overlay — auto-shown after answering
 function ExplanationOverlay({
   question,
   category,
+  stats,
+  selectedIndex,
   onClose,
 }: {
   question: Question;
   category: Category;
+  stats: GlobalStats | null;
+  selectedIndex: number;
   onClose: () => void;
 }) {
-  const accentColor = category === 'bls' ? 'text-blue-300' : 'text-red-300';
+  const isCorrect = selectedIndex === question.correct_index;
+  const pct = stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
   const borderColor = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
-  const bgGlow = category === 'bls' ? 'from-blue-500/8' : 'from-red-500/8';
+  const bgGlow = category === 'bls' ? 'from-blue-900/30' : 'from-red-900/30';
 
   return (
     <motion.div
@@ -284,51 +288,80 @@ function ExplanationOverlay({
       transition={{ duration: 0.2 }}
     >
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Card */}
       <motion.div
         className={`relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-b ${bgGlow} to-emt-dark border ${borderColor} p-6 flex flex-col items-center gap-4 shadow-2xl`}
-        initial={{ scale: 0.88, y: 24, opacity: 0 }}
+        initial={{ scale: 0.88, y: 28, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.88, y: 24, opacity: 0 }}
+        exit={{ scale: 0.88, y: 28, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 26 }}
         dir="rtl"
       >
-        {/* Close button */}
+        {/* Close */}
         <button
           onClick={onClose}
           className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors"
-          aria-label="סגור הסבר"
+          aria-label="סגור"
         >
           <X size={14} />
         </button>
 
-        {/* Icon + title */}
+        {/* Result badge */}
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
+          isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-300'
+        }`}>
+          {isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
+          <span className="font-black text-sm">{isCorrect ? 'תשובה נכונה! 🎉' : 'תשובה שגויה'}</span>
+        </div>
+
+        {/* Brain + title */}
         <div className="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
           <Brain size={28} className="text-amber-400" />
         </div>
-        <h3 className="text-amber-300 font-black text-2xl text-center">הסבר קליני</h3>
+        <h3 className="text-amber-300 font-black text-2xl text-center leading-tight">הסבר קליני</h3>
 
-        {/* Correct answer label */}
-        <div className={`px-3 py-1 rounded-full border text-xs font-bold ${borderColor} ${accentColor} bg-white/5`}>
-          {CATEGORY_LABELS[category]} — {CATEGORY_FULL[category]}
-        </div>
-
-        {/* Explanation text */}
+        {/* Explanation */}
         <p className="text-emt-light text-lg leading-relaxed text-center font-medium">
           {question.explanation}
         </p>
 
-        {/* Dismiss button */}
+        {/* Global stat: "You are among X% who answered correctly today" */}
+        {pct !== null && stats && stats.total > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-2"
+          >
+            <div className="flex items-center gap-2 text-emt-muted text-xs font-semibold">
+              <Users size={13} />
+              <span>סטטיסטיקה גלובלית היום</span>
+            </div>
+            <p className={`text-base font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
+              {isCorrect
+                ? `אתה בין ${pct}% שענו נכון היום!`
+                : `${pct}% מהמשתמשים ענו נכון היום`}
+            </p>
+            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full ${category === 'bls' ? 'bg-blue-400' : 'bg-red-400'}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
+              />
+            </div>
+            <p className="text-emt-muted/50 text-xs">{stats.total} משתתפים עד כה</p>
+          </motion.div>
+        )}
+
+        {/* Dismiss */}
         <HapticButton
           onClick={onClose}
           hapticPattern={10}
           pressScale={0.95}
-          className="mt-1 w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
+          className="w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
         >
           הבנתי ✓
         </HapticButton>
@@ -380,6 +413,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setShowExplanationOverlay(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
+    // Check local cache first (avoids a round-trip if already loaded today)
     const cached = loadCache(cat);
     if (cached) {
       setQuestion(cached.question);
@@ -401,13 +435,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setSelectedIndex(null);
 
     try {
-      const q = await fetchQuestion(cat);
+      // DB-first: fetch from daily_questions or generate + store
+      const q = await fetchOrCreateQuestion(cat);
       setQuestion(q);
       saveCache(cat, q, null);
       setView('question');
       questionStartRef.current = Date.now();
     } catch (err) {
-      console.error('[DailyChallengeModal] fetch error:', err);
+      console.error('[DailyChallengeModal] load error:', err);
       setView('error');
     }
   }, []);
@@ -418,18 +453,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const elapsed = questionStartRef.current
       ? Math.round((Date.now() - questionStartRef.current) / 1000)
       : 0;
-
     const isCorrect = index === question.correct_index;
+
     setSelectedIndex(index);
     setTimeTaken(elapsed);
     setView('answered');
     saveCache(category, question, index, elapsed);
 
-    trackEvent('daily_challenge_answered', { category, is_correct: isCorrect });
+    // GA4 event
+    trackEvent('daily_challenge_complete', {
+      category,
+      is_correct: isCorrect,
+      time_taken: elapsed,
+    });
 
-    // Auto-show explanation overlay after a short delay
+    // Auto-show explanation overlay after short delay
     overlayTimerRef.current = setTimeout(() => setShowExplanationOverlay(true), 900);
 
+    // Persist response + fetch updated stats
     await saveResponse(category, isCorrect, elapsed, index);
     const stats = await fetchGlobalStats(category);
     setGlobalStats(stats);
@@ -473,7 +514,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-4 p-4">
 
-        {/* Category selector — always visible */}
+        {/* Category selector */}
         <div dir="rtl" className="flex gap-3">
           <CategoryBadge cat="bls" active={category === 'bls'} onClick={() => loadCategory('bls')} />
           <CategoryBadge cat="als" active={category === 'als'} onClick={() => loadCategory('als')} />
@@ -481,7 +522,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         <AnimatePresence mode="wait">
 
-          {/* ── No category selected yet ── */}
+          {/* ── Select prompt ── */}
           {view === 'select' && (
             <motion.div
               key="select"
@@ -520,14 +561,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   <Brain size={22} className="text-amber-400/70" />
                 </div>
               </div>
-              <p className="text-emt-muted text-sm font-semibold">מכין שאלה מאתגרת...</p>
+              <p className="text-emt-muted text-sm font-semibold">טוען שאלה יומית...</p>
               <p className="text-emt-muted/50 text-xs">
                 {category ? `${CATEGORY_LABELS[category]} — ${CATEGORY_FULL[category]}` : ''}
               </p>
             </motion.div>
           )}
 
-          {/* ── Question or Answered ── */}
+          {/* ── Question / Answered ── */}
           {(view === 'question' || view === 'answered') && question && (
             <motion.div
               key={`question-${category}`}
@@ -538,7 +579,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               className="flex flex-col gap-4"
               dir="rtl"
             >
-              {/* Already answered banner */}
+              {/* Result banner */}
               {isAnswered && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -550,11 +591,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       : 'bg-red-500/15 border-red-500/30'
                   }`}
                 >
-                  {selectedIndex === question.correct_index ? (
-                    <CheckCircle size={22} className="text-green-400 shrink-0" />
-                  ) : (
-                    <XCircle size={22} className="text-red-400 shrink-0" />
-                  )}
+                  {selectedIndex === question.correct_index
+                    ? <CheckCircle size={22} className="text-green-400 shrink-0" />
+                    : <XCircle size={22} className="text-red-400 shrink-0" />}
                   <div className="flex-1 text-center">
                     <span className={`font-black text-lg ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
                       {selectedIndex === question.correct_index ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
@@ -589,29 +628,23 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </p>
               </div>
 
-              {/* Options */}
+              {/* Answer options */}
               <div className="flex flex-col gap-2.5">
                 {question.options.map((option, idx) => {
                   const isSelected = selectedIndex === idx;
                   const isCorrect = idx === question.correct_index;
                   const showResult = isAnswered;
 
-                  // Per-answer percentage
-                  const chosenPct = globalStats && globalStats.total > 0
-                    ? Math.round((globalStats.answer_counts[idx] ?? 0) / globalStats.total * 100)
-                    : null;
+                  const chosenPct =
+                    globalStats && globalStats.total > 0
+                      ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
+                      : null;
 
-                  let style =
-                    'bg-emt-gray border-emt-border text-emt-light hover:bg-white/8 active:scale-[0.98]';
-
+                  let style = 'bg-emt-gray border-emt-border text-emt-light hover:bg-white/8 active:scale-[0.98]';
                   if (showResult) {
-                    if (isCorrect) {
-                      style = 'bg-green-500/15 border-green-400/50 text-green-200';
-                    } else if (isSelected && !isCorrect) {
-                      style = 'bg-red-500/15 border-red-400/50 text-red-200';
-                    } else {
-                      style = 'bg-emt-gray/50 border-emt-border/50 text-emt-muted';
-                    }
+                    if (isCorrect) style = 'bg-green-500/15 border-green-400/50 text-green-200';
+                    else if (isSelected) style = 'bg-red-500/15 border-red-400/50 text-red-200';
+                    else style = 'bg-emt-gray/50 border-emt-border/50 text-emt-muted';
                   }
 
                   return (
@@ -627,41 +660,37 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                         <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
                           showResult && isCorrect
                             ? 'bg-green-500/30 border-green-400/60 text-green-300'
-                            : showResult && isSelected && !isCorrect
+                            : showResult && isSelected
                             ? 'bg-red-500/30 border-red-400/60 text-red-300'
                             : 'bg-white/8 border-white/15 text-emt-muted'
                         }`}>
                           {['א', 'ב', 'ג', 'ד'][idx]}
                         </span>
-                        <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">{option}</span>
+                        <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">
+                          {option}
+                        </span>
                         {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
                         {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
                       </div>
 
-                      {/* Per-answer percentage bar */}
+                      {/* Per-answer % bar */}
                       {showResult && chosenPct !== null && (
                         <motion.div
                           className="mt-2.5 w-full"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + idx * 0.06 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.25 + idx * 0.06 }}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[11px] text-emt-muted/70">
-                              {chosenPct}% בחרו בתשובה זו
-                            </span>
-                            <span className="text-[11px] text-emt-muted/50">
-                              {globalStats?.answer_counts[idx] ?? 0} משיבים
-                            </span>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-[11px] text-emt-muted/70">{chosenPct}% בחרו בתשובה זו</span>
+                            <span className="text-[11px] text-emt-muted/50">{globalStats?.answer_counts[idx] ?? 0}</span>
                           </div>
                           <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                             <motion.div
-                              className={`h-full rounded-full ${
-                                isCorrect ? 'bg-green-400' : isSelected ? 'bg-red-400' : 'bg-white/30'
-                              }`}
+                              className={`h-full rounded-full ${isCorrect ? 'bg-green-400' : isSelected ? 'bg-red-400' : 'bg-white/25'}`}
                               initial={{ width: 0 }}
                               animate={{ width: `${chosenPct}%` }}
-                              transition={{ duration: 0.5, delay: 0.4 + idx * 0.06, ease: 'easeOut' }}
+                              transition={{ duration: 0.5, delay: 0.35 + idx * 0.06, ease: 'easeOut' }}
                             />
                           </div>
                         </motion.div>
@@ -671,12 +700,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 })}
               </div>
 
-              {/* Re-open explanation button (after overlay was closed) */}
+              {/* Re-open explanation button */}
               {isAnswered && !showExplanationOverlay && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.4 }}
                 >
                   <HapticButton
                     onClick={() => setShowExplanationOverlay(true)}
@@ -690,17 +719,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </motion.div>
               )}
 
-              {/* Global stats (shown after answering) */}
-              {isAnswered && category && (
-                <GlobalStatsPanel stats={globalStats} category={category} />
-              )}
-
               {/* Switch category hint */}
               {isAnswered && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
+                  transition={{ delay: 0.6 }}
                   className="flex items-center justify-center gap-1.5 text-emt-muted/60 text-xs py-1"
                 >
                   <ChevronRight size={12} />
@@ -740,7 +764,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         </AnimatePresence>
 
-        {/* Disclaimer */}
         <p className="text-center text-[10px] text-emt-muted/40 px-4 leading-relaxed pb-2">
           השאלות מיוצרות על ידי AI למטרות לימוד בלבד. אינן תחליף להכשרה מקצועית מוסמכת.
         </p>
@@ -752,6 +775,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           <ExplanationOverlay
             question={question}
             category={category}
+            stats={globalStats}
+            selectedIndex={selectedIndex}
             onClose={() => setShowExplanationOverlay(false)}
           />
         )}
