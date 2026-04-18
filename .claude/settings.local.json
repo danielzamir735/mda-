@@ -47,7 +47,8 @@
       "Bash(node_modules/.bin/tsc:*)",
       "Bash(ls *.config*)",
       "Bash(ls tailwind*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(git merge *)"
     ]
   },
   "hooks": {
