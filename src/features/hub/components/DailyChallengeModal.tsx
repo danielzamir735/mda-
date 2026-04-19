@@ -214,42 +214,56 @@ async function saveResponse(
   time_taken: number,
   answer_index: number,
 ): Promise<void> {
-  try {
-    const { error } = await supabase.from('daily_responses').insert({
-      session_id: getSessionId(),
-      question_type: category,
-      question_date: TODAY,
-      is_correct,
-      time_taken,
-      answer_index,
-    });
-    if (error) console.error('[DailyChallenge] saveResponse error:', error.message, error.details, error.hint, error.code);
-  } catch (err) {
-    console.error('[DailyChallenge] saveResponse exception:', err);
+  const payload = {
+    session_id: getSessionId(),
+    question_type: category,
+    question_date: TODAY,
+    is_correct,
+    time_taken,
+    answer_index: Number(answer_index),
+  };
+  console.log('[DailyChallenge] INSERT payload:', payload);
+  const { data, error } = await supabase.from('daily_responses').insert(payload).select();
+  if (error) {
+    console.error('INSERT ERROR:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
+  } else {
+    console.log('[DailyChallenge] INSERT success:', data);
   }
 }
 
 async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
+  console.log(`[DailyChallenge] fetchGlobalStats — category=${category} date=${TODAY}`);
   const { data, error } = await supabase
     .from('daily_responses')
     .select('is_correct, answer_index')
     .eq('question_type', category)
     .eq('question_date', TODAY);
 
-  if (error) console.error('[DailyChallenge] fetchGlobalStats error:', error.message, error.details, error.hint, error.code);
-  if (error || !data) return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+  if (error) {
+    console.error('[DailyChallenge] fetchGlobalStats error:', error.message, '| code:', error.code, '| details:', error.details);
+    return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+  }
+
+  console.log(`[DailyChallenge] fetchGlobalStats raw rows (${data?.length ?? 0}):`, data);
+
+  if (!data || data.length === 0) {
+    console.log('[DailyChallenge] fetchGlobalStats — no rows found, returning zeros');
+    return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+  }
 
   const answer_counts = [0, 0, 0, 0];
   data.forEach((r) => {
-    const ai = r.answer_index;
-    if (typeof ai === 'number' && ai >= 0 && ai <= 3) answer_counts[ai]++;
+    const ai = Number(r.answer_index);
+    if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
   });
 
-  return {
+  const stats: GlobalStats = {
     total: data.length,
     correct: data.filter((r) => r.is_correct).length,
     answer_counts,
   };
+  console.log('[DailyChallenge] fetchGlobalStats computed stats:', stats);
+  return stats;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
