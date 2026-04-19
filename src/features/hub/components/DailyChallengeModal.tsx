@@ -446,12 +446,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setSelectedIndex(cached.answered_index);
         setTimeTaken(cached.time_taken ?? null);
         setView('answered');
-        fetchGlobalStats(cat).then(setGlobalStats);
       } else {
         setSelectedIndex(null);
         setView('question');
         questionStartRef.current = Date.now();
       }
+      fetchGlobalStats(cat).then(setGlobalStats);
       return;
     }
 
@@ -466,6 +466,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       saveCache(cat, q, null);
       setView('question');
       questionStartRef.current = Date.now();
+      fetchGlobalStats(cat).then(setGlobalStats);
     } catch (err) {
       console.error('[DailyChallengeModal] load error:', err);
       setView('error');
@@ -653,6 +654,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </p>
               </div>
 
+              {/* Participants badge */}
+              {globalStats !== null && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 self-center"
+                >
+                  <Users size={12} className="text-emt-muted/70" />
+                  <span className="text-[11px] text-emt-muted font-semibold">
+                    סה&quot;כ משתתפים היום:{' '}
+                    <span className="text-emt-light font-black">{globalStats.total}</span>
+                  </span>
+                </motion.div>
+              )}
+
               {/* Answer options */}
               <div className="flex flex-col gap-2.5">
                 {question.options.map((option, idx) => {
@@ -665,12 +682,20 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
                       : null;
 
-                  let style = 'bg-emt-gray border-emt-border text-emt-light hover:bg-white/8 active:scale-[0.98]';
+                  let borderStyle = 'border-emt-border';
+                  let textStyle = 'text-emt-light hover:bg-white/8 active:scale-[0.98]';
+                  let baseBg = 'bg-emt-gray';
                   if (showResult) {
-                    if (isCorrect) style = 'bg-green-500/15 border-green-400/50 text-green-200';
-                    else if (isSelected) style = 'bg-red-500/15 border-red-400/50 text-red-200';
-                    else style = 'bg-emt-gray/50 border-emt-border/50 text-emt-muted';
+                    if (isCorrect) { borderStyle = 'border-green-400/50'; textStyle = 'text-green-200'; baseBg = 'bg-green-500/10'; }
+                    else if (isSelected) { borderStyle = 'border-red-400/50'; textStyle = 'text-red-200'; baseBg = 'bg-red-500/10'; }
+                    else { borderStyle = 'border-emt-border/50'; textStyle = 'text-emt-muted'; baseBg = 'bg-emt-gray/50'; }
                   }
+
+                  const fillColor = isCorrect
+                    ? 'bg-green-500/25'
+                    : isSelected
+                    ? 'bg-red-500/25'
+                    : 'bg-white/8';
 
                   return (
                     <HapticButton
@@ -679,9 +704,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       disabled={isAnswered}
                       hapticPattern={isAnswered ? 0 : 10}
                       pressScale={isAnswered ? 1 : 0.97}
-                      className={`w-full flex flex-col rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${style}`}
+                      className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
                     >
-                      <div className="flex items-center gap-3 w-full">
+                      {/* Background progress fill — right-to-left */}
+                      {showResult && chosenPct !== null && (
+                        <motion.div
+                          className={`absolute inset-y-0 right-0 rounded-2xl ${fillColor}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${chosenPct}%` }}
+                          transition={{ duration: 0.6, delay: 0.3 + idx * 0.07, ease: 'easeOut' }}
+                        />
+                      )}
+
+                      <div className="relative z-10 flex items-center gap-3 w-full">
                         <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
                           showResult && isCorrect
                             ? 'bg-green-500/30 border-green-400/60 text-green-300'
@@ -694,32 +729,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                         <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">
                           {option}
                         </span>
+                        {showResult && chosenPct !== null && (
+                          <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.25 + idx * 0.07 }}
+                            className={`text-sm font-black shrink-0 tabular-nums ${
+                              isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-emt-muted/70'
+                            }`}
+                          >
+                            {chosenPct}%
+                          </motion.span>
+                        )}
                         {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
                         {showResult && isSelected && !isCorrect && <XCircle size={16} className="text-red-400 shrink-0" />}
                       </div>
-
-                      {/* Per-answer % bar */}
-                      {showResult && chosenPct !== null && (
-                        <motion.div
-                          className="mt-2.5 w-full"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.25 + idx * 0.06 }}
-                        >
-                          <div className="flex justify-between mb-1">
-                            <span className="text-[11px] text-emt-muted/70">{chosenPct}% בחרו בתשובה זו</span>
-                            <span className="text-[11px] text-emt-muted/50">{globalStats?.answer_counts[idx] ?? 0}</span>
-                          </div>
-                          <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-                            <motion.div
-                              className={`h-full rounded-full ${isCorrect ? 'bg-green-400' : isSelected ? 'bg-red-400' : 'bg-white/25'}`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${chosenPct}%` }}
-                              transition={{ duration: 0.5, delay: 0.35 + idx * 0.06, ease: 'easeOut' }}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
                     </HapticButton>
                   );
                 })}
