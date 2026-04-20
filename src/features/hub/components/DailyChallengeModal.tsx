@@ -34,7 +34,9 @@ interface GlobalStats {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TODAY = new Date().toISOString().slice(0, 10);
+// Use local date (not UTC) to avoid midnight-shift timezone bugs for Israeli users
+const _now = new Date();
+const TODAY = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
 
 const CACHE_KEYS: Record<Category, string> = {
   bls: 'daily_challenge_bls_v3',
@@ -132,10 +134,17 @@ async function generateQuestion(cat: Category): Promise<Question> {
 // ─── Supabase — daily_questions ───────────────────────────────────────────────
 // Schema: question_date (date), question_type (text), content (jsonb)
 
-async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
-  console.log(`[DailyChallenge] fetchOrCreateQuestion — question_type=${cat} question_date=${TODAY}`);
+function parseQuestionContent(c: Question): Question {
+  return {
+    question: c.question,
+    options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
+    correct_index: c.correct_index,
+    explanation: c.explanation,
+  };
+}
 
-  // 1. Check DB for today's question
+async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
+  // 1. Check DB for today's question (all users share the same row)
   const { data: existing, error: fetchError } = await supabase
     .from('daily_questions')
     .select('*')
@@ -144,44 +153,29 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
     .maybeSingle();
 
   if (fetchError) {
-    console.error('[DailyChallenge] DB fetch error:', fetchError.message, fetchError.details, fetchError.hint, fetchError.code);
+    console.error('[DailyChallenge] DB fetch error:', fetchError.message, fetchError.code);
   }
-  console.log('[DailyChallenge] DB fetch result:', { existing, fetchError });
 
   if (existing?.content) {
-    console.log('[DailyChallenge] Found existing question in DB, returning it.');
-    const c = existing.content as Question;
-    return {
-      question: c.question,
-      options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
-      correct_index: c.correct_index,
-      explanation: c.explanation,
-    };
+    return parseQuestionContent(existing.content as Question);
   }
 
-  // 2. Generate with Gemini, then store atomically (upsert on unique date+type)
-  console.log('[DailyChallenge] No DB row found — generating with Gemini...');
+  // 2. First user for today: generate with Gemini
   const generated = await generateQuestion(cat);
-  console.log('[DailyChallenge] Gemini returned:', generated);
 
-  const payload = {
-    question_date: TODAY,
-    question_type: cat,
-    content: generated,
-  };
-  console.log('[DailyChallenge] Upserting to daily_questions:', payload);
-
-  const { data: upsertData, error: upsertError } = await supabase
+  // 3. Atomic INSERT — unique constraint on (question_date, question_type)
+  const { data: inserted, error: insertError } = await supabase
     .from('daily_questions')
-    .upsert(payload, { onConflict: 'question_date,question_type', ignoreDuplicates: true })
-    .select();
+    .insert({ question_date: TODAY, question_type: cat, content: generated })
+    .select()
+    .single();
 
-  console.log('[DailyChallenge] Upsert result:', { upsertData, upsertError });
-  if (upsertError) {
-    console.error('[DailyChallenge] UPSERT ERROR:', upsertError.message, upsertError.details, upsertError.hint, upsertError.code);
+  if (!insertError && inserted?.content) {
+    return parseQuestionContent(inserted.content as Question);
   }
 
-  // 3. Re-fetch in case another client beat us (race condition → use DB row)
+  // 4. Race condition: another client won the insert (unique_violation = 23505)
+  // Fallback SELECT to get the canonical row created by the other user
   const { data: canonical, error: refetchError } = await supabase
     .from('daily_questions')
     .select('*')
@@ -189,19 +183,16 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
     .eq('question_type', cat)
     .maybeSingle();
 
-  console.log('[DailyChallenge] Re-fetch after upsert:', { canonical, refetchError });
-
-  if (canonical?.content) {
-    const c = canonical.content as Question;
-    return {
-      question: c.question,
-      options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
-      correct_index: c.correct_index,
-      explanation: c.explanation,
-    };
+  if (refetchError) {
+    console.error('[DailyChallenge] Fallback SELECT error:', refetchError.message, refetchError.code);
   }
 
-  console.warn('[DailyChallenge] Re-fetch returned nothing — falling back to generated question.');
+  if (canonical?.content) {
+    return parseQuestionContent(canonical.content as Question);
+  }
+
+  // 5. Last resort: return the locally generated question
+  console.warn('[DailyChallenge] All DB paths failed — using locally generated question.');
   return generated;
 }
 
@@ -678,8 +669,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 >
                   <Users size={12} className="text-emt-muted/70" />
                   <span className="text-[11px] text-emt-muted font-semibold">
-                    סה&quot;כ משתתפים היום:{' '}
                     <span className="text-emt-light font-black">{globalStats.total}</span>
+                    {' '}חובשים כבר ענו היום
                   </span>
                 </motion.div>
               )}
