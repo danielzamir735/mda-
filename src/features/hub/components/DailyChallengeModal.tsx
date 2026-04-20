@@ -57,12 +57,13 @@ const CATEGORY_FULL: Record<Category, string> = {
 
 function buildPrompt(type: 'BLS' | 'ALS'): string {
   return (
-    `You are an elite Paramedic Instructor and Medical Director. Generate the Daily Challenge question for ${type} (BLS or ALS) in Hebrew.\n` +
-    'Strict Rules:\n\n' +
-    'ACCURACY: Base all medical logic STRICTLY on the latest AHA (American Heart Association), PHTLS, and official paramedic protocols.\n\n' +
-    'DIFFICULTY: Make the clinical scenario highly tricky, borderline deceptive, and complex. It must spark fierce debate among professional medics.\n\n' +
-    'OPTIONS: Provide 4 options. All distractors must sound incredibly plausible and be common clinical pitfalls.\n\n' +
-    'EXPLANATION: Provide a deep clinical_explanation that cites the clinical rationale, explaining exactly why the correct answer is right and why the most tempting distractor is wrong.\n\n' +
+    `You are a senior medical board examiner and elite Paramedic Medical Director. Your mission is to challenge professional paramedics at the highest level and expose subtle clinical errors. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
+    'STRICT RULES:\n\n' +
+    'ACCURACY: Base all medical logic STRICTLY on the latest AHA (American Heart Association), PHTLS, and official paramedic protocols. Include specific drug dosages, energy levels, or exact timeframes where applicable.\n\n' +
+    'DIFFICULTY: Create an extremely complex clinical scenario with high-stakes decision points. The question must be borderline deceptive and spark fierce debate among professional medics. Use advanced medical terminology — subtle ECG changes, complex trauma mechanisms, specific drug interactions, or nuanced protocol edge-cases.\n\n' +
+    'DISTRACTORS: Provide exactly 4 answer options. Each option MUST be a detailed, complete clinical statement of at least 15-25 words — NOT just 2-3 words. All distractors must be partially correct but clinically inferior, representing real-world pitfalls that experienced medics commonly fall for.\n\n' +
+    'CLINICAL EXPLANATION: The clinical_explanation field MUST be at least 4-5 long, detailed sentences. It must: (1) explain exactly why the correct answer is best, (2) explain why the most tempting wrong answer is inferior, (3) cite the specific AHA/PHTLS protocol or guideline, (4) include a memorable clinical teaching point.\n\n' +
+    'TONE: Act as an uncompromising board examiner. The goal is to identify subtle clinical errors and separate truly skilled clinicians from those who only know surface-level protocols.\n\n' +
     'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
   );
 }
@@ -436,6 +437,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
+  // Poll global stats every 15s while modal is open — keeps counter live across devices
+  useEffect(() => {
+    if (!isOpen || !category) return;
+    const id = setInterval(() => {
+      fetchGlobalStats(category).then(setGlobalStats);
+    }, 15000);
+    return () => clearInterval(id);
+  }, [isOpen, category]);
+
   const loadCategory = useCallback(async (cat: Category) => {
     setCategory(cat);
     setGlobalStats(null);
@@ -683,8 +693,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   const showResult = isAnswered;
 
                   const chosenPct =
-                    globalStats && globalStats.total > 0
-                      ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
+                    globalStats && showResult
+                      ? (globalStats.total > 0
+                          ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
+                          : 0)
                       : null;
 
                   let borderStyle = 'border-emt-border';
