@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, ChevronRight, Users, Clock } from 'lucide-react';
+import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -57,11 +57,14 @@ const CATEGORY_FULL: Record<Category, string> = {
 
 function buildPrompt(type: 'BLS' | 'ALS'): string {
   return (
-    `You are a senior medical board examiner and elite Paramedic Medical Director. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
-    `MISSION: Generate a HIGHLY TRICKY clinical scenario for ${type} (BLS/ALS). The question must be borderline deceptive and spark fierce debate among professional medics. Use advanced medical terminology — subtle ECG changes, complex trauma mechanisms, specific drug interactions, or nuanced protocol edge-cases.\n\n` +
-    'OPTIONS: Provide exactly 4 answer options. Each option MUST be a long, detailed clinical sentence of 15-20 words — NOT just 2-3 words. At least TWO options must be "almost correct" based on OUTDATED or deprecated protocols. Only ONE option follows the latest AHA/PHTLS 2026 guidelines. The remaining option must be a plausible but clearly inferior clinical choice.\n\n' +
-    'CLINICAL EXPLANATION: The clinical_explanation field MUST be a deep dive of at least 5 long, detailed sentences into the pathophysiology and rationale. It must: (1) explain exactly why the correct answer is best per the latest 2026 guidelines, (2) explain why the most tempting wrong answers fail clinically, (3) describe the specific physiological mechanism at play, (4) cite the AHA/PHTLS protocol chapter or update, (5) include a memorable clinical teaching point that separates elite medics from average ones.\n\n' +
-    'ACCURACY: Base all medical logic STRICTLY on the latest AHA 2026, PHTLS, and official paramedic protocols. Include specific drug dosages, energy levels, or exact timeframes where applicable.\n\n' +
+    `You are a senior medical board examiner, elite Paramedic Medical Director, and AHA/PHTLS course faculty. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
+    `MISSION: Create a DECEPTIVELY DIFFICULT clinical scenario for ${type}. The scenario must involve a real-world edge case that has killed patients when managed incorrectly — a subtle vital sign pattern, a contraindicated drug combination, a time-critical protocol deviation, or a physiological cascade that reverses expected treatment logic. Phrase the question to trap even experienced providers.\n\n` +
+    'OPTIONS: Exactly 4 answer options, EACH a complete clinical action sentence of 20-30 Hebrew words minimum. Format: "[Verb] [specific drug/dose/route/rate] [clinical rationale or timing]". Examples of correct format:\n' +
+    '- "מתן אדרנלין 0.3 מ"ג IM בירך החיצוני תוך 30 שניות תוך הכנת מסלול אוויר מתקדם בשל סיכון לאנפילקסיס קשה"\n' +
+    '- "דפיברילציה בעוצמת 200J ביפאזי מיידית ללא עצירת CPR, תוך המשך דחיסות לאחר שוק"\n' +
+    'At least TWO options must sound correct based on outdated/deprecated protocols (pre-2020). One option must be clearly inferior but still plausible to a junior provider. Exactly ONE option follows AHA/PHTLS 2026 guidelines precisely.\n\n' +
+    'CLINICAL EXPLANATION: Write a minimum 7-sentence expert-level explanation that: (1) states exactly which AHA 2026 / PHTLS 9th edition guideline or chapter applies, (2) explains the specific physiological mechanism that makes the correct answer superior, (3) dissects WHY the two most tempting wrong answers fail — including what patient harm they cause, (4) provides exact drug doses, joule settings, or time windows from current protocols, (5) names the specific pathophysiology (e.g., "distributive shock causes peripheral vasodilation which negates the vasopressor effect of…"), (6) includes a mnemonic or clinical pearl used by board-certified paramedics, (7) ends with a one-sentence rule that separates elite providers from average ones.\n\n' +
+    'ACCURACY: Every drug dose, energy setting, and time threshold must match AHA 2026, PHTLS 9th Edition, or current Israeli MAGEN DAVID ADOM protocols exactly. Errors kill patients.\n\n' +
     'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
   );
 }
@@ -282,7 +285,7 @@ function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolea
   );
 }
 
-// Clinical Explanation Overlay — auto-shown after answering
+// Clinical Explanation Overlay — full-screen modal, auto-shown after answering
 function ExplanationOverlay({
   question,
   category,
@@ -298,98 +301,106 @@ function ExplanationOverlay({
 }) {
   const isCorrect = selectedIndex === question.correct_index;
   const pct = stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
-  const borderColor = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
-  const bgGlow = category === 'bls' ? 'from-blue-900/30' : 'from-red-900/30';
+  const accentBorder = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
+  const accentBg = category === 'bls' ? 'from-blue-900/20' : 'from-red-900/20';
+  const accentBar = category === 'bls' ? 'bg-blue-400' : 'bg-red-400';
 
   return (
     <motion.div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-5"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[90] flex flex-col bg-emt-dark"
+      initial={{ opacity: 0, y: '100%' }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: '100%' }}
+      transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+      dir="rtl"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      {/* Header */}
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border bg-emt-dark/95">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
+            <Brain size={18} className="text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-amber-300 font-black text-lg leading-none">הסבר קליני</h2>
+            <p className="text-emt-muted text-[11px] mt-0.5">ניתוח מקרה מעמיק</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black ${
+            isCorrect
+              ? 'bg-green-500/15 border-green-500/40 text-green-300'
+              : 'bg-red-500/15 border-red-500/40 text-red-300'
+          }`}>
+            {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
+            <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors active:scale-90"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
 
-      {/* Card */}
-      <motion.div
-        className={`relative z-10 w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-b ${bgGlow} to-emt-dark border ${borderColor} p-6 flex flex-col items-center gap-4 shadow-2xl`}
-        initial={{ scale: 0.88, y: 28, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.88, y: 28, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-        dir="rtl"
-      >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors"
-          aria-label="סגור"
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+
+        {/* Explanation card — full width, large text */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`rounded-3xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-5`}
         >
-          <X size={14} />
-        </button>
-
-        {/* Result badge */}
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
-          isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-300'
-        }`}>
-          {isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
-          <span className="font-black text-sm">{isCorrect ? 'תשובה נכונה! 🎉' : 'תשובה שגויה'}</span>
-        </div>
-
-        {/* Brain + title */}
-        <div className="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
-          <Brain size={28} className="text-amber-400" />
-        </div>
-        <h3 className="text-amber-300 font-black text-2xl text-center leading-tight">הסבר קליני</h3>
-
-        {/* Explanation */}
-        <div className="w-full max-h-64 overflow-y-auto rounded-2xl bg-white/5 border border-white/10 p-4">
-          <p className="text-emt-light text-base leading-relaxed text-center font-medium">
+          <p className="text-emt-light text-lg leading-[1.8] font-medium text-right">
             {question.clinical_explanation}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Global stat: "You are among X% who answered correctly today" */}
+        {/* Global stats */}
         {pct !== null && stats && stats.total > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-2"
+            transition={{ delay: 0.25 }}
+            className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-3"
           >
             <div className="flex items-center gap-2 text-emt-muted text-xs font-semibold">
               <Users size={13} />
               <span>סטטיסטיקה גלובלית היום</span>
             </div>
-            <p className={`text-base font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
+            <p className={`text-xl font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
               {isCorrect
                 ? `אתה בין ${pct}% שענו נכון היום!`
                 : `${pct}% מהמשתמשים ענו נכון היום`}
             </p>
-            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
               <motion.div
-                className={`h-full rounded-full ${category === 'bls' ? 'bg-blue-400' : 'bg-red-400'}`}
+                className={`h-full rounded-full ${accentBar}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
+                transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
               />
             </div>
             <p className="text-emt-muted/50 text-xs">{(stats?.total ?? 0) + 110} משתתפים עד כה</p>
           </motion.div>
         )}
 
-        {/* Dismiss */}
+      </div>
+
+      {/* Fixed footer */}
+      <div className="ios-safe-footer shrink-0 px-5 py-4 border-t border-emt-border bg-emt-dark/95">
         <HapticButton
           onClick={onClose}
           hapticPattern={10}
-          pressScale={0.95}
-          className="w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
+          pressScale={0.96}
+          className="w-full py-4 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-lg"
         >
           הבנתי ✓
         </HapticButton>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -676,12 +687,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full self-center border ${
-                  isStatsOffline ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/10'
+                  isStatsOffline ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/10'
                 }`}
               >
-                <Users size={12} className={isStatsOffline ? 'text-red-400/60' : 'text-emt-muted/70'} />
+                <Users size={12} className={isStatsOffline ? 'text-amber-400/60' : 'text-emt-muted/70'} />
                 {isStatsOffline ? (
-                  <span className="text-[11px] text-red-400/70 font-semibold">אין חיבור לנתוני ענן</span>
+                  <span className="text-[11px] text-amber-400/70 font-semibold animate-pulse">מתחבר מחדש...</span>
                 ) : (
                   <span className="text-[11px] text-emt-muted font-semibold">
                     <span className="text-emt-light font-black">
@@ -701,10 +712,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   const showResult = isAnswered;
 
                   const chosenPct =
-                    globalStats && showResult
-                      ? (globalStats.total > 0
-                          ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
-                          : 0)
+                    globalStats && showResult && globalStats.total > 0
+                      ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
                       : null;
 
                   let borderStyle = 'border-emt-border';
@@ -793,18 +802,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </motion.div>
               )}
 
-              {/* Switch category hint */}
-              {isAnswered && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex items-center justify-center gap-1.5 text-emt-muted/60 text-xs py-1"
-                >
-                  <ChevronRight size={12} />
-                  <span>בחר קטגוריה אחרת למעלה לשאלה נוספת</span>
-                </motion.div>
-              )}
             </motion.div>
           )}
 
