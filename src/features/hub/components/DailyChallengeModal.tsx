@@ -253,7 +253,7 @@ async function fetchGlobalStats(
   }
 
   let rows = data ?? [];
-  console.log(`[DailyChallenge] fetchGlobalStats — total rows fetched: ${rows.length}`, rows);
+  console.log(`[DailySync] Total responses fetched: ${rows.length}`, rows);
 
   // If DB returned 0 rows but we know the user just answered (e.g. RLS limits reads),
   // inject their response so the UI always shows at least 1 participant.
@@ -346,7 +346,7 @@ function ExplanationOverlay({
 
       {/* Card */}
       <motion.div
-        className={`relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-b ${bgGlow} to-emt-dark border ${borderColor} p-6 flex flex-col items-center gap-4 shadow-2xl`}
+        className={`relative z-10 w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-b ${bgGlow} to-emt-dark border ${borderColor} p-6 flex flex-col items-center gap-4 shadow-2xl`}
         initial={{ scale: 0.88, y: 28, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.88, y: 28, opacity: 0 }}
@@ -377,9 +377,11 @@ function ExplanationOverlay({
         <h3 className="text-amber-300 font-black text-2xl text-center leading-tight">הסבר קליני</h3>
 
         {/* Explanation */}
-        <p className="text-emt-light text-lg leading-relaxed text-center font-medium">
-          {question.explanation}
-        </p>
+        <div className="w-full max-h-[220px] overflow-y-auto rounded-2xl bg-white/5 border border-white/10 p-4">
+          <p className="text-emt-light text-base leading-relaxed text-center font-medium">
+            {question.explanation}
+          </p>
+        </div>
 
         {/* Global stat: "You are among X% who answered correctly today" */}
         {pct !== null && stats && stats.total > 0 && (
@@ -454,6 +456,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setGlobalStats(null);
       setTimeTaken(null);
       setShowExplanationOverlay(false);
+      // Ensure session_id exists in localStorage for cross-session consistency
+      getSessionId();
     }
     return () => {
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
