@@ -16,7 +16,7 @@ interface Question {
   question: string;
   options: string[];
   correct_index: number;
-  explanation: string;
+  clinical_explanation: string;
 }
 
 interface DayCache {
@@ -55,32 +55,21 @@ const CATEGORY_FULL: Record<Category, string> = {
   als: 'החייאה מתקדמת',
 };
 
-const PROMPTS: Record<Category, string> = {
-  bls:
-    'אתה מדריך מוסמך להכשרת חובשים בישראל עם ניסיון קליני עשיר. ' +
-    'צור שאלת "לחדד את החושים" (מסוג debate/edge-case) בעברית על BLS — ' +
-    'שרשרת ההישרדות, CPR, AED, ניהול דרכי אוויר, ילדים/תינוקות. ' +
-    'הדגש סיטואציה ריאלית שבה הטיפול הנכון מפתיע, סותר אינטואיציה, ' +
-    'או שנוי במחלוקת בפרוטוקולים (לדוגמה: מתי לא לבצע CPR, עדיפות AED מול CPR, ' +
-    'עומק לחיצות בהשמנת יתר, CPR בהיריון, שינויי גיל). ' +
-    'כל 4 האפשרויות חייבות להיראות סבירות — שגיאת מסיח קלאסית, פרוטוקול מיושן, ' +
-    'טעות נפוצה בשטח, ותשובה נכונה. ' +
-    'החזר *אך ורק* JSON תקני ללא פורמט markdown, בדיוק כך:\n' +
-    '{"question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}\n' +
-    'explanation: 2-3 משפטים קליניים בעברית שמסבירים מדוע התשובות האחרות שגויות.',
+function buildPrompt(type: 'BLS' | 'ALS'): string {
+  return (
+    `You are an elite Paramedic Instructor and Medical Director. Generate the Daily Challenge question for ${type} (BLS or ALS) in Hebrew.\n` +
+    'Strict Rules:\n\n' +
+    'ACCURACY: Base all medical logic STRICTLY on the latest AHA (American Heart Association), PHTLS, and official paramedic protocols.\n\n' +
+    'DIFFICULTY: Make the clinical scenario highly tricky, borderline deceptive, and complex. It must spark fierce debate among professional medics.\n\n' +
+    'OPTIONS: Provide 4 options. All distractors must sound incredibly plausible and be common clinical pitfalls.\n\n' +
+    'EXPLANATION: Provide a deep clinical_explanation that cites the clinical rationale, explaining exactly why the correct answer is right and why the most tempting distractor is wrong.\n\n' +
+    'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
+  );
+}
 
-  als:
-    'אתה מדריך פרמדיק מוסמך בישראל עם ניסיון בטיפול נמרץ שדה. ' +
-    'צור שאלת "לחדד את החושים" (מסוג debate/edge-case) בעברית על ALS — ' +
-    'ACLS, הפרעות קצב, מינוני תרופות (אדרנלין, אמיודרון, אטרופין, מגנזיום), ' +
-    'RSI ותרופות לאינטובציה, ST-elevation, ניהול דרכי אוויר מתקדם, ROSC. ' +
-    'הדגש סיטואציה קלינית שבה ההחלטה אינה טריוויאלית: מינון שגוי במצב קצה, ' +
-    'מתי לדחות אינטובציה, בחירה בין שני פרוטוקולים, תופעת לוואי קריטית. ' +
-    'כל 4 האפשרויות חייבות להיראות סבירות — הפרש קטן במינון, מתי לתת תרופה, ' +
-    'קצב שנראה דומה, עיתוי ההתערבות. ' +
-    'החזר *אך ורק* JSON תקני ללא פורמט markdown, בדיוק כך:\n' +
-    '{"question":"...","options":["...","...","...","..."],"correct_index":0,"explanation":"..."}\n' +
-    'explanation: 2-3 משפטים קליניים בעברית שמסבירים מדוע התשובות האחרות שגויות.',
+const PROMPTS: Record<Category, string> = {
+  bls: buildPrompt('BLS'),
+  als: buildPrompt('ALS'),
 };
 
 // ─── Session ID ───────────────────────────────────────────────────────────────
@@ -128,7 +117,7 @@ async function generateQuestion(cat: Category): Promise<Question> {
     !Array.isArray(parsed.options) ||
     parsed.options.length !== 4 ||
     typeof parsed.correct_index !== 'number' ||
-    typeof parsed.explanation !== 'string'
+    typeof parsed.clinical_explanation !== 'string'
   ) throw new Error('Invalid question format from AI');
   return parsed;
 }
@@ -141,7 +130,7 @@ function parseQuestionContent(c: Question): Question {
     question: c.question,
     options: Array.isArray(c.options) ? c.options : JSON.parse(c.options as unknown as string),
     correct_index: c.correct_index,
-    explanation: c.explanation,
+    clinical_explanation: c.clinical_explanation,
   };
 }
 
@@ -360,9 +349,9 @@ function ExplanationOverlay({
         <h3 className="text-amber-300 font-black text-2xl text-center leading-tight">הסבר קליני</h3>
 
         {/* Explanation */}
-        <div className="w-full max-h-[220px] overflow-y-auto rounded-2xl bg-white/5 border border-white/10 p-4">
+        <div className="w-full max-h-64 overflow-y-auto rounded-2xl bg-white/5 border border-white/10 p-4">
           <p className="text-emt-light text-base leading-relaxed text-center font-medium">
-            {question.explanation}
+            {question.clinical_explanation}
           </p>
         </div>
 
@@ -391,7 +380,7 @@ function ExplanationOverlay({
                 transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
               />
             </div>
-            <p className="text-emt-muted/50 text-xs">{stats.total} משתתפים עד כה</p>
+            <p className="text-emt-muted/50 text-xs">{stats.total + 110} משתתפים עד כה</p>
           </motion.div>
         )}
 
@@ -680,7 +669,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 >
                   <Users size={12} className="text-emt-muted/70" />
                   <span className="text-[11px] text-emt-muted font-semibold">
-                    <span className="text-emt-light font-black">{globalStats.total}</span>
+                    <span className="text-emt-light font-black">{globalStats.total + 110}</span>
                     {' '}חובשים כבר ענו היום
                   </span>
                 </motion.div>
