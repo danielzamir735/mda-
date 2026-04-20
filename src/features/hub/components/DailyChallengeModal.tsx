@@ -57,13 +57,11 @@ const CATEGORY_FULL: Record<Category, string> = {
 
 function buildPrompt(type: 'BLS' | 'ALS'): string {
   return (
-    `You are a senior medical board examiner and elite Paramedic Medical Director. Your mission is to challenge professional paramedics at the highest level and expose subtle clinical errors. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
-    'STRICT RULES:\n\n' +
-    'ACCURACY: Base all medical logic STRICTLY on the latest AHA (American Heart Association), PHTLS, and official paramedic protocols. Include specific drug dosages, energy levels, or exact timeframes where applicable.\n\n' +
-    'DIFFICULTY: Create an extremely complex clinical scenario with high-stakes decision points. The question must be borderline deceptive and spark fierce debate among professional medics. Use advanced medical terminology — subtle ECG changes, complex trauma mechanisms, specific drug interactions, or nuanced protocol edge-cases.\n\n' +
-    'DISTRACTORS: Provide exactly 4 answer options. Each option MUST be a detailed, complete clinical statement of at least 15-25 words — NOT just 2-3 words. All distractors must be partially correct but clinically inferior, representing real-world pitfalls that experienced medics commonly fall for.\n\n' +
-    'CLINICAL EXPLANATION: The clinical_explanation field MUST be at least 4-5 long, detailed sentences. It must: (1) explain exactly why the correct answer is best, (2) explain why the most tempting wrong answer is inferior, (3) cite the specific AHA/PHTLS protocol or guideline, (4) include a memorable clinical teaching point.\n\n' +
-    'TONE: Act as an uncompromising board examiner. The goal is to identify subtle clinical errors and separate truly skilled clinicians from those who only know surface-level protocols.\n\n' +
+    `You are a senior medical board examiner and elite Paramedic Medical Director. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
+    `MISSION: Generate a HIGHLY TRICKY clinical scenario for ${type} (BLS/ALS). The question must be borderline deceptive and spark fierce debate among professional medics. Use advanced medical terminology — subtle ECG changes, complex trauma mechanisms, specific drug interactions, or nuanced protocol edge-cases.\n\n` +
+    'OPTIONS: Provide exactly 4 answer options. Each option MUST be a long, detailed clinical sentence of 15-20 words — NOT just 2-3 words. At least TWO options must be "almost correct" based on OUTDATED or deprecated protocols. Only ONE option follows the latest AHA/PHTLS 2026 guidelines. The remaining option must be a plausible but clearly inferior clinical choice.\n\n' +
+    'CLINICAL EXPLANATION: The clinical_explanation field MUST be a deep dive of at least 5 long, detailed sentences into the pathophysiology and rationale. It must: (1) explain exactly why the correct answer is best per the latest 2026 guidelines, (2) explain why the most tempting wrong answers fail clinically, (3) describe the specific physiological mechanism at play, (4) cite the AHA/PHTLS protocol chapter or update, (5) include a memorable clinical teaching point that separates elite medics from average ones.\n\n' +
+    'ACCURACY: Base all medical logic STRICTLY on the latest AHA 2026, PHTLS, and official paramedic protocols. Include specific drug dosages, energy levels, or exact timeframes where applicable.\n\n' +
     'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
   );
 }
@@ -218,40 +216,37 @@ async function saveResponse(
   }
 }
 
-// Pure global fetch — no local math, no fallback injection.
-// All percentages and counts come exclusively from Supabase rows.
-async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
+// Pure global fetch with retry — all percentages/counts from Supabase rows exclusively.
+async function fetchGlobalStats(category: Category, retries = 2): Promise<{ stats: GlobalStats; offline: boolean }> {
   const today = getToday();
 
-  const { data, error } = await supabase
-    .from('daily_responses')
-    .select('is_correct, answer_index')
-    .eq('question_type', category)
-    .eq('question_date', today);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const { data, error } = await supabase
+      .from('daily_responses')
+      .select('is_correct, answer_index')
+      .eq('question_type', category)
+      .eq('question_date', today);
 
-  if (error) {
-    console.error('[DailySync] fetchGlobalStats error:', error.message, '| code:', error.code);
-    return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+    if (!error) {
+      const rows = data ?? [];
+      console.log(`[DailySync] Total responses fetched: ${rows.length} (attempt ${attempt + 1})`);
+      if (rows.length === 0) return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: false };
+      const answer_counts = [0, 0, 0, 0];
+      rows.forEach((r) => {
+        const ai = Number(r.answer_index);
+        if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
+      });
+      return {
+        stats: { total: rows.length, correct: rows.filter((r) => r.is_correct).length, answer_counts },
+        offline: false,
+      };
+    }
+
+    console.error(`[DailySync] fetchGlobalStats error (attempt ${attempt + 1}):`, error.message, '| code:', error.code);
+    if (attempt < retries) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
   }
 
-  const rows = data ?? [];
-  console.log(`[DailySync] Total responses fetched: ${rows.length}`);
-
-  if (rows.length === 0) {
-    return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
-  }
-
-  const answer_counts = [0, 0, 0, 0];
-  rows.forEach((r) => {
-    const ai = Number(r.answer_index);
-    if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
-  });
-
-  return {
-    total: rows.length,
-    correct: rows.filter((r) => r.is_correct).length,
-    answer_counts,
-  };
+  return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: true };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -381,7 +376,7 @@ function ExplanationOverlay({
                 transition={{ duration: 0.7, delay: 0.4, ease: 'easeOut' }}
               />
             </div>
-            <p className="text-emt-muted/50 text-xs">{stats.total + 110} משתתפים עד כה</p>
+            <p className="text-emt-muted/50 text-xs">{(stats?.total ?? 0) + 110} משתתפים עד כה</p>
           </motion.div>
         )}
 
@@ -414,6 +409,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
+  const [isStatsOffline, setIsStatsOffline] = useState(false);
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
   const [showExplanationOverlay, setShowExplanationOverlay] = useState(false);
   const questionStartRef = useRef<number | null>(null);
@@ -427,6 +423,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setQuestion(null);
       setSelectedIndex(null);
       setGlobalStats(null);
+      setIsStatsOffline(false);
       setTimeTaken(null);
       setShowExplanationOverlay(false);
       // Ensure session_id exists in localStorage for cross-session consistency
@@ -437,12 +434,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
-  // Poll global stats every 15s while modal is open — keeps counter live across devices
+  // Poll global stats every 10s while modal is open — keeps counter live across devices
   useEffect(() => {
     if (!isOpen || !category) return;
     const id = setInterval(() => {
-      fetchGlobalStats(category).then(setGlobalStats);
-    }, 15000);
+      fetchGlobalStats(category).then(({ stats, offline }) => {
+        setGlobalStats(stats);
+        setIsStatsOffline(offline);
+      });
+    }, 10000);
     return () => clearInterval(id);
   }, [isOpen, category]);
 
@@ -466,7 +466,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setView('question');
         questionStartRef.current = Date.now();
       }
-      fetchGlobalStats(cat).then(setGlobalStats);
+      fetchGlobalStats(cat).then(({ stats, offline }) => { setGlobalStats(stats); setIsStatsOffline(offline); });
       return;
     }
 
@@ -481,7 +481,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       saveCache(cat, q, null);
       setView('question');
       questionStartRef.current = Date.now();
-      fetchGlobalStats(cat).then(setGlobalStats);
+      fetchGlobalStats(cat).then(({ stats, offline }) => { setGlobalStats(stats); setIsStatsOffline(offline); });
     } catch (err) {
       console.error('[DailyChallengeModal] load error:', err);
       setView('error');
@@ -513,8 +513,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     // INSERT response, then SELECT all rows for today — stats come only from DB
     await saveResponse(category, isCorrect, elapsed, index);
-    const stats = await fetchGlobalStats(category);
+    const { stats, offline } = await fetchGlobalStats(category);
     setGlobalStats(stats);
+    setIsStatsOffline(offline);
   }, [question, category, selectedIndex]);
 
   const handleRetry = useCallback(() => {
@@ -669,21 +670,28 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </p>
               </div>
 
-              {/* Participants badge */}
-              {globalStats !== null && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 self-center"
-                >
-                  <Users size={12} className="text-emt-muted/70" />
+              {/* Participants badge — shown immediately; defaults to baseline 110 while loading */}
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full self-center border ${
+                  isStatsOffline ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/10'
+                }`}
+              >
+                <Users size={12} className={isStatsOffline ? 'text-red-400/60' : 'text-emt-muted/70'} />
+                {isStatsOffline ? (
+                  <span className="text-[11px] text-red-400/70 font-semibold">אין חיבור לנתוני ענן</span>
+                ) : (
                   <span className="text-[11px] text-emt-muted font-semibold">
-                    <span className="text-emt-light font-black">{globalStats.total + 110}</span>
+                    <span className="text-emt-light font-black">
+                      {(globalStats?.total ?? 0) + 110}
+                    </span>
                     {' '}חובשים כבר ענו היום
+                    {globalStats === null && <span className="animate-pulse"> ...</span>}
                   </span>
-                </motion.div>
-              )}
+                )}
+              </motion.div>
 
               {/* Answer options */}
               <div className="flex flex-col gap-2.5">
