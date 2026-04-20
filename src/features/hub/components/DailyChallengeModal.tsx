@@ -201,7 +201,8 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
 }
 
 // ─── Supabase — daily_responses ──────────────────────────────────────────────
-// Schema: session_id, question_type, question_date, is_correct, time_taken, answer_index
+// Schema: session_id, question_type (text), question_date (date), is_correct, time_taken, answer_index
+// Unique constraint: (session_id, question_type, question_date)
 
 async function saveResponse(
   category: Category,
@@ -217,23 +218,20 @@ async function saveResponse(
     time_taken,
     answer_index: Number(answer_index),
   };
-  console.log('[DailyChallenge] INSERT payload:', payload);
+  console.log('[DailySync] INSERT payload:', payload);
+  // Plain INSERT — unique constraint on (session_id, question_type, question_date) prevents duplicates
   const { data, error } = await supabase.from('daily_responses').insert(payload).select();
   if (error) {
-    console.error('INSERT ERROR:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
+    console.error('[DailySync] INSERT error:', error.message, '| code:', error.code, '| details:', error.details);
   } else {
-    console.log('[DailyChallenge] INSERT success:', data);
+    console.log('[DailySync] INSERT success:', data);
   }
 }
 
-// localFallback: the current user's just-submitted response, used if DB returns 0 rows
-// (can happen when RLS restricts cross-user reads)
-async function fetchGlobalStats(
-  category: Category,
-  localFallback?: { answer_index: number; is_correct: boolean },
-): Promise<GlobalStats> {
+// Pure global fetch — no local math, no fallback injection.
+// All percentages and counts come exclusively from Supabase rows.
+async function fetchGlobalStats(category: Category): Promise<GlobalStats> {
   const today = getToday();
-  console.log(`[DailyChallenge] fetchGlobalStats — category=${category} date=${today}`);
 
   const { data, error } = await supabase
     .from('daily_responses')
@@ -242,25 +240,12 @@ async function fetchGlobalStats(
     .eq('question_date', today);
 
   if (error) {
-    console.error('[DailyChallenge] fetchGlobalStats error:', error.message, '| code:', error.code, '| details:', error.details);
-    // If DB fails entirely and we have a local response, return that as minimum
-    if (localFallback) {
-      const counts = [0, 0, 0, 0];
-      counts[localFallback.answer_index] = 1;
-      return { total: 1, correct: localFallback.is_correct ? 1 : 0, answer_counts: counts };
-    }
+    console.error('[DailySync] fetchGlobalStats error:', error.message, '| code:', error.code);
     return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
   }
 
-  let rows = data ?? [];
-  console.log(`[DailySync] Total responses fetched: ${rows.length}`, rows);
-
-  // If DB returned 0 rows but we know the user just answered (e.g. RLS limits reads),
-  // inject their response so the UI always shows at least 1 participant.
-  if (rows.length === 0 && localFallback) {
-    console.warn('[DailyChallenge] fetchGlobalStats — 0 rows from DB, injecting local response as fallback');
-    rows = [{ answer_index: localFallback.answer_index, is_correct: localFallback.is_correct }];
-  }
+  const rows = data ?? [];
+  console.log(`[DailySync] Total responses fetched: ${rows.length}`);
 
   if (rows.length === 0) {
     return { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
@@ -272,13 +257,11 @@ async function fetchGlobalStats(
     if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
   });
 
-  const stats: GlobalStats = {
+  return {
     total: rows.length,
     correct: rows.filter((r) => r.is_correct).length,
     answer_counts,
   };
-  console.log('[DailyChallenge] fetchGlobalStats computed stats:', stats);
-  return stats;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -526,18 +509,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       time_taken: elapsed,
     });
 
-    // Optimistic stats: show at least 1 participant (this user) immediately
-    const optimisticCounts = [0, 0, 0, 0] as number[];
-    optimisticCounts[index] = 1;
-    setGlobalStats({ total: 1, correct: isCorrect ? 1 : 0, answer_counts: optimisticCounts });
-
     // Auto-show explanation overlay after short delay
     overlayTimerRef.current = setTimeout(() => setShowExplanationOverlay(true), 900);
 
-    // Persist response to DB, then fetch real global stats
-    // Pass localFallback so fetchGlobalStats can inject our response if RLS returns 0 rows
+    // INSERT response, then SELECT all rows for today — stats come only from DB
     await saveResponse(category, isCorrect, elapsed, index);
-    const stats = await fetchGlobalStats(category, { answer_index: index, is_correct: isCorrect });
+    const stats = await fetchGlobalStats(category);
     setGlobalStats(stats);
   }, [question, category, selectedIndex]);
 
