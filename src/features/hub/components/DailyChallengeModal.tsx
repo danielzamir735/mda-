@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock } from 'lucide-react';
+import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock, Medal } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -24,6 +24,7 @@ interface DayCache {
   question: Question;
   answered_index: number | null;
   time_taken?: number;
+  leaderboard_saved?: boolean;
 }
 
 interface GlobalStats {
@@ -32,17 +33,22 @@ interface GlobalStats {
   answer_counts: number[];
 }
 
+interface LeaderboardEntry {
+  display_name: string;
+  time_taken: number;
+  rank: number;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Always computed fresh — avoids stale date if tab stays open past midnight
 function getToday(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 const CACHE_KEYS: Record<Category, string> = {
-  bls: 'daily_challenge_bls_v3',
-  als: 'daily_challenge_als_v3',
+  bls: 'daily_challenge_bls_v4',
+  als: 'daily_challenge_als_v4',
 };
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -57,14 +63,12 @@ const CATEGORY_FULL: Record<Category, string> = {
 
 function buildPrompt(type: 'BLS' | 'ALS'): string {
   return (
-    `You are a senior medical board examiner, elite Paramedic Medical Director, and AHA/PHTLS course faculty. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
-    `MISSION: Create a DECEPTIVELY DIFFICULT clinical scenario for ${type}. The scenario must involve a real-world edge case that has killed patients when managed incorrectly — a subtle vital sign pattern, a contraindicated drug combination, a time-critical protocol deviation, or a physiological cascade that reverses expected treatment logic. Phrase the question to trap even experienced providers.\n\n` +
-    'OPTIONS: Exactly 4 answer options, EACH a complete clinical action sentence of 20-30 Hebrew words minimum. Format: "[Verb] [specific drug/dose/route/rate] [clinical rationale or timing]". Examples of correct format:\n' +
-    '- "מתן אדרנלין 0.3 מ"ג IM בירך החיצוני תוך 30 שניות תוך הכנת מסלול אוויר מתקדם בשל סיכון לאנפילקסיס קשה"\n' +
-    '- "דפיברילציה בעוצמת 200J ביפאזי מיידית ללא עצירת CPR, תוך המשך דחיסות לאחר שוק"\n' +
-    'At least TWO options must sound correct based on outdated/deprecated protocols (pre-2020). One option must be clearly inferior but still plausible to a junior provider. Exactly ONE option follows AHA/PHTLS 2026 guidelines precisely.\n\n' +
-    'CLINICAL EXPLANATION: Write a minimum 7-sentence expert-level explanation that: (1) states exactly which AHA 2026 / PHTLS 9th edition guideline or chapter applies, (2) explains the specific physiological mechanism that makes the correct answer superior, (3) dissects WHY the two most tempting wrong answers fail — including what patient harm they cause, (4) provides exact drug doses, joule settings, or time windows from current protocols, (5) names the specific pathophysiology (e.g., "distributive shock causes peripheral vasodilation which negates the vasopressor effect of…"), (6) includes a mnemonic or clinical pearl used by board-certified paramedics, (7) ends with a one-sentence rule that separates elite providers from average ones.\n\n' +
-    'ACCURACY: Every drug dose, energy setting, and time threshold must match AHA 2026, PHTLS 9th Edition, or current Israeli MAGEN DAVID ADOM protocols exactly. Errors kill patients.\n\n' +
+    `You are a Senior Medical Examiner and AHA/PHTLS course faculty member. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
+    `MISSION: Create a DECEPTIVELY DIFFICULT clinical scenario for ${type}. The scenario must involve a real-world edge case — a subtle vital sign pattern, a contraindicated drug combination, a time-critical protocol deviation, or a physiological cascade that reverses expected treatment logic. Phrase the question to trap even experienced providers.\n\n` +
+    'OPTIONS: Exactly 4 answer options. Each option must be a complete, detailed clinical action sentence of 20-30 Hebrew words. Format: "[Verb] [specific drug/dose/route/rate] [clinical rationale or timing]".\n' +
+    'DISTRACTOR RULES: At least TWO options must sound clinically correct based on outdated/deprecated protocols (pre-2020). One option must be clearly inferior but still plausible to a junior provider. Exactly ONE option follows current AHA/PHTLS 2026 guidelines precisely. All distractors must be highly plausible — no obviously wrong answers.\n\n' +
+    'CLINICAL EXPLANATION: Write exactly 3-4 concise sentences: (1) State the specific AHA 2026 / PHTLS guideline or chapter that applies. (2) Explain the physiological mechanism making the correct answer superior. (3) Dissect why the most tempting wrong answer fails and the patient harm it causes. (4) End with one clinical pearl that separates elite providers from average ones.\n\n' +
+    'ACCURACY: Every drug dose, energy setting, and time threshold must match AHA 2026, PHTLS 9th Edition, or current Israeli MDA protocols exactly.\n\n' +
     'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
   );
 }
@@ -99,8 +103,24 @@ function loadCache(cat: Category): DayCache | null {
   }
 }
 
-function saveCache(cat: Category, question: Question, answered_index: number | null, time_taken?: number) {
-  localStorage.setItem(CACHE_KEYS[cat], JSON.stringify({ date: getToday(), question, answered_index, time_taken }));
+function saveCache(
+  cat: Category,
+  question: Question,
+  answered_index: number | null,
+  time_taken?: number,
+  leaderboard_saved?: boolean,
+) {
+  const existing = loadCache(cat);
+  localStorage.setItem(
+    CACHE_KEYS[cat],
+    JSON.stringify({
+      date: getToday(),
+      question,
+      answered_index,
+      time_taken,
+      leaderboard_saved: leaderboard_saved ?? existing?.leaderboard_saved ?? false,
+    }),
+  );
 }
 
 // ─── Gemini ───────────────────────────────────────────────────────────────────
@@ -125,7 +145,6 @@ async function generateQuestion(cat: Category): Promise<Question> {
 }
 
 // ─── Supabase — daily_questions ───────────────────────────────────────────────
-// Schema: question_date (date), question_type (text), content (jsonb)
 
 function parseQuestionContent(c: Question): Question {
   return {
@@ -139,7 +158,6 @@ function parseQuestionContent(c: Question): Question {
 async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
   const today = getToday();
 
-  // 1. Check DB for today's question (all users share the same row)
   const { data: existing, error: fetchError } = await supabase
     .from('daily_questions')
     .select('*')
@@ -147,82 +165,49 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
     .eq('question_type', cat)
     .maybeSingle();
 
-  if (fetchError) {
-    console.error('[DailyChallenge] DB fetch error:', fetchError.message, fetchError.code);
-  }
+  if (fetchError) console.error('[DailyChallenge] DB fetch error:', fetchError.message);
 
-  if (existing?.content) {
-    return parseQuestionContent(existing.content as Question);
-  }
+  if (existing?.content) return parseQuestionContent(existing.content as Question);
 
-  // 2. First user for today: generate with Gemini
   const generated = await generateQuestion(cat);
 
-  // 3. Atomic INSERT — unique constraint on (question_date, question_type)
   const { data: inserted, error: insertError } = await supabase
     .from('daily_questions')
     .insert({ question_date: today, question_type: cat, content: generated })
     .select()
     .single();
 
-  if (!insertError && inserted?.content) {
-    return parseQuestionContent(inserted.content as Question);
-  }
+  if (!insertError && inserted?.content) return parseQuestionContent(inserted.content as Question);
 
-  // 4. Race condition: another client won the insert (unique_violation = 23505)
-  // Fallback SELECT to get the canonical row created by the other user
-  const { data: canonical, error: refetchError } = await supabase
+  // Race condition: another client won the INSERT — fetch the canonical row
+  const { data: canonical } = await supabase
     .from('daily_questions')
     .select('*')
     .eq('question_date', today)
     .eq('question_type', cat)
     .maybeSingle();
 
-  if (refetchError) {
-    console.error('[DailyChallenge] Fallback SELECT error:', refetchError.message, refetchError.code);
-  }
+  if (canonical?.content) return parseQuestionContent(canonical.content as Question);
 
-  if (canonical?.content) {
-    return parseQuestionContent(canonical.content as Question);
-  }
-
-  // 5. Last resort: return the locally generated question
-  console.warn('[DailyChallenge] All DB paths failed — using locally generated question.');
   return generated;
 }
 
 // ─── Supabase — daily_responses ──────────────────────────────────────────────
-// Schema: session_id, question_type (text), question_date (date), is_correct, time_taken, answer_index
-// Unique constraint: (session_id, question_type, question_date)
 
-async function saveResponse(
-  category: Category,
-  is_correct: boolean,
-  time_taken: number,
-  answer_index: number,
-): Promise<void> {
-  const payload = {
+async function saveResponse(category: Category, is_correct: boolean, time_taken: number, answer_index: number): Promise<void> {
+  const { error } = await supabase.from('daily_responses').insert({
     session_id: getSessionId(),
     question_type: category,
     question_date: getToday(),
     is_correct,
     time_taken,
     answer_index: Number(answer_index),
-  };
-  console.log('[DailySync] INSERT payload:', payload);
-  // Plain INSERT — unique constraint on (session_id, question_type, question_date) prevents duplicates
-  const { data, error } = await supabase.from('daily_responses').insert(payload).select();
-  if (error) {
-    console.error('[DailySync] INSERT error:', error.message, '| code:', error.code, '| details:', error.details);
-  } else {
-    console.log('[DailySync] INSERT success:', data);
-  }
+  });
+  if (error) console.error('[DailySync] INSERT error:', error.message);
 }
 
-// Pure global fetch with retry — all percentages/counts from Supabase rows exclusively.
 async function fetchGlobalStats(category: Category, retries = 2): Promise<{ stats: GlobalStats; offline: boolean }> {
   const today = getToday();
-
   for (let attempt = 0; attempt <= retries; attempt++) {
     const { data, error } = await supabase
       .from('daily_responses')
@@ -232,24 +217,48 @@ async function fetchGlobalStats(category: Category, retries = 2): Promise<{ stat
 
     if (!error) {
       const rows = data ?? [];
-      console.log(`[DailySync] Total responses fetched: ${rows.length} (attempt ${attempt + 1})`);
       if (rows.length === 0) return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: false };
       const answer_counts = [0, 0, 0, 0];
       rows.forEach((r) => {
         const ai = Number(r.answer_index);
         if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
       });
-      return {
-        stats: { total: rows.length, correct: rows.filter((r) => r.is_correct).length, answer_counts },
-        offline: false,
-      };
+      return { stats: { total: rows.length, correct: rows.filter((r) => r.is_correct).length, answer_counts }, offline: false };
     }
 
-    console.error(`[DailySync] fetchGlobalStats error (attempt ${attempt + 1}):`, error.message, '| code:', error.code);
-    if (attempt < retries) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+    console.error(`[DailySync] fetchGlobalStats error (attempt ${attempt + 1}):`, error.message);
+    if (attempt < retries) await new Promise((r) => setTimeout(r, 2000));
   }
-
   return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: true };
+}
+
+// ─── Supabase — daily_leaderboard ────────────────────────────────────────────
+
+async function saveLeaderboardEntry(category: Category, display_name: string, time_taken: number): Promise<void> {
+  const { error } = await supabase.from('daily_leaderboard').insert({
+    question_date: getToday(),
+    question_type: category,
+    display_name: display_name.trim(),
+    time_taken,
+    session_id: getSessionId(),
+  });
+  if (error) console.error('[Leaderboard] INSERT error:', error.message);
+}
+
+async function fetchLeaderboard(category: Category): Promise<LeaderboardEntry[]> {
+  const { data, error } = await supabase
+    .from('daily_leaderboard')
+    .select('display_name, time_taken')
+    .eq('question_date', getToday())
+    .eq('question_type', category)
+    .order('time_taken', { ascending: true })
+    .limit(10);
+
+  if (error) {
+    console.error('[Leaderboard] FETCH error:', error.message);
+    return [];
+  }
+  return (data ?? []).map((row, i) => ({ display_name: row.display_name, time_taken: row.time_taken, rank: i + 1 }));
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -285,8 +294,8 @@ function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolea
   );
 }
 
-// Clinical Explanation Overlay — full-screen modal, auto-shown after answering
-function ExplanationOverlay({
+// Clinical Explanation — centered pop-up modal with blurred backdrop
+function ExplanationModal({
   question,
   category,
   stats,
@@ -300,6 +309,7 @@ function ExplanationOverlay({
   onClose: () => void;
 }) {
   const isCorrect = selectedIndex === question.correct_index;
+  const totalWithBaseline = (stats?.total ?? 0) + 110;
   const pct = stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
   const accentBorder = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
   const accentBg = category === 'bls' ? 'from-blue-900/20' : 'from-red-900/20';
@@ -307,100 +317,214 @@ function ExplanationOverlay({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[90] flex flex-col bg-emt-dark"
-      initial={{ opacity: 0, y: '100%' }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: '100%' }}
-      transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       dir="rtl"
     >
-      {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border bg-emt-dark/95">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
-            <Brain size={18} className="text-amber-400" />
+      <motion.div
+        className="w-full max-w-lg rounded-3xl bg-emt-dark border border-emt-border overflow-hidden flex flex-col"
+        style={{ maxHeight: '85vh' }}
+        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 16 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+      >
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
+              <Brain size={18} className="text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-amber-300 font-black text-lg leading-none">הסבר קליני</h2>
+              <p className="text-emt-muted text-[11px] mt-0.5">ניתוח מקרה מעמיק</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-amber-300 font-black text-lg leading-none">הסבר קליני</h2>
-            <p className="text-emt-muted text-[11px] mt-0.5">ניתוח מקרה מעמיק</p>
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black ${
+              isCorrect
+                ? 'bg-green-500/15 border-green-500/40 text-green-300'
+                : 'bg-red-500/15 border-red-500/40 text-red-300'
+            }`}>
+              {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
+              <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors active:scale-90"
+              aria-label="סגור"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black ${
-            isCorrect
-              ? 'bg-green-500/15 border-green-500/40 text-green-300'
-              : 'bg-red-500/15 border-red-500/40 text-red-300'
-          }`}>
-            {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
-            <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors active:scale-90"
-            aria-label="סגור"
-          >
-            <X size={20} />
-          </button>
-        </div>
-      </div>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-
-        {/* Explanation card — full width, large text */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className={`rounded-3xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-5`}
-        >
-          <p className="text-emt-light text-lg leading-[1.8] font-medium text-right">
-            {question.clinical_explanation}
-          </p>
-        </motion.div>
-
-        {/* Global stats */}
-        {pct !== null && stats && stats.total > 0 && (
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-3"
+            transition={{ delay: 0.1 }}
+            className={`rounded-3xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-5`}
           >
-            <div className="flex items-center gap-2 text-emt-muted text-xs font-semibold">
-              <Users size={13} />
-              <span>סטטיסטיקה גלובלית היום</span>
-            </div>
-            <p className={`text-xl font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
-              {isCorrect
-                ? `אתה בין ${pct}% שענו נכון היום!`
-                : `${pct}% מהמשתמשים ענו נכון היום`}
+            <p className="text-emt-light text-base leading-[1.8] font-medium text-right">
+              {question.clinical_explanation}
             </p>
-            <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
-              <motion.div
-                className={`h-full rounded-full ${accentBar}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
-              />
-            </div>
-            <p className="text-emt-muted/50 text-xs">{(stats?.total ?? 0) + 110} משתתפים עד כה</p>
           </motion.div>
-        )}
 
+          {pct !== null && stats && stats.total > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-3"
+            >
+              <div className="flex items-center gap-2 text-emt-muted text-xs font-semibold">
+                <Users size={13} />
+                <span>סטטיסטיקה גלובלית היום</span>
+              </div>
+              <p className={`text-lg font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
+                {isCorrect
+                  ? `אתה בין ${pct}% שענו נכון היום!`
+                  : `${pct}% מהמשתמשים ענו נכון היום`}
+              </p>
+              <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                <motion.div
+                  className={`h-full rounded-full ${accentBar}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.8, delay: 0.35, ease: 'easeOut' }}
+                />
+              </div>
+              <p className="text-emt-muted/50 text-xs">{totalWithBaseline} משתתפים עד כה</p>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 px-5 py-4 border-t border-emt-border">
+          <HapticButton
+            onClick={onClose}
+            hapticPattern={10}
+            pressScale={0.96}
+            className="w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
+          >
+            הבנתי ✓
+          </HapticButton>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Leaderboard sub-component ────────────────────────────────────────────────
+
+function LeaderboardSection({
+  category,
+  timeTaken,
+  alreadySaved,
+  onSave,
+}: {
+  category: Category;
+  timeTaken: number;
+  alreadySaved: boolean;
+  onSave: (name: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchLeaderboard(category).then((data) => { setEntries(data); setLoading(false); });
+  }, [category, alreadySaved]);
+
+  const handleSubmit = async () => {
+    const trimmed = name.trim();
+    if (!trimmed || saving) return;
+    setSaving(true);
+    await saveLeaderboardEntry(category, trimmed, timeTaken);
+    onSave(trimmed);
+    const updated = await fetchLeaderboard(category);
+    setEntries(updated);
+    setSaving(false);
+  };
+
+  const rankColors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+  const rankIcons = ['🥇', '🥈', '🥉'];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="rounded-3xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3"
+      dir="rtl"
+    >
+      <div className="flex items-center gap-2">
+        <Trophy size={16} className="text-amber-400" />
+        <span className="text-emt-light font-black text-sm">דירוג המהירים — היום</span>
       </div>
 
-      {/* Fixed footer */}
-      <div className="ios-safe-footer shrink-0 px-5 py-4 border-t border-emt-border bg-emt-dark/95">
-        <HapticButton
-          onClick={onClose}
-          hapticPattern={10}
-          pressScale={0.96}
-          className="w-full py-4 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-lg"
-        >
-          הבנתי ✓
-        </HapticButton>
-      </div>
+      {!alreadySaved && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder="כל הכבוד! הכנס שם לדירוג המהירים"
+            maxLength={24}
+            className="flex-1 rounded-xl bg-white/8 border border-white/15 px-3 py-2.5 text-emt-light text-sm placeholder:text-emt-muted/50 outline-none focus:border-amber-400/50 text-right"
+          />
+          <HapticButton
+            onClick={handleSubmit}
+            disabled={!name.trim() || saving}
+            hapticPattern={20}
+            pressScale={0.95}
+            className="px-4 py-2.5 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-sm disabled:opacity-40"
+          >
+            {saving ? '...' : 'שמור'}
+          </HapticButton>
+        </div>
+      )}
+
+      {alreadySaved && (
+        <div className="flex items-center gap-1.5 text-green-400/80 text-xs font-semibold">
+          <CheckCircle size={13} />
+          <span>הוספת לדירוג! ענית תוך {timeTaken} שניות</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-emt-muted/50 text-xs text-center py-2">טוען דירוג...</div>
+      ) : entries.length === 0 ? (
+        <div className="text-emt-muted/50 text-xs text-center py-2">היה הראשון בדירוג היום!</div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {entries.map((entry) => (
+            <div
+              key={entry.rank}
+              className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${entry.rank <= 3 ? 'bg-white/5' : ''}`}
+            >
+              <span className="text-base leading-none w-6 text-center">
+                {entry.rank <= 3 ? rankIcons[entry.rank - 1] : <Medal size={14} className={rankColors[2]} />}
+              </span>
+              <span className={`flex-1 font-semibold text-sm ${entry.rank <= 3 ? rankColors[entry.rank - 1] : 'text-emt-muted'}`}>
+                {entry.display_name}
+              </span>
+              <div className="flex items-center gap-1 text-emt-muted/60 text-xs">
+                <Clock size={11} />
+                <span>{entry.time_taken}s</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -422,7 +546,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [isStatsOffline, setIsStatsOffline] = useState(false);
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
-  const [showExplanationOverlay, setShowExplanationOverlay] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [leaderboardSaved, setLeaderboardSaved] = useState(false);
+
   const questionStartRef = useRef<number | null>(null);
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -436,8 +562,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setGlobalStats(null);
       setIsStatsOffline(false);
       setTimeTaken(null);
-      setShowExplanationOverlay(false);
-      // Ensure session_id exists in localStorage for cross-session consistency
+      setShowExplanation(false);
+      setLeaderboardSaved(false);
       getSessionId();
     }
     return () => {
@@ -445,7 +571,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
-  // Poll global stats every 10s while modal is open — keeps counter live across devices
+  // Live counter sync every 10s while modal is open
   useEffect(() => {
     if (!isOpen || !category) return;
     const id = setInterval(() => {
@@ -460,20 +586,20 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const loadCategory = useCallback(async (cat: Category) => {
     setCategory(cat);
     setGlobalStats(null);
-    setTimeTaken(null);
-    setShowExplanationOverlay(false);
+    setShowExplanation(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
-    // Check local cache first (avoids a round-trip if already loaded today)
     const cached = loadCache(cat);
     if (cached) {
       setQuestion(cached.question);
+      setLeaderboardSaved(cached.leaderboard_saved ?? false);
       if (cached.answered_index !== null) {
         setSelectedIndex(cached.answered_index);
         setTimeTaken(cached.time_taken ?? null);
         setView('answered');
       } else {
         setSelectedIndex(null);
+        setTimeTaken(null);
         setView('question');
         questionStartRef.current = Date.now();
       }
@@ -484,9 +610,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setView('loading');
     setQuestion(null);
     setSelectedIndex(null);
+    setTimeTaken(null);
+    setLeaderboardSaved(false);
 
     try {
-      // DB-first: fetch from daily_questions or generate + store
       const q = await fetchOrCreateQuestion(cat);
       setQuestion(q);
       saveCache(cat, q, null);
@@ -510,24 +637,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setSelectedIndex(index);
     setTimeTaken(elapsed);
     setView('answered');
-    saveCache(category, question, index, elapsed);
+    saveCache(category, question, index, elapsed, false);
 
-    // GA4 event
-    trackEvent('daily_challenge_complete', {
-      category,
-      is_correct: isCorrect,
-      time_taken: elapsed,
-    });
+    trackEvent('daily_challenge_complete', { category, is_correct: isCorrect, time_taken: elapsed });
 
-    // Auto-show explanation overlay after short delay
-    overlayTimerRef.current = setTimeout(() => setShowExplanationOverlay(true), 900);
+    overlayTimerRef.current = setTimeout(() => setShowExplanation(true), 900);
 
-    // INSERT response, then SELECT all rows for today — stats come only from DB
     await saveResponse(category, isCorrect, elapsed, index);
     const { stats, offline } = await fetchGlobalStats(category);
     setGlobalStats(stats);
     setIsStatsOffline(offline);
   }, [question, category, selectedIndex]);
+
+  const handleLeaderboardSave = useCallback((name: string) => {
+    if (!category || !question) return;
+    setLeaderboardSaved(true);
+    saveCache(category, question, selectedIndex, timeTaken ?? 0, true);
+    trackEvent('daily_challenge_leaderboard_saved', { category, name });
+  }, [category, question, selectedIndex, timeTaken]);
 
   const handleRetry = useCallback(() => {
     if (!category) return;
@@ -538,6 +665,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const isAnswered = view === 'answered' && selectedIndex !== null && question !== null;
+  const isCorrectAnswer = isAnswered && selectedIndex === question.correct_index;
+  const participantCount = (globalStats?.total ?? 0) + 110;
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden">
@@ -639,17 +768,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 }}
                   className={`flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3 border ${
-                    selectedIndex === question.correct_index
+                    isCorrectAnswer
                       ? 'bg-green-500/15 border-green-500/30'
                       : 'bg-red-500/15 border-red-500/30'
                   }`}
                 >
-                  {selectedIndex === question.correct_index
+                  {isCorrectAnswer
                     ? <CheckCircle size={22} className="text-green-400 shrink-0" />
                     : <XCircle size={22} className="text-red-400 shrink-0" />}
                   <div className="flex-1 text-center">
-                    <span className={`font-black text-lg ${selectedIndex === question.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-                      {selectedIndex === question.correct_index ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
+                    <span className={`font-black text-lg ${isCorrectAnswer ? 'text-green-300' : 'text-red-300'}`}>
+                      {isCorrectAnswer ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
                     </span>
                     {timeTaken !== null && (
                       <div className="flex items-center justify-center gap-1 mt-0.5 text-emt-muted/60 text-xs">
@@ -681,7 +810,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </p>
               </div>
 
-              {/* Participants badge — shown immediately; defaults to baseline 110 while loading */}
+              {/* Participant counter */}
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -695,10 +824,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   <span className="text-[11px] text-amber-400/70 font-semibold animate-pulse">מתחבר מחדש...</span>
                 ) : (
                   <span className="text-[11px] text-emt-muted font-semibold">
+                    מספר משתתפים באתגר היומי:{' '}
                     <span className="text-emt-light font-black">
-                      {(globalStats?.total ?? 0) + 110}
+                      {participantCount}
                     </span>
-                    {' '}חובשים כבר ענו היום
                     {globalStats === null && <span className="animate-pulse"> ...</span>}
                   </span>
                 )}
@@ -711,10 +840,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   const isCorrect = idx === question.correct_index;
                   const showResult = isAnswered;
 
-                  const chosenPct =
+                  const rawPct =
                     globalStats && showResult && globalStats.total > 0
                       ? Math.round(((globalStats.answer_counts[idx] ?? 0) / globalStats.total) * 100)
                       : null;
+                  // Don't display 0% — hide bars/labels until there's real data
+                  const chosenPct = rawPct !== null && rawPct > 0 ? rawPct : null;
 
                   let borderStyle = 'border-emt-border';
                   let textStyle = 'text-emt-light hover:bg-white/8 active:scale-[0.98]';
@@ -725,11 +856,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     else { borderStyle = 'border-emt-border/50'; textStyle = 'text-emt-muted'; baseBg = 'bg-emt-gray/50'; }
                   }
 
-                  const fillColor = isCorrect
-                    ? 'bg-green-500/25'
-                    : isSelected
-                    ? 'bg-red-500/25'
-                    : 'bg-white/8';
+                  const fillColor = isCorrect ? 'bg-green-500/25' : isSelected ? 'bg-red-500/25' : 'bg-white/8';
 
                   return (
                     <HapticButton
@@ -740,7 +867,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       pressScale={isAnswered ? 1 : 0.97}
                       className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
                     >
-                      {/* Background progress fill — right-to-left */}
                       {showResult && chosenPct !== null && (
                         <motion.div
                           className={`absolute inset-y-0 right-0 rounded-2xl ${fillColor}`}
@@ -749,7 +875,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                           transition={{ duration: 0.6, delay: 0.3 + idx * 0.07, ease: 'easeOut' }}
                         />
                       )}
-
                       <div className="relative z-10 flex items-center gap-3 w-full">
                         <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
                           showResult && isCorrect
@@ -783,15 +908,25 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 })}
               </div>
 
+              {/* Leaderboard — shown after correct answer */}
+              {isAnswered && isCorrectAnswer && timeTaken !== null && category && (
+                <LeaderboardSection
+                  category={category}
+                  timeTaken={timeTaken}
+                  alreadySaved={leaderboardSaved}
+                  onSave={handleLeaderboardSave}
+                />
+              )}
+
               {/* Re-open explanation button */}
-              {isAnswered && !showExplanationOverlay && (
+              {isAnswered && !showExplanation && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
                   <HapticButton
-                    onClick={() => setShowExplanationOverlay(true)}
+                    onClick={() => setShowExplanation(true)}
                     hapticPattern={10}
                     pressScale={0.96}
                     className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/25 px-4 py-3.5 text-amber-300 font-bold text-base"
@@ -801,7 +936,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   </HapticButton>
                 </motion.div>
               )}
-
             </motion.div>
           )}
 
@@ -840,15 +974,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </p>
       </div>
 
-      {/* ── Clinical Explanation Overlay ── */}
+      {/* ── Clinical Explanation Modal ── */}
       <AnimatePresence>
-        {showExplanationOverlay && isAnswered && question && category && (
-          <ExplanationOverlay
+        {showExplanation && isAnswered && question && category && (
+          <ExplanationModal
             question={question}
             category={category}
             stats={globalStats}
             selectedIndex={selectedIndex}
-            onClose={() => setShowExplanationOverlay(false)}
+            onClose={() => setShowExplanation(false)}
           />
         )}
       </AnimatePresence>
