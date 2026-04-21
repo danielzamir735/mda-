@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock, Medal } from 'lucide-react';
+import { X, Trophy, Zap, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock, Medal, Crown, Share2 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -330,6 +330,42 @@ async function fetchLeaderboard(category: Category): Promise<LeaderboardEntry[]>
   return (data ?? []).map((row, i) => ({ display_name: row.display_name, time_taken: row.time_taken, rank: i + 1 }));
 }
 
+async function fetchLeaderOfTheDay(category: Category): Promise<LeaderboardEntry | null> {
+  const { data, error } = await supabase
+    .from('daily_leaderboard')
+    .select('display_name, time_taken')
+    .eq('question_date', getToday())
+    .eq('question_type', category)
+    .order('time_taken', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return { display_name: data.display_name, time_taken: data.time_taken, rank: 1 };
+}
+
+// ─── Share helper ─────────────────────────────────────────────────────────────
+
+async function shareChallengeResult(timeTaken: number): Promise<void> {
+  const text = `הצלחתי לפתור את האתגר היומי של 'חובש +' תוך ${timeTaken} שניות! בוא נראה אותך... 🏆`;
+  const url = typeof window !== 'undefined' ? window.location.origin : '';
+  const shareData: ShareData = { title: 'חובש +', text, url };
+
+  try {
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      await navigator.share(shareData);
+      return;
+    }
+  } catch {
+    /* fall through to clipboard */
+  }
+  try {
+    await navigator.clipboard.writeText(`${text}\n${url}`);
+  } catch {
+    /* noop */
+  }
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolean; onClick: () => void }) {
@@ -540,13 +576,17 @@ function LeaderboardSection({
       </div>
 
       {!alreadySaved && (
+        <>
+          <p className="text-amber-300/90 text-[13px] font-semibold text-right leading-snug">
+            ביצוע מרשים! הכנס שם כדי להיכנס לדירוג המהירים להיום
+          </p>
         <div className="flex gap-2">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="כל הכבוד! הכנס שם לדירוג המהירים"
+            placeholder="השם שלך"
             maxLength={24}
             className="flex-1 rounded-xl bg-white/8 border border-white/15 px-3 py-2.5 text-emt-light text-sm placeholder:text-emt-muted/50 outline-none focus:border-amber-400/50 text-right"
           />
@@ -560,6 +600,7 @@ function LeaderboardSection({
             {saving ? '...' : 'שמור'}
           </HapticButton>
         </div>
+        </>
       )}
 
       {alreadySaved && (
@@ -617,6 +658,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [leaderboardSaved, setLeaderboardSaved] = useState(false);
+  const [leaderOfTheDay, setLeaderOfTheDay] = useState<LeaderboardEntry | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   const questionStartRef = useRef<number | null>(null);
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -633,6 +676,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setTimeTaken(null);
       setShowExplanation(false);
       setLeaderboardSaved(false);
+      setLeaderOfTheDay(null);
+      setShareFeedback(null);
       getSessionId();
     }
     return () => {
@@ -640,23 +685,101 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     };
   }, [isOpen]);
 
-  // Live counter sync every 10s while modal is open
+  // Live counter sync — realtime subscription + 30s reconciliation poll.
+  // Realtime gives instant updates; the poll is a safety net for missed events.
   useEffect(() => {
     if (!isOpen || !category) return;
     const correctIdx = question?.correct_index ?? null;
+    const today = getToday();
+
+    const channel = supabase
+      .channel(`daily_responses:${category}:${today}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'daily_responses',
+          filter: `question_date=eq.${today}`,
+        },
+        (payload) => {
+          const row = payload.new as { question_type?: string; answer_index?: number };
+          if (row.question_type !== category) return;
+          const ai = Number(row.answer_index);
+          setGlobalStats((prev) => {
+            const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+            const counts = [...base.answer_counts];
+            if (Number.isInteger(ai) && ai >= 0 && ai <= 3) counts[ai] = (counts[ai] ?? 0) + 1;
+            return {
+              total: base.total + 1,
+              correct: base.correct + (correctIdx !== null && ai === correctIdx ? 1 : 0),
+              answer_counts: counts,
+            };
+          });
+          setIsStatsOffline(false);
+        },
+      )
+      .subscribe();
+
     const id = setInterval(() => {
       fetchGlobalStats(category, correctIdx).then(({ stats, offline }) => {
         setGlobalStats((prev) => {
-          // Never regress the counter — keep max of cached, current, and new.
           const prevTotal = prev?.total ?? 0;
           if (stats.total < prevTotal) return prev;
           return stats;
         });
         setIsStatsOffline(offline);
       });
-    }, 10000);
-    return () => clearInterval(id);
+    }, 30000);
+
+    return () => {
+      clearInterval(id);
+      supabase.removeChannel(channel);
+    };
   }, [isOpen, category, question?.correct_index]);
+
+  // Leader of the Day — fetch once per category and subscribe for updates
+  useEffect(() => {
+    if (!isOpen || !category) return;
+    let cancelled = false;
+
+    fetchLeaderOfTheDay(category).then((leader) => {
+      if (!cancelled) setLeaderOfTheDay(leader);
+    });
+
+    const today = getToday();
+    const channel = supabase
+      .channel(`daily_leaderboard:${category}:${today}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'daily_leaderboard',
+          filter: `question_date=eq.${today}`,
+        },
+        (payload) => {
+          const row = payload.new as { question_type?: string; display_name?: string; time_taken?: number };
+          if (row.question_type !== category) return;
+          setLeaderOfTheDay((prev) => {
+            if (!prev || (row.time_taken ?? Infinity) < prev.time_taken) {
+              return {
+                display_name: row.display_name ?? '',
+                time_taken: row.time_taken ?? 0,
+                rank: 1,
+              };
+            }
+            return prev;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [isOpen, category]);
 
   // Midnight rollover — every 60s check if the calendar day changed;
   // if so, clear caches for the active category and reset to category-select.
@@ -928,6 +1051,63 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </motion.div>
               )}
 
+              {/* Hero participant counter */}
+              <motion.div
+                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className={`relative overflow-hidden rounded-2xl border px-5 py-3.5 flex items-center justify-center gap-3 ${
+                  isStatsOffline
+                    ? 'bg-gradient-to-r from-amber-500/15 to-amber-600/10 border-amber-500/30'
+                    : 'bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-orange-500/15 border-amber-400/40 shadow-lg shadow-amber-500/10'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-full bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                  <Users size={18} className="text-amber-300" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[11px] text-amber-200/80 font-semibold leading-none">
+                    {isStatsOffline ? 'מתחבר מחדש...' : 'מספר משתתפים באתגר היומי'}
+                  </span>
+                  <motion.span
+                    key={participantCount}
+                    initial={{ scale: 0.85, opacity: 0.6 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                    className="text-3xl font-black text-amber-100 tabular-nums leading-tight mt-1"
+                  >
+                    {participantCount.toLocaleString('he-IL')}
+                  </motion.span>
+                </div>
+                {!isStatsOffline && (
+                  <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-green-400 animate-pulse" title="LIVE" />
+                )}
+              </motion.div>
+
+              {/* Leader of the Day — only before user has answered */}
+              {!isAnswered && leaderOfTheDay && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-transparent border border-yellow-400/30 px-3.5 py-2.5"
+                >
+                  <Crown size={18} className="text-yellow-300 shrink-0 drop-shadow-[0_0_6px_rgba(250,204,21,0.5)]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-yellow-200/70 text-[10px] font-bold uppercase tracking-wider leading-none">
+                      מלך/ת האתגר היום
+                    </p>
+                    <p className="text-yellow-100 font-black text-sm mt-0.5 truncate text-right">
+                      {leaderOfTheDay.display_name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-yellow-300/90 text-xs font-black tabular-nums shrink-0">
+                    <Clock size={11} />
+                    <span>{leaderOfTheDay.time_taken}s</span>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Question card */}
               <div className="rounded-3xl bg-white/5 border border-white/10 p-5">
                 <div className="flex items-center justify-center gap-2 mb-3">
@@ -947,29 +1127,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   {question.question}
                 </p>
               </div>
-
-              {/* Participant counter */}
-              <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full self-center border ${
-                  isStatsOffline ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/10'
-                }`}
-              >
-                <Users size={12} className={isStatsOffline ? 'text-amber-400/60' : 'text-emt-muted/70'} />
-                {isStatsOffline ? (
-                  <span className="text-[11px] text-amber-400/70 font-semibold animate-pulse">מתחבר מחדש...</span>
-                ) : (
-                  <span className="text-[11px] text-emt-muted font-semibold">
-                    מספר משתתפים באתגר היומי:{' '}
-                    <span className="text-emt-light font-black">
-                      {participantCount}
-                    </span>
-                    {globalStats === null && <span className="animate-pulse"> ...</span>}
-                  </span>
-                )}
-              </motion.div>
 
               {/* Answer options */}
               <div className="flex flex-col gap-2.5">
@@ -1036,6 +1193,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                             }`}
                           >
                             {chosenPct}%
+                            {isSelected && <span className="mr-1 font-semibold opacity-80">ענו כמוך</span>}
                           </motion.span>
                         )}
                         {showResult && isCorrect && <CheckCircle size={16} className="text-green-400 shrink-0" />}
@@ -1072,6 +1230,34 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <Brain size={18} />
                     הצג הסבר קליני
                   </HapticButton>
+                </motion.div>
+              )}
+
+              {/* Share button */}
+              {isAnswered && timeTaken !== null && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 }}
+                  className="flex flex-col items-center gap-1.5"
+                >
+                  <HapticButton
+                    onClick={async () => {
+                      trackEvent('daily_challenge_share_clicked', { category: category ?? 'unknown', time_taken: timeTaken });
+                      await shareChallengeResult(timeTaken);
+                      setShareFeedback('הקישור הועתק!');
+                      setTimeout(() => setShareFeedback(null), 2200);
+                    }}
+                    hapticPattern={15}
+                    pressScale={0.96}
+                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/20 border border-emerald-400/35 px-4 py-3.5 text-emerald-200 font-bold text-base"
+                  >
+                    <Share2 size={18} />
+                    שתף את ההישג שלך
+                  </HapticButton>
+                  {shareFeedback && (
+                    <span className="text-[11px] text-emerald-300/80 font-semibold">{shareFeedback}</span>
+                  )}
                 </motion.div>
               )}
             </motion.div>

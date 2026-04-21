@@ -62,15 +62,16 @@ export default function QuickToolsCard() {
           {/* Daily Challenge */}
           <button
             onClick={() => { trackInteraction('daily_challenge', 'main_tools'); setChallengeOpen(true); }}
-            className="flex items-center gap-3 px-3 py-2 rounded-2xl
+            className="relative flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label="אתגר יומי"
           >
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+              className="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0
                          border border-amber-400/40 bg-amber-400/10"
             >
-              <Trophy size={18} className="text-amber-400" />
+              <span className="absolute inset-0 rounded-full border border-amber-400/60 animate-ping opacity-70" aria-hidden="true" />
+              <Trophy size={18} className="text-amber-400 relative" />
             </div>
             <span className="text-amber-400 text-sm font-bold">אתגר יומי</span>
           </button>
