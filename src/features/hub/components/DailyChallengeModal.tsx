@@ -69,7 +69,7 @@ function buildPrompt(type: 'BLS' | 'ALS'): string {
 
   return (
     `You are a world-class Emergency Medical Educator. Your goal is to CHALLENGE the user — create HIGHLY TRICKY clinical scenarios for ${type} in Hebrew.\n\n` +
-    `MISSION: Write a deceptively difficult, realistic clinical scenario that simulates an EDGE CASE — the kind of call where the obvious answer kills the patient. Phrase it to trap even experienced providers. Include ONE subtle detail (a specific vital sign, a medication in the history, a timing quirk, a co-morbidity) that flips the correct action. The scenario must be 2-4 Hebrew sentences and feel real — a partner's radio report, a bystander's account, or a handoff note.\n\n` +
+    `MISSION: Write a BRUTALLY DIFFICULT extreme clinical scenario — a rare edge case where every standard protocol instinct leads the provider straight to patient death. Target the EXCEPTION to the rule, the contraindicated-but-looks-right action, the protocol conflict that requires elite judgment. Embed a single lethal detail (a hidden drug interaction, a borderline vital that changes everything, a co-morbidity that inverts standard care, a timing window that has already closed) that transforms the correct answer into the OPPOSITE of the obvious choice. The scenario must be 2-4 Hebrew sentences, written as a real-time radio report or bystander handoff — urgent, specific, visceral. NEVER write a standard protocol question. If a junior provider can answer it correctly on instinct, rewrite it.\n\n` +
     `${focus}\n\n` +
     'OPTIONS: Exactly 4 answer options in Hebrew. Each option is ONE complete, decisive clinical action sentence of 15-25 Hebrew words. Format: "[Verb] [specific action / drug-dose-route / energy or device setting] [clinical context]". NO option may be a hedging or vague answer.\n' +
     'THE TRAP — DISTRACTOR RULES: At least TWO of the wrong options must be COMMON MISTAKES or OUTDATED PROTOCOLS (pre-2020 practice, old ACLS dose, deprecated sequence). One wrong option must be a textbook-sounding answer that IGNORES the subtle twist in the scenario. Exactly ONE option follows current AHA 2026 / PHTLS 9th / Israeli MDA protocol precisely. All distractors must be plausible to a junior provider — zero obviously wrong answers.\n\n' +
@@ -455,22 +455,17 @@ function CategoryBadge({ cat, active, onClick }: { cat: Category; active: boolea
 function ExplanationModal({
   question,
   category,
-  stats,
   selectedIndex,
   onClose,
 }: {
   question: Question;
   category: Category;
-  stats: GlobalStats | null;
   selectedIndex: number;
   onClose: () => void;
 }) {
   const isCorrect = selectedIndex === question.correct_index;
-  const totalWithBaseline = (stats?.total ?? 0) + 110;
-  const pct = stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : null;
   const accentBorder = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
   const accentBg = category === 'bls' ? 'from-blue-900/20' : 'from-red-900/20';
-  const accentBar = category === 'bls' ? 'bg-blue-400' : 'bg-red-400';
 
   return (
     <motion.div
@@ -528,32 +523,6 @@ function ExplanationModal({
             </p>
           </motion.div>
 
-          {pct !== null && stats && stats.total > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2.5"
-            >
-              <Users size={14} className="text-emt-muted shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className={`text-[13px] font-black truncate ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
-                  {isCorrect ? `אתה בין ${pct}% שענו נכון` : `${pct}% ענו נכון היום`}
-                </p>
-                <div className="w-full h-1.5 mt-1 rounded-full bg-white/10 overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${accentBar}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.7, delay: 0.25, ease: 'easeOut' }}
-                  />
-                </div>
-              </div>
-              <span className="text-emt-muted/60 text-[10px] font-semibold tabular-nums shrink-0">
-                {totalWithBaseline}
-              </span>
-            </motion.div>
-          )}
 
           <HapticButton
             onClick={onClose}
@@ -646,7 +615,7 @@ function LeaderboardSection({
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="השם שלך"
               maxLength={24}
-              className="flex-1 rounded-xl bg-slate-900 border border-cyan-400/50 px-3 py-2.5 text-white text-sm font-semibold placeholder:text-slate-400 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 transition-all text-right"
+              className="flex-1 rounded-xl bg-black/70 border border-cyan-400/60 px-3 py-2.5 text-white text-sm font-bold placeholder:text-white/35 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40 transition-all text-right"
             />
             <HapticButton
               onClick={handleSubmit}
@@ -1136,7 +1105,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <Crown size={20} className="text-yellow-300 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
                 {leaderOfTheDay ? (
                   <div className="flex-1 flex items-center gap-1.5 min-w-0 text-right">
-                    <span className="text-yellow-200/90 text-[12px] font-bold shrink-0">🏆 אלוף היום בינתיים:</span>
+                    <span className="text-yellow-200/90 text-[12px] font-bold shrink-0">🏆 אלוף היום:</span>
                     <span className="text-yellow-50 font-black text-[14px] truncate">{leaderOfTheDay.display_name}</span>
                   </div>
                 ) : (
@@ -1185,17 +1154,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   transition={{ duration: 0.35, ease: 'easeOut' }}
                   className="relative flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br from-red-600/45 via-orange-500/35 to-red-600/45 border-2 border-red-500/70 px-5 py-4 shadow-xl shadow-red-500/25"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl leading-none">⚠️</span>
-                    <span className="text-white text-[15px] font-black tracking-wider uppercase drop-shadow">
+                  <div className="flex items-center justify-center gap-2.5">
+                    <span className="text-3xl leading-none">⚠️</span>
+                    <span className="text-white text-xl font-black tracking-widest uppercase drop-shadow-lg">
                       שים לב
                     </span>
-                    <span className="text-2xl leading-none">⚠️</span>
+                    <span className="text-3xl leading-none">⚠️</span>
                   </div>
-                  <p className="text-white text-[17px] font-black leading-snug text-center drop-shadow">
+                  <p className="text-white text-[22px] font-black leading-tight text-center drop-shadow-lg">
                     השאלות טריקיות ומדמות מקרי קיצון!
                   </p>
-                  <p className="text-red-50/95 text-[12px] font-bold leading-snug text-center">
+                  <p className="text-red-50 text-[14px] font-bold leading-snug text-center">
                     קרא היטב את כל התשובות לפני שתענה
                   </p>
                 </motion.div>
@@ -1253,7 +1222,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       disabled={isAnswered}
                       hapticPattern={isAnswered ? 0 : 10}
                       pressScale={isAnswered ? 1 : 0.97}
-                      className={`relative w-full overflow-hidden rounded-2xl border px-3.5 py-2.5 text-right transition-all duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
+                      className={`relative w-full overflow-hidden rounded-2xl border px-3.5 py-0 h-[76px] text-right transition-colors duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
                     >
                       {showResult && chosenPct !== null && (
                         <motion.div
@@ -1398,7 +1367,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           <ExplanationModal
             question={question}
             category={category}
-            stats={globalStats}
             selectedIndex={selectedIndex}
             onClose={() => setShowExplanation(false)}
           />
