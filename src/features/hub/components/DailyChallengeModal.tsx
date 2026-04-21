@@ -164,18 +164,20 @@ function parseQuestionContent(c: Question): Question {
 async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
   const today = getToday();
 
-  const { data: existing, error: fetchError } = await supabase
-    .from('daily_questions')
-    .select('*')
-    .eq('question_date', today)
-    .eq('question_type', cat)
-    .maybeSingle();
-
-  if (fetchError) console.error('[DailyChallenge] DB fetch error:', fetchError.message);
+  const existing = await withRetry(async () => {
+    const { data, error } = await supabase
+      .from('daily_questions')
+      .select('*')
+      .eq('question_date', today)
+      .eq('question_type', cat)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
 
   if (existing?.content) return parseQuestionContent(existing.content as Question);
 
-  const generated = await generateQuestion(cat);
+  const generated = await withRetry(() => generateQuestion(cat));
 
   const { data: inserted, error: insertError } = await supabase
     .from('daily_questions')
@@ -238,6 +240,43 @@ const STATS_CACHE_KEY: Record<Category, string> = {
   bls: 'daily_stats_bls_v1',
   als: 'daily_stats_als_v1',
 };
+
+const MY_NAME_KEYS: Record<Category, string> = {
+  bls: 'daily_leaderboard_my_name_bls',
+  als: 'daily_leaderboard_my_name_als',
+};
+
+function loadMyName(cat: Category): string | null {
+  try {
+    const raw = localStorage.getItem(MY_NAME_KEYS[cat]);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { date: string; name: string };
+    return parsed.date === getToday() ? parsed.name : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveMyName(cat: Category, name: string) {
+  try {
+    localStorage.setItem(MY_NAME_KEYS[cat], JSON.stringify({ date: getToday(), name }));
+  } catch {
+    /* noop */
+  }
+}
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1500): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
 
 function loadCachedStats(cat: Category): GlobalStats | null {
   try {
@@ -315,33 +354,46 @@ async function saveLeaderboardEntry(category: Category, display_name: string, ti
 }
 
 async function fetchLeaderboard(category: Category): Promise<LeaderboardEntry[]> {
-  const { data, error } = await supabase
-    .from('daily_leaderboard')
-    .select('display_name, time_taken')
-    .eq('question_date', getToday())
-    .eq('question_type', category)
-    .order('time_taken', { ascending: true })
-    .limit(10);
-
-  if (error) {
-    console.error('[Leaderboard] FETCH error:', error.message);
+  try {
+    return await withRetry(async () => {
+      const { data, error } = await supabase
+        .from('daily_leaderboard')
+        .select('display_name, time_taken')
+        .eq('question_date', getToday())
+        .eq('question_type', category)
+        .order('time_taken', { ascending: true })
+        .limit(10);
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((row, i) => ({
+        display_name: row.display_name,
+        time_taken: row.time_taken,
+        rank: i + 1,
+      }));
+    });
+  } catch (e) {
+    console.error('[Leaderboard] FETCH error:', e);
     return [];
   }
-  return (data ?? []).map((row, i) => ({ display_name: row.display_name, time_taken: row.time_taken, rank: i + 1 }));
 }
 
 async function fetchLeaderOfTheDay(category: Category): Promise<LeaderboardEntry | null> {
-  const { data, error } = await supabase
-    .from('daily_leaderboard')
-    .select('display_name, time_taken')
-    .eq('question_date', getToday())
-    .eq('question_type', category)
-    .order('time_taken', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return { display_name: data.display_name, time_taken: data.time_taken, rank: 1 };
+  try {
+    return await withRetry(async () => {
+      const { data, error } = await supabase
+        .from('daily_leaderboard')
+        .select('display_name, time_taken')
+        .eq('question_date', getToday())
+        .eq('question_type', category)
+        .order('time_taken', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) return null;
+      return { display_name: data.display_name, time_taken: data.time_taken, rank: 1 };
+    });
+  } catch {
+    return null;
+  }
 }
 
 // ─── Share helper ─────────────────────────────────────────────────────────────
@@ -423,7 +475,7 @@ function ExplanationModal({
   return (
     <motion.div
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(10px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -431,92 +483,83 @@ function ExplanationModal({
       dir="rtl"
     >
       <motion.div
-        className="w-full max-w-lg rounded-3xl bg-emt-dark border border-emt-border overflow-hidden flex flex-col"
-        style={{ maxHeight: '85vh' }}
+        className="w-full max-w-md rounded-3xl bg-emt-dark border border-emt-border overflow-hidden flex flex-col"
         initial={{ opacity: 0, scale: 0.92, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       >
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
-              <Brain size={18} className="text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-amber-300 font-black text-lg leading-none">הסבר קליני</h2>
-              <p className="text-emt-muted text-[11px] mt-0.5">ניתוח מקרה מעמיק</p>
-            </div>
-          </div>
+        <div className="shrink-0 flex items-center justify-between px-3.5 py-2.5 border-b border-emt-border">
           <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black ${
-              isCorrect
-                ? 'bg-green-500/15 border-green-500/40 text-green-300'
-                : 'bg-red-500/15 border-red-500/40 text-red-300'
-            }`}>
-              {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
-              <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
+              <Brain size={15} className="text-amber-400" />
             </div>
-            <button
-              onClick={onClose}
-              className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors active:scale-90"
-              aria-label="סגור"
-            >
-              <X size={20} />
-            </button>
+            <h2 className="text-amber-300 font-black text-base leading-none">הסבר קליני</h2>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light active:scale-90 transition"
+            aria-label="סגור"
+          >
+            <X size={16} />
+          </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+        {/* Body — compact, single-screen */}
+        <div className="p-3.5 flex flex-col gap-2.5">
+          <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black self-center ${
+            isCorrect
+              ? 'bg-green-500/15 border-green-500/40 text-green-300'
+              : 'bg-red-500/15 border-red-500/40 text-red-300'
+          }`}>
+            {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
+            <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className={`rounded-3xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-5`}
+            transition={{ delay: 0.08 }}
+            className={`rounded-2xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-3.5`}
           >
-            <p className="text-emt-light text-base leading-[1.8] font-medium text-right">
+            <p className="text-emt-light text-[14px] leading-[1.65] font-medium text-right">
               {question.clinical_explanation}
             </p>
           </motion.div>
 
           {pct !== null && stats && stats.total > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col items-center gap-3"
+              transition={{ delay: 0.15 }}
+              className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 flex items-center gap-2.5"
             >
-              <div className="flex items-center gap-2 text-emt-muted text-xs font-semibold">
-                <Users size={13} />
-                <span>סטטיסטיקה גלובלית היום</span>
+              <Users size={14} className="text-emt-muted shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-[13px] font-black truncate ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
+                  {isCorrect ? `אתה בין ${pct}% שענו נכון` : `${pct}% ענו נכון היום`}
+                </p>
+                <div className="w-full h-1.5 mt-1 rounded-full bg-white/10 overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${accentBar}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.7, delay: 0.25, ease: 'easeOut' }}
+                  />
+                </div>
               </div>
-              <p className={`text-lg font-black text-center ${isCorrect ? 'text-green-300' : 'text-emt-muted'}`}>
-                {isCorrect
-                  ? `אתה בין ${pct}% שענו נכון היום!`
-                  : `${pct}% מהמשתמשים ענו נכון היום`}
-              </p>
-              <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full ${accentBar}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.8, delay: 0.35, ease: 'easeOut' }}
-                />
-              </div>
-              <p className="text-emt-muted/50 text-xs">{totalWithBaseline} משתתפים עד כה</p>
+              <span className="text-emt-muted/60 text-[10px] font-semibold tabular-nums shrink-0">
+                {totalWithBaseline}
+              </span>
             </motion.div>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="shrink-0 px-5 py-4 border-t border-emt-border">
           <HapticButton
             onClick={onClose}
             hapticPattern={10}
             pressScale={0.96}
-            className="w-full py-3.5 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-base"
+            className="w-full py-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-sm"
           >
             הבנתי ✓
           </HapticButton>
@@ -532,11 +575,13 @@ function LeaderboardSection({
   category,
   timeTaken,
   alreadySaved,
+  myName,
   onSave,
 }: {
   category: Category;
   timeTaken: number;
   alreadySaved: boolean;
+  myName: string | null;
   onSave: (name: string) => void;
 }) {
   const [name, setName] = useState('');
@@ -545,7 +590,14 @@ function LeaderboardSection({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchLeaderboard(category).then((data) => { setEntries(data); setLoading(false); });
+    let cancelled = false;
+    setLoading(true);
+    fetchLeaderboard(category).then((data) => {
+      if (cancelled) return;
+      setEntries(data);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, [category, alreadySaved]);
 
   const handleSubmit = async () => {
@@ -562,6 +614,12 @@ function LeaderboardSection({
   const rankColors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
   const rankIcons = ['🥇', '🥈', '🥉'];
 
+  const normalized = (s: string) => s.trim().toLowerCase();
+  const isMyRow = (entry: LeaderboardEntry) =>
+    myName !== null &&
+    normalized(entry.display_name) === normalized(myName) &&
+    entry.time_taken === timeTaken;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -577,29 +635,29 @@ function LeaderboardSection({
 
       {!alreadySaved && (
         <>
-          <p className="text-amber-300/90 text-[13px] font-semibold text-right leading-snug">
+          <p className="text-cyan-200/90 text-[13px] font-semibold text-right leading-snug">
             ביצוע מרשים! הכנס שם כדי להיכנס לדירוג המהירים להיום
           </p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="השם שלך"
-            maxLength={24}
-            className="flex-1 rounded-xl bg-white/8 border border-white/15 px-3 py-2.5 text-emt-light text-sm placeholder:text-emt-muted/50 outline-none focus:border-amber-400/50 text-right"
-          />
-          <HapticButton
-            onClick={handleSubmit}
-            disabled={!name.trim() || saving}
-            hapticPattern={20}
-            pressScale={0.95}
-            className="px-4 py-2.5 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-sm disabled:opacity-40"
-          >
-            {saving ? '...' : 'שמור'}
-          </HapticButton>
-        </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="השם שלך"
+              maxLength={24}
+              className="flex-1 rounded-xl bg-slate-900/70 backdrop-blur-sm border border-cyan-400/40 px-3 py-2.5 text-cyan-50 text-sm font-semibold placeholder:text-cyan-100/40 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 focus:bg-slate-900/80 transition-all text-right"
+            />
+            <HapticButton
+              onClick={handleSubmit}
+              disabled={!name.trim() || saving}
+              hapticPattern={20}
+              pressScale={0.95}
+              className="px-4 py-2.5 rounded-xl bg-cyan-400/20 border border-cyan-400/50 text-cyan-200 font-black text-sm disabled:opacity-40"
+            >
+              {saving ? '...' : 'שמור'}
+            </HapticButton>
+          </div>
         </>
       )}
 
@@ -616,23 +674,39 @@ function LeaderboardSection({
         <div className="text-emt-muted/50 text-xs text-center py-2">היה הראשון בדירוג היום!</div>
       ) : (
         <div className="flex flex-col gap-1.5">
-          {entries.map((entry) => (
-            <div
-              key={entry.rank}
-              className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${entry.rank <= 3 ? 'bg-white/5' : ''}`}
-            >
-              <span className="text-base leading-none w-6 text-center">
-                {entry.rank <= 3 ? rankIcons[entry.rank - 1] : <Medal size={14} className={rankColors[2]} />}
-              </span>
-              <span className={`flex-1 font-semibold text-sm ${entry.rank <= 3 ? rankColors[entry.rank - 1] : 'text-emt-muted'}`}>
-                {entry.display_name}
-              </span>
-              <div className="flex items-center gap-1 text-emt-muted/60 text-xs">
-                <Clock size={11} />
-                <span>{entry.time_taken}s</span>
+          {entries.map((entry) => {
+            const mine = isMyRow(entry);
+            return (
+              <div
+                key={`${entry.rank}-${entry.display_name}-${entry.time_taken}`}
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2 border transition-colors ${
+                  mine
+                    ? 'bg-cyan-400/15 border-cyan-400/50 ring-1 ring-cyan-400/30'
+                    : entry.rank <= 3
+                    ? 'bg-white/5 border-transparent'
+                    : 'border-transparent'
+                }`}
+              >
+                <span className="text-base leading-none w-6 text-center">
+                  {entry.rank <= 3 ? rankIcons[entry.rank - 1] : <Medal size={14} className={rankColors[2]} />}
+                </span>
+                <span className={`flex-1 font-semibold text-sm ${
+                  mine
+                    ? 'text-cyan-100 font-black'
+                    : entry.rank <= 3
+                    ? rankColors[entry.rank - 1]
+                    : 'text-emt-muted'
+                }`}>
+                  {entry.display_name}
+                  {mine && <span className="mr-2 text-[10px] font-black text-cyan-300 bg-cyan-400/20 px-1.5 py-0.5 rounded-md">אתה</span>}
+                </span>
+                <div className={`flex items-center gap-1 text-xs ${mine ? 'text-cyan-200' : 'text-emt-muted/60'}`}>
+                  <Clock size={11} />
+                  <span className="tabular-nums font-bold">{entry.time_taken}s</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </motion.div>
@@ -658,11 +732,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [timeTaken, setTimeTaken] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [leaderboardSaved, setLeaderboardSaved] = useState(false);
+  const [myName, setMyName] = useState<string | null>(null);
   const [leaderOfTheDay, setLeaderOfTheDay] = useState<LeaderboardEntry | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   const questionStartRef = useRef<number | null>(null);
-  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -676,13 +750,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setTimeTaken(null);
       setShowExplanation(false);
       setLeaderboardSaved(false);
+      setMyName(null);
       setLeaderOfTheDay(null);
       setShareFeedback(null);
       getSessionId();
     }
-    return () => {
-      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
-    };
   }, [isOpen]);
 
   // Live counter sync — realtime subscription + 30s reconciliation poll.
@@ -791,6 +863,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         if (category) {
           localStorage.removeItem(CACHE_KEYS[category]);
           localStorage.removeItem(STATS_CACHE_KEY[category]);
+          localStorage.removeItem(MY_NAME_KEYS[category]);
         }
         setCategory(null);
         setView('select');
@@ -801,6 +874,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setTimeTaken(null);
         setShowExplanation(false);
         setLeaderboardSaved(false);
+        setMyName(null);
       }
     }, 60000);
     return () => clearInterval(id);
@@ -814,6 +888,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setGlobalStats(seeded);
     setIsStatsOffline(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
+
+    setMyName(loadMyName(cat));
 
     const cached = loadCache(cat);
     if (cached) {
@@ -886,8 +962,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     trackEvent('daily_challenge_complete', { category, is_correct: isCorrect, time_taken: elapsed });
 
-    overlayTimerRef.current = setTimeout(() => setShowExplanation(true), 900);
-
     await saveResponse(category, isCorrect, elapsed, index);
     const { stats, offline } = await fetchGlobalStats(category, question.correct_index);
     // Only replace optimistic stats with server stats if server has caught up.
@@ -898,6 +972,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const handleLeaderboardSave = useCallback((name: string) => {
     if (!category || !question) return;
     setLeaderboardSaved(true);
+    setMyName(name);
+    saveMyName(category, name);
     saveCache(category, question, selectedIndex, timeTaken ?? 0, true);
     trackEvent('daily_challenge_leaderboard_saved', { category, name });
   }, [category, question, selectedIndex, timeTaken]);
@@ -1036,17 +1112,26 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </motion.div>
               )}
 
-              {/* Tricky-questions warning banner */}
+              {/* Tricky-questions warning banner — high-contrast, centered, bold */}
               {!isAnswered && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-center gap-2 rounded-2xl bg-amber-500/8 border border-amber-500/20 px-3.5 py-2.5"
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  className="relative flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-b from-amber-500/25 to-amber-500/10 border-2 border-amber-400/60 px-4 py-3.5 shadow-lg shadow-amber-500/10"
                 >
-                  <Zap size={14} className="text-amber-400/80 shrink-0" />
-                  <p className="text-amber-300/90 text-[12px] font-semibold leading-snug text-right flex-1">
-                    שים לב: השאלות טריקיות ומדמות מקרי קיצון. קרא היטב את כל התשובות.
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xl leading-none">⚠️</span>
+                    <span className="text-amber-200 text-[13px] font-black tracking-wider uppercase">
+                      שים לב
+                    </span>
+                    <span className="text-xl leading-none">⚠️</span>
+                  </div>
+                  <p className="text-amber-50 text-[15px] font-black leading-snug text-center">
+                    השאלות טריקיות ומדמות מקרי קיצון
+                  </p>
+                  <p className="text-amber-100/90 text-[12px] font-bold leading-snug text-center">
+                    קרא היטב את כל התשובות לפני שתענה
                   </p>
                 </motion.div>
               )}
@@ -1084,27 +1169,40 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 )}
               </motion.div>
 
-              {/* Leader of the Day — only before user has answered */}
-              {!isAnswered && leaderOfTheDay && (
+              {/* Champion of the Day — always visible above the question */}
+              {!isAnswered && (
                 <motion.div
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
-                  className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-transparent border border-yellow-400/30 px-3.5 py-2.5"
+                  className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/12 to-transparent border border-yellow-400/40 px-3.5 py-3"
                 >
-                  <Crown size={18} className="text-yellow-300 shrink-0 drop-shadow-[0_0_6px_rgba(250,204,21,0.5)]" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-yellow-200/70 text-[10px] font-bold uppercase tracking-wider leading-none">
-                      מלך/ת האתגר היום
-                    </p>
-                    <p className="text-yellow-100 font-black text-sm mt-0.5 truncate text-right">
-                      {leaderOfTheDay.display_name}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 text-yellow-300/90 text-xs font-black tabular-nums shrink-0">
-                    <Clock size={11} />
-                    <span>{leaderOfTheDay.time_taken}s</span>
-                  </div>
+                  <Crown size={20} className="text-yellow-300 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                  {leaderOfTheDay ? (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-yellow-200/75 text-[10px] font-bold uppercase tracking-wider leading-none">
+                          🏆 אלוף היום בינתיים
+                        </p>
+                        <p className="text-yellow-100 font-black text-sm mt-0.5 truncate text-right">
+                          {leaderOfTheDay.display_name}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-yellow-300 text-xs font-black tabular-nums shrink-0">
+                        <Clock size={11} />
+                        <span>{leaderOfTheDay.time_taken}s</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-yellow-200/75 text-[10px] font-bold uppercase tracking-wider leading-none">
+                        🏆 אלוף היום
+                      </p>
+                      <p className="text-yellow-100 font-black text-sm mt-0.5 text-right">
+                        היה הראשון לנצח היום!
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -1210,6 +1308,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   category={category}
                   timeTaken={timeTaken}
                   alreadySaved={leaderboardSaved}
+                  myName={myName}
                   onSave={handleLeaderboardSave}
                 />
               )}
