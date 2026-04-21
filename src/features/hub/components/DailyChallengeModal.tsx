@@ -646,7 +646,7 @@ function LeaderboardSection({
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="השם שלך"
               maxLength={24}
-              className="flex-1 rounded-xl bg-slate-900/70 backdrop-blur-sm border border-cyan-400/40 px-3 py-2.5 text-cyan-50 text-sm font-semibold placeholder:text-cyan-100/40 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 focus:bg-slate-900/80 transition-all text-right"
+              className="flex-1 rounded-xl bg-slate-900 border border-cyan-400/50 px-3 py-2.5 text-white text-sm font-semibold placeholder:text-slate-400 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 transition-all text-right"
             />
             <HapticButton
               onClick={handleSubmit}
@@ -976,6 +976,20 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     saveMyName(category, name);
     saveCache(category, question, selectedIndex, timeTaken ?? 0, true);
     trackEvent('daily_challenge_leaderboard_saved', { category, name });
+
+    // Optimistic champion promotion — if user beat the current leader, show it immediately.
+    if (timeTaken !== null) {
+      setLeaderOfTheDay((prev) => {
+        if (!prev || timeTaken < prev.time_taken) {
+          return { display_name: name, time_taken: timeTaken, rank: 1 };
+        }
+        return prev;
+      });
+    }
+    // Authoritative refetch to sync with the server's view.
+    fetchLeaderOfTheDay(category).then((leader) => {
+      if (leader) setLeaderOfTheDay(leader);
+    });
   }, [category, question, selectedIndex, timeTaken]);
 
   const handleRetry = useCallback(() => {
@@ -1089,21 +1103,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 }}
-                  className={`flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3 border ${
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
                     isCorrectAnswer
                       ? 'bg-green-500/15 border-green-500/30'
                       : 'bg-red-500/15 border-red-500/30'
                   }`}
                 >
                   {isCorrectAnswer
-                    ? <CheckCircle size={22} className="text-green-400 shrink-0" />
-                    : <XCircle size={22} className="text-red-400 shrink-0" />}
+                    ? <CheckCircle size={20} className="text-green-400 shrink-0" />
+                    : <XCircle size={20} className="text-red-400 shrink-0" />}
                   <div className="flex-1 text-center">
-                    <span className={`font-black text-lg ${isCorrectAnswer ? 'text-green-300' : 'text-red-300'}`}>
+                    <span className={`font-black text-base ${isCorrectAnswer ? 'text-green-300' : 'text-red-300'}`}>
                       {isCorrectAnswer ? 'תשובה נכונה! כל הכבוד 🎉' : 'תשובה שגויה'}
                     </span>
                     {timeTaken !== null && (
-                      <div className="flex items-center justify-center gap-1 mt-0.5 text-emt-muted/60 text-xs">
+                      <div className="flex items-center justify-center gap-1 mt-0.5 text-emt-muted/60 text-[11px]">
                         <Clock size={10} />
                         <span>ענית תוך {timeTaken} שניות</span>
                       </div>
@@ -1112,103 +1126,84 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </motion.div>
               )}
 
-              {/* Tricky-questions warning banner — high-contrast, centered, bold */}
+              {/* Champion of the Day — gold bar, always visible at the top */}
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/30 via-amber-500/20 to-yellow-500/10 border border-yellow-400/55 px-4 py-2.5 shadow-md shadow-yellow-500/15"
+              >
+                <Crown size={20} className="text-yellow-300 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                {leaderOfTheDay ? (
+                  <div className="flex-1 flex items-center gap-1.5 min-w-0 text-right">
+                    <span className="text-yellow-200/90 text-[12px] font-bold shrink-0">🏆 אלוף היום בינתיים:</span>
+                    <span className="text-yellow-50 font-black text-[14px] truncate">{leaderOfTheDay.display_name}</span>
+                  </div>
+                ) : (
+                  <span className="flex-1 text-yellow-100 font-black text-[13px] text-right">
+                    🏆 היה הראשון לנצח היום
+                  </span>
+                )}
+                {leaderOfTheDay && (
+                  <div className="flex items-center gap-1 text-yellow-300 text-xs font-black tabular-nums shrink-0">
+                    <Clock size={11} />
+                    <span>{leaderOfTheDay.time_taken}s</span>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Participant counter — subtle pill */}
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1.5"
+              >
+                <Users size={12} className="text-emt-muted shrink-0" />
+                <span className="text-[11px] text-emt-muted font-semibold">
+                  {isStatsOffline ? 'מתחבר מחדש...' : 'משתתפים היום:'}
+                </span>
+                <motion.span
+                  key={participantCount}
+                  initial={{ scale: 0.9, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                  className="text-[12px] font-black text-emt-light tabular-nums"
+                >
+                  {participantCount.toLocaleString('he-IL')}
+                </motion.span>
+                {!isStatsOffline && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" title="LIVE" />
+                )}
+              </motion.div>
+
+              {/* Tricky-questions warning banner — loud red/orange, prominent */}
               {!isAnswered && (
                 <motion.div
                   initial={{ opacity: 0, y: -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
-                  className="relative flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-b from-amber-500/25 to-amber-500/10 border-2 border-amber-400/60 px-4 py-3.5 shadow-lg shadow-amber-500/10"
+                  className="relative flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br from-red-600/45 via-orange-500/35 to-red-600/45 border-2 border-red-500/70 px-5 py-4 shadow-xl shadow-red-500/25"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-xl leading-none">⚠️</span>
-                    <span className="text-amber-200 text-[13px] font-black tracking-wider uppercase">
+                    <span className="text-2xl leading-none">⚠️</span>
+                    <span className="text-white text-[15px] font-black tracking-wider uppercase drop-shadow">
                       שים לב
                     </span>
-                    <span className="text-xl leading-none">⚠️</span>
+                    <span className="text-2xl leading-none">⚠️</span>
                   </div>
-                  <p className="text-amber-50 text-[15px] font-black leading-snug text-center">
-                    השאלות טריקיות ומדמות מקרי קיצון
+                  <p className="text-white text-[17px] font-black leading-snug text-center drop-shadow">
+                    השאלות טריקיות ומדמות מקרי קיצון!
                   </p>
-                  <p className="text-amber-100/90 text-[12px] font-bold leading-snug text-center">
+                  <p className="text-red-50/95 text-[12px] font-bold leading-snug text-center">
                     קרא היטב את כל התשובות לפני שתענה
                   </p>
                 </motion.div>
               )}
 
-              {/* Hero participant counter */}
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={`relative overflow-hidden rounded-2xl border px-5 py-3.5 flex items-center justify-center gap-3 ${
-                  isStatsOffline
-                    ? 'bg-gradient-to-r from-amber-500/15 to-amber-600/10 border-amber-500/30'
-                    : 'bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-orange-500/15 border-amber-400/40 shadow-lg shadow-amber-500/10'
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
-                  <Users size={18} className="text-amber-300" />
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[11px] text-amber-200/80 font-semibold leading-none">
-                    {isStatsOffline ? 'מתחבר מחדש...' : 'מספר משתתפים באתגר היומי'}
-                  </span>
-                  <motion.span
-                    key={participantCount}
-                    initial={{ scale: 0.85, opacity: 0.6 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-                    className="text-3xl font-black text-amber-100 tabular-nums leading-tight mt-1"
-                  >
-                    {participantCount.toLocaleString('he-IL')}
-                  </motion.span>
-                </div>
-                {!isStatsOffline && (
-                  <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-green-400 animate-pulse" title="LIVE" />
-                )}
-              </motion.div>
-
-              {/* Champion of the Day — always visible above the question */}
-              {!isAnswered && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-500/12 to-transparent border border-yellow-400/40 px-3.5 py-3"
-                >
-                  <Crown size={20} className="text-yellow-300 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
-                  {leaderOfTheDay ? (
-                    <>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-yellow-200/75 text-[10px] font-bold uppercase tracking-wider leading-none">
-                          🏆 אלוף היום בינתיים
-                        </p>
-                        <p className="text-yellow-100 font-black text-sm mt-0.5 truncate text-right">
-                          {leaderOfTheDay.display_name}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 text-yellow-300 text-xs font-black tabular-nums shrink-0">
-                        <Clock size={11} />
-                        <span>{leaderOfTheDay.time_taken}s</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex-1 min-w-0">
-                      <p className="text-yellow-200/75 text-[10px] font-bold uppercase tracking-wider leading-none">
-                        🏆 אלוף היום
-                      </p>
-                      <p className="text-yellow-100 font-black text-sm mt-0.5 text-right">
-                        היה הראשון לנצח היום!
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
               {/* Question card */}
-              <div className="rounded-3xl bg-white/5 border border-white/10 p-5">
-                <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="rounded-3xl bg-white/5 border border-white/10 p-4">
+                <div className="flex items-center justify-center gap-2 mb-2.5">
                   <div className={`px-2.5 py-1 rounded-full text-xs font-black tracking-wide ${
                     category === 'bls' ? 'bg-blue-500/20 text-blue-300' : 'bg-red-500/20 text-red-300'
                   }`}>
@@ -1221,13 +1216,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     </div>
                   )}
                 </div>
-                <p className="text-emt-light font-bold text-xl leading-snug text-center">
+                <p className="text-emt-light font-bold text-lg leading-snug text-center">
                   {question.question}
                 </p>
               </div>
 
               {/* Answer options */}
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2">
                 {question.options.map((option, idx) => {
                   const isSelected = selectedIndex === idx;
                   const isCorrect = idx === question.correct_index;
@@ -1258,7 +1253,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       disabled={isAnswered}
                       hapticPattern={isAnswered ? 0 : 10}
                       pressScale={isAnswered ? 1 : 0.97}
-                      className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3.5 text-right transition-all duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
+                      className={`relative w-full overflow-hidden rounded-2xl border px-3.5 py-2.5 text-right transition-all duration-200 ${baseBg} ${borderStyle} ${textStyle}`}
                     >
                       {showResult && chosenPct !== null && (
                         <motion.div
@@ -1269,7 +1264,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                         />
                       )}
                       <div className="relative z-10 flex items-center gap-3 w-full">
-                        <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
+                        <span className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
                           showResult && isCorrect
                             ? 'bg-green-500/30 border-green-400/60 text-green-300'
                             : showResult && isSelected
@@ -1278,7 +1273,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                         }`}>
                           {['א', 'ב', 'ג', 'ד'][idx]}
                         </span>
-                        <span className="flex-1 text-base font-semibold leading-snug break-words min-w-0 text-center">
+                        <span className="flex-1 text-[15px] font-semibold leading-snug break-words min-w-0 text-center">
                           {option}
                         </span>
                         {showResult && chosenPct !== null && (
@@ -1324,9 +1319,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     onClick={() => setShowExplanation(true)}
                     hapticPattern={10}
                     pressScale={0.96}
-                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/25 px-4 py-3.5 text-amber-300 font-bold text-base"
+                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-3 text-amber-300 font-bold text-base"
                   >
-                    <Brain size={18} />
+                    <Brain size={17} />
                     הצג הסבר קליני
                   </HapticButton>
                 </motion.div>
@@ -1349,9 +1344,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     }}
                     hapticPattern={15}
                     pressScale={0.96}
-                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/20 border border-emerald-400/35 px-4 py-3.5 text-emerald-200 font-bold text-base"
+                    className="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/20 border border-emerald-400/35 px-4 py-3 text-emerald-200 font-bold text-base"
                   >
-                    <Share2 size={18} />
+                    <Share2 size={17} />
                     שתף את ההישג שלך
                   </HapticButton>
                   {shareFeedback && (
