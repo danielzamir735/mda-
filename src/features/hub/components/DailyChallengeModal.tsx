@@ -47,8 +47,8 @@ function getToday(): string {
 }
 
 const CACHE_KEYS: Record<Category, string> = {
-  bls: 'daily_challenge_bls_v4',
-  als: 'daily_challenge_als_v4',
+  bls: 'daily_challenge_bls_v5',
+  als: 'daily_challenge_als_v5',
 };
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -62,14 +62,20 @@ const CATEGORY_FULL: Record<Category, string> = {
 };
 
 function buildPrompt(type: 'BLS' | 'ALS'): string {
+  const focus =
+    type === 'BLS'
+      ? 'FOCUS DOMAIN: Strictly BLS territory — AED use, CPR mechanics (rate/depth/recoil/ratio), basic airway (head-tilt/chin-lift vs jaw-thrust, OPA/NPA sizing), choking (adult/child/infant/pregnant), recovery position, bleeding control, and the moment-to-moment decision cadence. The challenge must live in the NUANCES and TRAPS of the protocol — pad placement in a pacemaker patient, hypothermic arrest timing, wet chest shock risk, infant vs child compression depth, single-rescuer sequence under fatigue, or when to interrupt CPR for a suspected ROSC. No ALS drugs, no advanced airways, no 12-lead interpretation.'
+      : 'FOCUS DOMAIN: Strictly ALS territory — complex pharmacology (dose, route, timing, interactions, contraindications), 12-lead ECG interpretation and cath-lab activation criteria, shockable vs non-shockable decision trees, advanced airway selection and post-intubation management, post-ROSC targeted temperature and hemodynamic targets, reversible causes (H&Ts), and high-stakes transport/disposition calls. The challenge must live in the decision-making under uncertainty — amiodarone vs lidocaine selection, adenosine in pre-excited AF (LETHAL trap), pacing thresholds in bradycardia with ischemia, calcium vs bicarbonate in hyperkalemia, atropine failure indications, nitro in inferior MI with RV involvement.';
+
   return (
-    `You are a Senior Medical Examiner and AHA/PHTLS course faculty member. Generate the Daily Challenge question for ${type} in Hebrew.\n\n` +
-    `MISSION: Create a DECEPTIVELY DIFFICULT clinical scenario for ${type}. The scenario must involve a real-world edge case — a subtle vital sign pattern, a contraindicated drug combination, a time-critical protocol deviation, or a physiological cascade that reverses expected treatment logic. Phrase the question to trap even experienced providers.\n\n` +
-    'OPTIONS: Exactly 4 answer options. Each option must be a complete, detailed clinical action sentence of 20-30 Hebrew words. Format: "[Verb] [specific drug/dose/route/rate] [clinical rationale or timing]".\n' +
-    'DISTRACTOR RULES: At least TWO options must sound clinically correct based on outdated/deprecated protocols (pre-2020). One option must be clearly inferior but still plausible to a junior provider. Exactly ONE option follows current AHA/PHTLS 2026 guidelines precisely. All distractors must be highly plausible — no obviously wrong answers.\n\n' +
-    'CLINICAL EXPLANATION: Write exactly 3-4 concise sentences: (1) State the specific AHA 2026 / PHTLS guideline or chapter that applies. (2) Explain the physiological mechanism making the correct answer superior. (3) Dissect why the most tempting wrong answer fails and the patient harm it causes. (4) End with one clinical pearl that separates elite providers from average ones.\n\n' +
-    'ACCURACY: Every drug dose, energy setting, and time threshold must match AHA 2026, PHTLS 9th Edition, or current Israeli MDA protocols exactly.\n\n' +
-    'Output ONLY valid JSON: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
+    `You are a world-class Emergency Medical Educator. Your goal is to CHALLENGE the user — create HIGHLY TRICKY clinical scenarios for ${type} in Hebrew.\n\n` +
+    `MISSION: Write a deceptively difficult, realistic clinical scenario that simulates an EDGE CASE — the kind of call where the obvious answer kills the patient. Phrase it to trap even experienced providers. Include ONE subtle detail (a specific vital sign, a medication in the history, a timing quirk, a co-morbidity) that flips the correct action. The scenario must be 2-4 Hebrew sentences and feel real — a partner's radio report, a bystander's account, or a handoff note.\n\n` +
+    `${focus}\n\n` +
+    'OPTIONS: Exactly 4 answer options in Hebrew. Each option is ONE complete, decisive clinical action sentence of 15-25 Hebrew words. Format: "[Verb] [specific action / drug-dose-route / energy or device setting] [clinical context]". NO option may be a hedging or vague answer.\n' +
+    'THE TRAP — DISTRACTOR RULES: At least TWO of the wrong options must be COMMON MISTAKES or OUTDATED PROTOCOLS (pre-2020 practice, old ACLS dose, deprecated sequence). One wrong option must be a textbook-sounding answer that IGNORES the subtle twist in the scenario. Exactly ONE option follows current AHA 2026 / PHTLS 9th / Israeli MDA protocol precisely. All distractors must be plausible to a junior provider — zero obviously wrong answers.\n\n' +
+    'CLINICAL EXPLANATION: Exactly 3-4 concise Hebrew sentences, total under 60 words: (1) Name the specific 2026 guideline/chapter that applies. (2) Explain the physiological mechanism making the correct action superior here. (3) Dissect the most tempting distractor and the SPECIFIC harm it causes. (4) End with one pearl that separates elite providers from average ones.\n\n' +
+    'ACCURACY: Every drug dose, joule setting, rate threshold, and time window must match AHA 2026 / PHTLS 9th Edition / current Israeli MDA protocols EXACTLY. No approximations.\n\n' +
+    'Output ONLY valid JSON, no prose, no markdown: { "question": string, "options": string[], "correct_index": number, "clinical_explanation": string }'
   );
 }
 
@@ -194,42 +200,105 @@ async function fetchOrCreateQuestion(cat: Category): Promise<Question> {
 
 // ─── Supabase — daily_responses ──────────────────────────────────────────────
 
-async function saveResponse(category: Category, is_correct: boolean, time_taken: number, answer_index: number): Promise<void> {
-  const { error } = await supabase.from('daily_responses').insert({
+async function saveResponse(
+  category: Category,
+  is_correct: boolean,
+  time_taken: number,
+  answer_index: number,
+): Promise<void> {
+  const full = {
     session_id: getSessionId(),
     question_type: category,
     question_date: getToday(),
     is_correct,
     time_taken,
     answer_index: Number(answer_index),
-  });
-  if (error) console.error('[DailySync] INSERT error:', error.message);
+  };
+  const { error } = await supabase.from('daily_responses').insert(full);
+  if (!error) return;
+
+  // Fallback — legacy schema missing is_correct / time_taken columns.
+  // Retry with only the minimal columns guaranteed to exist.
+  if (/column .* does not exist/i.test(error.message)) {
+    const minimal = {
+      session_id: full.session_id,
+      question_type: full.question_type,
+      question_date: full.question_date,
+      answer_index: full.answer_index,
+    };
+    const { error: fallbackErr } = await supabase.from('daily_responses').insert(minimal);
+    if (fallbackErr) console.error('[DailySync] INSERT fallback error:', fallbackErr.message);
+    return;
+  }
+
+  console.error('[DailySync] INSERT error:', error.message);
 }
 
-async function fetchGlobalStats(category: Category, retries = 2): Promise<{ stats: GlobalStats; offline: boolean }> {
+const STATS_CACHE_KEY: Record<Category, string> = {
+  bls: 'daily_stats_bls_v1',
+  als: 'daily_stats_als_v1',
+};
+
+function loadCachedStats(cat: Category): GlobalStats | null {
+  try {
+    const raw = localStorage.getItem(STATS_CACHE_KEY[cat]);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { date: string; stats: GlobalStats };
+    return parsed.date === getToday() ? parsed.stats : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedStats(cat: Category, stats: GlobalStats) {
+  try {
+    localStorage.setItem(STATS_CACHE_KEY[cat], JSON.stringify({ date: getToday(), stats }));
+  } catch {
+    /* noop */
+  }
+}
+
+async function fetchGlobalStats(
+  category: Category,
+  correctIndex: number | null,
+  retries = 2,
+): Promise<{ stats: GlobalStats; offline: boolean }> {
   const today = getToday();
+  const emptyStats: GlobalStats = { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+
   for (let attempt = 0; attempt <= retries; attempt++) {
+    // Select only answer_index — is_correct is derived client-side from the
+    // known question.correct_index, so the query works even on legacy schemas
+    // where is_correct / time_taken columns do not exist.
     const { data, error } = await supabase
       .from('daily_responses')
-      .select('is_correct, answer_index')
+      .select('answer_index')
       .eq('question_type', category)
       .eq('question_date', today);
 
     if (!error) {
       const rows = data ?? [];
-      if (rows.length === 0) return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: false };
       const answer_counts = [0, 0, 0, 0];
+      let correct = 0;
       rows.forEach((r) => {
         const ai = Number(r.answer_index);
-        if (Number.isInteger(ai) && ai >= 0 && ai <= 3) answer_counts[ai]++;
+        if (Number.isInteger(ai) && ai >= 0 && ai <= 3) {
+          answer_counts[ai]++;
+          if (correctIndex !== null && ai === correctIndex) correct++;
+        }
       });
-      return { stats: { total: rows.length, correct: rows.filter((r) => r.is_correct).length, answer_counts }, offline: false };
+      const stats: GlobalStats = { total: rows.length, correct, answer_counts };
+      saveCachedStats(category, stats);
+      return { stats, offline: false };
     }
 
     console.error(`[DailySync] fetchGlobalStats error (attempt ${attempt + 1}):`, error.message);
     if (attempt < retries) await new Promise((r) => setTimeout(r, 2000));
   }
-  return { stats: { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] }, offline: true };
+
+  // All retries failed — return cached stats if available, else empty.
+  const cached = loadCachedStats(category);
+  return { stats: cached ?? emptyStats, offline: true };
 }
 
 // ─── Supabase — daily_leaderboard ────────────────────────────────────────────
@@ -574,19 +643,53 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // Live counter sync every 10s while modal is open
   useEffect(() => {
     if (!isOpen || !category) return;
+    const correctIdx = question?.correct_index ?? null;
     const id = setInterval(() => {
-      fetchGlobalStats(category).then(({ stats, offline }) => {
-        setGlobalStats(stats);
+      fetchGlobalStats(category, correctIdx).then(({ stats, offline }) => {
+        setGlobalStats((prev) => {
+          // Never regress the counter — keep max of cached, current, and new.
+          const prevTotal = prev?.total ?? 0;
+          if (stats.total < prevTotal) return prev;
+          return stats;
+        });
         setIsStatsOffline(offline);
       });
     }, 10000);
+    return () => clearInterval(id);
+  }, [isOpen, category, question?.correct_index]);
+
+  // Midnight rollover — every 60s check if the calendar day changed;
+  // if so, clear caches for the active category and reset to category-select.
+  useEffect(() => {
+    if (!isOpen) return;
+    const startDay = getToday();
+    const id = setInterval(() => {
+      if (getToday() !== startDay) {
+        if (category) {
+          localStorage.removeItem(CACHE_KEYS[category]);
+          localStorage.removeItem(STATS_CACHE_KEY[category]);
+        }
+        setCategory(null);
+        setView('select');
+        setQuestion(null);
+        setSelectedIndex(null);
+        setGlobalStats(null);
+        setIsStatsOffline(false);
+        setTimeTaken(null);
+        setShowExplanation(false);
+        setLeaderboardSaved(false);
+      }
+    }, 60000);
     return () => clearInterval(id);
   }, [isOpen, category]);
 
   const loadCategory = useCallback(async (cat: Category) => {
     setCategory(cat);
-    setGlobalStats(null);
     setShowExplanation(false);
+    // Seed from last-known cache immediately so the counter never flashes to 110.
+    const seeded = loadCachedStats(cat);
+    setGlobalStats(seeded);
+    setIsStatsOffline(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
     const cached = loadCache(cat);
@@ -603,7 +706,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setView('question');
         questionStartRef.current = Date.now();
       }
-      fetchGlobalStats(cat).then(({ stats, offline }) => { setGlobalStats(stats); setIsStatsOffline(offline); });
+      fetchGlobalStats(cat, cached.question.correct_index).then(({ stats, offline }) => {
+        setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        setIsStatsOffline(offline);
+      });
       return;
     }
 
@@ -619,7 +725,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       saveCache(cat, q, null);
       setView('question');
       questionStartRef.current = Date.now();
-      fetchGlobalStats(cat).then(({ stats, offline }) => { setGlobalStats(stats); setIsStatsOffline(offline); });
+      fetchGlobalStats(cat, q.correct_index).then(({ stats, offline }) => {
+        setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        setIsStatsOffline(offline);
+      });
     } catch (err) {
       console.error('[DailyChallengeModal] load error:', err);
       setView('error');
@@ -639,13 +748,27 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setView('answered');
     saveCache(category, question, index, elapsed, false);
 
+    // Optimistic local bump — show percentages immediately without waiting for network.
+    setGlobalStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const next_counts = [...base.answer_counts];
+      next_counts[index] = (next_counts[index] ?? 0) + 1;
+      return {
+        total: base.total + 1,
+        correct: base.correct + (isCorrect ? 1 : 0),
+        answer_counts: next_counts,
+      };
+    });
+    setIsStatsOffline(false);
+
     trackEvent('daily_challenge_complete', { category, is_correct: isCorrect, time_taken: elapsed });
 
     overlayTimerRef.current = setTimeout(() => setShowExplanation(true), 900);
 
     await saveResponse(category, isCorrect, elapsed, index);
-    const { stats, offline } = await fetchGlobalStats(category);
-    setGlobalStats(stats);
+    const { stats, offline } = await fetchGlobalStats(category, question.correct_index);
+    // Only replace optimistic stats with server stats if server has caught up.
+    setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
     setIsStatsOffline(offline);
   }, [question, category, selectedIndex]);
 
@@ -787,6 +910,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       </div>
                     )}
                   </div>
+                </motion.div>
+              )}
+
+              {/* Tricky-questions warning banner */}
+              {!isAnswered && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-2 rounded-2xl bg-amber-500/8 border border-amber-500/20 px-3.5 py-2.5"
+                >
+                  <Zap size={14} className="text-amber-400/80 shrink-0" />
+                  <p className="text-amber-300/90 text-[12px] font-semibold leading-snug text-right flex-1">
+                    שים לב: השאלות טריקיות ומדמות מקרי קיצון. קרא היטב את כל התשובות.
+                  </p>
                 </motion.div>
               )}
 
