@@ -49,7 +49,11 @@
       "Bash(ls tailwind*)",
       "Bash(npx vite:*)",
       "Bash(git merge *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(git -C C:/Users/User/Desktop/medic-app status)",
+      "Bash(git -C C:/Users/User/Desktop/medic-app diff --stat)",
+      "Bash(git -C C:/Users/User/Desktop/medic-app add src/features/hub/components/DailyChallengeModal.tsx)",
+      "Bash(git -C C:/Users/User/Desktop/medic-app commit -m ' *)"
     ]
   },
   "hooks": {
