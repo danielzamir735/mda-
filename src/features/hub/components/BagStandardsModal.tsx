@@ -197,44 +197,67 @@ const MDA_CATEGORIES: MDACategory[] = [
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: 'אספירין', qty: '10' },
+      { name: 'אספירין 300mg', qty: '10' },
       { name: "גלוקוג'ל", qty: '1' },
-      { name: 'מי מלח 0.9% (Saline)', qty: '1' },
+      { name: 'פולידין 20 מ"ל', qty: '1' },
+      { name: 'מי מלח 0.9%', qty: '1' },
     ],
   },
   {
     id: 'airway',
-    title: 'נתיב אוויר וחמצן',
+    title: 'ציוד הנשמה וחמצן',
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
-      { name: 'ערכת החייאה B.L.S. (מבוגר + ילד)', qty: '1' },
-      { name: 'מיכל חמצן D', qty: '1' },
+      { name: 'שק הנשמה מבוגר (אמבו)', qty: '1' },
+      { name: 'שק הנשמה ילד (אמבו)', qty: '1' },
+      { name: 'מסכת חמצן מבוגר M', qty: '1' },
+      { name: 'מסכת חמצן מבוגר S', qty: '1' },
+      { name: 'מסכת חמצן ילד', qty: '1' },
+      { name: 'מסכת חמצן פעוט (Toddler)', qty: '1' },
+      { name: 'מסכת חמצן תינוק (Infant)', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 00', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 0', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 1', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 2', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 3', qty: '1' },
+      { name: 'מנתב אוויר פלסטי 4', qty: '1' },
       { name: 'סקשן ידני', qty: '1' },
+      { name: 'קטטר שאיבה 18', qty: '1' },
+      { name: 'קטטר שאיבה 8', qty: '1' },
+      { name: 'מיכל חמצן D + וסת', qty: '1' },
     ],
   },
   {
     id: 'diagnostics',
-    title: 'אבחון',
+    title: 'אבחון ומדידה',
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
-      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
-      { name: 'גלוקומטר', qty: '1' },
+      { name: 'מד ל"ד + סטטוסקופ (מבוגר)', qty: '1' },
+      { name: 'מד ל"ד + סטטוסקופ (ילד)', qty: '1' },
+      { name: 'גלוקומטר + 5 מחטים + 5 סטיקים', qty: '1' },
     ],
   },
   {
     id: 'trauma',
-    title: 'טראומה וחבישה',
+    title: 'חבישה וטראומה',
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
-      { name: 'חוסם עורקים (גומי)', qty: '3' },
-      { name: 'תחבושות שדה', qty: '1 סט' },
-      { name: 'מספריים לתחבושות', qty: '1' },
+      { name: 'חוסם עורקים גומי', qty: '3' },
+      { name: 'תחבושת אישית', qty: '1' },
+      { name: 'תחבושת בינונית', qty: '1' },
+      { name: 'פד גזה 3x3 סטרילי', qty: '10' },
+      { name: 'מספריים', qty: '1' },
+      { name: 'תחבושות אלסטיות', qty: '5' },
+      { name: 'צווארון צוואר מבוגר', qty: '1' },
+      { name: 'צווארון צוואר ילד', qty: '1' },
+      { name: 'ערכת מגן אישי (PPE)', qty: '1' },
+      { name: 'שמיכה אלומיניום', qty: '1' },
     ],
   },
 ];
@@ -251,12 +274,18 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [activeStandard, setActiveStandard] = useState<Standard>('moh');
+  const [mdaCheckedItems, setMdaCheckedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!selectedBag) return;
     const stored = localStorage.getItem(`bag-checklist-${selectedBag.id}`);
     setCheckedItems(stored ? JSON.parse(stored) : {});
   }, [selectedBag]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('mda-kit-checklist');
+    setMdaCheckedItems(stored ? JSON.parse(stored) : {});
+  }, []);
 
   const clearChecklist = () => {
     setCheckedItems({});
@@ -269,6 +298,19 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
       localStorage.setItem(`bag-checklist-${selectedBag!.id}`, JSON.stringify(next));
       return next;
     });
+  };
+
+  const toggleMdaItem = (key: string) => {
+    setMdaCheckedItems((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('mda-kit-checklist', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clearMdaChecklist = () => {
+    setMdaCheckedItems({});
+    localStorage.removeItem('mda-kit-checklist');
   };
 
   useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
@@ -365,7 +407,18 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           <ChevronRight size={20} />
         </button>
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('bagStandardsTitle')}</h2>
-        <div className="w-10" />
+        {activeStandard === 'mda' ? (
+          <button
+            onClick={clearMdaChecklist}
+            className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
+            aria-label={t('clearMarkings')}
+          >
+            <RotateCcw size={15} />
+            <span>{t('clearMarkings')}</span>
+          </button>
+        ) : (
+          <div className="w-10" />
+        )}
       </div>
 
       {/* Standard selector tabs */}
@@ -415,28 +468,48 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           </div>
         )}
 
-        {/* MDA — categorized equipment */}
+        {/* MDA — interactive checklist by category */}
         {activeStandard === 'mda' && (
           <div className="flex flex-col gap-4" dir="rtl">
-            {MDA_CATEGORIES.map((cat) => (
-              <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
-                <div className={`px-4 py-3 border-b ${cat.border}`}>
-                  <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+            {MDA_CATEGORIES.map((cat) => {
+              const checkedCount = cat.items.filter((_, i) => mdaCheckedItems[`${cat.id}-${i}`]).length;
+              return (
+                <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
+                  <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
+                    <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+                    <span className={`text-xs font-medium ${cat.color} opacity-70`}>
+                      {checkedCount}/{cat.items.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
+                    {cat.items.map((item, i) => {
+                      const key = `${cat.id}-${i}`;
+                      const isChecked = !!mdaCheckedItems[key];
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => toggleMdaItem(key)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-right transition-colors active:scale-[0.98] ${
+                            isChecked ? 'opacity-60' : ''
+                          }`}
+                          dir="rtl"
+                        >
+                          {isChecked
+                            ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                            : <Circle size={18} className="text-gray-300 dark:text-slate-600 shrink-0" />}
+                          <span className={`flex-1 text-sm font-medium text-right ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
+                            {item.name}
+                          </span>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
+                            {item.qty}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
-                  {cat.items.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
-                        {item.qty}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-emt-light text-right flex-1">
-                        {item.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
