@@ -354,17 +354,6 @@ export default function HubModal({
                 {id === 'updates' && !hasSeenWhatsNew && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse z-10" />
                 )}
-                {id === 'daily-challenge' && (
-                  <>
-                    <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full z-10 shadow-lg">
-                      New
-                    </span>
-                    <span
-                      className="pointer-events-none absolute inset-2 rounded-full border-2 border-yellow-400/50 animate-ping opacity-60"
-                      aria-hidden="true"
-                    />
-                  </>
-                )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
                 {subtitle && (

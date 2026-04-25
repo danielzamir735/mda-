@@ -36,6 +36,7 @@ const LEVEL_B: Hospital[] = [
   { name: 'קפלן',              city: 'רחובות',      central: '08-944-1211', er: '08-944-1553', lat: 31.903, lng: 34.813 },
   { name: 'ברזילי',            city: 'אשקלון',      central: '08-674-5111', er: '08-674-5561', lat: 31.669, lng: 34.573 },
   { name: 'אסף הרופא',         city: 'צריפין',      central: '08-977-9020', er: '08-977-9333', lat: 31.930, lng: 34.830 },
+  { name: 'הדסה הר הצופים',   city: 'ירושלים',     central: '02-584-4111', er: '02-584-4111', lat: 31.794, lng: 35.239, navQueries: { general: 'מיון הדסה הר הצופים ירושלים', pediatric: 'מיון ילדים הדסה הר הצופים', maternity: 'מיון יולדות הדסה הר הצופים' } },
 ];
 
 function NearestERButton() {
