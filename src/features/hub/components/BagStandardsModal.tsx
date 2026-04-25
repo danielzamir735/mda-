@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
+import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw, Clock } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 
@@ -16,6 +16,15 @@ interface Bag {
   border: string;
   bg: string;
   iconColor: string;
+  items: BagItem[];
+}
+
+interface MDACategory {
+  id: string;
+  title: string;
+  color: string;
+  border: string;
+  bg: string;
   items: BagItem[];
 }
 
@@ -180,6 +189,58 @@ const BAGS: Bag[] = [
   },
 ];
 
+const MDA_CATEGORIES: MDACategory[] = [
+  {
+    id: 'meds',
+    title: 'תרופות ונוזלים',
+    color: 'text-rose-400',
+    border: 'border-rose-400/30',
+    bg: 'bg-rose-400/10',
+    items: [
+      { name: 'אספירין', qty: '10' },
+      { name: "גלוקוג'ל", qty: '1' },
+      { name: 'מי מלח 0.9% (Saline)', qty: '1' },
+    ],
+  },
+  {
+    id: 'airway',
+    title: 'נתיב אוויר וחמצן',
+    color: 'text-sky-400',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+    items: [
+      { name: 'ערכת החייאה B.L.S. (מבוגר + ילד)', qty: '1' },
+      { name: 'מיכל חמצן D', qty: '1' },
+      { name: 'סקשן ידני', qty: '1' },
+    ],
+  },
+  {
+    id: 'diagnostics',
+    title: 'אבחון',
+    color: 'text-violet-400',
+    border: 'border-violet-400/30',
+    bg: 'bg-violet-400/10',
+    items: [
+      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
+      { name: 'גלוקומטר', qty: '1' },
+    ],
+  },
+  {
+    id: 'trauma',
+    title: 'טראומה וחבישה',
+    color: 'text-amber-400',
+    border: 'border-amber-400/30',
+    bg: 'bg-amber-400/10',
+    items: [
+      { name: 'חוסם עורקים (גומי)', qty: '3' },
+      { name: 'תחבושות שדה', qty: '1 סט' },
+      { name: 'מספריים לתחבושות', qty: '1' },
+    ],
+  },
+];
+
+type Standard = 'moh' | 'mda' | 'hatzalah';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -189,6 +250,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const t = useTranslation();
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [activeStandard, setActiveStandard] = useState<Standard>('moh');
 
   useEffect(() => {
     if (!selectedBag) return;
@@ -209,20 +271,16 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     });
   };
 
-  // When a bag detail is open, hardware back clears the selection;
-  // otherwise it closes the entire modal.
   useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
 
   if (!isOpen) return null;
 
   const handleSelectBag = (bag: Bag) => {
     setSelectedBag(bag);
-    // Push an extra history entry so hardware back navigates to list, not out of modal
     window.history.pushState({ bagDetail: true }, '');
   };
 
   const handleBackFromDetail = () => {
-    // Pop the bagDetail history entry → triggers popstate → setSelectedBag(null)
     window.history.back();
   };
 
@@ -287,6 +345,12 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     );
   }
 
+  const STANDARDS: { id: Standard; label: string }[] = [
+    { id: 'moh', label: 'תקן משרד הבריאות' },
+    { id: 'mda', label: 'תקן מד״א' },
+    { id: 'hatzalah', label: 'תקן איחוד הצלה' },
+  ];
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
       {/* Header */}
@@ -304,31 +368,93 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         <div className="w-10" />
       </div>
 
-      {/* Ministry of Health standard sub-header */}
-      <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.03] backdrop-blur-sm">
-        <p className="text-center text-[0.7rem] font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase">
-          על פי תקן משרד הבריאות
-        </p>
+      {/* Standard selector tabs */}
+      <div className="shrink-0 px-4 py-3 border-b border-gray-100 dark:border-white/10">
+        <div
+          className="flex rounded-2xl p-1 gap-1"
+          style={{ background: 'rgba(120,120,128,0.12)' }}
+          dir="rtl"
+        >
+          {STANDARDS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveStandard(id)}
+              className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-bold transition-all duration-200 active:scale-95 leading-tight ${
+                activeStandard === id
+                  ? 'bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light shadow-sm'
+                  : 'text-gray-500 dark:text-emt-muted'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Bag selection cards */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-        {BAGS.map((bag) => (
-          <button
-            key={bag.id}
-            onClick={() => handleSelectBag(bag)}
-            className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
-                        flex items-center gap-4 active:scale-[0.98] transition-transform`}
-          >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
-              <Backpack size={24} className={bag.iconColor} />
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* MOH — bag selection cards */}
+        {activeStandard === 'moh' && (
+          <div className="flex flex-col gap-3">
+            {BAGS.map((bag) => (
+              <button
+                key={bag.id}
+                onClick={() => handleSelectBag(bag)}
+                className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
+                            flex items-center gap-4 active:scale-[0.98] transition-transform`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
+                  <Backpack size={24} className={bag.iconColor} />
+                </div>
+                <div className="flex-1 text-right">
+                  <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* MDA — categorized equipment */}
+        {activeStandard === 'mda' && (
+          <div className="flex flex-col gap-4" dir="rtl">
+            {MDA_CATEGORIES.map((cat) => (
+              <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
+                <div className={`px-4 py-3 border-b ${cat.border}`}>
+                  <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+                </div>
+                <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
+                  {cat.items.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
+                        {item.qty}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-emt-light text-right flex-1">
+                        {item.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Hatzalah — coming soon */}
+        {activeStandard === 'hatzalah' && (
+          <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4 text-center">
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center"
+              style={{ background: 'rgba(120,120,128,0.12)' }}
+            >
+              <Clock size={36} className="text-gray-400 dark:text-emt-muted" />
             </div>
-            <div className="flex-1 text-right">
-              <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
-              <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-bold text-gray-900 dark:text-emt-light" dir="rtl">בקרוב</p>
+              <p className="text-sm text-gray-500 dark:text-emt-muted" dir="rtl">תקן איחוד הצלה יתווסף בקרוב</p>
             </div>
-          </button>
-        ))}
+          </div>
+        )}
       </div>
     </div>
   );
