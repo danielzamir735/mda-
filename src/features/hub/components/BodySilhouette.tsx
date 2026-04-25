@@ -113,24 +113,32 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1 }:
             transformOrigin: 'top left',
           }}
         >
-          {/* HEAD — top center. h derived from 370×552 viewBox aspect (≈0.67). */}
+          {/*
+            JSX order = paint order. We want a contiguous silhouette, so:
+              1. HEAD  — bottom (neck overlapped by torso top)
+              2. ARMS  — paint BEFORE torso so torso covers their medial edge → no armpit gap
+              3. TORSO — covers head neck + arm shoulders
+              4. LEGS  — top, cover torso bottom (shorts hem)
+          */}
+
+          {/* HEAD — top center. h from 370×552 viewBox aspect (≈0.67). */}
           <div className="absolute" style={{ left: 58, top: 0, width: 44, height: 66 }}>
             <PartButton svg={headSvgRaw} selected={selected.has(idHead)} onClick={() => onToggle(idHead)} width={44} height={66} ariaLabel={labelLookup[idHead]} mirrored={mirror} />
           </div>
 
-          {/* TORSO — overlaps head at neck (top) and pelvis at hips (bottom). 798×1443 aspect. */}
-          <div className="absolute" style={{ left: 44, top: 60, width: 72, height: 130 }}>
-            <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={labelLookup[idTorso]} mirrored={mirror} />
-          </div>
-
-          {/* RIGHT ARM — patient's right (viewer's left). Right edge meets torso left edge. */}
-          <div className="absolute" style={{ left: 10, top: 70, width: 34, height: 111 }}>
+          {/* RIGHT ARM — patient's right (viewer's left). 10px overlap with torso closes the armpit. */}
+          <div className="absolute" style={{ left: 20, top: 70, width: 34, height: 111 }}>
             <PartButton svg={rightArmSvgRaw} selected={selected.has(idRArm)} onClick={() => onToggle(idRArm)} width={34} height={111} ariaLabel={labelLookup[idRArm]} mirrored={mirror} />
           </div>
 
-          {/* LEFT ARM — patient's left (viewer's right). Left edge meets torso right edge. */}
-          <div className="absolute" style={{ left: 116, top: 70, width: 34, height: 111 }}>
+          {/* LEFT ARM — patient's left (viewer's right). 10px overlap with torso. */}
+          <div className="absolute" style={{ left: 106, top: 70, width: 34, height: 111 }}>
             <PartButton svg={leftArmSvgRaw} selected={selected.has(idLArm)} onClick={() => onToggle(idLArm)} width={34} height={111} ariaLabel={labelLookup[idLArm]} mirrored={mirror} />
+          </div>
+
+          {/* TORSO — paints over arm shoulders + head neck for a clean silhouette. 798×1443 aspect. */}
+          <div className="absolute" style={{ left: 44, top: 60, width: 72, height: 130 }}>
+            <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={labelLookup[idTorso]} mirrored={mirror} />
           </div>
 
           {/* RIGHT LEG — left half under torso. 359×1749 aspect. */}

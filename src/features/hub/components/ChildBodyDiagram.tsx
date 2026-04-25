@@ -13,28 +13,28 @@ export interface ChildPartDef {
   percentage: number;
 }
 
-// Pediatric Lund-Browder simplified mapping (per task spec):
-//   Head: 18% (9/9 front+back) — proportionally larger than adult
-//   Torso: 36% (18/18) — same as adult
-//   Each arm: 9% (4.5/4.5) — same as adult
-//   Each leg: 14% (7/7) — proportionally smaller than adult
+// Pediatric Lund-Browder mapping calibrated to total exactly 100.0%:
+//   Head:   18% (9/9 front+back) — proportionally larger than adult
+//   Torso:  36% (18/18)          — same as adult
+//   Arms:   9% per arm (4.5/4.5) — same as adult
+//   Legs:  13.5% per leg (6.75/6.75) — proportionally smaller than adult
 //   Perineum: 1%
-// Sums to 101% by spec; the extra 1% comes from perineum being additive
-// (matches Lund-Browder convention — selecting all parts is not clinically meaningful).
+// Sum: 18 + 36 + 18 + 27 + 1 = 100.0%. All values are exact in IEEE-754
+// (multiples of 0.25), so floating-point summation never drifts past 100.
 export const CHILD_PARTS: ChildPartDef[] = [
-  { id: 'head_front',      label: 'ראש קדמי',     percentage: 9   },
-  { id: 'head_back',       label: 'ראש אחורי',    percentage: 9   },
-  { id: 'torso_front',     label: 'גוף קדמי',     percentage: 18  },
-  { id: 'torso_back',      label: 'גב',           percentage: 18  },
-  { id: 'right_arm_front', label: "יד י' קדמי",   percentage: 4.5 },
-  { id: 'right_arm_back',  label: "יד י' אחורי",  percentage: 4.5 },
-  { id: 'left_arm_front',  label: "יד ש' קדמי",   percentage: 4.5 },
-  { id: 'left_arm_back',   label: "יד ש' אחורי",  percentage: 4.5 },
-  { id: 'right_leg_front', label: "רגל י' קדמי",  percentage: 7   },
-  { id: 'right_leg_back',  label: "רגל י' אחורי", percentage: 7   },
-  { id: 'left_leg_front',  label: "רגל ש' קדמי",  percentage: 7   },
-  { id: 'left_leg_back',   label: "רגל ש' אחורי", percentage: 7   },
-  { id: 'perineum',        label: 'פרינאום',      percentage: 1   },
+  { id: 'head_front',      label: 'ראש קדמי',     percentage: 9    },
+  { id: 'head_back',       label: 'ראש אחורי',    percentage: 9    },
+  { id: 'torso_front',     label: 'גוף קדמי',     percentage: 18   },
+  { id: 'torso_back',      label: 'גב',           percentage: 18   },
+  { id: 'right_arm_front', label: "יד י' קדמי",   percentage: 4.5  },
+  { id: 'right_arm_back',  label: "יד י' אחורי",  percentage: 4.5  },
+  { id: 'left_arm_front',  label: "יד ש' קדמי",   percentage: 4.5  },
+  { id: 'left_arm_back',   label: "יד ש' אחורי",  percentage: 4.5  },
+  { id: 'right_leg_front', label: "רגל י' קדמי",  percentage: 6.75 },
+  { id: 'right_leg_back',  label: "רגל י' אחורי", percentage: 6.75 },
+  { id: 'left_leg_front',  label: "רגל ש' קדמי",  percentage: 6.75 },
+  { id: 'left_leg_back',   label: "רגל ש' אחורי", percentage: 6.75 },
+  { id: 'perineum',        label: 'פרינאום',      percentage: 1    },
 ];
 
 export const CHILD_PART_LOOKUP: Record<BodyPartId, ChildPartDef> =
