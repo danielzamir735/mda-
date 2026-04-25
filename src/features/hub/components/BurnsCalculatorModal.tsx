@@ -1,36 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Flame, Share2, Droplets } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import ReactGA from 'react-ga4';
 import { trackEvent } from '../../../utils/analytics';
-import AdultBodyDiagram, { ADULT_PART_LOOKUP, type AdultPartId } from './AdultBodyDiagram';
+import AdultBodyDiagram, { ADULT_PART_LOOKUP } from './AdultBodyDiagram';
+import ChildBodyDiagram, { CHILD_PART_LOOKUP } from './ChildBodyDiagram';
+import type { BodyPartId } from './BodySilhouette';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 type AgeGroup = 'adult' | 'child';
-interface ChildPart { id: string; label: string; child: number; }
-
-// Child Lund-Browder approximation (existing schematic)
-const CHILD_PARTS: ChildPart[] = [
-  { id: 'head',           label: 'ראש',             child: 18 },
-  { id: 'chest',          label: 'חזה',             child: 9  },
-  { id: 'abdomen',        label: 'בטן',             child: 9  },
-  { id: 'upper_back',     label: 'גב עליון',        child: 9  },
-  { id: 'lower_back',     label: 'גב תחתון',        child: 9  },
-  { id: 'right_arm',      label: "יד י'",           child: 9  },
-  { id: 'left_arm',       label: "יד ש'",           child: 9  },
-  { id: 'right_leg',      label: "רגל י'",          child: 14 },
-  { id: 'left_leg',       label: "רגל ש'",          child: 14 },
-  { id: 'genitals',       label: 'איברי מין',       child: 1  },
-  { id: 'right_arm_back', label: "יד אחורית י'",   child: 4  },
-  { id: 'left_arm_back',  label: "יד אחורית ש'",   child: 4  },
-  { id: 'right_leg_back', label: "רגל אחורית י'",  child: 7  },
-  { id: 'left_leg_back',  label: "רגל אחורית ש'",  child: 7  },
-];
-
-const CHILD_EXTRAS = ['upper_back', 'lower_back', 'genitals'];
-const CHILD_POSTERIOR_LIMBS = ['right_arm_back', 'left_arm_back', 'right_leg_back', 'left_leg_back'];
-const childById = (id: string) => CHILD_PARTS.find(p => p.id === id)!;
 
 export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
@@ -44,13 +23,13 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const [weight, setWeight] = useState('');
   const [burnOverride, setBurnOverride] = useState('');
 
-  // Total computed differently per mode (different part schemas)
-  const total = ageGroup === 'adult'
-    ? Array.from(selected).reduce((sum, id) => {
-        const p = ADULT_PART_LOOKUP[id as AdultPartId];
-        return p ? sum + p.percentage : sum;
-      }, 0)
-    : CHILD_PARTS.reduce((sum, p) => selected.has(p.id) ? sum + p.child : sum, 0);
+  // Total uses the active mode's percentage table. IDs are shared between modes,
+  // but values differ (head/leg weights change between adult and child).
+  const lookup = ageGroup === 'adult' ? ADULT_PART_LOOKUP : CHILD_PART_LOOKUP;
+  const total = Array.from(selected).reduce((sum, id) => {
+    const p = lookup[id as BodyPartId];
+    return p ? sum + p.percentage : sum;
+  }, 0);
 
   const parklandBurn = burnOverride !== '' ? parseFloat(burnOverride) : total;
   const parklandWeight = parseFloat(weight);
@@ -81,10 +60,8 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const handleAge = (ag: AgeGroup) => { setAgeGroup(ag); setSelected(new Set()); };
   const resetSelection = () => setSelected(new Set());
 
-  // Round to 1 decimal for adult (4.5% increments), integer for child
-  const totalDisplay = ageGroup === 'adult'
-    ? Number.isInteger(total) ? String(total) : total.toFixed(1)
-    : String(total);
+  // Both modes use 0.5 increments (4.5%, 7%, 9%, etc.) so totals can be fractional.
+  const totalDisplay = Number.isInteger(total) ? String(total) : total.toFixed(1);
 
   const severity = total === 0 ? null : total < 10 ? 'קל' : total < 25 ? 'בינוני' : 'חמור';
   const sevColor  = total < 10 ? 'text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
@@ -97,26 +74,6 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
       title: 'חישוב פרקלנד',
       text: `מטופל: משקל ${parklandWeight} ק"ג, כוויות ${parklandBurn}%. נוזלים נדרשים (פרקלנד): ${parklandResult?.toFixed(2)} ליטר.`,
     });
-  };
-
-  // ── Child schematic helpers ──
-  const childCell = (id: string, extra = '') => [
-    'flex flex-col items-center justify-center cursor-pointer select-none',
-    'transition-all duration-150 active:scale-95 border-2 rounded-xl',
-    selected.has(id)
-      ? 'border-emt-red bg-emt-red/20 text-emt-red'
-      : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
-    extra,
-  ].join(' ');
-
-  const childLbl = (id: string) => {
-    const p = childById(id);
-    return (
-      <>
-        <span className="text-[9px] font-bold leading-tight">{p.label}</span>
-        <span className="text-[8px] opacity-60">{p.child}%</span>
-      </>
-    );
   };
 
   return (
@@ -151,7 +108,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
           ))}
         </div>
 
-        {/* ── Body diagram (animated swap between Adult/Child modes) ── */}
+        {/* Body diagram — animated swap between Adult/Child modes */}
         <div className="w-full">
           <AnimatePresence mode="wait">
             {ageGroup === 'adult' ? (
@@ -162,89 +119,12 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
                 onReset={resetSelection}
               />
             ) : (
-              <motion.div
+              <ChildBodyDiagram
                 key="child"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="w-full flex flex-col items-center gap-4"
-              >
-                {/* Schematic body diagram (LTR for anatomical consistency) */}
-                <div className="flex flex-col items-center gap-1 py-2" dir="ltr">
-                  {/* Head */}
-                  <div onClick={() => toggle('head')} className={childCell('head', 'w-16 h-16 rounded-full mb-0.5')}>
-                    {childLbl('head')}
-                  </div>
-
-                  {/* Arms + Torso */}
-                  <div className="flex items-start gap-1">
-                    <div onClick={() => toggle('right_arm')} className={childCell('right_arm', 'w-10 h-24 mt-1')}>
-                      {childLbl('right_arm')}
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <div onClick={() => toggle('chest')} className={childCell('chest', 'w-24 h-14')}>
-                        {childLbl('chest')}
-                      </div>
-                      <div onClick={() => toggle('abdomen')} className={childCell('abdomen', 'w-24 h-10')}>
-                        {childLbl('abdomen')}
-                      </div>
-                    </div>
-
-                    <div onClick={() => toggle('left_arm')} className={childCell('left_arm', 'w-10 h-24 mt-1')}>
-                      {childLbl('left_arm')}
-                    </div>
-                  </div>
-
-                  {/* Legs */}
-                  <div className="flex gap-2 mt-0.5">
-                    <div onClick={() => toggle('right_leg')} className={childCell('right_leg', 'w-16 h-28')}>
-                      {childLbl('right_leg')}
-                    </div>
-                    <div onClick={() => toggle('left_leg')} className={childCell('left_leg', 'w-16 h-28')}>
-                      {childLbl('left_leg')}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Back + Genitals chips */}
-                <div className="flex gap-2 flex-wrap justify-center" dir="rtl">
-                  {CHILD_EXTRAS.map(id => {
-                    const p = childById(id);
-                    return (
-                      <button key={id} onClick={() => toggle(id)}
-                        className={['px-3 py-2 rounded-xl border font-bold text-sm transition-all active:scale-95',
-                          selected.has(id)
-                            ? 'border-emt-red/50 bg-emt-red/10 text-emt-red'
-                            : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
-                        ].join(' ')}>
-                        {p.label} <span className="text-xs opacity-60">({p.child}%)</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Posterior limb chips */}
-                <div className="w-full flex flex-col gap-1.5" dir="rtl">
-                  <p className="text-[0.65rem] font-bold text-gray-400 dark:text-emt-muted uppercase tracking-widest text-center">גפיים אחוריות</p>
-                  <div className="flex gap-2 flex-wrap justify-center">
-                    {CHILD_POSTERIOR_LIMBS.map(id => {
-                      const p = childById(id);
-                      return (
-                        <button key={id} onClick={() => toggle(id)}
-                          className={['px-3 py-2 rounded-xl border font-bold text-sm transition-all active:scale-95',
-                            selected.has(id)
-                              ? 'border-emt-red/50 bg-emt-red/10 text-emt-red'
-                              : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted',
-                          ].join(' ')}>
-                          {p.label} <span className="text-xs opacity-60">({p.child}%)</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </motion.div>
+                selected={selected}
+                onToggle={(id) => toggle(id)}
+                onReset={resetSelection}
+              />
             )}
           </AnimatePresence>
         </div>
