@@ -121,7 +121,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
   const [trainerOpen, setTrainerOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen) trackInteraction('common_meds', 'reference');
+    if (isOpen) trackInteraction('תרופות נפוצות', 'reference');
   }, [isOpen]);
 
   if (!isOpen) return null;

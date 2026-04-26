@@ -109,7 +109,7 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
   const [motor,  setMotor]  = useState<number>(() => readLS('lastGcsMotor',  6));
 
   useEffect(() => {
-    if (isOpen) trackInteraction('gcs_calculator', 'calculators');
+    if (isOpen) trackInteraction('מחשבון גלזגו (GCS)', 'calculators');
   }, [isOpen]);
 
   if (!isOpen) return null;

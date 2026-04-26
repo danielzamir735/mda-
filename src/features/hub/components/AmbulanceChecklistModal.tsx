@@ -51,7 +51,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   const isComplete = totalItems > 0 && checkedCount === totalItems;
 
   useEffect(() => {
-    if (isOpen) trackInteraction('ambulance_checklist', 'tools');
+    if (isOpen) trackInteraction('רשימת ציוד לאמבולנס', 'tools');
   }, [isOpen]);
 
   useEffect(() => {

@@ -29,7 +29,7 @@ export default function QuickToolsCard() {
 
           {/* Camera */}
           <button
-            onClick={() => { trackInteraction('camera', 'main_tools'); setCameraOpen(true); }}
+            onClick={() => { trackInteraction('מצלמה', 'main_tools'); setCameraOpen(true); }}
             className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label={t('camera')}
@@ -45,7 +45,7 @@ export default function QuickToolsCard() {
 
           {/* Add Vitals */}
           <button
-            onClick={() => { trackInteraction('add_vitals', 'main_tools'); setAddVitalsOpen(true); }}
+            onClick={() => { trackInteraction('הוספת מדדים', 'main_tools'); setAddVitalsOpen(true); }}
             className="flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label={t('addVitals')}
@@ -61,7 +61,7 @@ export default function QuickToolsCard() {
 
           {/* Daily Challenge */}
           <button
-            onClick={() => { trackInteraction('daily_challenge', 'main_tools'); setChallengeOpen(true); }}
+            onClick={() => { trackInteraction('האתגר היומי', 'main_tools'); setChallengeOpen(true); }}
             className="relative flex items-center gap-3 px-3 py-2 rounded-2xl
                        transition-all duration-200 active:scale-95"
             aria-label="אתגר יומי"

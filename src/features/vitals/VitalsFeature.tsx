@@ -101,7 +101,7 @@ export default function VitalsFeature() {
   const setDraftBreathing = useVitalsDraftStore((s) => s.setDraftBreathing);
 
   const openModal = useCallback((multiplier: number, unit: string, cardType: 'heart' | 'breath') => {
-    trackInteraction(cardType === 'heart' ? 'heart_rate_measure' : 'breathing_measure', 'main_tools');
+    trackInteraction(cardType === 'heart' ? 'מדידת דופק' : 'מדידת נשימות', 'main_tools');
     setActiveMultiplier(multiplier);
     setActiveUnit(unit);
     setActiveCard(cardType);
@@ -169,12 +169,12 @@ export default function VitalsFeature() {
       {isMetronomePlaying && <CPRTimerOverlay />}
 
       <BottomNav
-        onGalleryOpen={() => { trackInteraction('gallery', 'navigation'); setGalleryOpen(true); }}
-        onNotesOpen={() => { trackInteraction('notes', 'navigation'); setNotesOpen(true); }}
-        onVitalsOpen={() => { trackInteraction('vitals_history', 'navigation'); setVitalsHistoryOpen(true); }}
-        onHubOpen={() => { trackInteraction('tools_hub', 'navigation'); setHubOpen(true); }}
-        onSupportOpen={() => { trackInteraction('support_open', 'navigation'); setSupportOpen(true); }}
-        onLanguageBridgeOpen={() => { trackInteraction('language_bridge', 'navigation'); setLanguageBridgeOpen(true); }}
+        onGalleryOpen={() => { trackInteraction('גלריה', 'navigation'); setGalleryOpen(true); }}
+        onNotesOpen={() => { trackInteraction('הערות', 'navigation'); setNotesOpen(true); }}
+        onVitalsOpen={() => { trackInteraction('היסטוריית מדדים', 'navigation'); setVitalsHistoryOpen(true); }}
+        onHubOpen={() => { trackInteraction('כלי עזר', 'navigation'); setHubOpen(true); }}
+        onSupportOpen={() => { trackInteraction('תמיכה', 'navigation'); setSupportOpen(true); }}
+        onLanguageBridgeOpen={() => { trackInteraction('גשר שפות', 'navigation'); setLanguageBridgeOpen(true); }}
       />
 
       <footer className="shrink-0 text-center pt-1" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>

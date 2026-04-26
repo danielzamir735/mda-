@@ -164,7 +164,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
   const handleStart = async () => {
     setRunning(true);
-    trackInteraction('breathing_synchronizer', 'wellness');
+    trackInteraction('מסנכרן נשימות', 'wellness');
     try {
       wakeLockRef.current = await navigator.wakeLock.request('screen');
     } catch { /* wake lock not supported or denied — silently ignore */ }

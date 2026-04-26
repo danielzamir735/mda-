@@ -123,7 +123,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 icon={<HandHeart size={20} />}
                 onClick={() => {
                   if (navigator.vibrate) navigator.vibrate(50);
-                  trackInteraction('paybox_donation', 'support');
+                  trackInteraction('תרומה', 'support');
                   setDonationDone(true);
                   window.open('https://links.payboxapp.com/ikLxTdoky1b', '_blank');
                 }}

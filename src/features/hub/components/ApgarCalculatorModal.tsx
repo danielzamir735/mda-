@@ -46,7 +46,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
   const [scores, setScores] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (isOpen) trackInteraction('apgar_calculator', 'calculators');
+    if (isOpen) trackInteraction('מחשבון APGAR', 'calculators');
   }, [isOpen]);
 
   if (!isOpen) return null;

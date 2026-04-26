@@ -170,7 +170,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
                 pressScale={0.95}
                 onClick={() => {
                   trackEvent('translation_started', { source_lang: 'he', target_lang: l });
-                  trackInteraction('translation_language_select', 'translation');
+                  trackInteraction('תרגום רפואי', 'translation');
                   setSelectedLang(l);
                 }}
                 className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border

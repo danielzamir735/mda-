@@ -263,25 +263,25 @@ export default function HubModal({
   if (!isOpen) return null;
 
   const HUB_TRACKING: Record<string, [string, string]> = {
-    'daily-challenge':            ['daily_challenge',        'learning'],
-    calculators:                  ['calculators_section',   'calculators'],
-    settings:                     ['settings',              'utility'],
-    clinical:                     ['vitals_reference_table','medical_knowledge'],
-    medhistory:                   ['background_illnesses',  'medical_knowledge'],
-    hospitals:                    ['hospital_info',         'emergency_info'],
-    updates:                      ['share_app',             'utility'],
-    'kit-standards':              ['bag_standards',         'tools'],
-    'medications-classification': ['medication_groups',     'medical_knowledge'],
-    'common-meds':                ['common_medications',    'medical_knowledge'],
-    'realtime-translate':         ['medical_translator',    'tools'],
-    'poison-centers':             ['poison_control_center', 'emergency_info'],
-    accessibility:                ['accessibility_settings','utility'],
-    breathing:                    ['breathing_synchronizer','tools'],
-    'medication-scanner':         ['medication_info',       'tools'],
-    simulators:                   ['learning_simulators',   'community_learning'],
-    'soul-departure':             ['soul_departure_prayer', 'tools'],
-    'install-app':                ['pwa_install',           'utility'],
-    'whatsapp-community':         ['hovesh_plus_community', 'community_learning'],
+    'daily-challenge':            ['האתגר היומי',             'learning'],
+    calculators:                  ['מחשבונים',                'calculators'],
+    settings:                     ['הגדרות',                  'utility'],
+    clinical:                     ['טבלת מדדים',              'medical_knowledge'],
+    medhistory:                   ['מחלות רקע נפוצות',        'medical_knowledge'],
+    hospitals:                    ['מידע בתי חולים',           'emergency_info'],
+    updates:                      ['שיתוף האפליקציה',          'utility'],
+    'kit-standards':              ['תקנים לתיקי כונן',         'tools'],
+    'medications-classification': ['קבוצות תרופות',            'medical_knowledge'],
+    'common-meds':                ['תרופות נפוצות',            'medical_knowledge'],
+    'realtime-translate':         ['תרגום רפואי',              'tools'],
+    'poison-centers':             ['מרכזי הרעלות',             'emergency_info'],
+    accessibility:                ['נגישות',                  'utility'],
+    breathing:                    ['מסנכרן נשימות',            'tools'],
+    'medication-scanner':         ['מידע על תרופות',           'tools'],
+    simulators:                   ['סימולטורים ללמידה',        'community_learning'],
+    'soul-departure':             ['תפילה ליציאת נשמה',        'tools'],
+    'install-app':                ['התקנת האפליקציה',          'utility'],
+    'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
   };
 
   const handleItemClick = (id: string) => {
@@ -381,7 +381,7 @@ https://chovesh-plus.vercel.app/`;
                   target="_blank"
                   rel="noopener noreferrer"
                   className={sharedClass}
-                  onClick={() => trackInteraction('nearest_aed', 'emergency_info')}
+                  onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
                 >
                   {content}
                 </a>
@@ -404,7 +404,7 @@ https://chovesh-plus.vercel.app/`;
 
         {/* Feedback button */}
         <HapticButton
-          onClick={() => { trackInteraction('send_feedback', 'utility'); onFeedbackOpen(); }}
+          onClick={() => { trackInteraction('שליחת משוב', 'utility'); onFeedbackOpen(); }}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
                      border border-emt-red/30 bg-emt-red/10
                      text-emt-red font-bold text-base"
@@ -464,7 +464,7 @@ https://chovesh-plus.vercel.app/`;
                 label: 'סימולטור החייאה',
                 sublabel: 'Lifesaver — תרגול CPR אינטראקטיבי',
                 url: 'https://life-saver.org.uk/',
-                trackName: 'simulator_cpr',
+                trackName: 'סימולטור החייאה',
                 color: 'text-rose-400',
                 border: 'border-rose-400/30',
                 bg: 'bg-rose-400/5',
@@ -474,7 +474,7 @@ https://chovesh-plus.vercel.app/`;
                 label: "סימולטור אק\"ג וקצבי לב",
                 sublabel: 'SkillStat — סימולטור אק"ג אינטראקטיבי',
                 url: 'https://www.skillstat.com/tools/ecg-simulator/',
-                trackName: 'simulator_ecg',
+                trackName: 'סימולטור אק"ג וקצבי לב',
                 color: 'text-sky-400',
                 border: 'border-sky-400/30',
                 bg: 'bg-sky-400/5',
@@ -484,7 +484,7 @@ https://chovesh-plus.vercel.app/`;
                 label: 'תרגול מקרים והחייאה',
                 sublabel: 'RevivR (BHF) — תרגול בהדרכה',
                 url: 'https://revivr.bhf.org.uk/',
-                trackName: 'simulator_revivr',
+                trackName: 'תרגול מקרים והחייאה',
                 color: 'text-emerald-400',
                 border: 'border-emerald-400/30',
                 bg: 'bg-emerald-400/5',
@@ -494,7 +494,7 @@ https://chovesh-plus.vercel.app/`;
                 label: 'אימון זיהוי מחלות',
                 sublabel: 'נחש את המחלה — אבחון קליני',
                 url: 'https://diseaseguess.azurewebsites.net/welcome',
-                trackName: 'simulator_disease_guess',
+                trackName: 'אימון זיהוי מחלות',
                 color: 'text-violet-400',
                 border: 'border-violet-400/30',
                 bg: 'bg-violet-400/5',

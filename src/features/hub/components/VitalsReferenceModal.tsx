@@ -40,7 +40,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
 
   useEffect(() => {
-    if (isOpen) trackInteraction('vitals_reference', 'reference');
+    if (isOpen) trackInteraction('טבלת מדדים', 'reference');
   }, [isOpen]);
 
   if (!isOpen) return null;

@@ -29,7 +29,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   const { customItems, addItem, removeItem } = useMedicalHistoryStore();
 
   useEffect(() => {
-    if (isOpen) trackInteraction('medical_history', 'reference');
+    if (isOpen) trackInteraction('מחלות רקע נפוצות', 'reference');
   }, [isOpen]);
 
   if (!isOpen) return null;
