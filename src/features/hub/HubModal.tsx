@@ -60,6 +60,14 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
+    id: 'medication-scanner',
+    label: 'מידע על תרופות',
+    icon: ScanSearch,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+  },
+  {
     id: 'daily-challenge',
     label: 'האתגר היומי',
     subtitle: 'BLS + ALS · שאלות יומיות',
@@ -115,15 +123,6 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
-  },
-  {
-    id: 'defibrillator',
-    label: 'מצא דפיברילטור קרוב',
-    icon: MapPin,
-    color: 'text-emt-red',
-    border: 'border-emt-red/30',
-    bg: 'bg-emt-red/10',
-    href: 'https://defi.co.il/#/map',
   },
   {
     id: 'realtime-translate',
@@ -182,20 +181,21 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-sky-400/10',
   },
   {
-    id: 'medication-scanner',
-    label: 'מידע על תרופות',
-    icon: ScanSearch,
-    color: 'text-teal-400',
-    border: 'border-teal-400/30',
-    bg: 'bg-teal-400/10',
-  },
-  {
     id: 'kit-standards',
     label: 'תקנים לתיקי כונן',
     icon: ClipboardList,
     color: 'text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
+  },
+  {
+    id: 'defibrillator',
+    label: 'מצא דפיברילטור קרוב',
+    icon: MapPin,
+    color: 'text-emt-red',
+    border: 'border-emt-red/30',
+    bg: 'bg-emt-red/10',
+    href: 'https://defi.co.il/#/map',
   },
   {
     id: 'whatsapp-community',

@@ -43,6 +43,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         <span className="animate-heartbeat">
           <Heart size={24} strokeWidth={1.5} fill="currentColor" />
         </span>
+        <span className="text-[0.65rem] font-semibold">Support</span>
       </HapticButton>
 
       <HapticButton
