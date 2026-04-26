@@ -70,11 +70,8 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 <Heart size={62} fill="currentColor" />
               </motion.div>
               <h1 className="text-3xl font-black text-white text-center leading-tight">
-                חובש<span className="text-rose-400">+</span> מחפשים שותפים
+                לא עוצרים את הפיתוח של חובש<span className="text-rose-400">+</span>
               </h1>
-              <p className="text-white/55 text-sm text-center max-w-[260px]">
-                לא תורמים – שותפים. כי בלעדיכם זה לא קורה.
-              </p>
             </div>
 
             {/* 3 reason cards */}
@@ -107,11 +104,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               className="text-center space-y-2 max-w-xs"
             >
               <p className="text-white/80 text-base leading-relaxed">
-                חובש+ פותחה בהתנדבות, אבל השרתים, הפיתוח והתחזוקה עולים כסף.
-                {' '}כדי שנמשיך להיות כאן – בשטח, בזמן אמת, בחינם – אנחנו צריכים אתכם.
-              </p>
-              <p className="text-rose-300 font-bold text-base">
-                תרומה קטנה? זה מה שמשאיר אותנו כאן.
+                חובש+ היא אפליקציה ללא מטרות רווח, שנבנתה בהתנדבות עבור הקהילה. כדי שנוכל להמשיך להחזיק את השרתים באוויר, לתחזק את המערכת ולהוסיף עוד יכולות מקצועיות שישרתו אתכם בשטח, אנחנו זקוקים לתמיכה שלכם. כל עלויות הפיתוח והתחזוקה ממומנות כרגע באופן פרטי, וכל תרומה קטנה עוזרת לנו להבטיח שהאפליקציה תישאר חופשית, מעודכנת וזמינה לכולם ברגע האמת.
               </p>
             </motion.div>
 
@@ -123,7 +116,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               className="w-full max-w-sm flex flex-col items-center gap-3"
             >
               <ShinyButton
-                label="גם אני רוצה להיות שותף ❤️"
+                label="אני רוצה לתמוך בהמשך הפיתוח"
                 sublabel="תרומה חד-פעמית דרך PayBox"
                 gradient="from-rose-500 via-rose-600 to-pink-700"
                 done={donationDone}

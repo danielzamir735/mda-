@@ -109,14 +109,6 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-emt-green/10',
   },
   {
-    id: 'kit-standards',
-    label: 'תקנים לתיקי כונן',
-    icon: ClipboardList,
-    color: 'text-indigo-400',
-    border: 'border-indigo-400/30',
-    bg: 'bg-indigo-400/10',
-  },
-  {
     id: 'hospitals',
     label: 'מידע בתי חולים',
     icon: Building2,
@@ -196,6 +188,14 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
+  },
+  {
+    id: 'kit-standards',
+    label: 'תקנים לתיקי כונן',
+    icon: ClipboardList,
+    color: 'text-indigo-400',
+    border: 'border-indigo-400/30',
+    bg: 'bg-indigo-400/10',
   },
   {
     id: 'whatsapp-community',

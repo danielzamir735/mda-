@@ -388,7 +388,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   }
 
   const STANDARDS: { id: Standard; label: string }[] = [
-    { id: 'moh', label: 'תקן משרד הבריאות' },
+    { id: 'moh', label: 'תקן משרד החינוך' },
     { id: 'mda', label: 'תקן מד״א' },
     { id: 'hatzalah', label: 'תקן איחוד הצלה' },
   ];
