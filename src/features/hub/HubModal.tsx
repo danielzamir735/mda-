@@ -226,7 +226,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure']);
+const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
 
 export default function HubModal({
   isOpen,
@@ -250,6 +250,7 @@ export default function HubModal({
 }: Props) {
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
+  const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
   const { openFullModal } = usePwaInstall();
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
@@ -260,6 +261,7 @@ export default function HubModal({
   useModalBackHandler(isOpen, onClose);
   // Give simulators its own back-button layer so back returns to the tools menu, not home
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
+  useModalBackHandler(showWhatsAppCommunity, () => setShowWhatsAppCommunity(false));
   if (!isOpen) return null;
 
   const HUB_TRACKING: Record<string, [string, string]> = {
@@ -294,15 +296,15 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      const shareText = `אהלן, כדאי לך להכיר את חובש+ – הכלי המקצועי החדש שלנו בשטח! 🚑
-ריכזנו את כל מה שחובש צריך במקום אחד, נגיש ומהיר:
-✅ מחשבוני כוויות ומדדים בזמן אמת.
-✅ מאגר מידע מפורט על תרופות.
-✅ תקני ציוד מעודכנים (מד"א, איחוד הצלה ומשרד החינוך).
-✅ ניווט מהיר לחדרי מיון.
-✅ אתגר יומי לשמירה על כשירות מקצועית.
+      const shareText = `חובש? פרמדיק? כונן? 🚑
+מצאתי את האפליקציה המושלמת לשטח - 'חובש +'. אפליקציה חינמית לחלוטין וללא פרסומות שיש בה הכל:
+🔥 מחשבון כוויות, חמצן ואפגר
+🗣️ תרגום רפואי בזמן אמת למטופלים
+🎒 פירוט תקני ציוד (BLS וכו')
+📍 ניווט מהיר ישירות לחדרי מיון
+💊 מידע על תרופות, מרכזי הרעלות ועוד.
 
-האפליקציה חינמית לחלוטין וללא פרסומות. שווה לשמור במסך הבית:
+ממליץ בחום שזה יהיה על הטלפון שלכם במשמרת הבאה. להורדה/כניסה:
 https://chovesh-plus.vercel.app/`;
       if (navigator.share) {
         navigator.share({ title: 'חובש+', text: shareText }).catch(() => {});
@@ -321,6 +323,7 @@ https://chovesh-plus.vercel.app/`;
     if (id === 'daily-challenge') onDailyChallengeOpen();
     if (id === 'soul-departure') onSoulDepartureOpen();
     if (id === 'simulators') setShowSimulators(true);
+    if (id === 'whatsapp-community') setShowWhatsAppCommunity(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
   };
 
@@ -525,6 +528,86 @@ https://chovesh-plus.vercel.app/`;
 
       {simFlashcardOpen && (
         <FlashcardTrainer data={SIMULATOR_FLASHCARDS} onClose={() => setSimFlashcardOpen(false)} />
+      )}
+
+      {/* WhatsApp Community Modal */}
+      {showWhatsAppCommunity && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-5"
+          style={{ background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)' }}
+          onClick={() => setShowWhatsAppCommunity(false)}
+        >
+          <div
+            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-green-400/20 shadow-2xl"
+            style={{
+              background: 'linear-gradient(145deg, rgba(18,28,18,0.97) 0%, rgba(12,18,12,0.99) 100%)',
+              backdropFilter: 'blur(28px)',
+              boxShadow: '0 0 70px rgba(74,222,128,0.10), 0 30px 60px rgba(0,0,0,0.55)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Top glow line */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-400/55 to-transparent" />
+
+            {/* Corner glows */}
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-green-600/6 blur-3xl pointer-events-none" />
+
+            {/* Close button */}
+            <HapticButton
+              onClick={() => setShowWhatsAppCommunity(false)}
+              pressScale={0.88}
+              className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/8 border border-white/12 flex items-center justify-center text-gray-400 hover:text-white"
+              aria-label="סגור"
+            >
+              <X size={15} />
+            </HapticButton>
+
+            {/* Content */}
+            <div className="px-6 pt-8 pb-7 flex flex-col items-center gap-4 text-center">
+              {/* Icon */}
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center border border-green-400/30"
+                style={{
+                  background: 'rgba(37,211,102,0.12)',
+                  boxShadow: '0 4px 24px rgba(37,211,102,0.18)',
+                }}
+              >
+                <Users size={32} className="text-green-400" />
+              </div>
+
+              {/* Title */}
+              <h2 className="text-white font-bold text-xl leading-snug">
+                ברוכים הבאים לקהילת חובש + 🚑
+              </h2>
+
+              {/* Body */}
+              <p className="text-gray-300/85 text-sm leading-relaxed">
+                הצטרפו לערוץ העדכונים הרשמי של אפליקציית{' '}
+                <span className="text-green-400 font-bold">חובש +</span>
+                {'. '}המקום שבו חובשים ופרמדיקים מכל הארגונים מקבלים ערך מוסף: טיפים מקצועיים לשטח, עדכונים על כלים ומחשבונים חדשים לפני כולם, ומבצעים בלעדיים על ציוד רפואי.
+              </p>
+
+              {/* CTA */}
+              <a
+                href="https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
+                className="mt-1 block w-full py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                style={{
+                  background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                  boxShadow: '0 4px 22px rgba(37,211,102,0.38)',
+                }}
+              >
+                הצטרפות לערוץ הוואטסאפ
+              </a>
+            </div>
+
+            {/* Bottom glow line */}
+            <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-400/22 to-transparent" />
+          </div>
+        </div>
       )}
     </div>
   );
