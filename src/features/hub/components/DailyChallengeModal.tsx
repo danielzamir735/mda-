@@ -638,7 +638,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   const isAnswered = view === 'answered' && selectedIndex !== null && question !== null;
   const isCorrectAnswer = isAnswered && selectedIndex === question.correct_index;
-  const participantCount = (globalStats?.total ?? 0) + 110;
+  const participantCount = (() => {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    let hash = 0;
+    for (let i = 0; i < today.length; i++) {
+      hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+    }
+    const seed = 70 + (hash % 181); // range [70, 250]
+    return (globalStats?.total ?? 0) + seed;
+  })();
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden">
