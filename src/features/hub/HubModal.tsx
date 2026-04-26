@@ -237,7 +237,6 @@ export default function HubModal({
   onFeedbackOpen,
   onMedicalHistoryOpen,
   onHospitalsOpen,
-  onUpdatesOpen,
   onBagStandardsOpen,
   onMedicationsOpen,
   onCommonMedsOpen,
