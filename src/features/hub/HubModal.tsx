@@ -296,13 +296,16 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      const shareText = `חובש? פרמדיק? כונן? 🚑
+      const shareText = `מע"ר? חובש? פרמדיק? 🚑
 מצאתי את האפליקציה המושלמת לשטח - 'חובש +'. אפליקציה חינמית לחלוטין וללא פרסומות שיש בה הכל:
 🔥 מחשבון כוויות, חמצן ואפגר
 🗣️ תרגום רפואי בזמן אמת למטופלים
 🎒 פירוט תקני ציוד (BLS וכו')
 📍 ניווט מהיר ישירות לחדרי מיון
-💊 מידע על תרופות, מרכזי הרעלות ועוד.
+💊 מידע על תרופות, מרכזי הרעלות ועוד
+⏱️ טיימרים אינטראקטיביים למדידת דופק ונשימה
+🏆 האתגר היומי לשמירה על כשירות
+🎵 מטרונום לקצב לחיצות CPR
 
 ממליץ בחום שזה יהיה על הטלפון שלכם במשמרת הבאה. להורדה/כניסה:
 https://chovesh-plus.vercel.app/`;
@@ -530,82 +533,141 @@ https://chovesh-plus.vercel.app/`;
         <FlashcardTrainer data={SIMULATOR_FLASHCARDS} onClose={() => setSimFlashcardOpen(false)} />
       )}
 
-      {/* WhatsApp Community Modal */}
+      {/* WhatsApp Community — full-screen page */}
       {showWhatsAppCommunity && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-5"
-          style={{ background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(14px)' }}
-          onClick={() => setShowWhatsAppCommunity(false)}
+          className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #071207 0%, #040a04 55%, #020602 100%)' }}
         >
-          <div
-            className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-green-400/20 shadow-2xl"
-            style={{
-              background: 'linear-gradient(145deg, rgba(18,28,18,0.97) 0%, rgba(12,18,12,0.99) 100%)',
-              backdropFilter: 'blur(28px)',
-              boxShadow: '0 0 70px rgba(74,222,128,0.10), 0 30px 60px rgba(0,0,0,0.55)',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Top glow line */}
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-400/55 to-transparent" />
+          {/* Ambient glows — decorative, non-interactive */}
+          <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-green-500/12 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-32 -right-16 w-56 h-56 rounded-full bg-green-600/8 blur-3xl" />
 
-            {/* Corner glows */}
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-green-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-green-600/6 blur-3xl pointer-events-none" />
-
-            {/* Close button */}
+          {/* Header */}
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
+            <div />
             <HapticButton
               onClick={() => setShowWhatsAppCommunity(false)}
               pressScale={0.88}
-              className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/8 border border-white/12 flex items-center justify-center text-gray-400 hover:text-white"
+              className="w-10 h-10 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400"
               aria-label="סגור"
             >
-              <X size={15} />
+              <X size={20} />
             </HapticButton>
+          </div>
 
-            {/* Content */}
-            <div className="px-6 pt-8 pb-7 flex flex-col items-center gap-4 text-center">
-              {/* Icon */}
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto pb-36">
+
+            {/* Hero */}
+            <div className="flex flex-col items-center text-center px-6 pt-2 pb-8">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center border border-green-400/30"
+                className="w-24 h-24 rounded-3xl flex items-center justify-center border border-green-400/35 mb-5"
                 style={{
-                  background: 'rgba(37,211,102,0.12)',
-                  boxShadow: '0 4px 24px rgba(37,211,102,0.18)',
+                  background: 'linear-gradient(135deg, rgba(37,211,102,0.18) 0%, rgba(18,140,126,0.10) 100%)',
+                  boxShadow: '0 0 48px rgba(37,211,102,0.22), 0 8px 32px rgba(0,0,0,0.4)',
                 }}
               >
-                <Users size={32} className="text-green-400" />
+                <Users size={46} className="text-green-400" />
               </div>
-
-              {/* Title */}
-              <h2 className="text-white font-bold text-xl leading-snug">
-                ברוכים הבאים לקהילת חובש + 🚑
-              </h2>
-
-              {/* Body */}
-              <p className="text-gray-300/85 text-sm leading-relaxed">
-                הצטרפו לערוץ העדכונים הרשמי של אפליקציית{' '}
-                <span className="text-green-400 font-bold">חובש +</span>
-                {'. '}המקום שבו חובשים ופרמדיקים מכל הארגונים מקבלים ערך מוסף: טיפים מקצועיים לשטח, עדכונים על כלים ומחשבונים חדשים לפני כולם, ומבצעים בלעדיים על ציוד רפואי.
+              <h1 className="text-white font-bold text-2xl leading-tight mb-1">
+                קהילת חובש + 🚑
+              </h1>
+              <p className="text-green-400/75 text-sm font-medium tracking-wide">
+                ערוץ עדכונים רשמי · WhatsApp
               </p>
-
-              {/* CTA */}
-              <a
-                href="https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
-                className="mt-1 block w-full py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
-                style={{
-                  background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                  boxShadow: '0 4px 22px rgba(37,211,102,0.38)',
-                }}
-              >
-                הצטרפות לערוץ הוואטסאפ
-              </a>
             </div>
 
-            {/* Bottom glow line */}
-            <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-400/22 to-transparent" />
+            {/* Intro banner */}
+            <div
+              className="mx-4 mb-4 rounded-2xl border border-green-400/18 p-4"
+              style={{ background: 'rgba(37,211,102,0.055)' }}
+            >
+              <p className="text-gray-200 text-sm leading-relaxed text-center">
+                הצטרפו לערוץ העדכונים הרשמי של אפליקציית{' '}
+                <span className="text-green-400 font-bold">חובש +</span>
+                {' '}— המקום שבו חובשים, פרמדיקים ומע"רים מכל הארגונים מקבלים ערך מוסף ישירות לטלפון.
+              </p>
+            </div>
+
+            {/* Benefit cards */}
+            <div className="px-4 flex flex-col gap-3">
+              {[
+                {
+                  emoji: '💡',
+                  title: 'טיפים מקצועיים לשטח',
+                  desc: 'פרוטוקולים, תזכורות קליניות ועצות מניסיון שיחסכו לכם שניות קריטיות בשטח',
+                  glow: 'rgba(250,204,21,0.06)',
+                  border: 'rgba(250,204,21,0.15)',
+                },
+                {
+                  emoji: '🆕',
+                  title: 'עדכונים לפני כולם',
+                  desc: 'גלו כלים ומחשבונים חדשים ראשונים, עם הסברים ודוגמאות שימוש מיד בשחרור',
+                  glow: 'rgba(56,189,248,0.06)',
+                  border: 'rgba(56,189,248,0.15)',
+                },
+                {
+                  emoji: '🛒',
+                  title: 'מבצעים בלעדיים לחברי הקהילה',
+                  desc: 'הנחות ועסקאות על ציוד רפואי ואביזרי שטח — רק דרך הערוץ שלנו',
+                  glow: 'rgba(52,211,153,0.06)',
+                  border: 'rgba(52,211,153,0.15)',
+                },
+                {
+                  emoji: '📢',
+                  title: 'פרסומים חשובים בזמן אמת',
+                  desc: 'שינויי פרוטוקול, עדכוני קורסים ומידע שכל איש צוות חייב לדעת',
+                  glow: 'rgba(251,146,60,0.06)',
+                  border: 'rgba(251,146,60,0.15)',
+                },
+                {
+                  emoji: '🤝',
+                  title: 'קהילה מכל הארגונים',
+                  desc: 'מד"א · איחוד הצלה · רפא"ל · מתנדבים — כולם במקום אחד',
+                  glow: 'rgba(167,139,250,0.06)',
+                  border: 'rgba(167,139,250,0.15)',
+                },
+              ].map(({ emoji, title, desc, glow, border }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-3 rounded-2xl p-4"
+                  style={{ background: glow, border: `1px solid ${border}` }}
+                >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
+                    {emoji}
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-white font-bold text-sm leading-tight">{title}</span>
+                    <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* Sticky CTA — floats above scroll with gradient fade */}
+          <div
+            className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
+            style={{ background: 'linear-gradient(to top, #020602 65%, transparent)' }}
+          >
+            <a
+              href="https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
+              className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
+              style={{
+                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                boxShadow: '0 4px 30px rgba(37,211,102,0.45)',
+              }}
+            >
+              הצטרפות לערוץ הוואטסאפ
+            </a>
+            <p className="text-center text-gray-600 text-xs mt-2">
+              ערוץ חד-כיווני · ללא ספאם · ניתן לעזוב בכל עת
+            </p>
           </div>
         </div>
       )}
