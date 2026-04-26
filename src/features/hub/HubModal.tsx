@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Sparkles, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -134,11 +134,11 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'updates',
-    label: 'מה חדש?',
-    icon: Sparkles,
-    color: 'text-emt-yellow',
-    border: 'border-emt-yellow/30',
-    bg: 'bg-emt-yellow/10',
+    label: 'שיתוף האפליקציה',
+    icon: Share2,
+    color: 'text-blue-400',
+    border: 'border-blue-400/30',
+    bg: 'bg-blue-400/10',
   },
   {
     id: 'install-app',
@@ -249,16 +249,9 @@ export default function HubModal({
   onDailyChallengeOpen,
   onSoulDepartureOpen,
 }: Props) {
-  const [hasSeenWhatsNew, setHasSeenWhatsNew] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const { openFullModal } = usePwaInstall();
-
-  useEffect(() => {
-    if (localStorage.getItem('whatsNew_v2_seen') === 'true') {
-      setHasSeenWhatsNew(true);
-    }
-  }, []);
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
@@ -277,7 +270,7 @@ export default function HubModal({
     clinical:                     ['vitals_reference_table','medical_knowledge'],
     medhistory:                   ['background_illnesses',  'medical_knowledge'],
     hospitals:                    ['hospital_info',         'emergency_info'],
-    updates:                      ['whats_new',             'navigation'],
+    updates:                      ['share_app',             'utility'],
     'kit-standards':              ['bag_standards',         'tools'],
     'medications-classification': ['medication_groups',     'medical_knowledge'],
     'common-meds':                ['common_medications',    'medical_knowledge'],
@@ -302,9 +295,21 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      localStorage.setItem('whatsNew_v2_seen', 'true');
-      setHasSeenWhatsNew(true);
-      onUpdatesOpen();
+      const shareText = `אהלן, כדאי לך להכיר את חובש+ – הכלי המקצועי החדש שלנו בשטח! 🚑
+ריכזנו את כל מה שחובש צריך במקום אחד, נגיש ומהיר:
+✅ מחשבוני כוויות ומדדים בזמן אמת.
+✅ מאגר מידע מפורט על תרופות.
+✅ תקני ציוד מעודכנים (מד"א, איחוד הצלה ומשרד החינוך).
+✅ ניווט מהיר לחדרי מיון.
+✅ אתגר יומי לשמירה על כשירות מקצועית.
+
+האפליקציה חינמית לחלוטין וללא פרסומות. שווה לשמור במסך הבית:
+https://chovesh-plus.vercel.app/`;
+      if (navigator.share) {
+        navigator.share({ title: 'חובש+', text: shareText }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(shareText).catch(() => {});
+      }
     }
     if (id === 'kit-standards') onBagStandardsOpen();
     if (id === 'medications-classification') onMedicationsOpen();
@@ -351,9 +356,6 @@ export default function HubModal({
 
             const content = (
               <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
-                {id === 'updates' && !hasSeenWhatsNew && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse z-10" />
-                )}
                 <Icon size={36} className={color} />
                 <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
                 {subtitle && (
