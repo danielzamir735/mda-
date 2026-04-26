@@ -308,7 +308,7 @@ export default function HubModal({
 🎵 מטרונום לקצב לחיצות CPR
 
 ממליץ בחום שזה יהיה על הטלפון שלכם במשמרת הבאה. להורדה/כניסה:
-https://chovesh-plus.vercel.app/`;
+https://hovesh-plus.vercel.app/`;
       if (navigator.share) {
         navigator.share({ title: 'חובש+', text: shareText }).catch(() => {});
       } else {
@@ -653,7 +653,7 @@ https://chovesh-plus.vercel.app/`;
             style={{ background: 'linear-gradient(to top, #020602 65%, transparent)' }}
           >
             <a
-              href="https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
+              href="href=https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
