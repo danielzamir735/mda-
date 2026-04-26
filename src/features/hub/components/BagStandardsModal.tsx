@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw, Clock } from 'lucide-react';
+import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 
@@ -189,6 +189,83 @@ const BAGS: Bag[] = [
   },
 ];
 
+const HATZALAH_CATEGORIES: MDACategory[] = [
+  {
+    id: 'trauma',
+    title: 'חבישה וטראומה',
+    color: 'text-amber-400',
+    border: 'border-amber-400/30',
+    bg: 'bg-amber-400/10',
+    items: [
+      { name: 'חסם עורקים', qty: '1' },
+      { name: 'פלסטרים', qty: '10' },
+      { name: 'אגד חבישה - גלילים', qty: '5' },
+      { name: 'פדי גזה סטרילי 10×10', qty: '20' },
+      { name: 'שמיכת מילוט', qty: '1' },
+      { name: 'סביעור/אלכוקסידין 100 מ"ל', qty: '1' },
+      { name: 'טרנספר - לויקופלסט', qty: '1' },
+      { name: 'תחבושת אלסטית', qty: '1' },
+      { name: 'תחבושת אישית', qty: '3' },
+      { name: 'משולש', qty: '4' },
+      { name: 'מלע"כ מקצועי', qty: '1' },
+    ],
+  },
+  {
+    id: 'airway',
+    title: 'הנשמה וחמצן',
+    color: 'text-sky-400',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+    items: [
+      { name: 'בלון חמצן 2.4 ליטר', qty: '1' },
+      { name: 'ווסת', qty: '1' },
+      { name: 'סקשן ידני + 2 מחברים', qty: '1' },
+      { name: 'מפוח הנשמה סיליקון מבוגר + מסכה 5', qty: '1' },
+      { name: 'מפוח הנשמה סיליקון ילד + מסכה 2', qty: '1' },
+      { name: "מסכת הנשמה סיליקון מס' 0", qty: '2' },
+      { name: "סט מנתבי אוויר 00-4", qty: '1' },
+      { name: 'מסנן ויראלי מבוגר', qty: '1' },
+      { name: 'מסנן ויראלי ילד', qty: '1' },
+      { name: 'מסיכת חמצן מבוגר + שקית', qty: '3' },
+      { name: 'מסיכת חמצן ילד + שקית', qty: '2' },
+    ],
+  },
+  {
+    id: 'meds',
+    title: 'אבחון, עירוי ותרופות',
+    color: 'text-rose-400',
+    border: 'border-rose-400/30',
+    bg: 'bg-rose-400/10',
+    items: [
+      { name: 'אספירין 100 מ"ג', qty: '10' },
+      { name: "גלוקוג'ל", qty: '2' },
+      { name: 'סליין 0.5 ליטר', qty: '1' },
+      { name: 'סט שטיפה לעירוי', qty: '1' },
+      { name: 'וונפלונים (כחול 2, ירוק 2, ורוד 2)', qty: '6' },
+      { name: 'מדל"ד + סטטוסקופ מבוגר', qty: '1' },
+      { name: 'מדל"ד + סטטוסקופ ילד', qty: '1' },
+      { name: 'קטטר לסקשן אדום 18', qty: '2' },
+      { name: 'קטטר לסקשן כחול 8', qty: '2' },
+    ],
+  },
+  {
+    id: 'general',
+    title: 'כללי',
+    color: 'text-violet-400',
+    border: 'border-violet-400/30',
+    bg: 'bg-violet-400/10',
+    items: [
+      { name: 'כפפות L', qty: '30' },
+      { name: "ספונג'טה לחיטוי", qty: '10' },
+      { name: 'מסכת הגנה לפנים', qty: '1' },
+      { name: 'חומר לחיטוי ידיים', qty: '1' },
+      { name: 'פחי מחטים 0.6 ליטר', qty: '1' },
+      { name: 'צווארון מתכוונן מבוגר', qty: '1' },
+      { name: 'ערכת לידה', qty: '1' },
+    ],
+  },
+];
+
 const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'meds',
@@ -275,6 +352,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [activeStandard, setActiveStandard] = useState<Standard>('moh');
   const [mdaCheckedItems, setMdaCheckedItems] = useState<Record<string, boolean>>({});
+  const [hatzalahCheckedItems, setHatzalahCheckedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!selectedBag) return;
@@ -285,6 +363,11 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   useEffect(() => {
     const stored = localStorage.getItem('mda-kit-checklist');
     setMdaCheckedItems(stored ? JSON.parse(stored) : {});
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('hatzalah-kit-checklist');
+    setHatzalahCheckedItems(stored ? JSON.parse(stored) : {});
   }, []);
 
   const clearChecklist = () => {
@@ -311,6 +394,19 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const clearMdaChecklist = () => {
     setMdaCheckedItems({});
     localStorage.removeItem('mda-kit-checklist');
+  };
+
+  const toggleHatzalahItem = (key: string) => {
+    setHatzalahCheckedItems((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('hatzalah-kit-checklist', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clearHatzalahChecklist = () => {
+    setHatzalahCheckedItems({});
+    localStorage.removeItem('hatzalah-kit-checklist');
   };
 
   useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
@@ -407,9 +503,9 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           <ChevronRight size={20} />
         </button>
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('bagStandardsTitle')}</h2>
-        {activeStandard === 'mda' ? (
+        {activeStandard === 'mda' || activeStandard === 'hatzalah' ? (
           <button
-            onClick={clearMdaChecklist}
+            onClick={activeStandard === 'mda' ? clearMdaChecklist : clearHatzalahChecklist}
             className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
@@ -513,19 +609,48 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           </div>
         )}
 
-        {/* Hatzalah — coming soon */}
+        {/* Hatzalah — interactive checklist by category */}
         {activeStandard === 'hatzalah' && (
-          <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4 text-center">
-            <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center"
-              style={{ background: 'rgba(120,120,128,0.12)' }}
-            >
-              <Clock size={36} className="text-gray-400 dark:text-emt-muted" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <p className="text-lg font-bold text-gray-900 dark:text-emt-light" dir="rtl">בקרוב</p>
-              <p className="text-sm text-gray-500 dark:text-emt-muted" dir="rtl">תקן איחוד הצלה יתווסף בקרוב</p>
-            </div>
+          <div className="flex flex-col gap-4" dir="rtl">
+            {HATZALAH_CATEGORIES.map((cat) => {
+              const checkedCount = cat.items.filter((_, i) => hatzalahCheckedItems[`${cat.id}-${i}`]).length;
+              return (
+                <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
+                  <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
+                    <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+                    <span className={`text-xs font-medium ${cat.color} opacity-70`}>
+                      {checkedCount}/{cat.items.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
+                    {cat.items.map((item, i) => {
+                      const key = `${cat.id}-${i}`;
+                      const isChecked = !!hatzalahCheckedItems[key];
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => toggleHatzalahItem(key)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-right transition-colors active:scale-[0.98] ${
+                            isChecked ? 'opacity-60' : ''
+                          }`}
+                          dir="rtl"
+                        >
+                          {isChecked
+                            ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                            : <Circle size={18} className="text-gray-300 dark:text-slate-600 shrink-0" />}
+                          <span className={`flex-1 text-sm font-medium text-right ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
+                            {item.name}
+                          </span>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
+                            {item.qty}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
