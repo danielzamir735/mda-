@@ -1,6 +1,7 @@
 import { X, Phone, MessageCircle, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
           </p>
           <a
             href="tel:047771900"
+            onClick={() => trackEvent('poison_center_call', { center: 'rambam' })}
             className="flex items-center justify-center gap-3 py-4 rounded-xl
                        bg-emt-red text-white font-bold text-2xl active:scale-95 transition-transform shadow-md"
           >
@@ -57,6 +59,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
           </p>
           <a
             href="tel:089779309"
+            onClick={() => trackEvent('poison_center_call', { center: 'assaf_harofeh' })}
             className="flex items-center justify-center gap-3 py-3 rounded-xl
                        bg-orange-500 text-white font-bold text-xl active:scale-95 transition-transform shadow-md"
           >
@@ -74,6 +77,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
             href="https://wa.me/972502063304"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackEvent('poison_center_whatsapp')}
             className="flex items-center justify-center gap-3 py-3 rounded-xl
                        bg-green-600 text-white font-bold text-xl active:scale-95 transition-transform shadow-md"
           >

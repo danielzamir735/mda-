@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Activity } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -44,10 +45,21 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [scores, setScores] = useState<Record<string, number>>({});
 
+  useEffect(() => {
+    if (isOpen) trackInteraction('apgar_calculator', 'calculators');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const set = (id: string, val: number) =>
-    setScores(prev => ({ ...prev, [id]: val }));
+  const set = (id: string, val: number) => {
+    const next = { ...scores, [id]: val };
+    setScores(next);
+    if (Object.keys(next).length === 5) {
+      const t = Object.values(next).reduce((a, b) => a + b, 0);
+      const sev = t <= 3 ? 'red' : t <= 6 ? 'yellow' : 'green';
+      trackEvent('calculate_apgar', { score: t, severity: sev });
+    }
+  };
 
   const answered = Object.keys(scores).length;
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
@@ -143,7 +155,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
 
         {/* Reset */}
         <button
-          onClick={() => setScores({})}
+          onClick={() => { setScores({}); trackEvent('apgar_reset'); }}
           className="w-full py-3 rounded-2xl border border-gray-200 dark:border-emt-border
                      bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted
                      font-bold text-sm active:scale-95 transition-transform"

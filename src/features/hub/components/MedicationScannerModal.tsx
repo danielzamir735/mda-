@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackEvent } from '../../../utils/analytics';
 
 const SYSTEM_PROMPT =
   'אתה סוכן AI רפואי מקצועי. תפקידך לזהות תרופות מתמונה או טקסט.\n' +
@@ -185,6 +186,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     setState('loading');
     setResultText('');
     setPreview(null);
+    trackEvent('med_scan_text', { query_length: query.length });
 
     try {
       const model = getModel();
@@ -208,6 +210,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     setPreview(URL.createObjectURL(file));
     setState('loading');
     setResultText('');
+    trackEvent('med_scan_photo');
 
 
     try {

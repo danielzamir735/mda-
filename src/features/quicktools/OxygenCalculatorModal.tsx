@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Wind } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useTranslation } from '../../hooks/useTranslation';
+import { trackEvent } from '../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -36,6 +37,13 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
       ? Math.floor((pressureNum * volumeNum) / flowNum)
       : Math.floor(((pressureNum / 15) * volumeNum) / flowNum);
   }
+
+  useEffect(() => {
+    if (minutes !== null) {
+      trackEvent('calculate_oxygen_time', { minutes, unit: pressureUnit });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minutes]);
 
   const handleReset = () => { setPressure(''); setVolume(''); setFlow(''); };
 

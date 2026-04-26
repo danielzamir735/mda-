@@ -3,6 +3,7 @@ import { ChevronRight, Timer, History, X, Trash2, ChevronDown } from 'lucide-rea
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContractionStore } from '../../../store/contractionStore';
 import type { ContractionSession } from '../../../store/contractionStore';
+import { trackEvent } from '../../../utils/analytics';
 
 // ── Audio feedback via Web Audio API (no file needed, silent on error) ─────
 function playBeep(frequency = 660, duration = 0.12, volume = 0.07) {
@@ -103,9 +104,11 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
     if (!active) {
       playBeep(660, 0.12, 0.07);   // higher tone = start
       startContraction();
+      trackEvent('contraction_start');
     } else {
       playBeep(440, 0.18, 0.07);   // lower tone = stop
       endContraction();
+      trackEvent('contraction_stop', { duration_sec: elapsed });
     }
   };
 

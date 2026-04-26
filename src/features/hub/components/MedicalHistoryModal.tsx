@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, BookHeart, Search, Plus, Trash2, Tablet, BookOpen, ChevronDown, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 import { MEDICAL_CATEGORIES, TABLET_CATEGORIES } from '../data/medicalTerms';
 import { useMedicalHistoryStore } from '../../../store/medicalHistoryStore';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
@@ -27,6 +28,10 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
   const [trainerOpen, setTrainerOpen] = useState(false);
   const { customItems, addItem, removeItem } = useMedicalHistoryStore();
 
+  useEffect(() => {
+    if (isOpen) trackInteraction('medical_history', 'reference');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const q = query.trim().toLowerCase();
@@ -50,6 +55,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
     addItem(he, en);
     setNewHe('');
     setNewEn('');
+    trackEvent('medical_history_add_custom');
   };
 
   const Row = ({
@@ -188,7 +194,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
         {/* Flashcard trainer trigger — general view only */}
         {view === 'general' && (
           <button
-            onClick={() => setTrainerOpen(true)}
+            onClick={() => { setTrainerOpen(true); trackEvent('open_flashcard_trainer', { tool: 'medical_history' }); }}
             className="w-full rounded-2xl border border-purple-400/30 bg-purple-500/8 dark:bg-purple-500/10
                        backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
                        active:scale-[0.98] transition-transform"

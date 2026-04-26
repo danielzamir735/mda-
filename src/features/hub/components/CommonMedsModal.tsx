@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Pill, Search, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 
 interface Med {
   name: string;
@@ -118,6 +119,11 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const [query, setQuery] = useState('');
   const [trainerOpen, setTrainerOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) trackInteraction('common_meds', 'reference');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const q = query.trim().toLowerCase();
@@ -174,7 +180,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
 
         {/* Flashcard trainer trigger */}
         <button
-          onClick={() => setTrainerOpen(true)}
+          onClick={() => { setTrainerOpen(true); trackEvent('open_flashcard_trainer', { tool: 'common_meds' }); }}
           className="w-full rounded-2xl border border-emerald-400/30 bg-emerald-500/8 dark:bg-emerald-500/10
                      backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
                      active:scale-[0.98] transition-transform"

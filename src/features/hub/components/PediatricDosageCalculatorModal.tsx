@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Baby, AlertCircle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -108,7 +109,10 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
   }
 
   function handleCalculate() {
-    if (displayWeight && displayWeight > 0) setCalculated(true);
+    if (displayWeight && displayWeight > 0) {
+      setCalculated(true);
+      trackEvent('calculate_pediatric_dosage', { weight: displayWeight, is_estimated: isEstimated });
+    }
   }
 
   const w = displayWeight ?? 0;

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, BookOpen, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -37,6 +38,11 @@ const FLASHCARD_DATA: FlashcardItem[] = ROWS.flatMap((row) => [
 export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
   const [trainerOpen, setTrainerOpen] = useState(false);
   useModalBackHandler(isOpen, onClose);
+
+  useEffect(() => {
+    if (isOpen) trackInteraction('vitals_reference', 'reference');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -64,7 +70,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
 
           {/* ── Flashcard Trainer Trigger ── */}
           <button
-            onClick={() => setTrainerOpen(true)}
+            onClick={() => { setTrainerOpen(true); trackEvent('open_flashcard_trainer', { tool: 'vitals_reference' }); }}
             className="w-full mb-4 rounded-2xl border border-purple-400/30 bg-purple-500/8 dark:bg-purple-500/10
                        backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
                        active:scale-[0.98] transition-transform"

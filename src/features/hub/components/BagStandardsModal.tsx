@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { trackEvent } from '../../../utils/analytics';
 
 interface BagItem {
   name: string;
@@ -415,6 +416,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
   const handleSelectBag = (bag: Bag) => {
     setSelectedBag(bag);
+    trackEvent('bag_standards_view', { bag_id: bag.id, bag_title: bag.title });
     window.history.pushState({ bagDetail: true }, '');
   };
 
@@ -527,7 +529,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           {STANDARDS.map(({ id, label }) => (
             <button
               key={id}
-              onClick={() => setActiveStandard(id)}
+              onClick={() => { setActiveStandard(id); trackEvent('bag_standards_tab', { standard: id }); }}
               className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-bold transition-all duration-200 active:scale-95 leading-tight ${
                 activeStandard === id
                   ? 'bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light shadow-sm'

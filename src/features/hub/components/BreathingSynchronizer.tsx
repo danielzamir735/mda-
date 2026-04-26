@@ -2,6 +2,7 @@ import { X, Wind, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
+import { trackInteraction } from '../../../utils/analytics';
 
 type Phase = 'idle' | 'inhale' | 'exhale';
 
@@ -163,6 +164,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
   const handleStart = async () => {
     setRunning(true);
+    trackInteraction('breathing_synchronizer', 'wellness');
     try {
       wakeLockRef.current = await navigator.wakeLock.request('screen');
     } catch { /* wake lock not supported or denied — silently ignore */ }

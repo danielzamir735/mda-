@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, RefreshCw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -20,12 +21,14 @@ export default function BarPsiConverterModal({ isOpen, onClose }: Props) {
     setBarValue(val);
     if (val === '' || isNaN(Number(val))) { setPsiValue(''); return; }
     setPsiValue(String(+(parseFloat(val) * BAR_TO_PSI).toFixed(2)));
+    trackEvent('convert_bar_psi', { direction: 'bar_to_psi' });
   };
 
   const handlePsiChange = (val: string) => {
     setPsiValue(val);
     if (val === '' || isNaN(Number(val))) { setBarValue(''); return; }
     setBarValue(String(+(parseFloat(val) / BAR_TO_PSI).toFixed(2)));
+    trackEvent('convert_bar_psi', { direction: 'psi_to_bar' });
   };
 
   const inputCls =

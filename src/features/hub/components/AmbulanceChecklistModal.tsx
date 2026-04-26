@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ChevronDown, ChevronUp, ChevronRight, RotateCcw,
   Eye, Trash2, Plus, Check, X,
@@ -6,6 +6,7 @@ import {
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useChecklistStore } from '../../../store/checklistStore';
 import { AMBULANCE_CHECKLIST } from '../data/ambulanceChecklistData';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -42,6 +43,22 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
     [customItems],
   );
 
+  // Progress counts only visible (non-hidden) items
+  const allVisible = mergedCategories.flatMap((cat) => cat.items.filter((i) => !hiddenItems[i.id]));
+  const totalItems = allVisible.length;
+  const checkedCount = allVisible.filter((i) => checkedItems[i.id]).length;
+  const progress = totalItems > 0 ? (checkedCount / totalItems) * 100 : 0;
+  const isComplete = totalItems > 0 && checkedCount === totalItems;
+
+  useEffect(() => {
+    if (isOpen) trackInteraction('ambulance_checklist', 'tools');
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isComplete) trackEvent('checklist_complete', { total: totalItems });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isComplete]);
+
   if (!isOpen) return null;
 
   // Display set: customize mode shows everything; normal mode filters hidden & empty categories
@@ -50,13 +67,6 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
     : mergedCategories
         .map((cat) => ({ ...cat, items: cat.items.filter((item) => !hiddenItems[item.id]) }))
         .filter((cat) => cat.items.length > 0);
-
-  // Progress counts only visible (non-hidden) items
-  const allVisible = mergedCategories.flatMap((cat) => cat.items.filter((i) => !hiddenItems[i.id]));
-  const totalItems = allVisible.length;
-  const checkedCount = allVisible.filter((i) => checkedItems[i.id]).length;
-  const progress = totalItems > 0 ? (checkedCount / totalItems) * 100 : 0;
-  const isComplete = totalItems > 0 && checkedCount === totalItems;
 
   const toggleCategory = (id: string) =>
     setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));

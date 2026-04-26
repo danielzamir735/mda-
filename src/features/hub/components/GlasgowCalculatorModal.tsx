@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Brain, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
+import { trackInteraction, trackEvent } from '../../../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -107,6 +108,10 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
   const [verbal, setVerbal] = useState<number>(() => readLS('lastGcsVerbal', 5));
   const [motor,  setMotor]  = useState<number>(() => readLS('lastGcsMotor',  6));
 
+  useEffect(() => {
+    if (isOpen) trackInteraction('gcs_calculator', 'calculators');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleEyes   = (v: number) => { setEyes(v);   writeLS('lastGcsEyes',   v); };
@@ -121,6 +126,7 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
     handleEyes(4);
     handleVerbal(5);
     handleMotor(6);
+    trackEvent('gcs_reset');
   };
 
   return (

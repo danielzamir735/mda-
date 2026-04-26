@@ -3,6 +3,7 @@ import { X, Search, Navigation } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
+import { trackEvent } from '../../../utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -72,6 +73,7 @@ function NearestERButton() {
           href="https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent('hospital_nav_nearest_er')}
           className="relative z-10 flex flex-col items-center justify-center gap-1.5
                      w-28 h-28 rounded-full text-white font-black text-center
                      active:scale-90 transition-transform"
