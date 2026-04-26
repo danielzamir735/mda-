@@ -653,7 +653,7 @@ https://hovesh-plus.vercel.app/`;
             style={{ background: 'linear-gradient(to top, #020602 65%, transparent)' }}
           >
             <a
-              href="https://whatsapp.com/channel/0029VbC2u2l1CYoaUdUhCv2N"
+              href="https://whatsapp.com/channel/0029Vb83OlqCBtxAbvGHzH1J"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
