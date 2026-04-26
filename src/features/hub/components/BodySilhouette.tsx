@@ -76,14 +76,24 @@ interface SilhouetteProps {
   onToggle: (id: BodyPartId) => void;
   labelLookup: Record<string, string>;
   scale?: number;
+  childProportions?: boolean;
 }
 
 // One full silhouette (front OR back), absolute-positioned in a logical 160×380
 // canvas. Each part's width × height matches the SVG viewBox aspect ratio so the
 // path fills the container edge-to-edge — that's what eliminates the gaps.
-export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1 }: SilhouetteProps) {
+export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, childProportions = false }: SilhouetteProps) {
   const W = 160;
   const H = 380;
+
+  // Child-proportioned layout: slimmer legs and torso shifted down 8px to open
+  // a clean 2px neck gap (head bottom = y:66, torso top = y:68).
+  const torsoTop     = childProportions ? 68  : 60;
+  const armTop       = childProportions ? 78  : 70;
+  const legTop       = childProportions ? 193 : 185;
+  const legW         = childProportions ? 28  : 38;
+  const rightLegLeft = childProportions ? 52  : 42;
+  const leftLegLeft  = childProportions ? 80  : 80;
 
   const idHead  = `head_${side}`      as BodyPartId;
   const idTorso = `torso_${side}`     as BodyPartId;
@@ -131,29 +141,29 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1 }:
 
           {/* RIGHT ARM — left side of diagram. Mirrored shoulder lands at canvas x≈36-46,
                giving ~2px overlap with torso left edge (44) — snug, not crushing. */}
-          <div className="absolute" style={{ left: 15, top: 70, width: 34, height: 111 }}>
+          <div className="absolute" style={{ left: 15, top: armTop, width: 34, height: 111 }}>
             <PartButton svg={rightArmSvgRaw} selected={selected.has(idRArm)} onClick={() => onToggle(idRArm)} width={34} height={111} ariaLabel={labelLookup[idRArm]} mirrored={mirror} />
           </div>
 
           {/* LEFT ARM — right side of diagram. Mirrored shoulder lands at canvas x≈115-123,
                giving ~1px overlap with torso right edge (116) — snug, not crushing. */}
-          <div className="absolute" style={{ left: 111, top: 70, width: 34, height: 111 }}>
+          <div className="absolute" style={{ left: 111, top: armTop, width: 34, height: 111 }}>
             <PartButton svg={leftArmSvgRaw} selected={selected.has(idLArm)} onClick={() => onToggle(idLArm)} width={34} height={111} ariaLabel={labelLookup[idLArm]} mirrored={mirror} />
           </div>
 
           {/* TORSO — paints over arm shoulders + head neck for a clean silhouette. 798×1443 aspect. */}
-          <div className="absolute" style={{ left: 44, top: 60, width: 72, height: 130 }}>
+          <div className="absolute" style={{ left: 44, top: torsoTop, width: 72, height: 130 }}>
             <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={labelLookup[idTorso]} mirrored={mirror} />
           </div>
 
           {/* RIGHT LEG — left half under torso. 359×1749 aspect. */}
-          <div className="absolute" style={{ left: 42, top: 185, width: 38, height: 185 }}>
-            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={38} height={185} ariaLabel={labelLookup[idRLeg]} mirrored={mirror} />
+          <div className="absolute" style={{ left: rightLegLeft, top: legTop, width: legW, height: 185 }}>
+            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={legW} height={185} ariaLabel={labelLookup[idRLeg]} mirrored={mirror} />
           </div>
 
           {/* LEFT LEG — right half under torso. */}
-          <div className="absolute" style={{ left: 80, top: 185, width: 38, height: 185 }}>
-            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={38} height={185} ariaLabel={labelLookup[idLLeg]} mirrored={mirror} />
+          <div className="absolute" style={{ left: leftLegLeft, top: legTop, width: legW, height: 185 }}>
+            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={legW} height={185} ariaLabel={labelLookup[idLLeg]} mirrored={mirror} />
           </div>
         </div>
       </div>
