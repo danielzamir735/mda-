@@ -35,7 +35,6 @@ import DailyChallengeModal from '../hub/components/DailyChallengeModal';
 import WelcomeModal from '../../components/WelcomeModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
-import UpdateAnnouncementModal from '../../components/UpdateAnnouncementModal';
 import LanguageBridgeModal from '../translators/LanguageBridgeModal';
 import SoulDepartureModal from '../hub/components/SoulDepartureModal';
 
@@ -280,7 +279,6 @@ export default function VitalsFeature() {
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
       <LanguageBridgeModal isOpen={languageBridgeOpen} onClose={() => setLanguageBridgeOpen(false)} />
       <SoulDepartureModal isOpen={soulDepartureOpen} onClose={() => { setSoulDepartureOpen(false); setHubOpen(true); }} />
-      <UpdateAnnouncementModal />
     </div>
   );
 }
