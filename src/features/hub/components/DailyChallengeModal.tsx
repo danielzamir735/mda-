@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
-  Share2, Pill, BookOpen, AlertTriangle, Zap, Flame, Star,
+  Share2, Pill, BookOpen, AlertTriangle, Zap, Flame, Star, ChevronLeft,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,7 @@ import { supabase } from '../../../lib/supabase';
 
 type ClinicalCategory = 'bls' | 'als';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
+type BlockId = 'A' | 'B' | 'C' | 'D';
 
 interface ClinicalQuestion {
   question: string;
@@ -25,6 +26,9 @@ interface ClinicalQuestion {
 interface MedOfDay {
   name: string;
   drug_class: string;
+  question: string;
+  options: string[];
+  correct_index: number;
   clinical_pearl: string;
   emergency_note: string;
 }
@@ -49,7 +53,6 @@ interface DayCache<T> {
   date: string;
   data: T;
   answeredIdx?: number | null;
-  completed?: boolean;
   timeTaken?: number;
 }
 
@@ -82,7 +85,7 @@ function getSessionId(): string {
 const CACHE_KEYS = {
   bls: 'daily_challenge_bls_v6',
   als: 'daily_challenge_als_v6',
-  med: 'daily_challenge_med_v2',
+  med: 'daily_challenge_med_v3',
   abbr: 'daily_challenge_abbr_v2',
   red_flag: 'daily_challenge_redflag_v2',
 } as const;
@@ -121,20 +124,24 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
   als: buildClinicalPrompt('ALS'),
 };
 
-const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור אובייקט JSON של "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-בחר תרופת בית נפוצה שמטופלים עשויים לקחת (כגון: Eliquis, Xarelto, Aspirin, Clopidogrel, Warfarin, Bisoprolol, Metoprolol, Amlodipine, Furosemide, Metformin, Empagliflozin, Levothyroxine, Omeprazole, Atorvastatin, Losartan, Ramipril, Digoxin, Amiodarone, Allopurinol, Prednisolone).
-בחר תרופה שונה מדי יום (גיוון הכרחי).
+const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
+בחר תרופת בית נפוצה (כגון: Eliquis, Xarelto, Aspirin, Clopidogrel, Warfarin, Bisoprolol, Metoprolol, Amlodipine, Furosemide, Metformin, Empagliflozin, Levothyroxine, Omeprazole, Atorvastatin, Losartan, Ramipril, Digoxin, Amiodarone, Prednisolone).
+בחר תרופה שונה מדי יום. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
 פלט JSON בלבד, ללא markdown:
 {
   "name": "שם מסחרי ישראלי + גנרי — לדוגמה: אליקוויס (Apixaban)",
-  "drug_class": "קבוצה ומנגנון פעולה קצר — לדוגמה: NOAC — מעכב פקטור Xa, מדלל דם חדש",
-  "clinical_pearl": "דגש קליני חשוב למדיק (1-2 משפטים בעברית מקצועית — מה רלוונטי בשדה)",
-  "emergency_note": "אזהרת חירום ספציפית (1-2 משפטים) — מה לצפות ולזהות כשמטופל על תרופה זו"
+  "drug_class": "קבוצה ומנגנון קצר — לדוגמה: NOAC — מעכב פקטור Xa",
+  "question": "שאלת MCQ על הסכנה/אינדיקציה/זהירות — לדוגמה: מטופל על אליקוויס חווה טראומה בטנית. מה החשש הקריטי ביותר?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "clinical_pearl": "דגש קליני חשוב למדיק (1-2 משפטים)",
+  "emergency_note": "אזהרת חירום ספציפית (1-2 משפטים)"
 }`;
 
 const ABBR_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. צור שאלת MCQ על קיצור רפואי חשוב בעולם ההצלה הישראלי.
-בחר קיצור מהרשימה: GCS, AVPU, FAST, OPQRST, SAMPLE, MIST, AED, BVM, CPAP, PEEP, MAP, SpO2, EtCO2, IM, IV, IO, ROSC, PEA, VF, VT, SVT, CVA, MI, AMI, STEMI, NSTEMI, CHF, COPD, DKA, AVPU, MCI, TRIAGE, START, JVD, EMT, MICU, HR, BP, RR, GCS, LOC.
+בחר קיצור מהרשימה: GCS, AVPU, FAST, OPQRST, SAMPLE, MIST, AED, BVM, CPAP, PEEP, MAP, SpO2, EtCO2, IM, IV, IO, ROSC, PEA, VF, VT, SVT, CVA, MI, AMI, STEMI, NSTEMI, CHF, COPD, DKA, MCI, JVD, EMT, MICU, HR, BP, RR, LOC.
 ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 פלט JSON בלבד, ללא markdown:
 {
@@ -168,8 +175,8 @@ function loadCache<T>(key: string): DayCache<T> | null {
   } catch { return null; }
 }
 
-function saveCache<T>(key: string, data: T, answeredIdx?: number | null, completed?: boolean, timeTaken?: number) {
-  localStorage.setItem(key, JSON.stringify({ date: getToday(), data, answeredIdx, completed, timeTaken }));
+function saveCache<T>(key: string, data: T, answeredIdx?: number | null, timeTaken?: number) {
+  localStorage.setItem(key, JSON.stringify({ date: getToday(), data, answeredIdx, timeTaken }));
 }
 
 function loadCachedStats(cat: ClinicalCategory): GlobalStats | null {
@@ -254,7 +261,9 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
 
 async function generateMed(): Promise<MedOfDay> {
   const m = await withRetry(() => parseGeminiJSON<MedOfDay>(MED_PROMPT));
-  if (!m.name || !m.drug_class || !m.clinical_pearl || !m.emergency_note) throw new Error('Invalid med format');
+  if (!m.name || !m.drug_class || !m.question || !Array.isArray(m.options) || m.options.length !== 4 || typeof m.correct_index !== 'number') {
+    throw new Error('Invalid med format');
+  }
   return m;
 }
 
@@ -376,19 +385,28 @@ async function shareChallengeResult(score: number): Promise<void> {
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+const gridVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.02 } },
+  exit: { opacity: 0, scale: 0.97, transition: { duration: 0.15 } },
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 22, scale: 0.96 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 260, damping: 22 } },
+const gridCardVariants = {
+  hidden: { opacity: 0, scale: 0.93, y: 14 },
+  show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } },
 };
 
-// ─── MCQ Options (reusable for blocks A, C, D) ────────────────────────────────
+const expandedVariants = {
+  hidden: { opacity: 0, x: 28 },
+  show: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 320, damping: 28 } },
+  exit: { opacity: 0, x: 28, transition: { duration: 0.14 } },
+};
+
+// ─── HEBREW_LETTERS ───────────────────────────────────────────────────────────
 
 const HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד'];
+
+// ─── MCQ Options ──────────────────────────────────────────────────────────────
 
 function MCQOptions({
   options,
@@ -533,15 +551,18 @@ function ExplanationModal({ explanation, category, isCorrect, onClose }: {
   );
 }
 
-// ─── Generic Explanation Modal (for C, D blocks) ──────────────────────────────
+// ─── Simple Explanation Modal ─────────────────────────────────────────────────
 
 function SimpleExplanationModal({ explanation, isCorrect, accentColor = 'purple', onClose }: {
   explanation: string;
   isCorrect: boolean;
-  accentColor?: 'purple' | 'orange';
+  accentColor?: 'purple' | 'orange' | 'green';
   onClose: () => void;
 }) {
-  const borderColor = accentColor === 'purple' ? 'border-purple-500/30 from-purple-900/20' : 'border-orange-500/30 from-orange-900/20';
+  const borderColor =
+    accentColor === 'purple' ? 'border-purple-500/30 from-purple-900/20' :
+    accentColor === 'orange' ? 'border-orange-500/30 from-orange-900/20' :
+    'border-green-500/30 from-green-900/20';
 
   return (
     <motion.div
@@ -599,7 +620,6 @@ function SuccessScreen({ score, streak, onClose }: {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 240, damping: 20, delay: 0.05 }}
       >
-        {/* Stars */}
         <div className="flex items-center gap-2">
           {[0, 1, 2, 3].map((i) => (
             <motion.div
@@ -616,7 +636,6 @@ function SuccessScreen({ score, streak, onClose }: {
           ))}
         </div>
 
-        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -629,7 +648,6 @@ function SuccessScreen({ score, streak, onClose }: {
           <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/4 בלוקים נכונים</p>
         </motion.div>
 
-        {/* Streak */}
         {streak > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -645,7 +663,6 @@ function SuccessScreen({ score, streak, onClose }: {
           </motion.div>
         )}
 
-        {/* Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -679,71 +696,95 @@ function SuccessScreen({ score, streak, onClose }: {
   );
 }
 
-// ─── Block Card wrapper ───────────────────────────────────────────────────────
+// ─── Grid Card ────────────────────────────────────────────────────────────────
 
-function BlockCard({ neonBorder, glowColor, bg, icon, blockLabel, blockTitle, labelColor, status, isAnswered, isCorrect, children }: {
+interface GridCardConfig {
   neonBorder: string;
   glowColor: string;
   bg: string;
+  labelColor: string;
   icon: React.ReactNode;
+  iconBg: string;
+  iconBorder: string;
   blockLabel: string;
   blockTitle: string;
-  labelColor: string;
+  emoji: string;
+}
+
+function GridCard({
+  config,
+  status,
+  isAnswered,
+  isCorrect,
+  onClick,
+}: {
+  config: GridCardConfig;
   status: LoadStatus;
   isAnswered: boolean;
   isCorrect?: boolean;
-  children: React.ReactNode;
+  onClick: () => void;
 }) {
+  const borderClass = isAnswered
+    ? (isCorrect ? 'border-green-500/50' : 'border-red-500/30')
+    : config.neonBorder;
+
+  const bgClass = isAnswered
+    ? (isCorrect ? 'bg-gradient-to-b from-green-900/20 to-transparent' : 'bg-gradient-to-b from-red-900/12 to-transparent')
+    : config.bg;
+
   const glowStyle = isAnswered
-    ? { boxShadow: isCorrect ? '0 0 24px rgba(34,197,94,0.18)' : '0 0 18px rgba(239,68,68,0.12)' }
-    : { boxShadow: glowColor };
+    ? { boxShadow: isCorrect ? '0 0 28px rgba(34,197,94,0.2)' : '0 0 18px rgba(239,68,68,0.1)' }
+    : { boxShadow: config.glowColor };
 
   return (
-    <motion.div
-      variants={cardVariants}
-      className={`rounded-3xl border backdrop-blur-sm overflow-hidden ${isAnswered ? (isCorrect ? 'border-green-500/40' : 'border-red-500/30') : neonBorder} ${bg}`}
+    <motion.button
+      variants={gridCardVariants}
+      onClick={onClick}
+      className={`relative w-full h-full flex flex-col items-center justify-center gap-3 rounded-3xl border backdrop-blur-sm transition-all duration-200 active:scale-[0.96] ${borderClass} ${bgClass}`}
       style={glowStyle}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/6">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${labelColor.replace('text-', 'bg-').replace('400', '400/15').replace('300', '300/15')} border ${labelColor.replace('text-', 'border-').replace('400', '400/30').replace('300', '300/30')}`}>
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`text-[11px] font-black uppercase tracking-wider ${labelColor}`}>{blockLabel}</span>
-            {isAnswered && (
-              isCorrect
-                ? <CheckCircle size={12} className="text-green-400 shrink-0" />
-                : <XCircle size={12} className="text-red-400 shrink-0" />
-            )}
-          </div>
-          <span className="text-emt-light font-bold text-[13px] leading-tight">{blockTitle}</span>
-        </div>
+      {/* Status badge — top-left */}
+      <div className="absolute top-3 right-3">
         {status === 'loading' && (
-          <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-white/50 animate-spin shrink-0" />
+          <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
+        )}
+        {isAnswered && (
+          <motion.div
+            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            className={`w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/30 border border-green-400/60' : 'bg-red-500/20 border border-red-400/40'}`}
+          >
+            {isCorrect ? <CheckCircle size={11} className="text-green-400" /> : <XCircle size={11} className="text-red-400" />}
+          </motion.div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {status === 'loading' && (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-3 border-white/10 border-t-white/40 animate-spin" />
-              <p className="text-emt-muted text-xs font-semibold">טוען...</p>
-            </div>
-          </div>
-        )}
-        {status === 'error' && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <XCircle size={28} className="text-red-400" />
-            <p className="text-emt-muted text-xs text-center font-semibold">שגיאה בטעינה</p>
-          </div>
-        )}
-        {status === 'ready' && children}
+      {/* Big icon */}
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
+        style={{ boxShadow: isAnswered && isCorrect ? '0 0 18px rgba(34,197,94,0.2)' : undefined }}
+      >
+        <span className="text-2xl leading-none">{config.emoji}</span>
       </div>
-    </motion.div>
+
+      {/* Labels */}
+      <div className="text-center px-2">
+        <p className={`text-[10px] font-black uppercase tracking-widest ${config.labelColor}`}>{config.blockLabel}</p>
+        <p className="text-emt-light font-bold text-[13px] leading-tight mt-0.5">{config.blockTitle}</p>
+      </div>
+
+      {/* State hint */}
+      {!isAnswered && status === 'ready' && (
+        <p className="text-emt-muted/50 text-[10px] font-semibold">הקש לשחק ▶</p>
+      )}
+      {!isAnswered && status === 'error' && (
+        <p className="text-red-400/60 text-[10px] font-semibold">שגיאה — הקש לנסות</p>
+      )}
+      {isAnswered && (
+        <p className={`text-[10px] font-bold ${isCorrect ? 'text-green-400/70' : 'text-red-400/60'}`}>
+          {isCorrect ? 'נכון ✓' : 'שגוי — הקש לסקור'}
+        </p>
+      )}
+    </motion.button>
   );
 }
 
@@ -757,6 +798,9 @@ interface Props {
 export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
 
+  // Navigation
+  const [activeBlock, setActiveBlock] = useState<BlockId | null>(null);
+
   // Block A — Clinical
   const [clinicalCategory, setClinicalCategory] = useState<ClinicalCategory | null>(null);
   const [clinicalStatus, setClinicalStatus] = useState<LoadStatus>('idle');
@@ -767,11 +811,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [isStatsOffline, setIsStatsOffline] = useState(false);
 
-  // Block B — Medication
+  // Block B — Medication MCQ
   const [medStatus, setMedStatus] = useState<LoadStatus>('idle');
   const [medData, setMedData] = useState<MedOfDay | null>(null);
-  const [medCompleted, setMedCompleted] = useState(false);
-  const [medEmergencyOpen, setMedEmergencyOpen] = useState(false);
+  const [medAnsweredIdx, setMedAnsweredIdx] = useState<number | null>(null);
+  const [showMedExpl, setShowMedExpl] = useState(false);
 
   // Block C — Abbreviation
   const [abbrStatus, setAbbrStatus] = useState<LoadStatus>('idle');
@@ -791,20 +835,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   const questionStartRef = useRef<number | null>(null);
 
-  // ── Derived state ──
+  // ── Derived ──
   const clinicalIsAnswered = clinicalAnsweredIdx !== null;
+  const medIsAnswered = medAnsweredIdx !== null;
   const abbrIsAnswered = abbrAnsweredIdx !== null;
   const redIsAnswered = redAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medCompleted && abbrIsAnswered && redIsAnswered;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
-    medCompleted,
+    medIsAnswered && medAnsweredIdx === medData?.correct_index,
     abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index,
     redIsAnswered && redAnsweredIdx === redQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medCompleted, abbrIsAnswered, redIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered].filter(Boolean).length;
 
   const participantCount = (() => {
     const today = getToday();
@@ -813,29 +858,79 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     return (globalStats?.total ?? 0) + 70 + (hash % 181);
   })();
 
-  // ── Load blocks B, C, D on open ──
+  // ── Grid card configs ──
+  const BLOCK_CONFIGS: Record<BlockId, GridCardConfig> = {
+    A: {
+      neonBorder: clinicalCategory === 'als' ? 'border-red-500/40' : 'border-amber-500/30',
+      glowColor: clinicalCategory === 'als' ? '0 0 24px rgba(239,68,68,0.12)' : '0 0 20px rgba(245,158,11,0.1)',
+      bg: clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-900/12 to-transparent' : 'bg-gradient-to-b from-amber-900/10 to-transparent',
+      labelColor: clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400',
+      icon: <Zap size={20} className={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'} />,
+      iconBg: clinicalCategory === 'als' ? 'bg-red-400/15' : 'bg-amber-400/15',
+      iconBorder: clinicalCategory === 'als' ? 'border-red-400/30' : 'border-amber-400/30',
+      blockLabel: 'בלוק א׳',
+      blockTitle: 'שאלה קלינית',
+      emoji: clinicalCategory === 'als' ? '⚡' : '🫀',
+    },
+    B: {
+      neonBorder: 'border-green-500/40',
+      glowColor: '0 0 22px rgba(34,197,94,0.1)',
+      bg: 'bg-gradient-to-b from-green-900/12 to-transparent',
+      labelColor: 'text-green-400',
+      icon: <Pill size={20} className="text-green-400" />,
+      iconBg: 'bg-green-400/15',
+      iconBorder: 'border-green-400/30',
+      blockLabel: 'בלוק ב׳',
+      blockTitle: 'תרופת היום',
+      emoji: '💊',
+    },
+    C: {
+      neonBorder: 'border-purple-500/40',
+      glowColor: '0 0 22px rgba(168,85,247,0.1)',
+      bg: 'bg-gradient-to-b from-purple-900/12 to-transparent',
+      labelColor: 'text-purple-400',
+      icon: <BookOpen size={20} className="text-purple-400" />,
+      iconBg: 'bg-purple-400/15',
+      iconBorder: 'border-purple-400/30',
+      blockLabel: 'בלוק ג׳',
+      blockTitle: 'קיצורים רפואיים',
+      emoji: '📋',
+    },
+    D: {
+      neonBorder: 'border-orange-500/40',
+      glowColor: '0 0 22px rgba(249,115,22,0.1)',
+      bg: 'bg-gradient-to-b from-orange-900/12 to-transparent',
+      labelColor: 'text-orange-400',
+      icon: <AlertTriangle size={20} className="text-orange-400" />,
+      iconBg: 'bg-orange-400/15',
+      iconBorder: 'border-orange-400/30',
+      blockLabel: 'בלוק ד׳',
+      blockTitle: 'דגל אדום',
+      emoji: '🚩',
+    },
+  };
+
+  // ── Load B, C, D on open ──
   useEffect(() => {
     if (!isOpen) return;
     getSessionId();
     trackEvent('daily_challenge_modal_opened');
     setStreak(getStreak().streak);
 
-    // Block B
     const cachedMed = loadCache<MedOfDay>(CACHE_KEYS.med);
     if (cachedMed) {
       setMedData(cachedMed.data);
-      setMedCompleted(cachedMed.completed ?? false);
+      setMedAnsweredIdx(cachedMed.answeredIdx ?? null);
       setMedStatus('ready');
     } else {
       setMedStatus('loading');
-      fetchOrCreateBlock<MedOfDay>('med', generateMed).then((med) => {
+      fetchOrCreateBlock<MedOfDay>('med_v3', generateMed).then((med) => {
         setMedData(med);
         saveCache(CACHE_KEYS.med, med);
         setMedStatus('ready');
       }).catch(() => setMedStatus('error'));
     }
 
-    // Block C
     const cachedAbbr = loadCache<AbbreviationQ>(CACHE_KEYS.abbr);
     if (cachedAbbr) {
       setAbbrQuestion(cachedAbbr.data);
@@ -850,7 +945,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       }).catch(() => setAbbrStatus('error'));
     }
 
-    // Block D
     const cachedRed = loadCache<RedFlagQ>(CACHE_KEYS.red_flag);
     if (cachedRed) {
       setRedQuestion(cachedRed.data);
@@ -870,10 +964,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // Reset on close
   useEffect(() => {
     if (!isOpen) {
+      setActiveBlock(null);
       setClinicalCategory(null); setClinicalStatus('idle'); setClinicalQuestion(null);
       setClinicalAnsweredIdx(null); setClinicalTimeTaken(null); setShowClinicalExpl(false);
       setGlobalStats(null); setIsStatsOffline(false);
-      setMedStatus('idle'); setMedData(null); setMedCompleted(false); setMedEmergencyOpen(false);
+      setMedStatus('idle'); setMedData(null); setMedAnsweredIdx(null); setShowMedExpl(false);
       setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false);
       setShowSuccess(false);
@@ -917,7 +1012,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [isOpen, clinicalCategory, clinicalQuestion?.correct_index]);
 
-  // ── Block A: load category ──
+  // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
     setClinicalCategory(cat);
     setShowClinicalExpl(false);
@@ -961,14 +1056,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     }
   }, []);
 
-  // ── Block A: answer ──
   const handleClinicalAnswer = useCallback(async (idx: number) => {
     if (!clinicalQuestion || !clinicalCategory || clinicalAnsweredIdx !== null) return;
     const elapsed = questionStartRef.current ? Math.round((Date.now() - questionStartRef.current) / 1000) : 0;
     const isCorrect = idx === clinicalQuestion.correct_index;
     setClinicalAnsweredIdx(idx);
     setClinicalTimeTaken(elapsed);
-    saveCache(CACHE_KEYS[clinicalCategory], clinicalQuestion, idx, false, elapsed);
+    saveCache(CACHE_KEYS[clinicalCategory], clinicalQuestion, idx, elapsed);
     setGlobalStats((prev) => {
       const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
       const counts = [...base.answer_counts];
@@ -983,7 +1077,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     setIsStatsOffline(offline);
   }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx]);
 
-  // ── Block C: answer ──
+  // ── Block B handler ──
+  const handleMedAnswer = useCallback((idx: number) => {
+    if (!medData || medAnsweredIdx !== null) return;
+    setMedAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.med, medData, idx);
+    trackEvent('daily_challenge_med_answered', { correct: idx === medData.correct_index });
+  }, [medData, medAnsweredIdx]);
+
+  // ── Block C handler ──
   const handleAbbrAnswer = useCallback((idx: number) => {
     if (!abbrQuestion || abbrAnsweredIdx !== null) return;
     setAbbrAnsweredIdx(idx);
@@ -991,7 +1093,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     trackEvent('daily_challenge_abbr_answered', { correct: idx === abbrQuestion.correct_index });
   }, [abbrQuestion, abbrAnsweredIdx]);
 
-  // ── Block D: answer ──
+  // ── Block D handler ──
   const handleRedAnswer = useCallback((idx: number) => {
     if (!redQuestion || redAnsweredIdx !== null) return;
     setRedAnsweredIdx(idx);
@@ -999,15 +1101,428 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     trackEvent('daily_challenge_redflag_answered', { correct: idx === redQuestion.correct_index });
   }, [redQuestion, redAnsweredIdx]);
 
-  // ── Block B: complete ──
-  const handleMedComplete = useCallback(() => {
-    if (medCompleted || !medData) return;
-    setMedCompleted(true);
-    saveCache(CACHE_KEYS.med, medData, null, true);
-    trackEvent('daily_challenge_med_completed');
-  }, [medCompleted, medData]);
-
   if (!isOpen) return null;
+
+  // ── Expanded block header ──
+  const renderExpandedHeader = (blockId: BlockId) => {
+    const cfg = BLOCK_CONFIGS[blockId];
+    const isAnswered =
+      blockId === 'A' ? clinicalIsAnswered :
+      blockId === 'B' ? medIsAnswered :
+      blockId === 'C' ? abbrIsAnswered : redIsAnswered;
+    const isCorrect =
+      blockId === 'A' ? (clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index) :
+      blockId === 'B' ? (medIsAnswered && medAnsweredIdx === medData?.correct_index) :
+      blockId === 'C' ? (abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index) :
+      (redIsAnswered && redAnsweredIdx === redQuestion?.correct_index);
+
+    return (
+      <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
+        <HapticButton
+          onClick={() => setActiveBlock(null)}
+          hapticPattern={8}
+          pressScale={0.9}
+          className="w-9 h-9 rounded-xl bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors shrink-0"
+        >
+          <ChevronLeft size={18} />
+        </HapticButton>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${cfg.iconBg} border ${cfg.iconBorder}`}>
+          {cfg.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-[10px] font-black uppercase tracking-wider ${cfg.labelColor}`}>{cfg.blockLabel}</p>
+          <p className="text-emt-light font-bold text-[13px] leading-tight truncate">{cfg.blockTitle}</p>
+        </div>
+        {isAnswered && (
+          isCorrect
+            ? <CheckCircle size={18} className="text-green-400 shrink-0" />
+            : <XCircle size={18} className="text-red-400 shrink-0" />
+        )}
+      </div>
+    );
+  };
+
+  // ── Block A content ──
+  const renderBlockA = () => (
+    <div className="flex flex-col gap-3">
+      {!clinicalCategory && (
+        <div className="flex flex-col gap-3">
+          <p className="text-emt-muted text-sm font-semibold text-center">בחר קטגוריה לשאלה של היום</p>
+          <div className="flex gap-2.5">
+            {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
+              <HapticButton
+                key={cat}
+                onClick={() => loadClinicalCategory(cat)}
+                hapticPattern={10}
+                pressScale={0.94}
+                className={`flex-1 py-6 rounded-2xl border flex flex-col items-center gap-1.5 ${
+                  cat === 'bls'
+                    ? 'bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/20'
+                    : 'bg-red-500/10 border-red-500/25 text-red-300 hover:bg-red-500/20'
+                }`}
+              >
+                <span className="text-3xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
+                <span className="text-2xl font-black leading-none">{CATEGORY_LABELS[cat]}</span>
+                <span className="text-[11px] font-semibold opacity-55">{CATEGORY_FULL[cat]}</span>
+              </HapticButton>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {clinicalCategory && clinicalStatus === 'loading' && (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה קלינית...</p>
+        </div>
+      )}
+
+      {clinicalCategory && clinicalStatus === 'error' && (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינת השאלה</p>
+          <HapticButton onClick={() => loadClinicalCategory(clinicalCategory)} hapticPattern={10} pressScale={0.95}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
+        </div>
+      )}
+
+      {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
+        <>
+          {/* Category tabs */}
+          <div className="flex gap-2 self-start">
+            {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => !clinicalIsAnswered && loadClinicalCategory(cat)}
+                disabled={clinicalIsAnswered}
+                className={`px-3 py-1 rounded-full text-xs font-black border transition-all ${
+                  clinicalCategory === cat
+                    ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/50 text-blue-300' : 'bg-red-500/25 border-red-500/50 text-red-300'
+                    : 'bg-white/5 border-white/10 text-emt-muted'
+                }`}
+              >
+                {cat === 'bls' ? '🫀' : '⚡'} {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+            {clinicalIsAnswered && (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold text-emt-muted/60 border border-white/8">ענית היום</span>
+            )}
+          </div>
+
+          {/* Result banner */}
+          {clinicalIsAnswered && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className={`flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
+                clinicalAnsweredIdx === clinicalQuestion.correct_index
+                  ? 'bg-green-500/15 border-green-500/30' : 'bg-red-500/15 border-red-500/30'
+              }`}
+            >
+              {clinicalAnsweredIdx === clinicalQuestion.correct_index
+                ? <CheckCircle size={18} className="text-green-400 shrink-0" />
+                : <XCircle size={18} className="text-red-400 shrink-0" />}
+              <div className="flex-1">
+                <span className={`font-black text-sm ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+                  {clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'תשובה נכונה! 🎉' : 'תשובה שגויה'}
+                </span>
+                {clinicalTimeTaken !== null && (
+                  <div className="flex items-center gap-1 mt-0.5 text-emt-muted/60 text-[10px]">
+                    <Clock size={9} /><span>ענית תוך {clinicalTimeTaken} שניות</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Live participants */}
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-3 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">{isStatsOffline ? 'מתחבר...' : 'משתתפים:'}</span>
+            <motion.span key={participantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
+              className="text-[11px] font-black text-emt-light tabular-nums">{participantCount.toLocaleString('he-IL')}
+            </motion.span>
+            {!isStatsOffline && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
+          </div>
+
+          {/* Trap warning */}
+          {!clinicalIsAnswered && (
+            <div className="flex items-center gap-2 rounded-xl bg-orange-500/8 border border-orange-400/20 px-3 py-2">
+              <span className="text-sm shrink-0">⚠️</span>
+              <div>
+                <span className="text-orange-300/90 text-xs font-bold">שאלות טריקיות — מקרי קיצון</span>
+                <span className="block text-orange-200/55 text-[11px]">קרא היטב את כל התשובות לפני שתענה</span>
+              </div>
+            </div>
+          )}
+
+          {/* Question */}
+          <div className="rounded-2xl bg-white/5 border border-white/8 p-3.5">
+            <p className="text-emt-light font-bold text-[15px] leading-snug text-center">{clinicalQuestion.question}</p>
+          </div>
+
+          <MCQOptions
+            options={clinicalQuestion.options}
+            correctIndex={clinicalQuestion.correct_index}
+            answeredIdx={clinicalAnsweredIdx}
+            onAnswer={handleClinicalAnswer}
+            stats={globalStats}
+          />
+
+          {clinicalIsAnswered && !showClinicalExpl && (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <HapticButton onClick={() => setShowClinicalExpl(true)} hapticPattern={10} pressScale={0.96}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-2.5 text-amber-300 font-bold text-sm">
+                <Brain size={15} />הצג הסבר קליני
+              </HapticButton>
+            </motion.div>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  // ── Block B content ──
+  const renderBlockB = () => {
+    if (medStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-green-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תרופת היום...</p>
+        </div>
+      );
+    }
+    if (medStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+        </div>
+      );
+    }
+    if (!medData) return null;
+
+    const medCorrect = medAnsweredIdx === medData.correct_index;
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Drug header */}
+        <div className="text-center py-2">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-500/15 border border-green-500/30 mb-2">
+            <Pill size={15} className="text-green-400" />
+            <span className="text-green-300 font-black text-base">{medData.name}</span>
+          </div>
+          <p className="text-emt-muted text-xs font-semibold">{medData.drug_class}</p>
+        </div>
+
+        {/* Result banner */}
+        {medIsAnswered && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className={`flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
+              medCorrect ? 'bg-green-500/15 border-green-500/30' : 'bg-red-500/15 border-red-500/30'
+            }`}
+          >
+            {medCorrect ? <CheckCircle size={18} className="text-green-400 shrink-0" /> : <XCircle size={18} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-sm ${medCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {medCorrect ? 'נכון! 🎉' : 'שגוי'}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Question */}
+        <div className="rounded-2xl bg-white/5 border border-white/8 p-3.5">
+          <p className="text-emt-light font-bold text-[15px] leading-snug text-center">{medData.question}</p>
+        </div>
+
+        <MCQOptions
+          options={medData.options}
+          correctIndex={medData.correct_index}
+          answeredIdx={medAnsweredIdx}
+          onAnswer={handleMedAnswer}
+          accentCorrect="border-green-400/50 bg-green-500/10 text-green-200"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {/* Clinical pearl + emergency note — revealed after answering */}
+        {medIsAnswered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+            className="flex flex-col gap-2.5"
+          >
+            <div className="rounded-2xl bg-green-500/8 border border-green-500/20 p-3.5">
+              <div className="flex items-start gap-2">
+                <Brain size={14} className="text-green-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-green-300 text-[11px] font-black uppercase tracking-wider mb-1">דגש קליני</p>
+                  <p className="text-emt-light text-[13px] leading-snug font-medium">{medData.clinical_pearl}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-amber-500/8 border border-amber-500/20 p-3.5">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1">אזהרת חירום</p>
+                  <p className="text-emt-light text-[13px] leading-snug font-medium">{medData.emergency_note}</p>
+                </div>
+              </div>
+            </div>
+            {!showMedExpl && (
+              <HapticButton onClick={() => setShowMedExpl(true)} hapticPattern={10} pressScale={0.96}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-green-400/12 border border-green-400/30 py-2.5 text-green-300 font-bold text-sm">
+                <Brain size={14} />הצג הסבר מלא
+              </HapticButton>
+            )}
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Block C content ──
+  const renderBlockC = () => {
+    if (abbrStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-purple-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">טוען קיצור...</p>
+        </div>
+      );
+    }
+    if (abbrStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+        </div>
+      );
+    }
+    if (!abbrQuestion) return null;
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Abbreviation badge */}
+        <div className="self-center px-6 py-3 rounded-2xl bg-purple-500/20 border border-purple-500/35">
+          <span className="text-purple-200 font-black text-3xl tracking-widest" dir="ltr">
+            {abbrQuestion.abbreviation}
+          </span>
+        </div>
+
+        <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{abbrQuestion.question}</p>
+
+        {abbrIsAnswered && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
+            {abbrAnsweredIdx === abbrQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
+            <span className="font-bold text-sm">{abbrAnsweredIdx === abbrQuestion.correct_index ? 'נכון!' : 'שגוי'}</span>
+          </motion.div>
+        )}
+
+        <MCQOptions
+          options={abbrQuestion.options}
+          correctIndex={abbrQuestion.correct_index}
+          answeredIdx={abbrAnsweredIdx}
+          onAnswer={handleAbbrAnswer}
+          accentCorrect="border-purple-400/50 bg-purple-500/10 text-purple-200"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {abbrIsAnswered && !showAbbrExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowAbbrExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-purple-400/15 border border-purple-400/35 py-2.5 text-purple-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Block D content ──
+  const renderBlockD = () => {
+    if (redStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-orange-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">טוען מקרה...</p>
+        </div>
+      );
+    }
+    if (redStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+        </div>
+      );
+    }
+    if (!redQuestion) return null;
+
+    return (
+      <div className="flex flex-col gap-3">
+        {/* Scenario */}
+        <div className="rounded-2xl bg-orange-500/8 border border-orange-500/20 p-3.5">
+          <p className="text-[11px] font-black uppercase tracking-wider text-orange-400/80 mb-2">מקרה חירום</p>
+          <p className="text-emt-light text-[14px] leading-[1.6] font-medium">{redQuestion.scenario}</p>
+        </div>
+
+        <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{redQuestion.question}</p>
+
+        {redIsAnswered && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${redAnsweredIdx === redQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
+            {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
+            <span className="font-bold text-sm">{redAnsweredIdx === redQuestion.correct_index ? 'זיהית נכון!' : 'שגוי'}</span>
+          </motion.div>
+        )}
+
+        <MCQOptions
+          options={redQuestion.options}
+          correctIndex={redQuestion.correct_index}
+          answeredIdx={redAnsweredIdx}
+          onAnswer={handleRedAnswer}
+          accentCorrect="border-orange-400/50 bg-orange-500/10 text-orange-200"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {redIsAnswered && !showRedExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowRedExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-2.5 text-orange-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר קליני
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Block status helpers (for grid cards) ──
+  const blockStatus = (id: BlockId): LoadStatus => {
+    if (id === 'A') return clinicalStatus === 'idle' ? 'ready' : clinicalStatus;
+    if (id === 'B') return medStatus;
+    if (id === 'C') return abbrStatus;
+    return redStatus;
+  };
+
+  const blockIsAnswered = (id: BlockId): boolean => {
+    if (id === 'A') return clinicalIsAnswered;
+    if (id === 'B') return medIsAnswered;
+    if (id === 'C') return abbrIsAnswered;
+    return redIsAnswered;
+  };
+
+  const blockIsCorrect = (id: BlockId): boolean => {
+    if (id === 'A') return clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index;
+    if (id === 'B') return medIsAnswered && medAnsweredIdx === medData?.correct_index;
+    if (id === 'C') return abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index;
+    return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl">
@@ -1065,353 +1580,73 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="flex flex-col gap-3 p-4 pb-8"
-        >
-
-          {/* ═══ BLOCK A — Clinical Question ═══ */}
-          <BlockCard
-            neonBorder={clinicalCategory === 'als' ? 'border-red-500/40' : clinicalCategory === 'bls' ? 'border-blue-500/40' : 'border-amber-500/30'}
-            glowColor={clinicalCategory === 'als' ? '0 0 24px rgba(239,68,68,0.12)' : clinicalCategory === 'bls' ? '0 0 24px rgba(59,130,246,0.12)' : '0 0 20px rgba(245,158,11,0.08)'}
-            bg={clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-900/12 to-transparent' : clinicalCategory === 'bls' ? 'bg-gradient-to-b from-blue-900/12 to-transparent' : 'bg-gradient-to-b from-amber-900/8 to-transparent'}
-            icon={<Zap size={16} className={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'} />}
-            blockLabel="בלוק א׳"
-            blockTitle="שאלה קלינית"
-            labelColor={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'}
-            status={clinicalStatus === 'idle' ? 'ready' : clinicalStatus}
-            isAnswered={clinicalIsAnswered}
-            isCorrect={clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index}
-          >
-            {/* Category selector */}
-            {!clinicalCategory && (
-              <div className="flex flex-col gap-3">
-                <p className="text-emt-muted text-sm font-semibold text-center">בחר קטגוריה לשאלה של היום</p>
-                <div className="flex gap-2.5">
-                  {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
-                    <HapticButton
-                      key={cat}
-                      onClick={() => loadClinicalCategory(cat)}
-                      hapticPattern={10}
-                      pressScale={0.94}
-                      className={`flex-1 py-4 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-1 ${
-                        cat === 'bls'
-                          ? 'bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/20'
-                          : 'bg-red-500/10 border-red-500/25 text-red-300 hover:bg-red-500/20'
-                      }`}
-                    >
-                      <span className="text-xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
-                      <span className="text-xl font-black leading-none mt-1">{CATEGORY_LABELS[cat]}</span>
-                      <span className="text-[11px] font-semibold opacity-55">{CATEGORY_FULL[cat]}</span>
-                    </HapticButton>
-                  ))}
+      <div className="flex-1 min-h-0 relative overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          {activeBlock === null ? (
+            /* ═══ GRID VIEW ═══ */
+            <motion.div
+              key="grid"
+              variants={gridVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              className="absolute inset-0 p-4"
+            >
+              <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
+                {(['A', 'B', 'C', 'D'] as BlockId[]).map((id) => (
+                  <GridCard
+                    key={id}
+                    config={BLOCK_CONFIGS[id]}
+                    status={blockStatus(id)}
+                    isAnswered={blockIsAnswered(id)}
+                    isCorrect={blockIsCorrect(id)}
+                    onClick={() => setActiveBlock(id)}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            /* ═══ EXPANDED BLOCK VIEW ═══ */
+            <motion.div
+              key={activeBlock}
+              variants={expandedVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+              className="absolute inset-0 flex flex-col"
+            >
+              {renderExpandedHeader(activeBlock)}
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-4 pb-8">
+                  {activeBlock === 'A' && renderBlockA()}
+                  {activeBlock === 'B' && renderBlockB()}
+                  {activeBlock === 'C' && renderBlockC()}
+                  {activeBlock === 'D' && renderBlockD()}
                 </div>
               </div>
-            )}
 
-            {/* Question content */}
-            {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
-              <div className="flex flex-col gap-3">
-                {/* Category toggle */}
-                <div className="flex gap-2 self-start">
-                  {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => !clinicalIsAnswered && loadClinicalCategory(cat)}
-                      disabled={clinicalIsAnswered}
-                      className={`px-3 py-1 rounded-full text-xs font-black border transition-all ${
-                        clinicalCategory === cat
-                          ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/50 text-blue-300' : 'bg-red-500/25 border-red-500/50 text-red-300'
-                          : 'bg-white/5 border-white/10 text-emt-muted'
-                      }`}
-                    >
-                      {cat === 'bls' ? '🫀' : '⚡'} {CATEGORY_LABELS[cat]}
-                    </button>
-                  ))}
-                  {clinicalIsAnswered && (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold text-emt-muted/60 border border-white/8">
-                      ענית היום
-                    </span>
-                  )}
-                </div>
-
-                {/* Result banner */}
-                {clinicalIsAnswered && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
-                      clinicalAnsweredIdx === clinicalQuestion.correct_index
-                        ? 'bg-green-500/15 border-green-500/30' : 'bg-red-500/15 border-red-500/30'
-                    }`}
-                  >
-                    {clinicalAnsweredIdx === clinicalQuestion.correct_index
-                      ? <CheckCircle size={18} className="text-green-400 shrink-0" />
-                      : <XCircle size={18} className="text-red-400 shrink-0" />}
-                    <div className="flex-1">
-                      <span className={`font-black text-sm ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-                        {clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'תשובה נכונה! 🎉' : 'תשובה שגויה'}
-                      </span>
-                      {clinicalTimeTaken !== null && (
-                        <div className="flex items-center gap-1 mt-0.5 text-emt-muted/60 text-[10px]">
-                          <Clock size={9} /><span>ענית תוך {clinicalTimeTaken} שניות</span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Live participants */}
-                <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-3 py-1.5">
-                  <Users size={11} className="text-emt-muted shrink-0" />
-                  <span className="text-[10px] text-emt-muted font-semibold">
-                    {isStatsOffline ? 'מתחבר...' : 'משתתפים:'}
-                  </span>
-                  <motion.span key={participantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }} className="text-[11px] font-black text-emt-light tabular-nums">
-                    {participantCount.toLocaleString('he-IL')}
-                  </motion.span>
-                  {!isStatsOffline && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
-                </div>
-
-                {/* Tricky notice */}
-                {!clinicalIsAnswered && (
-                  <div className="flex items-center gap-2 rounded-xl bg-orange-500/8 border border-orange-400/20 px-3 py-2">
-                    <span className="text-sm shrink-0">⚠️</span>
-                    <div>
-                      <span className="text-orange-300/90 text-xs font-bold">שאלות טריקיות — מקרי קיצון</span>
-                      <span className="block text-orange-200/55 text-[11px]">קרא היטב את כל התשובות לפני שתענה</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Question text */}
-                <div className="rounded-2xl bg-white/5 border border-white/8 p-3.5">
-                  <p className="text-emt-light font-bold text-[15px] leading-snug text-center">{clinicalQuestion.question}</p>
-                </div>
-
-                {/* Options */}
-                <MCQOptions
-                  options={clinicalQuestion.options}
-                  correctIndex={clinicalQuestion.correct_index}
-                  answeredIdx={clinicalAnsweredIdx}
-                  onAnswer={handleClinicalAnswer}
-                  stats={globalStats}
-                  accentCorrect="border-green-400/50 bg-green-500/10 text-green-200"
-                  accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
-                />
-
-                {/* Show explanation */}
-                {clinicalIsAnswered && !showClinicalExpl && (
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-                    <HapticButton
-                      onClick={() => setShowClinicalExpl(true)}
-                      hapticPattern={10} pressScale={0.96}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-2.5 text-amber-300 font-bold text-sm"
-                    >
-                      <Brain size={15} />הצג הסבר קליני
-                    </HapticButton>
-                  </motion.div>
-                )}
-              </div>
-            )}
-
-            {/* Error retry */}
-            {clinicalCategory && clinicalStatus === 'error' && (
-              <div className="flex flex-col items-center gap-3 py-4">
-                <p className="text-emt-muted text-xs text-center">שגיאה בטעינת השאלה</p>
-                <HapticButton onClick={() => loadClinicalCategory(clinicalCategory)} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 font-bold text-xs">
-                  <RefreshCw size={13} />נסה שוב
-                </HapticButton>
-              </div>
-            )}
-          </BlockCard>
-
-          {/* ═══ BLOCK B — Medication of the Day ═══ */}
-          <BlockCard
-            neonBorder="border-green-500/40"
-            glowColor="0 0 22px rgba(34,197,94,0.1)"
-            bg="bg-gradient-to-b from-green-900/12 to-transparent"
-            icon={<Pill size={16} className="text-green-400" />}
-            blockLabel="בלוק ב׳"
-            blockTitle="תרופת היום"
-            labelColor="text-green-400"
-            status={medStatus}
-            isAnswered={medCompleted}
-            isCorrect={medCompleted}
-          >
-            {medData && (
-              <div className="flex flex-col gap-3">
-                {/* Drug name */}
-                <div className="text-center">
-                  <p className="text-emt-light font-black text-lg leading-tight">{medData.name}</p>
-                  <p className="text-green-300/70 text-xs font-semibold mt-1">{medData.drug_class}</p>
-                </div>
-
-                {/* Clinical pearl */}
-                <div className="rounded-2xl bg-green-500/8 border border-green-500/25 p-3.5">
-                  <div className="flex items-start gap-2">
-                    <Brain size={14} className="text-green-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-green-300 text-[11px] font-black uppercase tracking-wider mb-1">דגש קליני</p>
-                      <p className="text-emt-light text-[14px] leading-snug font-medium">{medData.clinical_pearl}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Emergency note toggle */}
-                <div className="rounded-2xl border border-amber-500/25 overflow-hidden">
-                  <button
-                    onClick={() => setMedEmergencyOpen(!medEmergencyOpen)}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 bg-amber-500/8 hover:bg-amber-500/12 transition-colors active:scale-[0.99]"
-                  >
-                    <AlertTriangle size={15} className="text-amber-400 shrink-0" />
-                    <span className="flex-1 text-amber-300 font-bold text-sm text-right">אזהרת חירום</span>
-                    <motion.div animate={{ rotate: medEmergencyOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                      <span className="text-amber-400/60 text-xs">▼</span>
-                    </motion.div>
-                  </button>
-                  <AnimatePresence>
-                    {medEmergencyOpen && (
-                      <motion.div
-                        initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                        transition={{ duration: 0.22 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-4 py-3 border-t border-amber-500/20 bg-amber-500/5">
-                          <p className="text-amber-200/90 text-[13px] leading-relaxed font-medium">{medData.emergency_note}</p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Complete button */}
-                {!medCompleted ? (
+              {/* Back to grid — shown after answering */}
+              {blockIsAnswered(activeBlock) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="shrink-0 px-4 pb-6 pt-2 border-t border-emt-border"
+                >
                   <HapticButton
-                    onClick={handleMedComplete}
-                    hapticPattern={15} pressScale={0.96}
-                    className="w-full py-3 rounded-2xl bg-green-500/20 border border-green-500/40 text-green-300 font-black text-sm"
+                    onClick={() => setActiveBlock(null)}
+                    hapticPattern={10}
+                    pressScale={0.97}
+                    className="w-full py-3 rounded-2xl bg-white/6 border border-white/12 text-emt-muted font-bold text-sm flex items-center justify-center gap-2"
                   >
-                    הבנתי ✓
+                    <ChevronLeft size={16} />
+                    חזרה לרשת האתגר
                   </HapticButton>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-green-500/10 border border-green-500/25">
-                    <CheckCircle size={15} className="text-green-400" />
-                    <span className="text-green-300 font-bold text-sm">הושלם!</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </BlockCard>
-
-          {/* ═══ BLOCK C — Medical Abbreviation ═══ */}
-          <BlockCard
-            neonBorder="border-purple-500/40"
-            glowColor="0 0 22px rgba(168,85,247,0.1)"
-            bg="bg-gradient-to-b from-purple-900/12 to-transparent"
-            icon={<BookOpen size={16} className="text-purple-400" />}
-            blockLabel="בלוק ג׳"
-            blockTitle="קיצורים רפואיים"
-            labelColor="text-purple-400"
-            status={abbrStatus}
-            isAnswered={abbrIsAnswered}
-            isCorrect={abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index}
-          >
-            {abbrQuestion && (
-              <div className="flex flex-col gap-3">
-                {/* Abbreviation badge */}
-                <div className="self-center px-5 py-2 rounded-2xl bg-purple-500/20 border border-purple-500/35">
-                  <span className="text-purple-200 font-black text-2xl tracking-widest" dir="ltr">
-                    {abbrQuestion.abbreviation}
-                  </span>
-                </div>
-
-                <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{abbrQuestion.question}</p>
-
-                {abbrIsAnswered && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
-                    {abbrAnsweredIdx === abbrQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                    <span className="font-bold text-sm">{abbrAnsweredIdx === abbrQuestion.correct_index ? 'נכון!' : 'שגוי'}</span>
-                  </motion.div>
-                )}
-
-                <MCQOptions
-                  options={abbrQuestion.options}
-                  correctIndex={abbrQuestion.correct_index}
-                  answeredIdx={abbrAnsweredIdx}
-                  onAnswer={handleAbbrAnswer}
-                  accentCorrect="border-purple-400/50 bg-purple-500/10 text-purple-200"
-                  accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
-                />
-
-                {abbrIsAnswered && !showAbbrExpl && (
-                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                    <HapticButton onClick={() => setShowAbbrExpl(true)} hapticPattern={10} pressScale={0.96} className="w-full flex items-center justify-center gap-2 rounded-2xl bg-purple-400/15 border border-purple-400/35 py-2.5 text-purple-300 font-bold text-sm">
-                      <Brain size={14} />הצג הסבר
-                    </HapticButton>
-                  </motion.div>
-                )}
-              </div>
-            )}
-          </BlockCard>
-
-          {/* ═══ BLOCK D — Red Flag ═══ */}
-          <BlockCard
-            neonBorder="border-orange-500/40"
-            glowColor="0 0 22px rgba(249,115,22,0.1)"
-            bg="bg-gradient-to-b from-orange-900/12 to-transparent"
-            icon={<AlertTriangle size={16} className="text-orange-400" />}
-            blockLabel="בלוק ד׳"
-            blockTitle="דגל אדום"
-            labelColor="text-orange-400"
-            status={redStatus}
-            isAnswered={redIsAnswered}
-            isCorrect={redIsAnswered && redAnsweredIdx === redQuestion?.correct_index}
-          >
-            {redQuestion && (
-              <div className="flex flex-col gap-3">
-                {/* Scenario */}
-                <div className="rounded-2xl bg-orange-500/8 border border-orange-500/20 p-3.5">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-orange-400/80 mb-2">מקרה חירום</p>
-                  <p className="text-emt-light text-[14px] leading-[1.6] font-medium">{redQuestion.scenario}</p>
-                </div>
-
-                <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{redQuestion.question}</p>
-
-                {redIsAnswered && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${redAnsweredIdx === redQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
-                    {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                    <span className="font-bold text-sm">{redAnsweredIdx === redQuestion.correct_index ? 'זיהית נכון!' : 'שגוי'}</span>
-                  </motion.div>
-                )}
-
-                <MCQOptions
-                  options={redQuestion.options}
-                  correctIndex={redQuestion.correct_index}
-                  answeredIdx={redAnsweredIdx}
-                  onAnswer={handleRedAnswer}
-                  accentCorrect="border-orange-400/50 bg-orange-500/10 text-orange-200"
-                  accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
-                />
-
-                {redIsAnswered && !showRedExpl && (
-                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                    <HapticButton onClick={() => setShowRedExpl(true)} hapticPattern={10} pressScale={0.96} className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-2.5 text-orange-300 font-bold text-sm">
-                      <Brain size={14} />הצג הסבר קליני
-                    </HapticButton>
-                  </motion.div>
-                )}
-              </div>
-            )}
-          </BlockCard>
-
-          <p className="text-center text-[10px] text-emt-muted/40 px-4 leading-relaxed">
-            השאלות מיוצרות על ידי AI למטרות לימוד בלבד. אינן תחליף להכשרה מקצועית מוסמכת.
-          </p>
-        </motion.div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Modals ── */}
@@ -1422,6 +1657,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             category={clinicalCategory}
             isCorrect={clinicalAnsweredIdx === clinicalQuestion.correct_index}
             onClose={() => setShowClinicalExpl(false)}
+          />
+        )}
+        {showMedExpl && medData && medAnsweredIdx !== null && (
+          <SimpleExplanationModal
+            explanation={`${medData.clinical_pearl} ${medData.emergency_note}`}
+            isCorrect={medAnsweredIdx === medData.correct_index}
+            accentColor="green"
+            onClose={() => setShowMedExpl(false)}
           />
         )}
         {showAbbrExpl && abbrQuestion && abbrAnsweredIdx !== null && (
