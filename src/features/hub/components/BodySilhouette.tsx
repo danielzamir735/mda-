@@ -88,15 +88,26 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
 
   // Child-proportioned layout: slimmer legs and torso shifted down 8px to open
   // a clean 2px neck gap (head bottom = y:66, torso top = y:68).
-  // Adult legs are narrowed to legW=34 so the 68px leg span (46→114) sits
-  // inside the 72px torso width (44→116) — fixes wider-than-torso look.
-  // Child legTop=187 raises legs to overlap torso bottom (y:198) — closes gap.
+  //
+  // Leg sizing rule: container aspect MUST match the leg SVG aspect (~0.205,
+  // from 359×1749 viewBox). If the container is narrower than the SVG aspect,
+  // `preserveAspectRatio="xMidYMid meet"` adds vertical whitespace above the
+  // leg path, which reads as a gap between the torso shorts and the legs.
+  //   Adult: 38 × 185 → 0.2054 ✓ (matches SVG, no whitespace)
+  //   Child: 28 × 137 → 0.2044 ✓ (matches SVG, no whitespace; legs are
+  //          proportionally shorter, which is also anatomically correct)
+  //
+  // Adult leg positioning: shifted 2px inward each side so the leg span
+  // (44→116, 72px) sits exactly within the torso width (44→116) — fixes
+  // the previous look of legs being wider than the torso. Legs overlap by
+  // 4px at the medial midline, which is hidden inside the silhouette.
   const torsoTop     = childProportions ? 68  : 60;
   const armTop       = childProportions ? 78  : 70;
-  const legTop       = childProportions ? 187 : 185;
-  const legW         = childProportions ? 28  : 34;
-  const rightLegLeft = childProportions ? 52  : 46;
-  const leftLegLeft  = childProportions ? 80  : 80;
+  const legTop       = childProportions ? 193 : 185;
+  const legW         = childProportions ? 28  : 38;
+  const legH         = childProportions ? 137 : 185;
+  const rightLegLeft = childProportions ? 52  : 44;
+  const leftLegLeft  = childProportions ? 80  : 78;
 
   const idHead  = `head_${side}`      as BodyPartId;
   const idTorso = `torso_${side}`     as BodyPartId;
@@ -159,14 +170,14 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
             <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={labelLookup[idTorso]} mirrored={mirror} />
           </div>
 
-          {/* RIGHT LEG — left half under torso. 359×1749 aspect. */}
-          <div className="absolute" style={{ left: rightLegLeft, top: legTop, width: legW, height: 185 }}>
-            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={legW} height={185} ariaLabel={labelLookup[idRLeg]} mirrored={mirror} />
+          {/* RIGHT LEG — left half under torso. 359×1749 aspect (~0.205). */}
+          <div className="absolute" style={{ left: rightLegLeft, top: legTop, width: legW, height: legH }}>
+            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={legW} height={legH} ariaLabel={labelLookup[idRLeg]} mirrored={mirror} />
           </div>
 
           {/* LEFT LEG — right half under torso. */}
-          <div className="absolute" style={{ left: leftLegLeft, top: legTop, width: legW, height: 185 }}>
-            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={legW} height={185} ariaLabel={labelLookup[idLLeg]} mirrored={mirror} />
+          <div className="absolute" style={{ left: leftLegLeft, top: legTop, width: legW, height: legH }}>
+            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={legW} height={legH} ariaLabel={labelLookup[idLLeg]} mirrored={mirror} />
           </div>
         </div>
       </div>
@@ -225,7 +236,7 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
             : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted',
         ].join(' ')}
       >
-        איבר מ <span className="text-xs opacity-60">(1%)</span>
+        איבר מין** <span className="text-xs opacity-60">(1%)</span>
       </button>
 
       <button
