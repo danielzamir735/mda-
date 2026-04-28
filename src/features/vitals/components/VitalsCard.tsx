@@ -65,9 +65,12 @@ export default function VitalsCard({
       }}
       onClick={!isRunning ? start : undefined}
     >
-      {/* AlertOverlay portalled — heart rate only */}
-      {isHeartRate && createPortal(
-        <AlertOverlay visible={isRunning} />,
+      {/* AlertOverlay portalled — heart rate and breathing rate */}
+      {createPortal(
+        <AlertOverlay
+          visible={isRunning}
+          text={isHeartRate ? 'האם סדיר ונימוש?' : 'שימוש בשרירי עזר?'}
+        />,
         document.body,
       )}
 
