@@ -93,21 +93,21 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
   // from 359×1749 viewBox). If the container is narrower than the SVG aspect,
   // `preserveAspectRatio="xMidYMid meet"` adds vertical whitespace above the
   // leg path, which reads as a gap between the torso shorts and the legs.
-  //   Adult: 38 × 185 → 0.2054 ✓ (matches SVG, no whitespace)
+  //   Adult: 36 × 176 → 0.2045 ✓ (matches SVG, no whitespace)
   //   Child: 28 × 137 → 0.2044 ✓ (matches SVG, no whitespace; legs are
   //          proportionally shorter, which is also anatomically correct)
   //
-  // Adult leg positioning: shifted 2px inward each side so the leg span
-  // (44→116, 72px) sits exactly within the torso width (44→116) — fixes
-  // the previous look of legs being wider than the torso. Legs overlap by
-  // 4px at the medial midline, which is hidden inside the silhouette.
+  // Adult leg width = half the torso width (72/2 = 36) so each leg's hip
+  // matches one buttock half — anatomically correct. Legs sit edge-to-edge
+  // at x=80 with no overlap; total span 44→116 = 72px = torso width.
+  // Aspect-matched height: 36 / 0.205 ≈ 176.
   const torsoTop     = childProportions ? 68  : 60;
   const armTop       = childProportions ? 78  : 70;
   const legTop       = childProportions ? 193 : 185;
-  const legW         = childProportions ? 28  : 38;
-  const legH         = childProportions ? 137 : 185;
+  const legW         = childProportions ? 28  : 36;
+  const legH         = childProportions ? 137 : 176;
   const rightLegLeft = childProportions ? 52  : 44;
-  const leftLegLeft  = childProportions ? 80  : 78;
+  const leftLegLeft  = childProportions ? 80  : 80;
 
   const idHead  = `head_${side}`      as BodyPartId;
   const idTorso = `torso_${side}`     as BodyPartId;
@@ -236,7 +236,7 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
             : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted',
         ].join(' ')}
       >
-        איבר מין** <span className="text-xs opacity-60">(1%)</span>
+        איבר מין <span className="text-xs opacity-60">(1%)</span>
       </button>
 
       <button
