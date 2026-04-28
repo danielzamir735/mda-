@@ -88,11 +88,14 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
 
   // Child-proportioned layout: slimmer legs and torso shifted down 8px to open
   // a clean 2px neck gap (head bottom = y:66, torso top = y:68).
+  // Adult legs are narrowed to legW=34 so the 68px leg span (46→114) sits
+  // inside the 72px torso width (44→116) — fixes wider-than-torso look.
+  // Child legTop=187 raises legs to overlap torso bottom (y:198) — closes gap.
   const torsoTop     = childProportions ? 68  : 60;
   const armTop       = childProportions ? 78  : 70;
-  const legTop       = childProportions ? 193 : 185;
-  const legW         = childProportions ? 28  : 38;
-  const rightLegLeft = childProportions ? 52  : 42;
+  const legTop       = childProportions ? 187 : 185;
+  const legW         = childProportions ? 28  : 34;
+  const rightLegLeft = childProportions ? 52  : 46;
   const leftLegLeft  = childProportions ? 80  : 80;
 
   const idHead  = `head_${side}`      as BodyPartId;
@@ -222,7 +225,7 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
             : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted',
         ].join(' ')}
       >
-        פרינאום <span className="text-xs opacity-60">(1%)</span>
+        איבר מ <span className="text-xs opacity-60">(1%)</span>
       </button>
 
       <button
