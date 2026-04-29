@@ -825,6 +825,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // Navigation
   const [activeBlock, setActiveBlock] = useState<BlockId | null>(null);
 
+  // Samsung/Android back gesture inside a block → go back to grid, not close modal
+  useModalBackHandler(isOpen && activeBlock !== null, () => setActiveBlock(null));
+
   // Block A — Clinical
   const [clinicalCategory, setClinicalCategory] = useState<ClinicalCategory | null>(null);
   const [clinicalStatus, setClinicalStatus] = useState<LoadStatus>('idle');
@@ -1220,25 +1223,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
       {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
         <>
-          {/* Category toggle tabs */}
+          {/* Category toggle tabs — always clickable */}
           <div className="flex gap-2 self-start">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <button
                 key={cat}
-                onClick={() => !clinicalIsAnswered && loadClinicalCategory(cat)}
-                disabled={clinicalIsAnswered}
+                onClick={() => loadClinicalCategory(cat)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
                   clinicalCategory === cat
                     ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/55 text-blue-300' : 'bg-red-500/25 border-red-500/55 text-red-300'
-                    : 'bg-white/5 border-white/10 text-emt-muted'
+                    : 'bg-white/5 border-white/10 text-emt-muted hover:bg-white/10'
                 }`}
               >
                 {cat === 'bls' ? '🫀' : '⚡'} {CATEGORY_LABELS[cat]}
               </button>
             ))}
-            {clinicalIsAnswered && (
-              <span className="px-3 py-1.5 rounded-full text-xs font-semibold text-emt-muted/60 border border-white/8">ענית היום</span>
-            )}
           </div>
 
           {/* Live participants */}
@@ -1309,7 +1308,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <HapticButton onClick={() => setShowClinicalExpl(true)} hapticPattern={10} pressScale={0.96}
                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-3.5 text-amber-300 font-bold text-sm">
-                <Brain size={15} />הצג הסבר קליני
+                <Brain size={15} />הצג הסבר
               </HapticButton>
             </motion.div>
           )}
@@ -1342,15 +1341,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     return (
       <div className="flex flex-col gap-5">
-        {/* Drug header */}
-        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/50 to-slate-950 border border-emerald-500/30 p-5 flex flex-col items-center gap-2"
-          style={{ boxShadow: '0 0 28px rgba(16,185,129,0.12)' }}>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/35 flex items-center justify-center mb-1"
-            style={{ boxShadow: '0 0 18px rgba(16,185,129,0.3)' }}>
-            <Pill size={22} className="text-emerald-400" />
+        {/* Drug header — name + description */}
+        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/55 to-slate-950 border border-emerald-500/35 p-5"
+          style={{ boxShadow: '0 0 28px rgba(16,185,129,0.14)' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-400/20 border border-emerald-400/35 flex items-center justify-center shrink-0"
+              style={{ boxShadow: '0 0 16px rgba(16,185,129,0.3)' }}>
+              <Pill size={20} className="text-emerald-400" />
+            </div>
+            <span className="text-emerald-200 font-black text-xl leading-tight">{medData.name}</span>
           </div>
-          <span className="text-emerald-200 font-black text-xl leading-tight text-center">{medData.name}</span>
-          <span className="text-emerald-400/60 text-xs font-semibold text-center">{medData.drug_class}</span>
+          <div className="h-px bg-emerald-500/20 mb-3" />
+          <p className="text-emerald-100/75 text-[14px] font-medium leading-relaxed">{medData.drug_class}</p>
         </div>
 
         {/* Result banner */}
@@ -1384,32 +1386,32 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
-        {/* Clinical pearl + emergency note */}
+        {/* Clinical pearl + emergency note — distinct framed cards */}
         {medIsAnswered && (
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             className="flex flex-col gap-3"
           >
-            <div className="rounded-2xl bg-emerald-500/8 border border-emerald-500/22 p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-emerald-400/20 border border-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <Brain size={13} className="text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-emerald-300 text-[11px] font-black uppercase tracking-wider mb-1.5">דגש קליני</p>
-                  <p className="text-emt-light text-[14px] leading-relaxed font-medium">{medData.clinical_pearl}</p>
-                </div>
+            {/* Pearl card */}
+            <div className="rounded-2xl overflow-hidden border border-emerald-500/40"
+              style={{ boxShadow: '0 0 20px rgba(16,185,129,0.12)' }}>
+              <div className="bg-emerald-500/20 px-4 py-2.5 flex items-center gap-2 border-b border-emerald-500/25">
+                <Brain size={14} className="text-emerald-300 shrink-0" />
+                <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">דגש קליני</p>
+              </div>
+              <div className="bg-emerald-950/30 px-4 py-3.5">
+                <p className="text-white/90 text-[14px] leading-relaxed font-medium">{medData.clinical_pearl}</p>
               </div>
             </div>
-            <div className="rounded-2xl bg-amber-500/8 border border-amber-500/22 p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <AlertTriangle size={13} className="text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1.5">אזהרת חירום</p>
-                  <p className="text-emt-light text-[14px] leading-relaxed font-medium">{medData.emergency_note}</p>
-                </div>
+            {/* Emergency note card */}
+            <div className="rounded-2xl overflow-hidden border border-amber-500/40"
+              style={{ boxShadow: '0 0 20px rgba(245,158,11,0.12)' }}>
+              <div className="bg-amber-500/20 px-4 py-2.5 flex items-center gap-2 border-b border-amber-500/25">
+                <AlertTriangle size={14} className="text-amber-300 shrink-0" />
+                <p className="text-amber-200 text-xs font-black uppercase tracking-widest">אזהרת חירום</p>
+              </div>
+              <div className="bg-amber-950/25 px-4 py-3.5">
+                <p className="text-white/90 text-[14px] leading-relaxed font-medium">{medData.emergency_note}</p>
               </div>
             </div>
           </motion.div>
