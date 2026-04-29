@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 
 interface Props {
   visible: boolean;
-  text?: string;
 }
 
-export default function AlertOverlay({ visible, text = 'האם סדיר ונימוש?' }: Props) {
+export default function AlertOverlay({ visible }: Props) {
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -29,7 +28,7 @@ export default function AlertOverlay({ visible, text = 'האם סדיר ונימ
         className="text-emt-red font-black text-center leading-tight animate-slide-up"
         style={{ fontSize: 'clamp(1.8rem, 7vw, 3rem)' }}
       >
-        {text}
+        האם סדיר ונימוש?
       </p>
     </div>
   );
