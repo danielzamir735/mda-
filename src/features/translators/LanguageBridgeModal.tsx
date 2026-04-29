@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
-  HelpCircle, ShieldCheck, Trash2, Users, Video, Share2,
+  HelpCircle, ShieldCheck, Users, Video, Share2,
   Moon, CalendarDays,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
@@ -1304,11 +1304,10 @@ interface MyTranslatorData {
   availability: Availability | null;
 }
 
-function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
+function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
   id: string;
   allLanguages: Language[];
   onDeleted: () => void;
-  onUpdated: () => void;
   onEdit: (phone: string) => void;
 }) {
   const [data, setData]               = useState<MyTranslatorData | null>(null);
@@ -1922,7 +1921,6 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         fetchAllTranslators();
                         if (selectedLang) fetchForLanguage(selectedLang.code);
                       }}
-                      onUpdated={fetchAllTranslators}
                       onEdit={(phone) => { setPrefillPhone(phone); setView('register'); }}
                     />
                   </div>
@@ -2066,7 +2064,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     // Optimistic add for new registration only
                     setAllTranslators(prev => [
                       ...prev,
-                      { id: newId, full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false }
+                      { id: newId, full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false, availability: null }
                     ]);
                   } else if (langs.length === 0) {
                     // Deletion path — clear own id
