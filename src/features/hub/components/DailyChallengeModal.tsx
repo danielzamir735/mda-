@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
-  Share2, Pill, BookOpen, AlertTriangle, Zap, Flame, Star, ChevronLeft,
+  Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -387,7 +387,7 @@ async function shareChallengeResult(score: number): Promise<void> {
 const gridVariants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.02 } },
-  exit: { opacity: 0, scale: 0.97, transition: { duration: 0.15 } },
+  exit: { opacity: 0, scale: 1.06, transition: { duration: 0.2 } },
 };
 
 const gridCardVariants = {
@@ -396,9 +396,9 @@ const gridCardVariants = {
 };
 
 const expandedVariants = {
-  hidden: { opacity: 0, x: 28 },
-  show: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 320, damping: 28 } },
-  exit: { opacity: 0, x: 28, transition: { duration: 0.14 } },
+  hidden: { opacity: 0, scale: 0.94 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring' as const, stiffness: 340, damping: 28 } },
+  exit: { opacity: 0, scale: 0.97, transition: { duration: 0.14 } },
 };
 
 // ─── HEBREW_LETTERS ───────────────────────────────────────────────────────────
@@ -644,7 +644,7 @@ function SuccessScreen({ score, streak, onClose }: {
           <p className="text-emt-light font-black text-2xl leading-tight">
             {score === 4 ? '🏆 מושלם! כל הכבוד!' : score >= 3 ? '⭐ כמעט מושלם!' : score >= 2 ? '💪 לא רע!' : '📚 המשך ללמוד!'}
           </p>
-          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/4 בלוקים נכונים</p>
+          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/4</p>
         </motion.div>
 
         {streak > 0 && (
@@ -705,7 +705,6 @@ interface GridCardConfig {
   icon: React.ReactNode;
   iconBg: string;
   iconBorder: string;
-  blockLabel: string;
   blockTitle: string;
   emoji: string;
 }
@@ -724,64 +723,59 @@ function GridCard({
   onClick: () => void;
 }) {
   const borderClass = isAnswered
-    ? (isCorrect ? 'border-green-500/50' : 'border-red-500/30')
+    ? (isCorrect ? 'border-green-400/70' : 'border-red-500/40')
     : config.neonBorder;
 
-  const bgClass = isAnswered
-    ? (isCorrect ? 'bg-gradient-to-b from-green-900/20 to-transparent' : 'bg-gradient-to-b from-red-900/12 to-transparent')
-    : config.bg;
-
   const glowStyle = isAnswered
-    ? { boxShadow: isCorrect ? '0 0 28px rgba(34,197,94,0.2)' : '0 0 18px rgba(239,68,68,0.1)' }
+    ? { boxShadow: isCorrect ? '0 0 48px rgba(34,197,94,0.35), inset 0 0 32px rgba(34,197,94,0.06)' : '0 0 28px rgba(239,68,68,0.2)' }
     : { boxShadow: config.glowColor };
 
   return (
     <motion.button
       variants={gridCardVariants}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`relative w-full h-full flex flex-col items-center justify-center gap-3 rounded-3xl border backdrop-blur-sm transition-all duration-200 active:scale-[0.96] ${borderClass} ${bgClass}`}
+      className={`relative w-full h-full flex flex-col items-center justify-center gap-4 rounded-3xl border backdrop-blur-md bg-slate-950/80 ${borderClass}`}
       style={glowStyle}
     >
-      {/* Status badge — top-left */}
+      {/* Completion badge — top-right corner */}
       <div className="absolute top-3 right-3">
         {status === 'loading' && (
-          <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
         )}
         {isAnswered && (
           <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className={`w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/30 border border-green-400/60' : 'bg-red-500/20 border border-red-400/40'}`}
+            initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+            className={`w-7 h-7 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/35 border-2 border-green-400/70' : 'bg-red-500/25 border-2 border-red-400/55'}`}
           >
-            {isCorrect ? <CheckCircle size={11} className="text-green-400" /> : <XCircle size={11} className="text-red-400" />}
+            {isCorrect
+              ? <CheckCircle size={14} className="text-green-300" />
+              : <XCircle size={14} className="text-red-400" />}
           </motion.div>
         )}
       </div>
 
-      {/* Big icon */}
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
-        style={{ boxShadow: isAnswered && isCorrect ? '0 0 18px rgba(34,197,94,0.2)' : undefined }}
+      {/* Icon */}
+      <motion.div
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
+        style={{ boxShadow: isAnswered && isCorrect ? '0 0 28px rgba(34,197,94,0.35)' : config.glowColor }}
+        animate={isAnswered && isCorrect ? { scale: [1, 1.1, 1] } : {}}
+        transition={{ duration: 0.5, delay: 0.12 }}
       >
-        <span className="text-2xl leading-none">{config.emoji}</span>
-      </div>
+        <span className="text-3xl leading-none">{config.emoji}</span>
+      </motion.div>
 
-      {/* Labels */}
-      <div className="text-center px-2">
-        <p className={`text-[10px] font-black uppercase tracking-widest ${config.labelColor}`}>{config.blockLabel}</p>
-        <p className="text-emt-light font-bold text-[13px] leading-tight mt-0.5">{config.blockTitle}</p>
-      </div>
+      {/* Category title — no block label */}
+      <p className="text-white font-black text-[15px] leading-tight px-3 text-center">{config.blockTitle}</p>
 
-      {/* State hint */}
+      {/* Subtle state hint */}
       {!isAnswered && status === 'ready' && (
-        <p className="text-emt-muted/50 text-[10px] font-semibold">הקש לשחק ▶</p>
+        <p className="absolute bottom-3 text-white/20 text-[10px] font-semibold">הקש לשחק</p>
       )}
       {!isAnswered && status === 'error' && (
-        <p className="text-red-400/60 text-[10px] font-semibold">שגיאה — הקש לנסות</p>
-      )}
-      {isAnswered && (
-        <p className={`text-[10px] font-bold ${isCorrect ? 'text-green-400/70' : 'text-red-400/60'}`}>
-          {isCorrect ? 'נכון ✓' : 'שגוי — הקש לסקור'}
-        </p>
+        <p className="absolute bottom-3 text-red-400/60 text-[10px] font-semibold">שגיאה — נסה שוב</p>
       )}
     </motion.button>
   );
@@ -860,52 +854,48 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ── Grid card configs ──
   const BLOCK_CONFIGS: Record<BlockId, GridCardConfig> = {
     A: {
-      neonBorder: clinicalCategory === 'als' ? 'border-red-500/40' : 'border-amber-500/30',
-      glowColor: clinicalCategory === 'als' ? '0 0 24px rgba(239,68,68,0.12)' : '0 0 20px rgba(245,158,11,0.1)',
-      bg: clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-900/12 to-transparent' : 'bg-gradient-to-b from-amber-900/10 to-transparent',
+      neonBorder: clinicalCategory === 'als' ? 'border-red-500/50' : 'border-amber-500/40',
+      glowColor: clinicalCategory === 'als' ? '0 0 28px rgba(239,68,68,0.16)' : '0 0 24px rgba(245,158,11,0.14)',
+      bg: '',
       labelColor: clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400',
       icon: <Zap size={20} className={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'} />,
       iconBg: clinicalCategory === 'als' ? 'bg-red-400/15' : 'bg-amber-400/15',
       iconBorder: clinicalCategory === 'als' ? 'border-red-400/30' : 'border-amber-400/30',
-      blockLabel: 'בלוק א׳',
       blockTitle: 'שאלה קלינית',
       emoji: clinicalCategory === 'als' ? '⚡' : '🫀',
     },
     B: {
-      neonBorder: 'border-green-500/40',
-      glowColor: '0 0 22px rgba(34,197,94,0.1)',
-      bg: 'bg-gradient-to-b from-green-900/12 to-transparent',
+      neonBorder: 'border-green-500/50',
+      glowColor: '0 0 26px rgba(34,197,94,0.14)',
+      bg: '',
       labelColor: 'text-green-400',
       icon: <Pill size={20} className="text-green-400" />,
       iconBg: 'bg-green-400/15',
       iconBorder: 'border-green-400/30',
-      blockLabel: 'בלוק ב׳',
       blockTitle: 'תרופת היום',
       emoji: '💊',
     },
     C: {
-      neonBorder: 'border-purple-500/40',
-      glowColor: '0 0 22px rgba(168,85,247,0.1)',
-      bg: 'bg-gradient-to-b from-purple-900/12 to-transparent',
+      neonBorder: 'border-purple-500/50',
+      glowColor: '0 0 26px rgba(168,85,247,0.14)',
+      bg: '',
       labelColor: 'text-purple-400',
       icon: <BookOpen size={20} className="text-purple-400" />,
       iconBg: 'bg-purple-400/15',
       iconBorder: 'border-purple-400/30',
-      blockLabel: 'בלוק ג׳',
       blockTitle: 'קיצורים רפואיים',
       emoji: '📋',
     },
     D: {
-      neonBorder: 'border-orange-500/40',
-      glowColor: '0 0 22px rgba(249,115,22,0.1)',
-      bg: 'bg-gradient-to-b from-orange-900/12 to-transparent',
+      neonBorder: 'border-orange-500/50',
+      glowColor: '0 0 26px rgba(249,115,22,0.14)',
+      bg: '',
       labelColor: 'text-orange-400',
-      icon: <AlertTriangle size={20} className="text-orange-400" />,
+      icon: <OctagonAlert size={20} className="text-orange-400" />,
       iconBg: 'bg-orange-400/15',
       iconBorder: 'border-orange-400/30',
-      blockLabel: 'בלוק ד׳',
-      blockTitle: 'דגל אדום',
-      emoji: '🚩',
+      blockTitle: 'נורת אזהרה',
+      emoji: '🚨',
     },
   };
 
@@ -1129,8 +1119,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           {cfg.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-[10px] font-black uppercase tracking-wider ${cfg.labelColor}`}>{cfg.blockLabel}</p>
-          <p className="text-emt-light font-bold text-[13px] leading-tight truncate">{cfg.blockTitle}</p>
+          <p className="text-emt-light font-black text-[15px] leading-tight truncate">{cfg.blockTitle}</p>
         </div>
         {isAnswered && (
           isCorrect
@@ -1564,7 +1553,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         {/* Progress bar */}
         <div className="px-4 pb-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/4 בלוקים הושלמו</span>
+            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/4 הושלמו</span>
             <span className="text-amber-400/70 text-[11px] font-semibold">{score} נק׳</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
