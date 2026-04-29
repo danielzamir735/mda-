@@ -178,6 +178,20 @@ function saveCache<T>(key: string, data: T, answeredIdx?: number | null, timeTak
   localStorage.setItem(key, JSON.stringify({ date: getToday(), data, answeredIdx, timeTaken }));
 }
 
+const SUCCESS_SEEN_KEY = 'daily_challenge_success_seen_v1';
+
+function hasSeenSuccessToday(): boolean {
+  try {
+    const raw = localStorage.getItem(SUCCESS_SEEN_KEY);
+    if (!raw) return false;
+    return (JSON.parse(raw) as { date: string }).date === getToday();
+  } catch { return false; }
+}
+
+function markSuccessSeenToday() {
+  localStorage.setItem(SUCCESS_SEEN_KEY, JSON.stringify({ date: getToday() }));
+}
+
 function loadCachedStats(cat: ClinicalCategory): GlobalStats | null {
   try {
     const raw = localStorage.getItem(STATS_CACHE_KEY[cat]);
@@ -436,7 +450,7 @@ function MCQOptions({
           : null;
         const chosenPct = rawPct !== null && rawPct > 0 ? rawPct : null;
 
-        let cls = 'border-white/12 bg-white/5 text-emt-light hover:bg-white/10 hover:border-white/20 active:scale-[0.98]';
+        let cls = 'border-white/8 bg-white/3 text-emt-light hover:bg-white/7 hover:border-white/14 active:scale-[0.98]';
         if (isAnswered) {
           if (isCorrect) cls = accentCorrect;
           else if (isSelected) cls = accentWrong;
@@ -991,11 +1005,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     }
   }, [isOpen]);
 
-  // Trigger success screen
+  // Trigger success screen — only once per day, never on re-open from cache
   useEffect(() => {
-    if (allAnswered && !showSuccess) {
+    if (allAnswered && !showSuccess && !hasSeenSuccessToday()) {
       const t = setTimeout(() => {
         setShowSuccess(true);
+        markSuccessSeenToday();
         const s = markDayComplete();
         setStreak(s.streak);
         trackEvent('daily_challenge_all_blocks_complete', { score });
@@ -1272,8 +1287,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
-          {/* Question — prominent card */}
-          <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+          {/* Question — accent-colored card */}
+          <div
+            className={`rounded-3xl border p-5 ${clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-950/40 to-slate-950/60 border-red-400/30' : 'bg-gradient-to-b from-amber-950/40 to-slate-950/60 border-amber-400/30'}`}
+          >
             <p className="text-white font-black text-[17px] leading-[1.55] text-center">{clinicalQuestion.question}</p>
           </div>
 
@@ -1352,7 +1369,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         )}
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/40 to-slate-950/60 border border-emerald-400/30 p-5">
           <p className="text-white font-black text-[17px] leading-[1.55] text-center">{medData.question}</p>
         </div>
 
@@ -1499,7 +1516,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+        <div className="rounded-3xl bg-gradient-to-b from-orange-950/40 to-slate-950/60 border border-orange-400/30 p-5">
           <p className="text-white font-black text-[17px] leading-[1.55] text-center">{redQuestion.question}</p>
         </div>
 
@@ -1677,7 +1694,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     className="w-full py-3 rounded-2xl bg-white/6 border border-white/12 text-emt-muted font-bold text-sm flex items-center justify-center gap-2"
                   >
                     <ChevronLeft size={16} />
-                    חזרה לרשת האתגר
+                    חזרה לרשימת האתגרים
                   </HapticButton>
                 </motion.div>
               )}
