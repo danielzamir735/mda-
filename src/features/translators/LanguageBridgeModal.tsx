@@ -634,14 +634,14 @@ function RegisterForm({
   const [selectedLangs, setSelectedLangs]   = useState<string[]>([]);
   const [formLangSearch, setFormLangSearch] = useState('');
   const [availMode, setAvailMode]   = useState<AvailabilityMode>('24_7');
-  const [customDays, setCustomDays] = useState<{ [day: number]: { enabled: boolean; start: string; end: string } }>({
-    0: { enabled: true,  start: '08:00', end: '22:00' },
-    1: { enabled: true,  start: '08:00', end: '22:00' },
-    2: { enabled: true,  start: '08:00', end: '22:00' },
-    3: { enabled: true,  start: '08:00', end: '22:00' },
-    4: { enabled: true,  start: '08:00', end: '22:00' },
-    5: { enabled: true,  start: '08:00', end: '20:00' },
-    6: { enabled: false, start: '08:00', end: '20:00' },
+  const [customDays, setCustomDays] = useState<{ [day: number]: { enabled: boolean; slots: { start: string; end: string }[] } }>({
+    0: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    1: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    2: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    3: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    4: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    5: { enabled: true,  slots: [{ start: '08:00', end: '20:00' }] },
+    6: { enabled: true,  slots: [{ start: '08:00', end: '20:00' }] },
   });
   const [emergencyContact, setEmergencyContact] = useState(false);
   const [loading, setLoading]               = useState(false);
@@ -695,17 +695,21 @@ function RegisterForm({
         if (avail) {
           setAvailMode(avail.type);
           if (avail.type === 'custom' && avail.schedule.length > 0) {
-            const newDays: { [day: number]: { enabled: boolean; start: string; end: string } } = {
-              0: { enabled: false, start: '08:00', end: '22:00' },
-              1: { enabled: false, start: '08:00', end: '22:00' },
-              2: { enabled: false, start: '08:00', end: '22:00' },
-              3: { enabled: false, start: '08:00', end: '22:00' },
-              4: { enabled: false, start: '08:00', end: '22:00' },
-              5: { enabled: false, start: '08:00', end: '20:00' },
-              6: { enabled: false, start: '08:00', end: '20:00' },
+            const newDays: { [day: number]: { enabled: boolean; slots: { start: string; end: string }[] } } = {
+              0: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              1: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              2: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              3: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              4: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              5: { enabled: false, slots: [{ start: '08:00', end: '20:00' }] },
+              6: { enabled: false, slots: [{ start: '08:00', end: '20:00' }] },
             };
             (avail.schedule as AvailabilityEntry[]).forEach(s => {
-              newDays[s.day] = { enabled: true, start: s.start, end: s.end };
+              if (!newDays[s.day].enabled) {
+                newDays[s.day] = { enabled: true, slots: [{ start: s.start, end: s.end }] };
+              } else {
+                newDays[s.day].slots.push({ start: s.start, end: s.end });
+              }
             });
             setCustomDays(newDays);
           }
@@ -718,13 +722,13 @@ function RegisterForm({
           const s = (slot?.start ?? '08:00').slice(0, 5);
           const e = (slot?.end ?? '22:00').slice(0, 5);
           setCustomDays({
-            0: { enabled: true,  start: s, end: e },
-            1: { enabled: true,  start: s, end: e },
-            2: { enabled: true,  start: s, end: e },
-            3: { enabled: true,  start: s, end: e },
-            4: { enabled: true,  start: s, end: e },
-            5: { enabled: true,  start: s, end: e },
-            6: { enabled: false, start: s, end: e },
+            0: { enabled: true,  slots: [{ start: s, end: e }] },
+            1: { enabled: true,  slots: [{ start: s, end: e }] },
+            2: { enabled: true,  slots: [{ start: s, end: e }] },
+            3: { enabled: true,  slots: [{ start: s, end: e }] },
+            4: { enabled: true,  slots: [{ start: s, end: e }] },
+            5: { enabled: true,  slots: [{ start: s, end: e }] },
+            6: { enabled: false, slots: [{ start: s, end: e }] },
           });
         }
         setEmergencyContact(data.emergency_only_contact ?? false);
@@ -750,8 +754,8 @@ function RegisterForm({
         ? { type: '24_7', schedule: [] }
         : availMode === 'no_saturday'
           ? { type: 'no_saturday', schedule: [] }
-          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).map(([day, d]) => ({ day: parseInt(day), start: d.start, end: d.end })) };
-      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled) : undefined;
+          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).flatMap(([day, d]) => d.slots.map(slot => ({ day: parseInt(day), start: slot.start, end: slot.end }))) };
+      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled)?.slots[0] : undefined;
       const payload = {
         full_name:               fullName.trim(),
         languages:               selectedLangs,
@@ -759,7 +763,7 @@ function RegisterForm({
         is_24_7:                 availMode === '24_7',
         start_time:              firstSlot?.start ?? null,
         end_time:                firstSlot?.end ?? null,
-        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).map(d => ({ start: d.start, end: d.end })) : [],
+        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
       console.log('[LB] update payload:', payload);
@@ -815,8 +819,8 @@ function RegisterForm({
         ? { type: '24_7', schedule: [] }
         : availMode === 'no_saturday'
           ? { type: 'no_saturday', schedule: [] }
-          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).map(([day, d]) => ({ day: parseInt(day), start: d.start, end: d.end })) };
-      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled) : undefined;
+          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).flatMap(([day, d]) => d.slots.map(slot => ({ day: parseInt(day), start: slot.start, end: slot.end }))) };
+      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled)?.slots[0] : undefined;
       const payload = {
         full_name:               fullName.trim(),
         phone_number:            phone.trim(),
@@ -825,7 +829,7 @@ function RegisterForm({
         is_24_7:                 availMode === '24_7',
         start_time:              firstSlot?.start ?? null,
         end_time:                firstSlot?.end ?? null,
-        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).map(d => ({ start: d.start, end: d.end })) : [],
+        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
       console.log('[LB] insert payload:', payload);
@@ -1112,6 +1116,9 @@ function RegisterForm({
             >
               <div className="flex flex-col gap-3 rounded-xl px-3 py-3 border border-white/15" style={{ background: 'rgba(255,255,255,0.05)' }}>
 
+                {/* Header hint */}
+                <p className="text-[0.62rem] text-white/35 text-center font-semibold tracking-wide">לחץ על יום להפעלה / כיבוי</p>
+
                 {/* Day toggles */}
                 <div className="flex gap-1.5 justify-between">
                   {DAY_ABBREVS.map((abbr, day) => {
@@ -1140,31 +1147,74 @@ function RegisterForm({
                 </div>
 
                 {/* Per-day time pickers */}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   {Array.from({ length: 7 }, (_, day) => {
                     const d = customDays[day];
                     if (!d.enabled) return null;
                     return (
-                      <div
-                        key={day}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10"
-                        style={{ background: 'rgba(255,255,255,0.04)' }}
-                      >
-                        <span className="text-[0.65rem] font-black text-white/55 w-10 shrink-0 text-right">{DAY_NAMES[day]}</span>
-                        <Clock size={12} className="text-white/25 shrink-0" />
-                        <input
-                          type="time"
-                          value={d.start}
-                          onChange={e => setCustomDays(prev => ({ ...prev, [day]: { ...prev[day], start: e.target.value } }))}
-                          className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
-                        />
-                        <span className="text-white/25 font-black text-xs">—</span>
-                        <input
-                          type="time"
-                          value={d.end}
-                          onChange={e => setCustomDays(prev => ({ ...prev, [day]: { ...prev[day], end: e.target.value } }))}
-                          className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
-                        />
+                      <div key={day} className="flex flex-col gap-1">
+                        {d.slots.map((slot, si) => (
+                          <div
+                            key={si}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10"
+                            style={{ background: 'rgba(255,255,255,0.04)' }}
+                          >
+                            {si === 0
+                              ? <span className="text-[0.65rem] font-black text-white/55 w-10 shrink-0 text-right">{DAY_NAMES[day]}</span>
+                              : <span className="w-10 shrink-0" />
+                            }
+                            <Clock size={12} className="text-white/25 shrink-0" />
+                            <input
+                              type="time"
+                              value={slot.start}
+                              onChange={e => setCustomDays(prev => {
+                                const slots = [...prev[day].slots];
+                                slots[si] = { ...slots[si], start: e.target.value };
+                                return { ...prev, [day]: { ...prev[day], slots } };
+                              })}
+                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                            />
+                            <span className="text-white/25 font-black text-xs">—</span>
+                            <input
+                              type="time"
+                              value={slot.end}
+                              onChange={e => setCustomDays(prev => {
+                                const slots = [...prev[day].slots];
+                                slots[si] = { ...slots[si], end: e.target.value };
+                                return { ...prev, [day]: { ...prev[day], slots } };
+                              })}
+                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                            />
+                            <div className="flex gap-1 mr-auto">
+                              {d.slots.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomDays(prev => {
+                                    const slots = prev[day].slots.filter((_, i) => i !== si);
+                                    return { ...prev, [day]: { ...prev[day], slots } };
+                                  })}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-red-400 transition-colors"
+                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                >
+                                  <span className="text-base leading-none font-black">−</span>
+                                </button>
+                              )}
+                              {si === d.slots.length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomDays(prev => {
+                                    const slots = [...prev[day].slots, { start: '08:00', end: '17:00' }];
+                                    return { ...prev, [day]: { ...prev[day], slots } };
+                                  })}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-blue-400 transition-colors"
+                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                >
+                                  <span className="text-base leading-none font-black">+</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     );
                   })}
