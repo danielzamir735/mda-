@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS daily_questions (
   id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   question_date date        NOT NULL,
-  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als')),
+  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als', 'med_v3', 'abbr', 'red_flag')),
   content       jsonb       NOT NULL,
   created_at    timestamptz DEFAULT now(),
   CONSTRAINT unique_daily_question UNIQUE (question_date, question_type)

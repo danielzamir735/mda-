@@ -56,7 +56,9 @@
       "Bash(git -C C:/Users/User/Desktop/medic-app commit -m ' *)",
       "Bash(mkdir -p \"C:/Users/User/Desktop/medic-app/src/assets/body-parts\")",
       "Bash(cp \"C:/Users/User/Downloads/Untitled/\"*.svg \"C:/Users/User/Desktop/medic-app/src/assets/body-parts/\")",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)"
     ]
   },
   "hooks": {

@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
   Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
-  HelpCircle, ShieldCheck, Trash2, Users, Video, Share2,
+  HelpCircle, ShieldCheck, Users, Video, Share2,
+  Moon, CalendarDays,
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
@@ -15,6 +16,19 @@ interface Props {
 
 interface TimeSlot { start: string; end: string; }
 
+interface AvailabilityEntry {
+  day: number;   // 0=Sun … 6=Sat
+  start: string; // "HH:MM"
+  end: string;
+}
+
+type AvailabilityMode = '24_7' | 'no_saturday' | 'custom';
+
+interface Availability {
+  type: AvailabilityMode;
+  schedule: AvailabilityEntry[];
+}
+
 interface Translator {
   id: string;
   full_name: string;
@@ -25,6 +39,7 @@ interface Translator {
   end_time: string | null;
   time_slots: TimeSlot[] | null;
   emergency_only_contact: boolean;
+  availability: Availability | null;
 }
 
 interface Language {
@@ -108,11 +123,36 @@ const INTRO_PAGE = {
   exit:    { opacity: 0, scale: 0.92, y: -16, transition: { duration: 0.22 } },
 };
 
+// ─── Day labels ────────────────────────────────────────────────────────────────
+
+const DAY_ABBREVS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+const DAY_NAMES   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function isAvailableNow(t: Translator): boolean {
+  // New availability format takes priority
+  if (t.availability) {
+    const { type, schedule } = t.availability;
+    if (type === '24_7') return true;
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    if (type === 'no_saturday') return dayOfWeek !== 6;
+    if (type === 'custom') {
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const todaySlots = schedule.filter(s => s.day === dayOfWeek);
+      if (todaySlots.length === 0) return false;
+      return todaySlots.some(slot => {
+        const [sh, sm] = slot.start.split(':').map(Number);
+        const [eh, em] = slot.end.split(':').map(Number);
+        const s = sh * 60 + sm, e = eh * 60 + em;
+        return s <= e ? cur >= s && cur <= e : cur >= s || cur <= e;
+      });
+    }
+    return false;
+  }
+  // Legacy format fallback
   if (t.is_24_7) return true;
-  // Prefer multi-slot array, fall back to legacy single slot
   const slots: TimeSlot[] =
     (t.time_slots && t.time_slots.length > 0)
       ? t.time_slots
@@ -123,8 +163,7 @@ function isAvailableNow(t: Translator): boolean {
   return slots.some(slot => {
     const [sh, sm] = slot.start.split(':').map(Number);
     const [eh, em] = slot.end.split(':').map(Number);
-    const start = sh * 60 + sm;
-    const end   = eh * 60 + em;
+    const start = sh * 60 + sm, end = eh * 60 + em;
     return start <= end ? cur >= start && cur <= end : cur >= start || cur <= end;
   });
 }
@@ -282,6 +321,61 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
   );
 }
 
+// ─── Availability display helper ──────────────────────────────────────────────
+
+function AvailabilityBadge({ translator }: { translator: Translator }) {
+  const avail = translator.availability;
+  if (avail) {
+    if (avail.type === '24_7') return (
+      <div className="flex items-center gap-1 mt-0.5">
+        <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+        <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+      </div>
+    );
+    if (avail.type === 'no_saturday') return (
+      <div className="flex items-center gap-1 mt-0.5">
+        <Moon size={10} className="text-amber-400" />
+        <span className="text-[0.65rem] text-amber-400 font-bold">כל יום מלבד שבת</span>
+      </div>
+    );
+    if (avail.type === 'custom' && avail.schedule.length > 0) return (
+      <div className="flex flex-col gap-0.5 mt-0.5">
+        {avail.schedule.map((entry, i) => (
+          <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+            <Clock size={10} />
+            <span className="text-[0.6rem] font-semibold text-gray-500">{DAY_ABBREVS[entry.day]}</span>
+            {formatTime(entry.start)} – {formatTime(entry.end)}
+          </p>
+        ))}
+      </div>
+    );
+    return null;
+  }
+  // Legacy fallback
+  if (translator.is_24_7) return (
+    <div className="flex items-center gap-1 mt-0.5">
+      <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+      <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+    </div>
+  );
+  const slots: TimeSlot[] = (translator.time_slots && translator.time_slots.length > 0)
+    ? translator.time_slots
+    : (translator.start_time && translator.end_time
+        ? [{ start: translator.start_time, end: translator.end_time }]
+        : []);
+  if (slots.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-0.5 mt-0.5">
+      {slots.map((slot, i) => (
+        <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+          <Clock size={10} />
+          {formatTime(slot.start)} – {formatTime(slot.end)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 // ─── Translator Card ───────────────────────────────────────────────────────────
 
 // WhatsApp SVG icon
@@ -344,27 +438,7 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
             return lang ? `${lang.flag} ${lang.name}` : code;
           }).join(' · ')}
         </p>
-        {!translator.is_24_7 && (
-          <div className="flex flex-col gap-0.5 mt-0.5">
-            {(translator.time_slots && translator.time_slots.length > 0
-              ? translator.time_slots
-              : (translator.start_time && translator.end_time
-                  ? [{ start: translator.start_time, end: translator.end_time }]
-                  : [])
-            ).map((slot, i) => (
-              <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                <Clock size={10} />
-                {formatTime(slot.start)} – {formatTime(slot.end)}
-              </p>
-            ))}
-          </div>
-        )}
-        {translator.is_24_7 && (
-          <div className="flex items-center gap-1 mt-0.5">
-            <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
-            <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
-          </div>
-        )}
+        <AvailabilityBadge translator={translator} />
         {isEmergency && (
           <div className="flex items-center gap-1 mt-0.5">
             <AlertCircle size={10} className="text-orange-400 shrink-0" />
@@ -559,8 +633,16 @@ function RegisterForm({
   const [phoneConfirm, setPhoneConfirm]     = useState('');
   const [selectedLangs, setSelectedLangs]   = useState<string[]>([]);
   const [formLangSearch, setFormLangSearch] = useState('');
-  const [is24_7, setIs24_7]                 = useState(false);
-  const [timeSlots, setTimeSlots]           = useState<TimeSlot[]>([{ start: '08:00', end: '22:00' }]);
+  const [availMode, setAvailMode]   = useState<AvailabilityMode>('24_7');
+  const [customDays, setCustomDays] = useState<{ [day: number]: { enabled: boolean; slots: { start: string; end: string }[] } }>({
+    0: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    1: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    2: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    3: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    4: { enabled: true,  slots: [{ start: '08:00', end: '22:00' }] },
+    5: { enabled: true,  slots: [{ start: '08:00', end: '20:00' }] },
+    6: { enabled: true,  slots: [{ start: '08:00', end: '20:00' }] },
+  });
   const [emergencyContact, setEmergencyContact] = useState(false);
   const [loading, setLoading]               = useState(false);
   const [error, setError]                   = useState<string | null>(null);
@@ -600,7 +682,7 @@ function RegisterForm({
     phoneTimerRef.current = setTimeout(async () => {
       const { data } = await supabase
         .from('translators')
-        .select('id, full_name, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
+        .select('id, full_name, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
         .eq('phone_number', val.trim())
         .maybeSingle();
 
@@ -608,14 +690,46 @@ function RegisterForm({
         setExistingId(data.id);
         setFullName(data.full_name);
         setSelectedLangs(data.languages ?? []);
-        setIs24_7(data.is_24_7);
-        // Load multi-slot, fall back to legacy single slot
-        if (data.time_slots && (data.time_slots as TimeSlot[]).length > 0) {
-          setTimeSlots(data.time_slots as TimeSlot[]);
-        } else if (data.start_time && data.end_time) {
-          setTimeSlots([{ start: data.start_time.slice(0, 5), end: data.end_time.slice(0, 5) }]);
+        // Load availability — new format first, then legacy fallback
+        const avail = data.availability as Availability | null;
+        if (avail) {
+          setAvailMode(avail.type);
+          if (avail.type === 'custom' && avail.schedule.length > 0) {
+            const newDays: { [day: number]: { enabled: boolean; slots: { start: string; end: string }[] } } = {
+              0: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              1: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              2: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              3: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              4: { enabled: false, slots: [{ start: '08:00', end: '22:00' }] },
+              5: { enabled: false, slots: [{ start: '08:00', end: '20:00' }] },
+              6: { enabled: false, slots: [{ start: '08:00', end: '20:00' }] },
+            };
+            (avail.schedule as AvailabilityEntry[]).forEach(s => {
+              if (!newDays[s.day].enabled) {
+                newDays[s.day] = { enabled: true, slots: [{ start: s.start, end: s.end }] };
+              } else {
+                newDays[s.day].slots.push({ start: s.start, end: s.end });
+              }
+            });
+            setCustomDays(newDays);
+          }
+        } else if (data.is_24_7) {
+          setAvailMode('24_7');
         } else {
-          setTimeSlots([{ start: '08:00', end: '22:00' }]);
+          setAvailMode('custom');
+          const legacySlots = data.time_slots as TimeSlot[] | null;
+          const slot = legacySlots?.[0] ?? (data.start_time && data.end_time ? { start: data.start_time, end: data.end_time } : null);
+          const s = (slot?.start ?? '08:00').slice(0, 5);
+          const e = (slot?.end ?? '22:00').slice(0, 5);
+          setCustomDays({
+            0: { enabled: true,  slots: [{ start: s, end: e }] },
+            1: { enabled: true,  slots: [{ start: s, end: e }] },
+            2: { enabled: true,  slots: [{ start: s, end: e }] },
+            3: { enabled: true,  slots: [{ start: s, end: e }] },
+            4: { enabled: true,  slots: [{ start: s, end: e }] },
+            5: { enabled: true,  slots: [{ start: s, end: e }] },
+            6: { enabled: false, slots: [{ start: s, end: e }] },
+          });
         }
         setEmergencyContact(data.emergency_only_contact ?? false);
         setPhoneConfirm(val.trim()); // auto-confirm since record exists
@@ -630,16 +744,26 @@ function RegisterForm({
   const handleUpdate = async () => {
     if (!fullName.trim())           { setError('נא להזין שם מלא');          return; }
     if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    if (availMode === 'custom' && Object.values(customDays).every(d => !d.enabled)) {
+      setError('בלוח זמנים מותאם יש לבחור לפחות יום אחד'); return;
+    }
     setLoading(true); setError(null);
 
     try {
+      const builtAvail: Availability = availMode === '24_7'
+        ? { type: '24_7', schedule: [] }
+        : availMode === 'no_saturday'
+          ? { type: 'no_saturday', schedule: [] }
+          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).flatMap(([day, d]) => d.slots.map(slot => ({ day: parseInt(day), start: slot.start, end: slot.end }))) };
+      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled)?.slots[0] : undefined;
       const payload = {
         full_name:               fullName.trim(),
         languages:               selectedLangs,
-        is_24_7:                 is24_7,
-        start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
-        end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
-        time_slots:              is24_7 ? [] : timeSlots,
+        availability:            builtAvail,
+        is_24_7:                 availMode === '24_7',
+        start_time:              firstSlot?.start ?? null,
+        end_time:                firstSlot?.end ?? null,
+        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
       console.log('[LB] update payload:', payload);
@@ -685,17 +809,27 @@ function RegisterForm({
     if (!phone.trim())              { setError('נא להזין מספר טלפון');       return; }
     if (!phoneMatch)                { setError('מספרי הטלפון אינם תואמים'); return; }
     if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    if (availMode === 'custom' && Object.values(customDays).every(d => !d.enabled)) {
+      setError('בלוח זמנים מותאם יש לבחור לפחות יום אחד'); return;
+    }
     setLoading(true); setError(null);
 
     try {
+      const builtAvail: Availability = availMode === '24_7'
+        ? { type: '24_7', schedule: [] }
+        : availMode === 'no_saturday'
+          ? { type: 'no_saturday', schedule: [] }
+          : { type: 'custom', schedule: Object.entries(customDays).filter(([, d]) => d.enabled).flatMap(([day, d]) => d.slots.map(slot => ({ day: parseInt(day), start: slot.start, end: slot.end }))) };
+      const firstSlot = availMode === 'custom' ? Object.values(customDays).find(d => d.enabled)?.slots[0] : undefined;
       const payload = {
         full_name:               fullName.trim(),
         phone_number:            phone.trim(),
         languages:               selectedLangs,
-        is_24_7:                 is24_7,
-        start_time:              is24_7 ? null : (timeSlots[0]?.start ?? null),
-        end_time:                is24_7 ? null : (timeSlots[0]?.end ?? null),
-        time_slots:              is24_7 ? [] : timeSlots,
+        availability:            builtAvail,
+        is_24_7:                 availMode === '24_7',
+        start_time:              firstSlot?.start ?? null,
+        end_time:                firstSlot?.end ?? null,
+        time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
       console.log('[LB] insert payload:', payload);
@@ -908,91 +1042,188 @@ function RegisterForm({
       {/* Availability */}
       <div className="flex flex-col gap-3">
         <label className="text-xs font-bold text-white/50 uppercase tracking-wide">זמינות</label>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Option A: 24/7 */}
+
+        {/* Three-mode selector */}
+        <div className="flex flex-col gap-2">
+          {/* 24/7 */}
           <button
             type="button"
-            onClick={() => setIs24_7(true)}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
+            onClick={() => setAvailMode('24_7')}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
             style={{
-              borderColor: is24_7 ? 'rgba(34,197,94,0.8)' : 'rgba(255,255,255,0.12)',
-              background: is24_7 ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)',
-              boxShadow: is24_7 ? '0 0 0 3px rgba(34,197,94,0.12), 0 6px 24px rgba(34,197,94,0.2)' : 'none',
+              borderColor: availMode === '24_7' ? 'rgba(34,197,94,0.8)' : 'rgba(255,255,255,0.12)',
+              background: availMode === '24_7' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+              boxShadow: availMode === '24_7' ? '0 0 0 3px rgba(34,197,94,0.1), 0 4px 20px rgba(34,197,94,0.18)' : 'none',
             }}
           >
-            <ShieldCheck size={26} className={is24_7 ? 'text-emerald-400' : 'text-white/50'} style={is24_7 ? { filter: 'drop-shadow(0 0 6px rgba(52,211,153,0.6))' } : undefined} />
-            <span className="text-sm font-black text-white">זמין 24/7</span>
-            {is24_7 && <span className="text-[0.65rem] text-emerald-400 font-semibold">נבחר ✓</span>}
+            <ShieldCheck size={22} className={`shrink-0 ${availMode === '24_7' ? 'text-emerald-400' : 'text-white/40'}`} style={availMode === '24_7' ? { filter: 'drop-shadow(0 0 5px rgba(52,211,153,0.55))' } : undefined} />
+            <div className="flex flex-col items-start flex-1">
+              <span className="text-sm font-black text-white">זמין 24/7</span>
+              <span className="text-[0.65rem] text-white/45">כולל שבת וחגים</span>
+            </div>
+            {availMode === '24_7' && <Check size={16} className="text-emerald-400 shrink-0" />}
           </button>
 
-          {/* Option B: Manual hours */}
+          {/* 24/7 except Saturday */}
           <button
             type="button"
-            onClick={() => setIs24_7(false)}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 border-2 transition-all active:scale-95"
+            onClick={() => setAvailMode('no_saturday')}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
             style={{
-              borderColor: !is24_7 ? 'rgba(96,165,250,0.8)' : 'rgba(255,255,255,0.12)',
-              background: !is24_7 ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.05)',
-              boxShadow: !is24_7 ? '0 0 0 3px rgba(96,165,250,0.12), 0 6px 24px rgba(59,130,246,0.2)' : 'none',
+              borderColor: availMode === 'no_saturday' ? 'rgba(251,191,36,0.8)' : 'rgba(255,255,255,0.12)',
+              background: availMode === 'no_saturday' ? 'rgba(251,191,36,0.08)' : 'rgba(255,255,255,0.05)',
+              boxShadow: availMode === 'no_saturday' ? '0 0 0 3px rgba(251,191,36,0.08), 0 4px 20px rgba(251,191,36,0.15)' : 'none',
             }}
           >
-            <Clock size={26} className={!is24_7 ? 'text-blue-400' : 'text-white/50'} />
-            <span className="text-sm font-black text-white">בחירת שעות ידנית</span>
-            {!is24_7 && <span className="text-[0.65rem] text-blue-400 font-semibold">נבחר ✓</span>}
+            <Moon size={22} className={`shrink-0 ${availMode === 'no_saturday' ? 'text-amber-400' : 'text-white/40'}`} style={availMode === 'no_saturday' ? { filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' } : undefined} />
+            <div className="flex flex-col items-start flex-1">
+              <span className="text-sm font-black text-white">24/7 מלבד שבת</span>
+              <span className="text-[0.65rem] text-white/45">לא זמין בשבת</span>
+            </div>
+            {availMode === 'no_saturday' && <Check size={16} className="text-amber-400 shrink-0" />}
+          </button>
+
+          {/* Custom schedule */}
+          <button
+            type="button"
+            onClick={() => setAvailMode('custom')}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
+            style={{
+              borderColor: availMode === 'custom' ? 'rgba(96,165,250,0.8)' : 'rgba(255,255,255,0.12)',
+              background: availMode === 'custom' ? 'rgba(96,165,250,0.08)' : 'rgba(255,255,255,0.05)',
+              boxShadow: availMode === 'custom' ? '0 0 0 3px rgba(96,165,250,0.08), 0 4px 20px rgba(59,130,246,0.18)' : 'none',
+            }}
+          >
+            <CalendarDays size={22} className={`shrink-0 ${availMode === 'custom' ? 'text-blue-400' : 'text-white/40'}`} />
+            <div className="flex flex-col items-start flex-1">
+              <span className="text-sm font-black text-white">לוח זמנים מותאם</span>
+              <span className="text-[0.65rem] text-white/45">בחר ימים ושעות ספציפיים</span>
+            </div>
+            {availMode === 'custom' && <Check size={16} className="text-blue-400 shrink-0" />}
           </button>
         </div>
+
+        {/* Custom schedule panel */}
         <AnimatePresence initial={false}>
-          {!is24_7 && (
+          {availMode === 'custom' && (
             <motion.div
-              key="time-picker"
+              key="custom-schedule"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.22 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-2 rounded-xl px-3 py-3 border border-white/15" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                {timeSlots.map((slot, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Clock size={16} className="text-white/40 shrink-0" />
-                    <input
-                      type="time"
-                      value={slot.start}
-                      onChange={e => setTimeSlots(prev => prev.map((s, j) => j === i ? { ...s, start: e.target.value } : s))}
-                      className="min-w-[5.5rem] text-base font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
-                    />
-                    <span className="text-white/40 font-black">—</span>
-                    <input
-                      type="time"
-                      value={slot.end}
-                      onChange={e => setTimeSlots(prev => prev.map((s, j) => j === i ? { ...s, end: e.target.value } : s))}
-                      className="min-w-[5.5rem] text-base font-black bg-transparent text-white focus:outline-none min-h-[44px] cursor-pointer tracking-wide"
-                    />
-                    {timeSlots.length > 1 && (
+              <div className="flex flex-col gap-3 rounded-xl px-3 py-3 border border-white/15" style={{ background: 'rgba(255,255,255,0.05)' }}>
+
+                {/* Header hint */}
+                <p className="text-[0.62rem] text-white/35 text-center font-semibold tracking-wide">לחץ על יום להפעלה / כיבוי</p>
+
+                {/* Day toggles */}
+                <div className="flex gap-1.5 justify-between">
+                  {DAY_ABBREVS.map((abbr, day) => {
+                    const active = customDays[day].enabled;
+                    return (
                       <button
+                        key={day}
                         type="button"
-                        onClick={() => setTimeSlots(prev => prev.filter((_, j) => j !== i))}
-                        className="ml-auto p-1.5 rounded-lg text-red-400/70 hover:text-red-400 active:scale-90 transition-all"
+                        onClick={() => setCustomDays(prev => ({ ...prev, [day]: { ...prev[day], enabled: !prev[day].enabled } }))}
+                        className="flex-1 flex items-center justify-center rounded-xl py-2.5 border-2 transition-all active:scale-90"
+                        style={{
+                          borderColor: active
+                            ? (day === 6 ? 'rgba(248,113,113,0.7)' : 'rgba(96,165,250,0.7)')
+                            : 'rgba(255,255,255,0.1)',
+                          background: active
+                            ? (day === 6 ? 'rgba(248,113,113,0.12)' : 'rgba(59,130,246,0.12)')
+                            : 'rgba(255,255,255,0.04)',
+                        }}
                       >
-                        <Trash2 size={15} />
+                        <span className={`text-[0.7rem] font-black ${active ? (day === 6 ? 'text-red-400' : 'text-blue-400') : 'text-white/35'}`}>
+                          {abbr}
+                        </span>
                       </button>
-                    )}
-                  </div>
-                ))}
-                {timeSlots.length < 4 && (
-                  <button
-                    type="button"
-                    onClick={() => setTimeSlots(prev => [...prev, { start: '08:00', end: '20:00' }])}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed text-xs font-bold transition-all active:scale-95 mt-1"
-                    style={{
-                      borderColor: 'rgba(96,165,250,0.35)',
-                      color: 'rgba(96,165,250,0.75)',
-                      background: 'rgba(59,130,246,0.04)',
-                    }}
-                  >
-                    <Plus size={13} />
-                    הוסף טווח שעות
-                  </button>
+                    );
+                  })}
+                </div>
+
+                {/* Per-day time pickers */}
+                <div className="flex flex-col gap-2">
+                  {Array.from({ length: 7 }, (_, day) => {
+                    const d = customDays[day];
+                    if (!d.enabled) return null;
+                    return (
+                      <div key={day} className="flex flex-col gap-1">
+                        {d.slots.map((slot, si) => (
+                          <div
+                            key={si}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10"
+                            style={{ background: 'rgba(255,255,255,0.04)' }}
+                          >
+                            {si === 0
+                              ? <span className="text-[0.65rem] font-black text-white/55 w-10 shrink-0 text-right">{DAY_NAMES[day]}</span>
+                              : <span className="w-10 shrink-0" />
+                            }
+                            <Clock size={12} className="text-white/25 shrink-0" />
+                            <input
+                              type="time"
+                              value={slot.start}
+                              onChange={e => setCustomDays(prev => {
+                                const slots = [...prev[day].slots];
+                                slots[si] = { ...slots[si], start: e.target.value };
+                                return { ...prev, [day]: { ...prev[day], slots } };
+                              })}
+                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                            />
+                            <span className="text-white/25 font-black text-xs">—</span>
+                            <input
+                              type="time"
+                              value={slot.end}
+                              onChange={e => setCustomDays(prev => {
+                                const slots = [...prev[day].slots];
+                                slots[si] = { ...slots[si], end: e.target.value };
+                                return { ...prev, [day]: { ...prev[day], slots } };
+                              })}
+                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                            />
+                            <div className="flex gap-1 mr-auto">
+                              {d.slots.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomDays(prev => {
+                                    const slots = prev[day].slots.filter((_, i) => i !== si);
+                                    return { ...prev, [day]: { ...prev[day], slots } };
+                                  })}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-red-400 transition-colors"
+                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                >
+                                  <span className="text-base leading-none font-black">−</span>
+                                </button>
+                              )}
+                              {si === d.slots.length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomDays(prev => {
+                                    const slots = [...prev[day].slots, { start: '08:00', end: '17:00' }];
+                                    return { ...prev, [day]: { ...prev[day], slots } };
+                                  })}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-blue-400 transition-colors"
+                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                >
+                                  <span className="text-base leading-none font-black">+</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {Object.values(customDays).every(d => !d.enabled) && (
+                  <p className="text-xs text-amber-400/80 text-center font-semibold py-1">
+                    בחר לפחות יום אחד
+                  </p>
                 )}
               </div>
             </motion.div>
@@ -1120,13 +1351,13 @@ interface MyTranslatorData {
   end_time: string | null;
   time_slots: TimeSlot[] | null;
   emergency_only_contact: boolean;
+  availability: Availability | null;
 }
 
-function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
+function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
   id: string;
   allLanguages: Language[];
   onDeleted: () => void;
-  onUpdated: () => void;
   onEdit: (phone: string) => void;
 }) {
   const [data, setData]               = useState<MyTranslatorData | null>(null);
@@ -1137,7 +1368,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
   useEffect(() => {
     supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
       .eq('id', id)
       .maybeSingle()
       .then(({ data: row }) => {
@@ -1150,16 +1381,6 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
         setLoading(false);
       });
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggleAvailability = async () => {
-    if (!data || saving) return;
-    setSaving(true);
-    const next = !data.is_24_7;
-    await supabase.from('translators').update({ is_24_7: next }).eq('id', id);
-    setData(prev => prev ? { ...prev, is_24_7: next } : prev);
-    setSaving(false);
-    onUpdated();
-  };
 
   const handleDelete = async () => {
     setSaving(true);
@@ -1207,23 +1428,6 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
           <p className="text-[0.6rem] font-black text-blue-400 uppercase tracking-widest">ניהול הפרופיל שלי</p>
           <p className="text-sm font-bold text-white truncate">{data.full_name}</p>
         </div>
-        {/* Availability toggle */}
-        <button
-          onClick={toggleAvailability}
-          disabled={saving}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
-            data.is_24_7
-              ? 'border-emerald-400/50 text-emerald-300 bg-emerald-500/15'
-              : 'border-white/20 text-white/50 bg-white/8'
-          }`}
-        >
-          {saving
-            ? <Loader2 size={12} className="animate-spin" />
-            : data.is_24_7
-              ? <><Check size={12} /> זמין</>
-              : <>לא זמין</>
-          }
-        </button>
       </div>
 
       <div className="px-4 py-3 flex flex-col gap-2.5">
@@ -1239,10 +1443,27 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
           })}
         </div>
 
-        {/* Hours */}
-        {!data.is_24_7 && (
-          <div className="flex flex-col gap-0.5">
-            {(data.time_slots && data.time_slots.length > 0
+        {/* Availability status */}
+        <div className="flex flex-col gap-0.5">
+          {(() => {
+            const avail = data.availability;
+            if (avail) {
+              if (avail.type === '24_7') return <p className="text-xs text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />זמין 24/7</p>;
+              if (avail.type === 'no_saturday') return <p className="text-xs text-amber-400/80 flex items-center gap-1"><Moon size={11} />24/7 מלבד שבת</p>;
+              if (avail.type === 'custom' && avail.schedule.length > 0) return (
+                <>
+                  {avail.schedule.map((entry, i) => (
+                    <p key={i} className="text-xs text-white/45 flex items-center gap-1">
+                      <Clock size={11} />
+                      <span className="font-semibold text-[0.6rem] text-white/35">{DAY_ABBREVS[entry.day]}</span>
+                      {formatTime(entry.start)} – {formatTime(entry.end)}
+                    </p>
+                  ))}
+                </>
+              );
+            }
+            if (data.is_24_7) return <p className="text-xs text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />זמין 24/7</p>;
+            return (data.time_slots && data.time_slots.length > 0
               ? data.time_slots
               : (data.start_time && data.end_time ? [{ start: data.start_time, end: data.end_time }] : [])
             ).map((slot, i) => (
@@ -1250,9 +1471,9 @@ function MyProfileCard({ id, allLanguages, onDeleted, onUpdated, onEdit }: {
                 <Clock size={11} />
                 {formatTime(slot.start)} – {formatTime(slot.end)}
               </p>
-            ))}
-          </div>
-        )}
+            ));
+          })()}
+        </div>
 
         {/* Actions */}
         {!confirmDelete ? (
@@ -1362,7 +1583,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setLoadingAll(true);
     supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
       .then(({ data }) => {
         setAllTranslators((data as Translator[]) ?? []);
         setLoadingAll(false);
@@ -1411,7 +1632,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
     setLoadingList(true);
     const { data } = await supabase
       .from('translators')
-      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact')
+      .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
       .contains('languages', [langCode]);
     setTranslators((data as Translator[]) ?? []);
     setLoadingList(false);
@@ -1750,7 +1971,6 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         fetchAllTranslators();
                         if (selectedLang) fetchForLanguage(selectedLang.code);
                       }}
-                      onUpdated={fetchAllTranslators}
                       onEdit={(phone) => { setPrefillPhone(phone); setView('register'); }}
                     />
                   </div>
@@ -1894,7 +2114,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     // Optimistic add for new registration only
                     setAllTranslators(prev => [
                       ...prev,
-                      { id: newId, full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false }
+                      { id: newId, full_name: '', phone_number: '', languages: langs, is_24_7: false, start_time: null, end_time: null, time_slots: null, emergency_only_contact: false, availability: null }
                     ]);
                   } else if (langs.length === 0) {
                     // Deletion path — clear own id
