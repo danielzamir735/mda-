@@ -12,6 +12,7 @@ create table if not exists public.translators (
   end_time               time,
   time_slots             jsonb not null default '[]'::jsonb,
   emergency_only_contact boolean not null default false,
+  availability           jsonb,              -- { type: '24_7'|'no_saturday'|'custom', schedule: [{day,start,end}] }
   user_id                uuid references auth.users(id) on delete set null
 );
 
@@ -50,4 +51,5 @@ create index if not exists translators_languages_gin
 -- Migration: run this if the table already exists (adds new columns)
 alter table public.translators
   add column if not exists time_slots             jsonb not null default '[]'::jsonb,
-  add column if not exists emergency_only_contact boolean not null default false;
+  add column if not exists emergency_only_contact boolean not null default false,
+  add column if not exists availability           jsonb;
