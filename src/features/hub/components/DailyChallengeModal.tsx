@@ -427,7 +427,7 @@ function MCQOptions({
   const isAnswered = answeredIdx !== null;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {options.map((option, idx) => {
         const isCorrect = idx === correctIndex;
         const isSelected = answeredIdx === idx;
@@ -436,13 +436,13 @@ function MCQOptions({
           : null;
         const chosenPct = rawPct !== null && rawPct > 0 ? rawPct : null;
 
-        let cls = 'border-emt-border bg-emt-gray text-emt-light hover:bg-white/8 active:scale-[0.98]';
+        let cls = 'border-white/12 bg-white/5 text-emt-light hover:bg-white/10 hover:border-white/20 active:scale-[0.98]';
         if (isAnswered) {
           if (isCorrect) cls = accentCorrect;
           else if (isSelected) cls = accentWrong;
-          else cls = 'border-emt-border/50 bg-emt-gray/50 text-emt-muted';
+          else cls = 'border-white/6 bg-white/3 text-emt-muted/60';
         }
-        const fillColor = isCorrect ? 'bg-green-500/25' : isSelected ? 'bg-red-500/25' : 'bg-white/8';
+        const fillColor = isCorrect ? 'bg-green-500/20' : isSelected ? 'bg-red-500/20' : 'bg-white/6';
 
         return (
           <HapticButton
@@ -451,40 +451,42 @@ function MCQOptions({
             disabled={isAnswered}
             hapticPattern={isAnswered ? 0 : 10}
             pressScale={isAnswered ? 1 : 0.97}
-            className={`relative w-full overflow-hidden rounded-2xl border p-3.5 h-auto min-h-[64px] text-right transition-colors duration-200 ${cls}`}
+            className={`relative w-full overflow-hidden rounded-2xl border px-4 py-3.5 h-auto min-h-[72px] text-right transition-all duration-200 ${cls}`}
           >
             {isAnswered && chosenPct !== null && (
               <motion.div
                 className={`absolute inset-0 z-0 rounded-2xl ${fillColor}`}
-                initial={{ scaleX: 0, originX: 1 }}
+                initial={{ scaleX: 0 }}
                 animate={{ scaleX: chosenPct / 100 }}
-                transition={{ duration: 0.55, delay: 0.2 + idx * 0.06, ease: 'easeOut' }}
+                transition={{ duration: 0.55, delay: 0.18 + idx * 0.06, ease: 'easeOut' }}
                 style={{ transformOrigin: 'right' }}
               />
             )}
-            <div className="relative z-10 flex items-center gap-2.5 w-full">
-              <span className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-xs font-black border ${
-                isAnswered && isCorrect ? 'bg-green-500/30 border-green-400/60 text-green-300'
-                : isAnswered && isSelected ? 'bg-red-500/30 border-red-400/60 text-red-300'
-                : 'bg-white/8 border-white/15 text-emt-muted'
+            <div className="relative z-10 flex items-center gap-3 w-full">
+              <span className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-sm font-black border transition-colors ${
+                isAnswered && isCorrect ? 'bg-green-500/35 border-green-400/60 text-green-200'
+                : isAnswered && isSelected ? 'bg-red-500/35 border-red-400/60 text-red-200'
+                : 'bg-white/8 border-white/18 text-white/55'
               }`}>
                 {HEBREW_LETTERS[idx]}
               </span>
-              <span className="flex-1 text-[14px] font-semibold leading-snug break-words min-w-0 text-center">
+              <span className="flex-1 text-[15px] font-semibold leading-snug break-words min-w-0 text-right">
                 {option}
               </span>
-              {isAnswered && chosenPct !== null && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 + idx * 0.06 }}
-                  className={`text-xs font-black shrink-0 tabular-nums ${isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-emt-muted/70'}`}
-                >
-                  {chosenPct}%
-                </motion.span>
-              )}
-              {isAnswered && isCorrect && <CheckCircle size={15} className="text-green-400 shrink-0" />}
-              {isAnswered && isSelected && !isCorrect && <XCircle size={15} className="text-red-400 shrink-0" />}
+              <div className="shrink-0 flex items-center gap-1.5">
+                {isAnswered && chosenPct !== null && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 + idx * 0.06 }}
+                    className={`text-xs font-black tabular-nums ${isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-emt-muted/50'}`}
+                  >
+                    {chosenPct}%
+                  </motion.span>
+                )}
+                {isAnswered && isCorrect && <CheckCircle size={16} className="text-green-400" />}
+                {isAnswered && isSelected && !isCorrect && <XCircle size={16} className="text-red-400" />}
+              </div>
             </div>
           </HapticButton>
         );
@@ -700,7 +702,9 @@ function SuccessScreen({ score, streak, onClose }: {
 interface GridCardConfig {
   neonBorder: string;
   glowColor: string;
-  bg: string;
+  cardBg: string;
+  topGlow: string;
+  iconGlow: string;
   labelColor: string;
   icon: React.ReactNode;
   iconBg: string;
@@ -723,59 +727,72 @@ function GridCard({
   onClick: () => void;
 }) {
   const borderClass = isAnswered
-    ? (isCorrect ? 'border-green-400/70' : 'border-red-500/40')
+    ? (isCorrect ? 'border-green-400/70' : 'border-red-500/45')
     : config.neonBorder;
 
+  const cardBg = isAnswered
+    ? (isCorrect ? 'bg-gradient-to-b from-green-950/55 to-slate-950' : 'bg-gradient-to-b from-red-950/40 to-slate-950')
+    : config.cardBg;
+
   const glowStyle = isAnswered
-    ? { boxShadow: isCorrect ? '0 0 48px rgba(34,197,94,0.35), inset 0 0 32px rgba(34,197,94,0.06)' : '0 0 28px rgba(239,68,68,0.2)' }
+    ? { boxShadow: isCorrect ? '0 0 52px rgba(34,197,94,0.38), 0 0 16px rgba(34,197,94,0.12) inset' : '0 0 30px rgba(239,68,68,0.22)' }
     : { boxShadow: config.glowColor };
 
   return (
     <motion.button
       variants={gridCardVariants}
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.04, transition: { duration: 0.15 } }}
+      whileTap={{ scale: 0.94 }}
       onClick={onClick}
-      className={`relative w-full h-full flex flex-col items-center justify-center gap-4 rounded-3xl border backdrop-blur-md bg-slate-950/80 ${borderClass}`}
+      className={`relative w-full h-full flex flex-col items-center justify-center gap-5 rounded-3xl border backdrop-blur-xl overflow-hidden ${borderClass} ${cardBg}`}
       style={glowStyle}
     >
-      {/* Completion badge — top-right corner */}
-      <div className="absolute top-3 right-3">
+      {/* Colored radial top glow */}
+      {!isAnswered && (
+        <div
+          className="absolute inset-x-0 top-0 h-2/3 pointer-events-none"
+          style={{ background: config.topGlow, opacity: 0.35 }}
+        />
+      )}
+
+      {/* Completion badge */}
+      <div className="absolute top-3 right-3 z-10">
         {status === 'loading' && (
           <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
         )}
         {isAnswered && (
           <motion.div
-            initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 18 }}
-            className={`w-7 h-7 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/35 border-2 border-green-400/70' : 'bg-red-500/25 border-2 border-red-400/55'}`}
+            initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 440, damping: 18 }}
+            className={`w-7 h-7 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/40 border-2 border-green-400/80' : 'bg-red-500/30 border-2 border-red-400/65'}`}
           >
             {isCorrect
-              ? <CheckCircle size={14} className="text-green-300" />
-              : <XCircle size={14} className="text-red-400" />}
+              ? <CheckCircle size={14} className="text-green-200" />
+              : <XCircle size={14} className="text-red-300" />}
           </motion.div>
         )}
       </div>
 
       {/* Icon */}
       <motion.div
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
-        style={{ boxShadow: isAnswered && isCorrect ? '0 0 28px rgba(34,197,94,0.35)' : config.glowColor }}
-        animate={isAnswered && isCorrect ? { scale: [1, 1.1, 1] } : {}}
-        transition={{ duration: 0.5, delay: 0.12 }}
+        className={`relative z-10 w-[70px] h-[70px] rounded-[20px] flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
+        style={{ boxShadow: isAnswered && isCorrect ? '0 0 32px rgba(34,197,94,0.45)' : config.iconGlow }}
+        animate={isAnswered && isCorrect ? { scale: [1, 1.12, 1] } : {}}
+        transition={{ duration: 0.48, delay: 0.1 }}
       >
-        <span className="text-3xl leading-none">{config.emoji}</span>
+        <span className="text-[34px] leading-none">{config.emoji}</span>
       </motion.div>
 
-      {/* Category title — no block label */}
-      <p className="text-white font-black text-[15px] leading-tight px-3 text-center">{config.blockTitle}</p>
+      {/* Title */}
+      <p className="relative z-10 text-white font-black text-[16px] leading-snug px-4 text-center">
+        {config.blockTitle}
+      </p>
 
-      {/* Subtle state hint */}
       {!isAnswered && status === 'ready' && (
-        <p className="absolute bottom-3 text-white/20 text-[10px] font-semibold">הקש לשחק</p>
+        <p className="absolute bottom-4 z-10 text-white/20 text-[10px] font-semibold tracking-wide">הקש לשחק</p>
       )}
       {!isAnswered && status === 'error' && (
-        <p className="absolute bottom-3 text-red-400/60 text-[10px] font-semibold">שגיאה — נסה שוב</p>
+        <p className="absolute bottom-4 z-10 text-red-400/60 text-[10px] font-semibold">שגיאה — נסה שוב</p>
       )}
     </motion.button>
   );
@@ -854,46 +871,56 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ── Grid card configs ──
   const BLOCK_CONFIGS: Record<BlockId, GridCardConfig> = {
     A: {
-      neonBorder: clinicalCategory === 'als' ? 'border-red-500/50' : 'border-amber-500/40',
-      glowColor: clinicalCategory === 'als' ? '0 0 28px rgba(239,68,68,0.16)' : '0 0 24px rgba(245,158,11,0.14)',
-      bg: '',
+      neonBorder: clinicalCategory === 'als' ? 'border-red-500/55' : 'border-amber-500/50',
+      glowColor: clinicalCategory === 'als' ? '0 0 32px rgba(239,68,68,0.22)' : '0 0 28px rgba(245,158,11,0.20)',
+      cardBg: clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-950/50 to-slate-950' : 'bg-gradient-to-b from-amber-950/50 to-slate-950',
+      topGlow: clinicalCategory === 'als'
+        ? 'radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.7) 0%, transparent 70%)'
+        : 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.7) 0%, transparent 70%)',
+      iconGlow: clinicalCategory === 'als' ? '0 0 22px rgba(239,68,68,0.4)' : '0 0 22px rgba(245,158,11,0.4)',
       labelColor: clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400',
       icon: <Zap size={20} className={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'} />,
-      iconBg: clinicalCategory === 'als' ? 'bg-red-400/15' : 'bg-amber-400/15',
-      iconBorder: clinicalCategory === 'als' ? 'border-red-400/30' : 'border-amber-400/30',
+      iconBg: clinicalCategory === 'als' ? 'bg-red-400/20' : 'bg-amber-400/20',
+      iconBorder: clinicalCategory === 'als' ? 'border-red-400/35' : 'border-amber-400/35',
       blockTitle: 'שאלה קלינית',
       emoji: clinicalCategory === 'als' ? '⚡' : '🫀',
     },
     B: {
-      neonBorder: 'border-green-500/50',
-      glowColor: '0 0 26px rgba(34,197,94,0.14)',
-      bg: '',
-      labelColor: 'text-green-400',
-      icon: <Pill size={20} className="text-green-400" />,
-      iconBg: 'bg-green-400/15',
-      iconBorder: 'border-green-400/30',
+      neonBorder: 'border-emerald-500/55',
+      glowColor: '0 0 30px rgba(16,185,129,0.22)',
+      cardBg: 'bg-gradient-to-b from-emerald-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(16,185,129,0.4)',
+      labelColor: 'text-emerald-400',
+      icon: <Pill size={20} className="text-emerald-400" />,
+      iconBg: 'bg-emerald-400/20',
+      iconBorder: 'border-emerald-400/35',
       blockTitle: 'תרופת היום',
       emoji: '💊',
     },
     C: {
-      neonBorder: 'border-purple-500/50',
-      glowColor: '0 0 26px rgba(168,85,247,0.14)',
-      bg: '',
-      labelColor: 'text-purple-400',
-      icon: <BookOpen size={20} className="text-purple-400" />,
-      iconBg: 'bg-purple-400/15',
-      iconBorder: 'border-purple-400/30',
+      neonBorder: 'border-violet-500/55',
+      glowColor: '0 0 30px rgba(139,92,246,0.22)',
+      cardBg: 'bg-gradient-to-b from-violet-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(139,92,246,0.4)',
+      labelColor: 'text-violet-400',
+      icon: <BookOpen size={20} className="text-violet-400" />,
+      iconBg: 'bg-violet-400/20',
+      iconBorder: 'border-violet-400/35',
       blockTitle: 'קיצורים רפואיים',
       emoji: '📋',
     },
     D: {
-      neonBorder: 'border-orange-500/50',
-      glowColor: '0 0 26px rgba(249,115,22,0.14)',
-      bg: '',
+      neonBorder: 'border-orange-500/55',
+      glowColor: '0 0 30px rgba(249,115,22,0.22)',
+      cardBg: 'bg-gradient-to-b from-orange-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(249,115,22,0.4)',
       labelColor: 'text-orange-400',
       icon: <OctagonAlert size={20} className="text-orange-400" />,
-      iconBg: 'bg-orange-400/15',
-      iconBorder: 'border-orange-400/30',
+      iconBg: 'bg-orange-400/20',
+      iconBorder: 'border-orange-400/35',
       blockTitle: 'נורת אזהרה',
       emoji: '🚨',
     },
@@ -1132,11 +1159,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // ── Block A content ──
   const renderBlockA = () => (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-5">
       {!clinicalCategory && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <p className="text-emt-muted text-sm font-semibold text-center">בחר קטגוריה לשאלה של היום</p>
-          <div className="flex gap-2.5">
+          <div className="flex gap-3">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <HapticButton
                 key={cat}
@@ -1178,16 +1205,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
       {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
         <>
-          {/* Category tabs */}
+          {/* Category toggle tabs */}
           <div className="flex gap-2 self-start">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <button
                 key={cat}
                 onClick={() => !clinicalIsAnswered && loadClinicalCategory(cat)}
                 disabled={clinicalIsAnswered}
-                className={`px-3 py-1 rounded-full text-xs font-black border transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
                   clinicalCategory === cat
-                    ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/50 text-blue-300' : 'bg-red-500/25 border-red-500/50 text-red-300'
+                    ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/55 text-blue-300' : 'bg-red-500/25 border-red-500/55 text-red-300'
                     : 'bg-white/5 border-white/10 text-emt-muted'
                 }`}
               >
@@ -1195,37 +1222,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               </button>
             ))}
             {clinicalIsAnswered && (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold text-emt-muted/60 border border-white/8">ענית היום</span>
+              <span className="px-3 py-1.5 rounded-full text-xs font-semibold text-emt-muted/60 border border-white/8">ענית היום</span>
             )}
           </div>
 
-          {/* Result banner */}
-          {clinicalIsAnswered && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-              className={`flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
-                clinicalAnsweredIdx === clinicalQuestion.correct_index
-                  ? 'bg-green-500/15 border-green-500/30' : 'bg-red-500/15 border-red-500/30'
-              }`}
-            >
-              {clinicalAnsweredIdx === clinicalQuestion.correct_index
-                ? <CheckCircle size={18} className="text-green-400 shrink-0" />
-                : <XCircle size={18} className="text-red-400 shrink-0" />}
-              <div className="flex-1">
-                <span className={`font-black text-sm ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-                  {clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'תשובה נכונה! 🎉' : 'תשובה שגויה'}
-                </span>
-                {clinicalTimeTaken !== null && (
-                  <div className="flex items-center gap-1 mt-0.5 text-emt-muted/60 text-[10px]">
-                    <Clock size={9} /><span>ענית תוך {clinicalTimeTaken} שניות</span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
           {/* Live participants */}
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/8 px-3 py-1.5">
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
             <Users size={11} className="text-emt-muted shrink-0" />
             <span className="text-[10px] text-emt-muted font-semibold">{isStatsOffline ? 'מתחבר...' : 'משתתפים:'}</span>
             <motion.span key={participantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
@@ -1234,21 +1236,49 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             {!isStatsOffline && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
           </div>
 
+          {/* Result banner */}
+          {clinicalIsAnswered && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${
+                clinicalAnsweredIdx === clinicalQuestion.correct_index
+                  ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'
+              }`}
+            >
+              {clinicalAnsweredIdx === clinicalQuestion.correct_index
+                ? <CheckCircle size={20} className="text-green-400 shrink-0" />
+                : <XCircle size={20} className="text-red-400 shrink-0" />}
+              <div className="flex-1">
+                <span className={`font-black text-base ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+                  {clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'תשובה נכונה!' : 'תשובה שגויה'}
+                </span>
+                {clinicalTimeTaken !== null && (
+                  <div className="flex items-center gap-1 mt-0.5 text-emt-muted/55 text-[10px]">
+                    <Clock size={9} /><span>ענית תוך {clinicalTimeTaken} שניות</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Trap warning */}
           {!clinicalIsAnswered && (
-            <div className="flex items-center gap-2 rounded-xl bg-orange-500/8 border border-orange-400/20 px-3 py-2">
-              <span className="text-sm shrink-0">⚠️</span>
+            <div className="flex items-center gap-3 rounded-2xl bg-orange-500/8 border border-orange-400/20 px-4 py-3">
+              <span className="text-lg shrink-0">⚠️</span>
               <div>
-                <span className="text-orange-300/90 text-xs font-bold">שאלות טריקיות — מקרי קיצון</span>
-                <span className="block text-orange-200/55 text-[11px]">קרא היטב את כל התשובות לפני שתענה</span>
+                <span className="text-orange-300/90 text-sm font-bold">שאלות טריקיות — מקרי קיצון</span>
+                <span className="block text-orange-200/50 text-xs mt-0.5">קרא היטב את כל התשובות לפני שתענה</span>
               </div>
             </div>
           )}
 
-          {/* Question */}
-          <div className="rounded-2xl bg-white/5 border border-white/8 p-3.5">
-            <p className="text-emt-light font-bold text-[15px] leading-snug text-center">{clinicalQuestion.question}</p>
+          {/* Question — prominent card */}
+          <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+            <p className="text-white font-black text-[17px] leading-[1.55] text-center">{clinicalQuestion.question}</p>
           </div>
+
+          {/* Divider */}
+          <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
 
           <MCQOptions
             options={clinicalQuestion.options}
@@ -1261,7 +1291,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           {clinicalIsAnswered && !showClinicalExpl && (
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <HapticButton onClick={() => setShowClinicalExpl(true)} hapticPattern={10} pressScale={0.96}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-2.5 text-amber-300 font-bold text-sm">
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-3.5 text-amber-300 font-bold text-sm">
                 <Brain size={15} />הצג הסבר קליני
               </HapticButton>
             </motion.div>
@@ -1294,75 +1324,77 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const medCorrect = medAnsweredIdx === medData.correct_index;
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         {/* Drug header */}
-        <div className="text-center py-2">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-500/15 border border-green-500/30 mb-2">
-            <Pill size={15} className="text-green-400" />
-            <span className="text-green-300 font-black text-base">{medData.name}</span>
+        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/50 to-slate-950 border border-emerald-500/30 p-5 flex flex-col items-center gap-2"
+          style={{ boxShadow: '0 0 28px rgba(16,185,129,0.12)' }}>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/35 flex items-center justify-center mb-1"
+            style={{ boxShadow: '0 0 18px rgba(16,185,129,0.3)' }}>
+            <Pill size={22} className="text-emerald-400" />
           </div>
-          <p className="text-emt-muted text-xs font-semibold">{medData.drug_class}</p>
+          <span className="text-emerald-200 font-black text-xl leading-tight text-center">{medData.name}</span>
+          <span className="text-emerald-400/60 text-xs font-semibold text-center">{medData.drug_class}</span>
         </div>
 
         {/* Result banner */}
         {medIsAnswered && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-center gap-2.5 rounded-2xl px-4 py-2.5 border ${
-              medCorrect ? 'bg-green-500/15 border-green-500/30' : 'bg-red-500/15 border-red-500/30'
+            initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${
+              medCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'
             }`}
           >
-            {medCorrect ? <CheckCircle size={18} className="text-green-400 shrink-0" /> : <XCircle size={18} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-sm ${medCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {medCorrect ? 'נכון! 🎉' : 'שגוי'}
+            {medCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${medCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {medCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}
             </span>
           </motion.div>
         )}
 
         {/* Question */}
-        <div className="rounded-2xl bg-white/5 border border-white/8 p-3.5">
-          <p className="text-emt-light font-bold text-[15px] leading-snug text-center">{medData.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{medData.question}</p>
         </div>
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
 
         <MCQOptions
           options={medData.options}
           correctIndex={medData.correct_index}
           answeredIdx={medAnsweredIdx}
           onAnswer={handleMedAnswer}
-          accentCorrect="border-green-400/50 bg-green-500/10 text-green-200"
+          accentCorrect="border-emerald-400/55 bg-emerald-500/12 text-emerald-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
-        {/* Clinical pearl + emergency note — revealed after answering */}
+        {/* Clinical pearl + emergency note */}
         {medIsAnswered && (
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className="flex flex-col gap-2.5"
+            className="flex flex-col gap-3"
           >
-            <div className="rounded-2xl bg-green-500/8 border border-green-500/20 p-3.5">
-              <div className="flex items-start gap-2">
-                <Brain size={14} className="text-green-400 shrink-0 mt-0.5" />
+            <div className="rounded-2xl bg-emerald-500/8 border border-emerald-500/22 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-lg bg-emerald-400/20 border border-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <Brain size={13} className="text-emerald-400" />
+                </div>
                 <div>
-                  <p className="text-green-300 text-[11px] font-black uppercase tracking-wider mb-1">דגש קליני</p>
-                  <p className="text-emt-light text-[13px] leading-snug font-medium">{medData.clinical_pearl}</p>
+                  <p className="text-emerald-300 text-[11px] font-black uppercase tracking-wider mb-1.5">דגש קליני</p>
+                  <p className="text-emt-light text-[14px] leading-relaxed font-medium">{medData.clinical_pearl}</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl bg-amber-500/8 border border-amber-500/20 p-3.5">
-              <div className="flex items-start gap-2">
-                <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+            <div className="rounded-2xl bg-amber-500/8 border border-amber-500/22 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertTriangle size={13} className="text-amber-400" />
+                </div>
                 <div>
-                  <p className="text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1">אזהרת חירום</p>
-                  <p className="text-emt-light text-[13px] leading-snug font-medium">{medData.emergency_note}</p>
+                  <p className="text-amber-300 text-[11px] font-black uppercase tracking-wider mb-1.5">אזהרת חירום</p>
+                  <p className="text-emt-light text-[14px] leading-relaxed font-medium">{medData.emergency_note}</p>
                 </div>
               </div>
             </div>
-            {!showMedExpl && (
-              <HapticButton onClick={() => setShowMedExpl(true)} hapticPattern={10} pressScale={0.96}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-green-400/12 border border-green-400/30 py-2.5 text-green-300 font-bold text-sm">
-                <Brain size={14} />הצג הסבר מלא
-              </HapticButton>
-            )}
           </motion.div>
         )}
       </div>
@@ -1390,37 +1422,42 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (!abbrQuestion) return null;
 
     return (
-      <div className="flex flex-col gap-3">
-        {/* Abbreviation badge */}
-        <div className="self-center px-6 py-3 rounded-2xl bg-purple-500/20 border border-purple-500/35">
-          <span className="text-purple-200 font-black text-3xl tracking-widest" dir="ltr">
+      <div className="flex flex-col gap-5">
+        {/* Abbreviation hero badge */}
+        <div className="rounded-3xl bg-gradient-to-b from-violet-950/55 to-slate-950 border border-violet-500/35 p-6 flex flex-col items-center gap-2"
+          style={{ boxShadow: '0 0 28px rgba(139,92,246,0.14)' }}>
+          <span className="text-violet-200 font-black text-5xl tracking-[0.2em] leading-none" dir="ltr">
             {abbrQuestion.abbreviation}
           </span>
+          <p className="text-violet-400/60 text-xs font-semibold mt-1">{abbrQuestion.question}</p>
         </div>
 
-        <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{abbrQuestion.question}</p>
-
+        {/* Result banner */}
         {abbrIsAnswered && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
-            {abbrAnsweredIdx === abbrQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
-            <span className="font-bold text-sm">{abbrAnsweredIdx === abbrQuestion.correct_index ? 'נכון!' : 'שגוי'}</span>
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {abbrAnsweredIdx === abbrQuestion.correct_index ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+              {abbrAnsweredIdx === abbrQuestion.correct_index ? 'נכון!' : 'שגוי'}
+            </span>
           </motion.div>
         )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
 
         <MCQOptions
           options={abbrQuestion.options}
           correctIndex={abbrQuestion.correct_index}
           answeredIdx={abbrAnsweredIdx}
           onAnswer={handleAbbrAnswer}
-          accentCorrect="border-purple-400/50 bg-purple-500/10 text-purple-200"
+          accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
         {abbrIsAnswered && !showAbbrExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowAbbrExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-purple-400/15 border border-purple-400/35 py-2.5 text-purple-300 font-bold text-sm">
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-violet-400/15 border border-violet-400/35 py-3.5 text-violet-300 font-bold text-sm">
               <Brain size={14} />הצג הסבר
             </HapticButton>
           </motion.div>
@@ -1450,36 +1487,48 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (!redQuestion) return null;
 
     return (
-      <div className="flex flex-col gap-3">
-        {/* Scenario */}
-        <div className="rounded-2xl bg-orange-500/8 border border-orange-500/20 p-3.5">
-          <p className="text-[11px] font-black uppercase tracking-wider text-orange-400/80 mb-2">מקרה חירום</p>
-          <p className="text-emt-light text-[14px] leading-[1.6] font-medium">{redQuestion.scenario}</p>
+      <div className="flex flex-col gap-5">
+        {/* Scenario card */}
+        <div className="rounded-3xl bg-gradient-to-b from-orange-950/50 to-slate-950 border border-orange-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(249,115,22,0.12)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <OctagonAlert size={14} className="text-orange-400 shrink-0" />
+            <p className="text-orange-400 text-[11px] font-black uppercase tracking-widest">מקרה חירום</p>
+          </div>
+          <p className="text-white/90 text-[15px] leading-[1.65] font-medium">{redQuestion.scenario}</p>
         </div>
 
-        <p className="text-emt-light font-bold text-[15px] text-center leading-snug">{redQuestion.question}</p>
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/14 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{redQuestion.question}</p>
+        </div>
 
+        {/* Result banner */}
         {redIsAnswered && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${redAnsweredIdx === redQuestion.correct_index ? 'bg-green-500/12 border-green-500/30 text-green-300' : 'bg-red-500/12 border-red-500/30 text-red-300'}`}>
-            {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={14} /> : <XCircle size={14} />}
-            <span className="font-bold text-sm">{redAnsweredIdx === redQuestion.correct_index ? 'זיהית נכון!' : 'שגוי'}</span>
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${redAnsweredIdx === redQuestion.correct_index ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${redAnsweredIdx === redQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
+              {redAnsweredIdx === redQuestion.correct_index ? 'זיהית נכון!' : 'שגוי'}
+            </span>
           </motion.div>
         )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
 
         <MCQOptions
           options={redQuestion.options}
           correctIndex={redQuestion.correct_index}
           answeredIdx={redAnsweredIdx}
           onAnswer={handleRedAnswer}
-          accentCorrect="border-orange-400/50 bg-orange-500/10 text-orange-200"
+          accentCorrect="border-orange-400/55 bg-orange-500/12 text-orange-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
         {redIsAnswered && !showRedExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowRedExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-2.5 text-orange-300 font-bold text-sm">
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-3.5 text-orange-300 font-bold text-sm">
               <Brain size={14} />הצג הסבר קליני
             </HapticButton>
           </motion.div>
@@ -1605,7 +1654,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             >
               {renderExpandedHeader(activeBlock)}
               <div className="flex-1 overflow-y-auto">
-                <div className="p-4 pb-8">
+                <div className="p-5 pb-12">
                   {activeBlock === 'A' && renderBlockA()}
                   {activeBlock === 'B' && renderBlockB()}
                   {activeBlock === 'C' && renderBlockC()}
