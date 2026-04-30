@@ -1272,18 +1272,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
         <>
           {/* Category toggle tabs — always clickable */}
-          <div className="flex gap-2 self-start">
+          <div className="flex gap-3 self-stretch">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <button
                 key={cat}
                 onClick={() => loadClinicalCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                className={`flex-1 py-3.5 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${
                   clinicalCategory === cat
-                    ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/55 text-blue-300' : 'bg-red-500/25 border-red-500/55 text-red-300'
-                    : 'bg-white/5 border-white/10 text-emt-muted hover:bg-white/10'
+                    ? cat === 'bls'
+                      ? 'bg-blue-500/20 border-blue-500/60 text-blue-300 shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+                      : 'bg-red-500/20 border-red-500/60 text-red-300 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
+                    : 'bg-white/5 border-white/15 text-emt-muted hover:bg-white/10'
                 }`}
               >
-                {cat === 'bls' ? '🫀' : '⚡'} {CATEGORY_LABELS[cat]}
+                <span className="text-2xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
+                <span className="text-base font-black leading-none">{CATEGORY_LABELS[cat]}</span>
+                <span className="text-[10px] font-semibold opacity-60">{CATEGORY_FULL[cat]}</span>
               </button>
             ))}
           </div>
