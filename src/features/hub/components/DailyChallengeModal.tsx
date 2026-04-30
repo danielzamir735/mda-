@@ -108,7 +108,8 @@ function buildClinicalPrompt(type: 'BLS' | 'ALS'): string {
   return (
     `אתה מדריך פרמדיק בכיר של מד"א (מגן דוד אדום) ומשרד הבריאות הישראלי. תפקידך לאתגר פרמדיקים וחובשים ישראלים עם שאלות קליניות ברמה גבוהה, בעברית רפואית מקצועית.\n\n` +
     `חשוב ביותר: כל שאלה, תשובה והסבר חייבים להתבסס אך ורק על פרוטוקולי מד"א ומשרד הבריאות הישראלי. אין להתייחס לפרוטוקולי AHA, ERC, PHTLS או כל גוף בינלאומי אחר — במקרה של סתירה, ההנחיות הישראליות גוברות תמיד.\n\n` +
-    `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה. תרחיש: 2-4 משפטים בעברית, כדיווח רדיו בזמן אמת או העברת טיפול — דחוף, ספציפי, קליני.\n\n` +
+    `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה.\n\n` +
+    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד — ללא קידומות שיגור, ללא מספרי קריאה, ללא "קריאה דחופה", ללא "דיווח מקבלה", ללא כל סגנון רדיו/משגר. (2) התחל ישירות בהערכת המטופל: "בהגיעך למקום מצאת..." / "מטופל בן X שנים..." / "אישה כבת X מציגה עם..." — ישירות לעובדות הקליניות. (3) כלול: גיל/מין, תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. 2-4 משפטים ספציפיים, קליניים.\n\n` +
     `${focus}\n\n` +
     'תשובות: בדיוק 4 אפשרויות בעברית רפואית מקצועית. כל אפשרות: משפט פעולה קליני אחד, שלם ומוחלט, 15-25 מילים. פורמט: "[פועל] [פעולה ספציפית / תרופה-מינון-מסלול / הגדרת אנרגיה או מכשיר] [הקשר קליני]". אין אפשרות עמומה או מהססת.\n' +
     'כלל הסחות הדעת: לפחות שתי תשובות שגויות חייבות להיות טעויות שכיחות בשדה או פרוטוקולים מיושנים. תשובה שגויה אחת תישמע כמו תשובת ספר לימוד שמתעלמת מהפרט הקליני העדין בתרחיש. בדיוק תשובה אחת עוקבת אחר פרוטוקולי מד"א ומשרד הבריאות העדכניים. כל הסחות הדעת סבירות לחובש מתחיל.\n\n' +
@@ -950,8 +951,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     trackEvent('daily_challenge_modal_opened');
     setStreak(getStreak().streak);
 
+    const today = getToday();
     const cachedMed = loadCache<MedOfDay>(CACHE_KEYS.med);
-    if (cachedMed) {
+    if (cachedMed && cachedMed.date === today) {
       setMedData(cachedMed.data);
       setMedAnsweredIdx(cachedMed.answeredIdx ?? null);
       setMedStatus('ready');
@@ -1049,6 +1051,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
     setClinicalCategory(cat);
+    setClinicalAnsweredIdx(null);
+    setClinicalTimeTaken(null);
     setShowClinicalExpl(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
@@ -1206,7 +1210,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       {clinicalCategory && clinicalStatus === 'loading' && (
         <div className="flex flex-col items-center gap-3 py-10">
           <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה קלינית...</p>
+          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה...</p>
         </div>
       )}
 
