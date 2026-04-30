@@ -215,36 +215,22 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               boxShadow: '0 0 24px rgba(239,35,60,0.35), 0 0 48px rgba(239,35,60,0.15)',
             }}
           >
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <motion.p
-                  className="text-sm font-bold leading-relaxed"
-                  style={{ color: '#fca5a5', direction: 'rtl' }}
-                  animate={{ opacity: [1, 0.82, 1] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                >
-                  ⚠️ אזהרה: צירים בתדירות גבוהה (פחות מ-2 דקות). על פי פרוטוקול מד&quot;א, יש להזמין נט&quot;ן באופן מיידי.
-                </motion.p>
-                <button
-                  onClick={() => setDismissedAtInterval(lastInterval)}
-                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(239,35,60,0.15)', border: '1px solid rgba(239,35,60,0.35)' }}
-                  aria-label="סגור התראה"
-                >
-                  <X size={14} className="text-red-400" />
-                </button>
-              </div>
-              <button
-                onClick={() => { window.location.href = 'tel:101'; }}
-                className="w-full py-2.5 rounded-xl font-black text-sm tracking-wider active:scale-95 transition-transform"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(239,35,60,0.9), rgba(185,28,28,0.9))',
-                  border: '1px solid rgba(239,35,60,0.7)',
-                  color: 'white',
-                  boxShadow: '0 0 16px rgba(239,35,60,0.4)',
-                }}
+            <div className="p-4 flex items-start gap-3">
+              <motion.p
+                className="flex-1 text-lg font-black leading-snug text-right"
+                style={{ color: '#fca5a5', direction: 'rtl' }}
+                animate={{ opacity: [1, 0.82, 1] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
               >
-                📞 חיוג מיידי למוקד
+                ⚠️ צירים בתדירות גבוהה — פחות מ-2 דקות בין ציר לציר. יש להזמין נט&quot;ן באופן מיידי.
+              </motion.p>
+              <button
+                onClick={() => setDismissedAtInterval(lastInterval)}
+                className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(239,35,60,0.15)', border: '1px solid rgba(239,35,60,0.35)' }}
+                aria-label="סגור התראה"
+              >
+                <X size={14} className="text-red-400" />
               </button>
             </div>
           </motion.div>
