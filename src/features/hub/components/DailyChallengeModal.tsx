@@ -124,9 +124,23 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
   als: buildClinicalPrompt('ALS'),
 };
 
-const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-בחר תרופת בית נפוצה (כגון: Eliquis, Xarelto, Aspirin, Clopidogrel, Warfarin, Bisoprolol, Metoprolol, Amlodipine, Furosemide, Metformin, Empagliflozin, Levothyroxine, Omeprazole, Atorvastatin, Losartan, Ramipril, Digoxin, Amiodarone, Prednisolone).
-בחר תרופה שונה מדי יום. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+function buildMedPrompt(): string {
+  const today = getToday();
+  // Deterministic seed from date so Gemini varies by day
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+  const drugPool = [
+    'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Aspirin', 'Clopidogrel (Plavix)',
+    'Warfarin (Coumadin)', 'Bisoprolol', 'Metoprolol', 'Amlodipine', 'Furosemide',
+    'Metformin', 'Empagliflozin (Jardiance)', 'Levothyroxine', 'Omeprazole',
+    'Atorvastatin', 'Losartan', 'Ramipril', 'Digoxin', 'Amiodarone', 'Prednisolone',
+    'Nitroglycerin', 'Adenosine', 'Atropine', 'Epinephrine', 'Morphine', 'Midazolam',
+  ];
+  const todayDrug = drugPool[hash % drugPool.length];
+
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
+תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
+חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
 פלט JSON בלבד, ללא markdown:
@@ -139,6 +153,7 @@ const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משי
   "clinical_pearl": "דגש קליני חשוב למדיק (1-2 משפטים)",
   "emergency_note": "אזהרת חירום ספציפית (1-2 משפטים)"
 }`;
+}
 
 const ABBR_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. צור שאלת MCQ על קיצור רפואי חשוב בעולם ההצלה הישראלי.
 בחר קיצור מהרשימה: GCS, AVPU, FAST, OPQRST, SAMPLE, MIST, AED, BVM, CPAP, PEEP, MAP, SpO2, EtCO2, IM, IV, IO, ROSC, PEA, VF, VT, SVT, CVA, MI, AMI, STEMI, NSTEMI, CHF, COPD, DKA, MCI, JVD, EMT, MICU, HR, BP, RR, LOC.
@@ -274,7 +289,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
 }
 
 async function generateMed(): Promise<MedOfDay> {
-  const m = await withRetry(() => parseGeminiJSON<MedOfDay>(MED_PROMPT));
+  const m = await withRetry(() => parseGeminiJSON<MedOfDay>(buildMedPrompt()));
   if (!m.name || !m.drug_class || !m.question || !Array.isArray(m.options) || m.options.length !== 4 || typeof m.correct_index !== 'number') {
     throw new Error('Invalid med format');
   }
@@ -1024,6 +1039,35 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allAnswered, showSuccess]);
+
+  // Re-validate B/C/D freshness when their block is opened (handles date rollover while modal stays mounted)
+  useEffect(() => {
+    if (!isOpen || activeBlock === null) return;
+
+    if (activeBlock === 'B' && medStatus !== 'loading') {
+      if (!loadCache<MedOfDay>(CACHE_KEYS.med)) {
+        setMedStatus('loading'); setMedData(null); setMedAnsweredIdx(null);
+        fetchOrCreateBlock<MedOfDay>('med_v3', generateMed)
+          .then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); })
+          .catch(() => setMedStatus('error'));
+      }
+    } else if (activeBlock === 'C' && abbrStatus !== 'loading') {
+      if (!loadCache<AbbreviationQ>(CACHE_KEYS.abbr)) {
+        setAbbrStatus('loading'); setAbbrQuestion(null); setAbbrAnsweredIdx(null);
+        fetchOrCreateBlock<AbbreviationQ>('abbr', generateAbbreviation)
+          .then(q => { setAbbrQuestion(q); saveCache(CACHE_KEYS.abbr, q); setAbbrStatus('ready'); })
+          .catch(() => setAbbrStatus('error'));
+      }
+    } else if (activeBlock === 'D' && redStatus !== 'loading') {
+      if (!loadCache<RedFlagQ>(CACHE_KEYS.red_flag)) {
+        setRedStatus('loading'); setRedQuestion(null); setRedAnsweredIdx(null);
+        fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag)
+          .then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); })
+          .catch(() => setRedStatus('error'));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, activeBlock]);
 
   // Live stats channel for Block A
   useEffect(() => {
