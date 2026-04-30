@@ -108,7 +108,8 @@ function buildClinicalPrompt(type: 'BLS' | 'ALS'): string {
   return (
     `אתה מדריך פרמדיק בכיר של מד"א (מגן דוד אדום) ומשרד הבריאות הישראלי. תפקידך לאתגר פרמדיקים וחובשים ישראלים עם שאלות קליניות ברמה גבוהה, בעברית רפואית מקצועית.\n\n` +
     `חשוב ביותר: כל שאלה, תשובה והסבר חייבים להתבסס אך ורק על פרוטוקולי מד"א ומשרד הבריאות הישראלי. אין להתייחס לפרוטוקולי AHA, ERC, PHTLS או כל גוף בינלאומי אחר — במקרה של סתירה, ההנחיות הישראליות גוברות תמיד.\n\n` +
-    `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה. תרחיש: 2-4 משפטים בעברית, כדיווח רדיו בזמן אמת או העברת טיפול — דחוף, ספציפי, קליני.\n\n` +
+    `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה.\n\n` +
+    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד — ללא קידומות שיגור, ללא מספרי קריאה, ללא "קריאה דחופה", ללא "דיווח מקבלה", ללא כל סגנון רדיו/משגר. (2) התחל ישירות בהערכת המטופל: "בהגיעך למקום מצאת..." / "מטופל בן X שנים..." / "אישה כבת X מציגה עם..." — ישירות לעובדות הקליניות. (3) כלול: גיל/מין, תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. 2-4 משפטים ספציפיים, קליניים.\n\n` +
     `${focus}\n\n` +
     'תשובות: בדיוק 4 אפשרויות בעברית רפואית מקצועית. כל אפשרות: משפט פעולה קליני אחד, שלם ומוחלט, 15-25 מילים. פורמט: "[פועל] [פעולה ספציפית / תרופה-מינון-מסלול / הגדרת אנרגיה או מכשיר] [הקשר קליני]". אין אפשרות עמומה או מהססת.\n' +
     'כלל הסחות הדעת: לפחות שתי תשובות שגויות חייבות להיות טעויות שכיחות בשדה או פרוטוקולים מיושנים. תשובה שגויה אחת תישמע כמו תשובת ספר לימוד שמתעלמת מהפרט הקליני העדין בתרחיש. בדיוק תשובה אחת עוקבת אחר פרוטוקולי מד"א ומשרד הבריאות העדכניים. כל הסחות הדעת סבירות לחובש מתחיל.\n\n' +
@@ -123,9 +124,23 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
   als: buildClinicalPrompt('ALS'),
 };
 
-const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-בחר תרופת בית נפוצה (כגון: Eliquis, Xarelto, Aspirin, Clopidogrel, Warfarin, Bisoprolol, Metoprolol, Amlodipine, Furosemide, Metformin, Empagliflozin, Levothyroxine, Omeprazole, Atorvastatin, Losartan, Ramipril, Digoxin, Amiodarone, Prednisolone).
-בחר תרופה שונה מדי יום. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+function buildMedPrompt(): string {
+  const today = getToday();
+  // Deterministic seed from date so Gemini varies by day
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+  const drugPool = [
+    'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Aspirin', 'Clopidogrel (Plavix)',
+    'Warfarin (Coumadin)', 'Bisoprolol', 'Metoprolol', 'Amlodipine', 'Furosemide',
+    'Metformin', 'Empagliflozin (Jardiance)', 'Levothyroxine', 'Omeprazole',
+    'Atorvastatin', 'Losartan', 'Ramipril', 'Digoxin', 'Amiodarone', 'Prednisolone',
+    'Nitroglycerin', 'Adenosine', 'Atropine', 'Epinephrine', 'Morphine', 'Midazolam',
+  ];
+  const todayDrug = drugPool[hash % drugPool.length];
+
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
+תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
+חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
 פלט JSON בלבד, ללא markdown:
@@ -138,6 +153,7 @@ const MED_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. משי
   "clinical_pearl": "דגש קליני חשוב למדיק (1-2 משפטים)",
   "emergency_note": "אזהרת חירום ספציפית (1-2 משפטים)"
 }`;
+}
 
 const ABBR_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. צור שאלת MCQ על קיצור רפואי חשוב בעולם ההצלה הישראלי.
 בחר קיצור מהרשימה: GCS, AVPU, FAST, OPQRST, SAMPLE, MIST, AED, BVM, CPAP, PEEP, MAP, SpO2, EtCO2, IM, IV, IO, ROSC, PEA, VF, VT, SVT, CVA, MI, AMI, STEMI, NSTEMI, CHF, COPD, DKA, MCI, JVD, EMT, MICU, HR, BP, RR, LOC.
@@ -273,7 +289,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
 }
 
 async function generateMed(): Promise<MedOfDay> {
-  const m = await withRetry(() => parseGeminiJSON<MedOfDay>(MED_PROMPT));
+  const m = await withRetry(() => parseGeminiJSON<MedOfDay>(buildMedPrompt()));
   if (!m.name || !m.drug_class || !m.question || !Array.isArray(m.options) || m.options.length !== 4 || typeof m.correct_index !== 'number') {
     throw new Error('Invalid med format');
   }
@@ -950,8 +966,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     trackEvent('daily_challenge_modal_opened');
     setStreak(getStreak().streak);
 
+    const today = getToday();
     const cachedMed = loadCache<MedOfDay>(CACHE_KEYS.med);
-    if (cachedMed) {
+    if (cachedMed && cachedMed.date === today) {
       setMedData(cachedMed.data);
       setMedAnsweredIdx(cachedMed.answeredIdx ?? null);
       setMedStatus('ready');
@@ -1023,6 +1040,35 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allAnswered, showSuccess]);
 
+  // Re-validate B/C/D freshness when their block is opened (handles date rollover while modal stays mounted)
+  useEffect(() => {
+    if (!isOpen || activeBlock === null) return;
+
+    if (activeBlock === 'B' && medStatus !== 'loading') {
+      if (!loadCache<MedOfDay>(CACHE_KEYS.med)) {
+        setMedStatus('loading'); setMedData(null); setMedAnsweredIdx(null);
+        fetchOrCreateBlock<MedOfDay>('med_v3', generateMed)
+          .then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); })
+          .catch(() => setMedStatus('error'));
+      }
+    } else if (activeBlock === 'C' && abbrStatus !== 'loading') {
+      if (!loadCache<AbbreviationQ>(CACHE_KEYS.abbr)) {
+        setAbbrStatus('loading'); setAbbrQuestion(null); setAbbrAnsweredIdx(null);
+        fetchOrCreateBlock<AbbreviationQ>('abbr', generateAbbreviation)
+          .then(q => { setAbbrQuestion(q); saveCache(CACHE_KEYS.abbr, q); setAbbrStatus('ready'); })
+          .catch(() => setAbbrStatus('error'));
+      }
+    } else if (activeBlock === 'D' && redStatus !== 'loading') {
+      if (!loadCache<RedFlagQ>(CACHE_KEYS.red_flag)) {
+        setRedStatus('loading'); setRedQuestion(null); setRedAnsweredIdx(null);
+        fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag)
+          .then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); })
+          .catch(() => setRedStatus('error'));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, activeBlock]);
+
   // Live stats channel for Block A
   useEffect(() => {
     if (!isOpen || !clinicalCategory) return;
@@ -1049,6 +1095,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
     setClinicalCategory(cat);
+    setClinicalAnsweredIdx(null);
+    setClinicalTimeTaken(null);
     setShowClinicalExpl(false);
     trackEvent('daily_challenge_category_selected', { category: cat });
 
@@ -1206,7 +1254,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       {clinicalCategory && clinicalStatus === 'loading' && (
         <div className="flex flex-col items-center gap-3 py-10">
           <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה קלינית...</p>
+          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה...</p>
         </div>
       )}
 
@@ -1224,18 +1272,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       {clinicalCategory && clinicalStatus === 'ready' && clinicalQuestion && (
         <>
           {/* Category toggle tabs — always clickable */}
-          <div className="flex gap-2 self-start">
+          <div className="flex gap-3 self-stretch">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <button
                 key={cat}
                 onClick={() => loadClinicalCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                className={`flex-1 py-3.5 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${
                   clinicalCategory === cat
-                    ? cat === 'bls' ? 'bg-blue-500/25 border-blue-500/55 text-blue-300' : 'bg-red-500/25 border-red-500/55 text-red-300'
-                    : 'bg-white/5 border-white/10 text-emt-muted hover:bg-white/10'
+                    ? cat === 'bls'
+                      ? 'bg-blue-500/20 border-blue-500/60 text-blue-300 shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+                      : 'bg-red-500/20 border-red-500/60 text-red-300 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
+                    : 'bg-white/5 border-white/15 text-emt-muted hover:bg-white/10'
                 }`}
               >
-                {cat === 'bls' ? '🫀' : '⚡'} {CATEGORY_LABELS[cat]}
+                <span className="text-2xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
+                <span className="text-base font-black leading-none">{CATEGORY_LABELS[cat]}</span>
+                <span className="text-[10px] font-semibold opacity-60">{CATEGORY_FULL[cat]}</span>
               </button>
             ))}
           </div>

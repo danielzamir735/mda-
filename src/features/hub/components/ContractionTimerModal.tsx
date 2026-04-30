@@ -56,6 +56,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   );
   const [showHistory, setShowHistory] = useState(false);
   const [expandedSession, setExpandedSession] = useState<number | null>(null);
+  const [dismissedAtInterval, setDismissedAtInterval] = useState<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // ── Elapsed timer ──────────────────────────────────────────────────────
@@ -116,6 +117,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
     if ('vibrate' in navigator) navigator.vibrate([30, 60, 30]);
     reset();
     setShowHistory(false);
+    setDismissedAtInterval(null);
   };
 
   // ── Derived stats ──────────────────────────────────────────────────────
@@ -130,6 +132,10 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
   const lastInterval = contractions[0]?.interval ?? null;
   const isUrgent = lastInterval !== null && lastInterval < 300; // < 5 min apart
+  const isCritical = lastInterval !== null && lastInterval < 120; // < 2 min apart
+  const showBirthAlert = isCritical && (
+    dismissedAtInterval === null || (lastInterval !== null && lastInterval < dismissedAtInterval)
+  );
 
   // ─────────────────────────────────────────────────────────────────────
   return (
@@ -191,6 +197,45 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           {contractions.length === 0 && <div className="w-11" />}
         </div>
       </div>
+
+      {/* ── Imminent Birth Alert Banner ──────────────────────────────────── */}
+      <AnimatePresence>
+        {showBirthAlert && (
+          <motion.div
+            key="birth-alert"
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="shrink-0 mx-4 mt-3 rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(2,6,23,0.8)',
+              border: '1px solid rgba(239,35,60,0.7)',
+              backdropFilter: 'blur(24px)',
+              boxShadow: '0 0 24px rgba(239,35,60,0.35), 0 0 48px rgba(239,35,60,0.15)',
+            }}
+          >
+            <div className="p-4 flex items-start gap-3">
+              <motion.p
+                className="flex-1 text-lg font-black leading-snug text-right"
+                style={{ color: '#fca5a5', direction: 'rtl' }}
+                animate={{ opacity: [1, 0.82, 1] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
+              >
+                ⚠️ צירים בתדירות גבוהה — פחות מ-2 דקות בין ציר לציר. יש להזמין נט&quot;ן באופן מיידי.
+              </motion.p>
+              <button
+                onClick={() => setDismissedAtInterval(lastInterval)}
+                className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(239,35,60,0.15)', border: '1px solid rgba(239,35,60,0.35)' }}
+                aria-label="סגור התראה"
+              >
+                <X size={14} className="text-red-400" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Main Content ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-between px-5 py-6 gap-5">
