@@ -88,7 +88,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12, duration: 0.4 }}
-              className="text-center text-xs text-white/60"
+              className="text-center text-[2.25rem] leading-tight text-white/60"
             >
               מעל{' '}
               <span className="text-emerald-300 font-black tabular-nums">
