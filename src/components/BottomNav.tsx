@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { FileText, Images, Activity, LayoutGrid, Heart, Globe } from 'lucide-react';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 import HapticButton from './HapticButton';
 
@@ -13,6 +15,14 @@ interface Props {
 
 export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen, onLanguageBridgeOpen }: Props) {
   const t = useTranslation();
+  const count = useMotionValue(0);
+  const [displayCount, setDisplayCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = count.on('change', v => setDisplayCount(Math.round(v)));
+    const controls = animate(count, 15000, { duration: 2.5, ease: 'easeOut' });
+    return () => { controls.stop(); unsubscribe(); };
+  }, []);
 
   return (
     <nav
@@ -37,9 +47,31 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
         onClick={() => onSupportOpen?.()}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"
+        className="relative flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"
         aria-label="תמיכה"
       >
+        {/* Social proof counter badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 8, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.5, ease: 'easeOut' }}
+          className="absolute -top-9 left-1/2 -translate-x-1/2 w-max pointer-events-none"
+          dir="rtl"
+        >
+          <div className="bg-black/70 border border-emerald-500/25 rounded-xl px-2.5 py-1 backdrop-blur-md shadow-lg shadow-black/30">
+            <p className="text-[9px] font-semibold text-emerald-300/90 whitespace-nowrap text-center leading-tight">
+              מעל{' '}
+              <span className="text-emerald-300 font-black tabular-nums">
+                {displayCount.toLocaleString('en-US')}
+              </span>
+              + חובשים
+            </p>
+            <p className="text-[7.5px] text-white/35 text-center leading-tight mt-0.5 whitespace-nowrap">
+              כבר משתמשים באפליקציה
+            </p>
+          </div>
+        </motion.div>
+
         <span className="animate-heartbeat">
           <Heart size={24} strokeWidth={1.5} fill="currentColor" />
         </span>
