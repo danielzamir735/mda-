@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { Heart, X, CheckCircle, HandHeart, Server, Zap, Lock } from 'lucide-react';
 import { trackInteraction } from '../utils/analytics';
 
@@ -13,6 +13,15 @@ const REASONS = [
 
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donationDone, setDonationDone] = useState(false);
+  const count = useMotionValue(0);
+  const [displayCount, setDisplayCount] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) { count.set(0); setDisplayCount(0); return; }
+    const unsubscribe = count.on('change', v => setDisplayCount(Math.round(v)));
+    const controls = animate(count, 15000, { duration: 2.5, ease: 'easeOut' });
+    return () => { controls.stop(); unsubscribe(); };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) setDonationDone(false);
@@ -73,6 +82,21 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 לא עוצרים את הפיתוח של חובש<span className="text-rose-400">+</span>
               </h1>
             </div>
+
+            {/* Social proof counter */}
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, duration: 0.4 }}
+              className="text-center text-xs text-white/60"
+            >
+              מעל{' '}
+              <span className="text-emerald-300 font-black tabular-nums">
+                {displayCount.toLocaleString('en-US')}
+              </span>
+              <span className="text-emerald-300 font-bold">+</span>{' '}
+              חובשים כבר משתמשים באפליקציה
+            </motion.p>
 
             {/* 3 reason cards */}
             <motion.div
