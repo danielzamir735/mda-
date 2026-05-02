@@ -1,6 +1,6 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
@@ -255,7 +255,19 @@ export default function HubModal({
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
+  const [showPersonalCard, setShowPersonalCard] = useState(false);
+  const campaignScrollRef = useRef<HTMLDivElement>(null);
   const { openFullModal } = usePwaInstall();
+
+  const handleCampaignScroll = useCallback(() => {
+    if (sessionStorage.getItem('personal-card-shown')) return;
+    const el = campaignScrollRef.current;
+    if (!el) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+      sessionStorage.setItem('personal-card-shown', '1');
+      setShowPersonalCard(true);
+    }
+  }, []);
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
@@ -762,7 +774,11 @@ https://hovesh-plus.vercel.app/`;
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto pb-40">
+          <div
+            ref={campaignScrollRef}
+            onScroll={handleCampaignScroll}
+            className="flex-1 overflow-y-auto pb-40"
+          >
 
             {/* Hero */}
             <div className="flex flex-col items-center text-center px-6 pt-2 pb-8">
@@ -904,6 +920,66 @@ https://hovesh-plus.vercel.app/`;
               תרומה חד-פעמית · מאובטח · כל סכום עוזר
             </p>
           </div>
+
+          {/* Personal Appeal Card — slides up once when user reaches the bottom */}
+          <AnimatePresence>
+            {showPersonalCard && (
+              <motion.div
+                initial={{ y: 120, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 120, opacity: 0 }}
+                transition={{ type: 'spring', damping: 16, stiffness: 260, mass: 0.9 }}
+                className="absolute bottom-0 inset-x-0 z-20 rounded-t-3xl px-5 pt-6 pb-10"
+                style={{
+                  background: 'linear-gradient(160deg, #1e1b4b 0%, #0f172a 60%, #020b18 100%)',
+                  borderTop: '1px solid rgba(234, 179, 8, 0.35)',
+                  borderLeft: '1px solid rgba(234, 179, 8, 0.15)',
+                  borderRight: '1px solid rgba(234, 179, 8, 0.15)',
+                  boxShadow: '0 -8px 48px rgba(234, 179, 8, 0.18), 0 -1px 0 rgba(234, 179, 8, 0.3)',
+                }}
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setShowPersonalCard(false)}
+                  className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400 active:scale-90 transition-transform"
+                  aria-label="סגור"
+                >
+                  <X size={15} />
+                </button>
+
+                {/* Gold accent line */}
+                <div
+                  className="mx-auto mb-4 rounded-full"
+                  style={{ width: 40, height: 3, background: 'rgba(234, 179, 8, 0.7)' }}
+                />
+
+                <h2 className="text-white font-bold text-xl text-center mb-3 leading-tight">
+                  ועכשיו, בנימה אישית... ❤️
+                </h2>
+
+                <p className="text-gray-300 text-sm leading-relaxed text-center mb-5 px-1" dir="rtl">
+                  דניאל כאן, המפתח של חובש +. אני רואה שאתה משתמש באפליקציה ונהנה מהכלים שבנינו.
+                  האפליקציה הזו היא פרויקט של הלב, ללא מטרות רווח וללא פרסומות. כדי שנוכל להמשיך
+                  לגדול ולהגיע לכל חובש בארץ, אני מזמין אותך להיות שותף. תרומה של 50 או 100 ש״ח תעזור
+                  לנו לכסות את עלויות התחזוקה ולהעלות את האפליקציה לחנויות. בואו נעשה את זה ביחד!
+                </p>
+
+                <a
+                  href="https://links.payboxapp.com/ikLxTdoky1b"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackInteraction('תרומה — בנימה אישית', 'support')}
+                  className="block w-full py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                  style={{
+                    background: 'linear-gradient(135deg, #b45309 0%, #ca8a04 50%, #d97706 100%)',
+                    boxShadow: '0 4px 28px rgba(202, 138, 4, 0.50)',
+                  }}
+                >
+                  אני רוצה להיות שותף ולתרום
+                </a>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
