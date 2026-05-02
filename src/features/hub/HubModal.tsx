@@ -8,7 +8,6 @@ import { usePwaInstall } from '../pwa/PwaInstallContext';
 import { trackInteraction } from '../../utils/analytics';
 import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
-import { useConceptsStore } from '../../store/conceptsStore';
 
 const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
   { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
@@ -257,7 +256,6 @@ export default function HubModal({
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
   const { openFullModal } = usePwaInstall();
-  const conceptsCount = useConceptsStore((s) => s.concepts.length);
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
@@ -413,18 +411,6 @@ https://hovesh-plus.vercel.app/`;
           >
             <Sparkles size={28} className="text-purple-300 relative z-10" />
             <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מושגים שלמדתי</span>
-            <span className="text-purple-400/70 text-[11px] leading-tight relative z-10">
-              מילון מונחים אישי
-            </span>
-            {conceptsCount > 0 ? (
-              <span className="text-xs font-semibold bg-purple-500/25 border border-purple-400/40 text-purple-200 px-3 py-1 rounded-full mt-1 relative z-10">
-                {conceptsCount} {conceptsCount === 1 ? 'מושג' : 'מושגים'} →
-              </span>
-            ) : (
-              <span className="text-xs font-semibold bg-purple-500/20 border border-purple-400/30 text-purple-300 px-3 py-1 rounded-full mt-1 relative z-10">
-                הוסף מושג →
-              </span>
-            )}
           </motion.button>
 
         </div>

@@ -219,7 +219,8 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="לדוגמה: ברדיקרדיה, חסם AV, MAP, Digoxin..."
-                className="w-full rounded-2xl bg-white/8 border border-white/15 px-4 py-3.5 text-white placeholder:text-white/25 text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
+                className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-white placeholder:text-white/30 text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
+                style={{ background: '#1a1f2e', WebkitTextFillColor: 'white' }}
                 dir="rtl"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -232,9 +233,9 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 value={definition}
                 onChange={(e) => setDefinition(e.target.value)}
                 placeholder="כתוב כאן את הפירוש, המנגנון, תופעות לוואי, מה לזכור בשטח — כל מה שחשוב לך..."
-                className="flex-1 w-full rounded-2xl bg-white/8 border border-white/15 px-4 py-3.5 text-white placeholder:text-white/25 text-[14px] leading-relaxed focus:outline-none focus:border-purple-400/60 resize-none transition-colors"
+                className="flex-1 w-full rounded-2xl border border-white/15 px-4 py-3.5 text-white placeholder:text-white/30 text-[14px] leading-relaxed focus:outline-none focus:border-purple-400/60 resize-none transition-colors"
+                style={{ background: '#1a1f2e', minHeight: '140px', WebkitTextFillColor: 'white' }}
                 dir="rtl"
-                style={{ minHeight: '140px' }}
               />
             </div>
 
