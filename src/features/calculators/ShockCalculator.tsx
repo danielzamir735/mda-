@@ -83,9 +83,9 @@ function InputRow({ label, value, onChange, placeholder = '0', max = 300 }: Inpu
 export default function ShockCalculator({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
 
-  const [hr,  setHr]  = useState('80');
-  const [sbp, setSbp] = useState('120');
-  const [dbp, setDbp] = useState('80');
+  const [hr,  setHr]  = useState('');
+  const [sbp, setSbp] = useState('');
+  const [dbp, setDbp] = useState('');
 
   useEffect(() => {
     if (isOpen) trackInteraction('מחשבון הלם ופרפוזיה', 'calculators');
@@ -105,9 +105,9 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
   const mapCritical = hasInput && map < 65;
 
   const handleReset = () => {
-    setHr('80');
-    setSbp('120');
-    setDbp('80');
+    setHr('');
+    setSbp('');
+    setDbp('');
     trackEvent('shock_reset');
   };
 
