@@ -252,6 +252,7 @@ export default function HubModal({
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
+  const [showCampaign, setShowCampaign] = useState(false);
   const { openFullModal } = usePwaInstall();
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
@@ -263,6 +264,7 @@ export default function HubModal({
   // Give simulators its own back-button layer so back returns to the tools menu, not home
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
   useModalBackHandler(showWhatsAppCommunity, () => setShowWhatsAppCommunity(false));
+  useModalBackHandler(showCampaign, () => setShowCampaign(false));
   if (!isOpen) return null;
 
   const HUB_TRACKING: Record<string, [string, string]> = {
@@ -350,6 +352,71 @@ https://hovesh-plus.vercel.app/`;
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+
+        {/* Campaign + Placeholder cards — above feedback button */}
+        <div className="grid grid-cols-2 gap-3">
+
+          {/* Campaign Card — glow + pulse */}
+          <motion.button
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-sky-400/50 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
+            style={{
+              background: 'linear-gradient(160deg, rgba(14,165,233,0.18) 0%, rgba(37,99,235,0.10) 100%)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+            }}
+          >
+            {/* Pulsing neon ring */}
+            <motion.span
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              animate={{
+                boxShadow: [
+                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
+                  'inset 0 0 0 1px rgba(56,189,248,0.70), 0 0 26px 8px rgba(56,189,248,0.50)',
+                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
+                ],
+              }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <Rocket size={28} className="text-sky-300 relative z-10" />
+            <span className="text-sky-200 font-bold text-sm leading-tight relative z-10">
+              חובש + עולה לחנויות!
+            </span>
+            <span className="text-sky-400/80 text-[11px] leading-tight relative z-10">
+              עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
+            </span>
+            <span className="relative z-10 mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
+              לפרטים ולתרומה ←
+            </span>
+          </motion.button>
+
+          {/* Placeholder Card — מושגים שלמדתי */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.2 }}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 p-3 relative overflow-hidden min-h-36 text-center"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+            }}
+          >
+            <Sparkles size={28} className="text-purple-400/60" />
+            <span className="text-gray-300 font-bold text-sm leading-tight">מושגים שלמדתי</span>
+            <span className="text-gray-500 text-[11px] leading-tight">
+              מילון מונחים רפואי אישי שבנית
+            </span>
+            <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full mt-1">
+              בקרוב
+            </span>
+          </motion.div>
+
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           {HUB_ITEMS.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
             const enabled = ENABLED.has(id);
@@ -419,70 +486,6 @@ https://hovesh-plus.vercel.app/`;
           <MessageSquare size={22} />
           שליחת משוב
         </HapticButton>
-
-        {/* Campaign + Placeholder cards */}
-        <div className="grid grid-cols-2 gap-3">
-
-          {/* Campaign Card — glow + pulse */}
-          <motion.a
-            href="https://links.payboxapp.com/ikLxTdoky1b"
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.1 }}
-            onClick={() => trackInteraction('תרומה לקמפיין', 'support')}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-sky-400/50 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center"
-            style={{
-              background: 'linear-gradient(160deg, rgba(14,165,233,0.18) 0%, rgba(37,99,235,0.10) 100%)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-            }}
-          >
-            {/* Pulsing neon ring */}
-            <motion.span
-              className="pointer-events-none absolute inset-0 rounded-2xl"
-              animate={{
-                boxShadow: [
-                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
-                  'inset 0 0 0 1px rgba(56,189,248,0.70), 0 0 26px 8px rgba(56,189,248,0.50)',
-                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
-                ],
-              }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <Rocket size={28} className="text-sky-300 relative z-10" />
-            <span className="text-sky-200 font-bold text-sm leading-tight relative z-10">
-              חובש + עולה לחנויות!
-            </span>
-            <span className="text-sky-400/80 text-[11px] leading-tight relative z-10">
-              עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
-            </span>
-            <span className="relative z-10 mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
-              לתרומה מהירה
-            </span>
-          </motion.a>
-
-          {/* Placeholder Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.2 }}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 p-3 relative overflow-hidden min-h-36 text-center"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-            }}
-          >
-            <Sparkles size={28} className="text-purple-400/60" />
-            <span className="text-gray-300 font-bold text-sm leading-tight">בקרוב...</span>
-            <span className="text-gray-500 text-[11px] leading-tight">
-              פיצ'ר חדש ומטורף בדרך אליכם. יש למה לחכות.
-            </span>
-          </motion.div>
-
-        </div>
 
       </div>
 
@@ -732,6 +735,175 @@ https://hovesh-plus.vercel.app/`;
             </a>
             <p className="text-center text-gray-600 text-xs mt-2">
               ערוץ חד-כיווני · ללא ספאם · ניתן לעזוב בכל עת
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Campaign Landing Page */}
+      {showCampaign && (
+        <div
+          className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #020b18 0%, #050d1f 50%, #010810 100%)' }}
+        >
+          {/* Ambient glows */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-sky-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-40 -right-20 w-64 h-64 rounded-full bg-blue-600/8 blur-3xl" />
+
+          {/* Header */}
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
+            <div />
+            <HapticButton
+              onClick={() => setShowCampaign(false)}
+              pressScale={0.88}
+              className="w-10 h-10 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400"
+              aria-label="סגור"
+            >
+              <X size={20} />
+            </HapticButton>
+          </div>
+
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto pb-40">
+
+            {/* Hero */}
+            <div className="flex flex-col items-center text-center px-6 pt-2 pb-8">
+              <motion.div
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, type: 'spring' }}
+                className="w-24 h-24 rounded-3xl flex items-center justify-center border border-sky-400/35 mb-5 relative"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(14,165,233,0.22) 0%, rgba(37,99,235,0.12) 100%)',
+                  boxShadow: '0 0 56px rgba(56,189,248,0.30), 0 8px 32px rgba(0,0,0,0.5)',
+                }}
+              >
+                <motion.span
+                  className="absolute inset-0 rounded-3xl"
+                  animate={{
+                    boxShadow: [
+                      '0 0 12px 3px rgba(56,189,248,0.20)',
+                      '0 0 30px 10px rgba(56,189,248,0.50)',
+                      '0 0 12px 3px rgba(56,189,248,0.20)',
+                    ],
+                  }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <Rocket size={46} className="text-sky-300" />
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-white font-bold text-2xl leading-tight mb-1"
+              >
+                חובש + עולה לחנויות! 🚀
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-sky-400/80 text-sm font-medium tracking-wide"
+              >
+                App Store · Google Play · בעזרתכם
+              </motion.p>
+            </div>
+
+            {/* Intro banner */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mx-4 mb-4 rounded-2xl border border-sky-400/18 p-4"
+              style={{ background: 'rgba(14,165,233,0.07)' }}
+            >
+              <p className="text-gray-200 text-sm leading-relaxed text-center">
+                האפליקציה שאתם כבר אוהבים — <span className="text-sky-300 font-bold">חינמית לחלוטין, ללא פרסומות</span> — עומדת לעלות לחנויות הרשמיות.
+                כדי לממש את זה, אנחנו צריכים את העזרה שלכם.
+              </p>
+            </motion.div>
+
+            {/* Reason cards */}
+            <div className="px-4 flex flex-col gap-3">
+              {[
+                {
+                  emoji: '📱',
+                  title: 'גישה לכל חובש דרך החנויות',
+                  desc: 'כיום האפליקציה זמינה רק דרך הדפדפן. עלייה ל-App Store ו-Google Play תאפשר לחובשים, פרמדיקים ומע"רים להוריד אותה בקלות — בדיוק כמו כל אפליקציה אחרת.',
+                  glow: 'rgba(14,165,233,0.07)',
+                  border: 'rgba(56,189,248,0.18)',
+                },
+                {
+                  emoji: '🔔',
+                  title: 'עדכונים אוטומטיים שמצילים חיים',
+                  desc: 'משתמשי החנות יקבלו עדכוני פרוטוקול ותכנים חדשים ישירות לטלפון — ללא צורך לזכור לפתוח דפדפן מחדש. כל עדכון יכול להשפיע על החלטה בשטח.',
+                  glow: 'rgba(37,99,235,0.07)',
+                  border: 'rgba(99,102,241,0.18)',
+                },
+                {
+                  emoji: '💰',
+                  title: 'יש עלויות אמיתיות מאחורי הקלעים',
+                  desc: 'חשבון מפתח ב-Apple ו-Google, שרתים, תשתיות ואישורים — כולם עולים כסף. הפיתוח נעשה מאהבה, אבל התשתית דורשת מימון.',
+                  glow: 'rgba(250,204,21,0.05)',
+                  border: 'rgba(250,204,21,0.15)',
+                },
+                {
+                  emoji: '💚',
+                  title: 'חינמי לנצח — זה ההבטחה',
+                  desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש, לנצח. אתם משקיעים בתשתית, לא בתוכן נעול.',
+                  glow: 'rgba(52,211,153,0.06)',
+                  border: 'rgba(52,211,153,0.15)',
+                },
+                {
+                  emoji: '🏆',
+                  title: 'השפעה מדידה — אלפי חובשים',
+                  desc: 'כבר עכשיו אלפי אנשי צוות משתמשים בחובש + בכל משמרת. עלייה לחנויות תכפיל את המספר הזה — וכל אחד מהם יכול להציל חיים עם הכלים הנכונים.',
+                  glow: 'rgba(244,114,182,0.05)',
+                  border: 'rgba(244,114,182,0.15)',
+                },
+              ].map(({ emoji, title, desc, glow, border }, i) => (
+                <motion.div
+                  key={title}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 + i * 0.07 }}
+                  className="flex items-start gap-3 rounded-2xl p-4"
+                  style={{ background: glow, border: `1px solid ${border}` }}
+                >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
+                    {emoji}
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-white font-bold text-sm leading-tight">{title}</span>
+                    <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* Sticky CTA */}
+          <div
+            className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
+            style={{ background: 'linear-gradient(to top, #010810 65%, transparent)' }}
+          >
+            <a
+              href="https://links.payboxapp.com/ikLxTdoky1b"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackInteraction('תרומה לקמפיין — PayBox', 'support')}
+              className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
+              style={{
+                background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+                boxShadow: '0 4px 32px rgba(14,165,233,0.50)',
+              }}
+            >
+              לתרומה מהירה דרך PayBox
+            </a>
+            <p className="text-center text-gray-600 text-xs mt-2">
+              תרומה חד-פעמית · מאובטח · כל סכום עוזר
             </p>
           </div>
         </div>
