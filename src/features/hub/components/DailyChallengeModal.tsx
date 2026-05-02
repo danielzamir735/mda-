@@ -26,6 +26,7 @@ interface ClinicalQuestion {
 interface MedOfDay {
   name: string;
   drug_class: string;
+  description: string;
   question: string;
   options: string[];
   correct_index: number;
@@ -85,7 +86,7 @@ function getSessionId(): string {
 const CACHE_KEYS = {
   bls: 'daily_challenge_bls_v7',
   als: 'daily_challenge_als_v7',
-  med: 'daily_challenge_med_v3',
+  med: 'daily_challenge_med_v4',
   abbr: 'daily_challenge_abbr_v2',
   red_flag: 'daily_challenge_redflag_v2',
 } as const;
@@ -147,6 +148,7 @@ function buildMedPrompt(): string {
 {
   "name": "שם מסחרי ישראלי + גנרי — לדוגמה: אליקוויס (Apixaban)",
   "drug_class": "קבוצה ומנגנון קצר — לדוגמה: NOAC — מעכב פקטור Xa",
+  "description": "הסבר בשורה-שורה וחצי: מה התרופה הזאת עושה בגוף ולמה רושמים אותה — בשפה ברורה שכל חובש יבין. לדוגמה: תרופה מדללת דם — מונעת קרישי דם בחולים עם פרפור פרוזדורים, לאחר ניתוח אורתופדי, או לטיפול בתסחיף ריאתי.",
   "question": "שאלת MCQ על הסכנה/אינדיקציה/זהירות — לדוגמה: מטופל על אליקוויס חווה טראומה בטנית. מה החשש הקריטי ביותר?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
@@ -974,7 +976,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setMedStatus('ready');
     } else {
       setMedStatus('loading');
-      fetchOrCreateBlock<MedOfDay>('med_v3', generateMed).then((med) => {
+      fetchOrCreateBlock<MedOfDay>('med_v4', generateMed).then((med) => {
         setMedData(med);
         saveCache(CACHE_KEYS.med, med);
         setMedStatus('ready');
@@ -1047,7 +1049,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (activeBlock === 'B' && medStatus !== 'loading') {
       if (!loadCache<MedOfDay>(CACHE_KEYS.med)) {
         setMedStatus('loading'); setMedData(null); setMedAnsweredIdx(null);
-        fetchOrCreateBlock<MedOfDay>('med_v3', generateMed)
+        fetchOrCreateBlock<MedOfDay>('med_v4', generateMed)
           .then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); })
           .catch(() => setMedStatus('error'));
       }
@@ -1393,7 +1395,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     return (
       <div className="flex flex-col gap-5">
-        {/* Drug header — name + description */}
+        {/* Drug header — name + class + description */}
         <div className="rounded-3xl bg-gradient-to-b from-emerald-950/55 to-slate-950 border border-emerald-500/35 p-5"
           style={{ boxShadow: '0 0 28px rgba(16,185,129,0.14)' }}>
           <div className="flex items-center gap-3 mb-3">
@@ -1401,10 +1403,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               style={{ boxShadow: '0 0 16px rgba(16,185,129,0.3)' }}>
               <Pill size={20} className="text-emerald-400" />
             </div>
-            <span className="text-emerald-200 font-black text-xl leading-tight">{medData.name}</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-emerald-200 font-black text-xl leading-tight">{medData.name}</span>
+              <p className="text-emerald-400/70 text-[11px] font-semibold mt-0.5 leading-tight">{medData.drug_class}</p>
+            </div>
           </div>
-          <div className="h-px bg-emerald-500/20 mb-3" />
-          <p className="text-emerald-100/75 text-[14px] font-medium leading-relaxed">{medData.drug_class}</p>
+          {medData.description && (
+            <>
+              <div className="h-px bg-emerald-500/20 mb-3" />
+              <p className="text-white/85 text-[14px] font-medium leading-relaxed">{medData.description}</p>
+            </>
+          )}
         </div>
 
         {/* Result banner */}

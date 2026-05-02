@@ -7,6 +7,8 @@ import type { LucideIcon } from 'lucide-react';
 import { usePwaInstall } from '../pwa/PwaInstallContext';
 import { trackInteraction } from '../../utils/analytics';
 import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
+import ConceptsModal from './components/ConceptsModal';
+import { useConceptsStore } from '../../store/conceptsStore';
 
 const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
   { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
@@ -253,7 +255,9 @@ export default function HubModal({
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
   const [showCampaign, setShowCampaign] = useState(false);
+  const [showConcepts, setShowConcepts] = useState(false);
   const { openFullModal } = usePwaInstall();
+  const conceptsCount = useConceptsStore((s) => s.concepts.length);
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
@@ -389,31 +393,39 @@ https://hovesh-plus.vercel.app/`;
               עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
             </span>
             <span className="relative z-10 mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
-              לפרטים ולתרומה ←
+              לפרטים ←
             </span>
           </motion.button>
 
-          {/* Placeholder Card — מושגים שלמדתי */}
-          <motion.div
+          {/* Concepts Card — מושגים שלמדתי */}
+          <motion.button
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.2 }}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 p-3 relative overflow-hidden min-h-36 text-center"
+            onClick={() => { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); }}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
             style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
               backdropFilter: 'blur(14px)',
               WebkitBackdropFilter: 'blur(14px)',
+              boxShadow: '0 0 18px rgba(168,85,247,0.12)',
             }}
           >
-            <Sparkles size={28} className="text-purple-400/60" />
-            <span className="text-gray-300 font-bold text-sm leading-tight">מושגים שלמדתי</span>
-            <span className="text-gray-500 text-[11px] leading-tight">
-              מילון מונחים רפואי אישי שבנית
+            <Sparkles size={28} className="text-purple-300 relative z-10" />
+            <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מושגים שלמדתי</span>
+            <span className="text-purple-400/70 text-[11px] leading-tight relative z-10">
+              מילון מונחים אישי
             </span>
-            <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full mt-1">
-              בקרוב
-            </span>
-          </motion.div>
+            {conceptsCount > 0 ? (
+              <span className="text-xs font-semibold bg-purple-500/25 border border-purple-400/40 text-purple-200 px-3 py-1 rounded-full mt-1 relative z-10">
+                {conceptsCount} {conceptsCount === 1 ? 'מושג' : 'מושגים'} →
+              </span>
+            ) : (
+              <span className="text-xs font-semibold bg-purple-500/20 border border-purple-400/30 text-purple-300 px-3 py-1 rounded-full mt-1 relative z-10">
+                הוסף מושג →
+              </span>
+            )}
+          </motion.button>
 
         </div>
 
@@ -843,15 +855,15 @@ https://hovesh-plus.vercel.app/`;
                 },
                 {
                   emoji: '💰',
-                  title: 'יש עלויות אמיתיות מאחורי הקלעים',
+                  title: 'יש הרבה עלויות מאחורי הקלעים',
                   desc: 'חשבון מפתח ב-Apple ו-Google, שרתים, תשתיות ואישורים — כולם עולים כסף. הפיתוח נעשה מאהבה, אבל התשתית דורשת מימון.',
                   glow: 'rgba(250,204,21,0.05)',
                   border: 'rgba(250,204,21,0.15)',
                 },
                 {
                   emoji: '💚',
-                  title: 'חינמי לנצח — זה ההבטחה',
-                  desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש, לנצח. אתם משקיעים בתשתית, לא בתוכן נעול.',
+                  title: 'חינמי לנצח — זה החזון',
+                  desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש, . אתם משקיעים בתשתית, לא בתוכן נעול.',
                   glow: 'rgba(52,211,153,0.06)',
                   border: 'rgba(52,211,153,0.15)',
                 },
@@ -908,6 +920,9 @@ https://hovesh-plus.vercel.app/`;
           </div>
         </div>
       )}
+
+      {/* Concepts Modal */}
+      <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />
     </div>
   );
 }
