@@ -1,5 +1,8 @@
 import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+
+// Resets on every page load — prevents re-showing within the same tab session
+let _personalCardShown = false;
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
@@ -260,11 +263,12 @@ export default function HubModal({
   const { openFullModal } = usePwaInstall();
 
   const handleCampaignScroll = useCallback(() => {
-    if (sessionStorage.getItem('personal-card-shown')) return;
+    if (_personalCardShown) return;
     const el = campaignScrollRef.current;
     if (!el) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
-      sessionStorage.setItem('personal-card-shown', '1');
+    // pb-40 adds 160px of padding; trigger when the last card row first becomes visible
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+      _personalCardShown = true;
       setShowPersonalCard(true);
     }
   }, []);
