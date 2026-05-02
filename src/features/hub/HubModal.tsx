@@ -376,19 +376,19 @@ https://hovesh-plus.vercel.app/`;
 
           {/* Campaign Card — rotating gradient border */}
           <div className="relative">
-            {/* Outer glow bloom — pulses in sync with gradient rotation */}
+            {/* Outer glow bloom — subtle, synced to gradient rotation */}
             <motion.div
               className="pointer-events-none absolute rounded-2xl"
-              style={{ inset: -5 }}
+              style={{ inset: -3 }}
               animate={{
                 boxShadow: [
-                  '0 0 14px 4px rgba(16,185,129,0.45)',
-                  '0 0 30px 10px rgba(59,130,246,0.55)',
-                  '0 0 22px 7px rgba(124,58,237,0.45)',
-                  '0 0 14px 4px rgba(16,185,129,0.45)',
+                  '0 0 6px 1px rgba(16,185,129,0.20)',
+                  '0 0 12px 3px rgba(59,130,246,0.25)',
+                  '0 0 8px 2px rgba(124,58,237,0.20)',
+                  '0 0 6px 1px rgba(16,185,129,0.20)',
                 ],
               }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
             />
 
             <motion.button
@@ -403,10 +403,10 @@ https://hovesh-plus.vercel.app/`;
                 className="pointer-events-none absolute"
                 style={{
                   inset: -80,
-                  background: 'conic-gradient(from 0deg, #10b981 0%, #3b82f6 33%, #7c3aed 66%, #10b981 100%)',
+                  background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
                 }}
                 animate={{ rotate: 360 }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
               />
 
               {/* Inner card — covers the interior leaving 2px border strip */}
@@ -421,9 +421,6 @@ https://hovesh-plus.vercel.app/`;
                 <Rocket size={28} className="text-sky-300" />
                 <span className="text-sky-200 font-bold text-sm leading-tight">
                   חובש + עולה לחנויות!
-                </span>
-                <span className="text-sky-400/80 text-[11px] leading-tight">
-                  עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
                 </span>
                 <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
                   לפרטים ←
