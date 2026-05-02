@@ -370,42 +370,63 @@ https://hovesh-plus.vercel.app/`;
         {/* Campaign + Placeholder cards — above feedback button */}
         <div className="grid grid-cols-2 gap-3">
 
-          {/* Campaign Card — glow + pulse */}
-          <motion.button
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.1 }}
-            onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-sky-400/50 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
-            style={{
-              background: 'linear-gradient(160deg, rgba(14,165,233,0.18) 0%, rgba(37,99,235,0.10) 100%)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-            }}
-          >
-            {/* Pulsing neon ring */}
-            <motion.span
-              className="pointer-events-none absolute inset-0 rounded-2xl"
+          {/* Campaign Card — rotating gradient border */}
+          <div className="relative">
+            {/* Outer glow bloom — pulses in sync with gradient rotation */}
+            <motion.div
+              className="pointer-events-none absolute rounded-2xl"
+              style={{ inset: -5 }}
               animate={{
                 boxShadow: [
-                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
-                  'inset 0 0 0 1px rgba(56,189,248,0.70), 0 0 26px 8px rgba(56,189,248,0.50)',
-                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
+                  '0 0 14px 4px rgba(16,185,129,0.45)',
+                  '0 0 30px 10px rgba(59,130,246,0.55)',
+                  '0 0 22px 7px rgba(124,58,237,0.45)',
+                  '0 0 14px 4px rgba(16,185,129,0.45)',
                 ],
               }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
             />
-            <Rocket size={28} className="text-sky-300 relative z-10" />
-            <span className="text-sky-200 font-bold text-sm leading-tight relative z-10">
-              חובש + עולה לחנויות!
-            </span>
-            <span className="text-sky-400/80 text-[11px] leading-tight relative z-10">
-              עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
-            </span>
-            <span className="relative z-10 mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
-              לפרטים ←
-            </span>
-          </motion.button>
+
+            <motion.button
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+              onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
+              className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
+            >
+              {/* Rotating conic-gradient — GPU-accelerated, clipped by overflow-hidden */}
+              <motion.div
+                className="pointer-events-none absolute"
+                style={{
+                  inset: -80,
+                  background: 'conic-gradient(from 0deg, #10b981 0%, #3b82f6 33%, #7c3aed 66%, #10b981 100%)',
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+              />
+
+              {/* Inner card — covers the interior leaving 2px border strip */}
+              <div
+                className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
+                style={{
+                  background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
+                  backdropFilter: 'blur(14px)',
+                  WebkitBackdropFilter: 'blur(14px)',
+                }}
+              >
+                <Rocket size={28} className="text-sky-300" />
+                <span className="text-sky-200 font-bold text-sm leading-tight">
+                  חובש + עולה לחנויות!
+                </span>
+                <span className="text-sky-400/80 text-[11px] leading-tight">
+                  עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
+                </span>
+                <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
+                  לפרטים ←
+                </span>
+              </div>
+            </motion.button>
+          </div>
 
           {/* Concepts Card — מושגים שלמדתי */}
           <motion.button
@@ -958,9 +979,9 @@ https://hovesh-plus.vercel.app/`;
                 </h2>
 
                 <p className="text-gray-300 text-sm leading-relaxed text-center mb-5 px-1" dir="rtl">
-                  דניאל כאן, המפתח של חובש +. אני רואה שאתה משתמש באפליקציה ונהנה מהכלים שבנינו.
+                   כאן דניאל , המפתח של חובש +. כבר כמה חודשים שאלפי חובשים וחובשות משתמשים באפליקציה.
                   האפליקציה הזו היא פרויקט של הלב, ללא מטרות רווח וללא פרסומות. כדי שנוכל להמשיך
-                  לגדול ולהגיע לכל חובש בארץ, אני מזמין אותך להיות שותף. תרומה של 50 או 100 ש״ח תעזור
+                  לגדול ולהגיע לכל חובש בארץ, אני מזמין אותכם להיות שותפים. תרומה של 50 או 100 ש״ח תעזור
                   לנו לכסות את עלויות התחזוקה ולהעלות את האפליקציה לחנויות. בואו נעשה את זה ביחד!
                 </p>
 
