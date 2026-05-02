@@ -20,8 +20,6 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
   const [volume, setVolume] = useState('');
   const [flow, setFlow] = useState('');
 
-  if (!isOpen) return null;
-
   const pressureNum = parseFloat(pressure);
   const volumeNum   = parseFloat(volume);
   const flowNum     = parseFloat(flow);
@@ -44,6 +42,8 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minutes]);
+
+  if (!isOpen) return null;
 
   const handleReset = () => { setPressure(''); setVolume(''); setFlow(''); };
 

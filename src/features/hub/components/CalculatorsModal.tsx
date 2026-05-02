@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby } from 'lucide-react';
+import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby, HeartPulse } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackInteraction } from '../../../utils/analytics';
 import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
@@ -9,6 +9,7 @@ import ApgarCalculatorModal from './ApgarCalculatorModal';
 import ContractionTimerModal from './ContractionTimerModal';
 import GlasgowCalculatorModal from './GlasgowCalculatorModal';
 import PediatricDosageCalculatorModal from './PediatricDosageCalculatorModal';
+import ShockCalculator from '../../calculators/ShockCalculator';
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [contractionOpen, setContractionOpen] = useState(false);
   const [gcsOpen, setGcsOpen] = useState(false);
   const [pediatricOpen, setPediatricOpen] = useState(false);
+  const [shockOpen, setShockOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -58,6 +60,23 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <p className="text-purple-400 font-bold text-base">מחשבון צירי לידה</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 מדידת משך וזמן בין צירים
+              </p>
+            </div>
+          </button>
+
+          {/* Shock & Perfusion Calculator */}
+          <button
+            onClick={() => { trackInteraction('מחשבון הלם ופרפוזיה', 'calculators'); setShockOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-red-400/30
+                       bg-red-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-red-400/20 border border-red-400/40">
+              <HeartPulse size={22} className="text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-red-400 font-bold text-base">מחשבון הלם ופרפוזיה</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                Shock Index ו־MAP — זיהוי הלם מוקדם
               </p>
             </div>
           </button>
@@ -175,6 +194,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
       <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />
       <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />
       <PediatricDosageCalculatorModal isOpen={pediatricOpen} onClose={() => setPediatricOpen(false)} />
+      <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />
     </>
   );
 }
