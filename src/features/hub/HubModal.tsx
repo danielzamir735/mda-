@@ -1,5 +1,6 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
@@ -418,6 +419,70 @@ https://hovesh-plus.vercel.app/`;
           <MessageSquare size={22} />
           שליחת משוב
         </HapticButton>
+
+        {/* Campaign + Placeholder cards */}
+        <div className="grid grid-cols-2 gap-3">
+
+          {/* Campaign Card — glow + pulse */}
+          <motion.a
+            href="https://links.payboxapp.com/ikLxTdoky1b"
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            onClick={() => trackInteraction('תרומה לקמפיין', 'support')}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-sky-400/50 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center"
+            style={{
+              background: 'linear-gradient(160deg, rgba(14,165,233,0.18) 0%, rgba(37,99,235,0.10) 100%)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+            }}
+          >
+            {/* Pulsing neon ring */}
+            <motion.span
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              animate={{
+                boxShadow: [
+                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
+                  'inset 0 0 0 1px rgba(56,189,248,0.70), 0 0 26px 8px rgba(56,189,248,0.50)',
+                  'inset 0 0 0 1px rgba(56,189,248,0.25), 0 0 10px 3px rgba(56,189,248,0.20)',
+                ],
+              }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <Rocket size={28} className="text-sky-300 relative z-10" />
+            <span className="text-sky-200 font-bold text-sm leading-tight relative z-10">
+              חובש + עולה לחנויות!
+            </span>
+            <span className="text-sky-400/80 text-[11px] leading-tight relative z-10">
+              עזרו לנו להגיע לכל חובש ב-App Store וב-Google Play.
+            </span>
+            <span className="relative z-10 mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
+              לתרומה מהירה
+            </span>
+          </motion.a>
+
+          {/* Placeholder Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.2 }}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 p-3 relative overflow-hidden min-h-36 text-center"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+            }}
+          >
+            <Sparkles size={28} className="text-purple-400/60" />
+            <span className="text-gray-300 font-bold text-sm leading-tight">בקרוב...</span>
+            <span className="text-gray-500 text-[11px] leading-tight">
+              פיצ'ר חדש ומטורף בדרך אליכם. יש למה לחכות.
+            </span>
+          </motion.div>
+
+        </div>
 
       </div>
 
