@@ -23,7 +23,7 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
         <div className="flex items-center gap-1.5">
           <Zap size={13} className="text-yellow-400" fill="currentColor" />
           <p className="text-yellow-400/80 text-xs font-black uppercase tracking-wide">{t('cprLabel')}</p>
-          <p className="text-gray-500 dark:text-emt-muted text-xs">· {log.timestamp}</p>
+          <p className="text-zinc-400 text-xs">· {log.timestamp}</p>
         </div>
         <div className="flex items-center gap-1">
           {hasShocks && (
@@ -43,12 +43,12 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <div>
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sessionDuration')}</p>
+          <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('sessionDuration')}</p>
           <p className="text-gray-900 dark:text-emt-light font-black text-xl leading-tight tabular-nums">{log.cprDuration || '—'}</p>
         </div>
         <div>
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('electricShocks')}</p>
-          <p className="font-black text-xl leading-tight" style={{ color: (log.cprShocks ?? 0) > 0 ? '#fb923c' : '#6b7280' }}>
+          <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('electricShocks')}</p>
+          <p className="font-black text-xl leading-tight" style={{ color: (log.cprShocks ?? 0) > 0 ? '#fb923c' : '#a1a1aa' }}>
             {log.cprShocks ?? 0}
           </p>
         </div>
@@ -125,43 +125,43 @@ function LogCard({ log, onDelete, onEdit }: {
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         {log.bloodPressure && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('bloodPressure')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('bloodPressure')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.bloodPressure}</p>
           </div>
         )}
         {log.heartRate && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('heartRate')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('heartRate')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.heartRate}</p>
           </div>
         )}
         {log.breathing && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('breathing')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('breathing')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.breathing}</p>
           </div>
         )}
         {log.bloodSugar && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sugarLabel')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('sugarLabel')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.bloodSugar}</p>
           </div>
         )}
         {log.saturation && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('saturationLabel')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('saturationLabel')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.saturation}%</p>
           </div>
         )}
         {log.temperature && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('temperatureLabel')}</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">{t('temperatureLabel')}</p>
             <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.temperature}°C</p>
           </div>
         )}
         {log.fastTest && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
+            <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
             <p className={`font-black text-lg leading-tight ${log.fastTest === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
               {log.fastTest === 'תקין' ? t('normal') : log.fastTest === 'לא תקין' ? t('abnormal') : log.fastTest}
             </p>
@@ -197,7 +197,7 @@ function LogCard({ log, onDelete, onEdit }: {
       {/* Notes — full-width below grid */}
       {log.notes && (
         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-emt-border">
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide mb-1">{t('notesLabel')}</p>
+          <p className="text-zinc-400 text-[0.62rem] font-bold uppercase tracking-wide mb-1">{t('notesLabel')}</p>
           <p className="text-gray-900 dark:text-emt-light text-sm font-medium whitespace-pre-wrap">{log.notes}</p>
         </div>
       )}

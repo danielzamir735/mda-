@@ -582,7 +582,7 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete }: Session
                   borderTop: '1px solid rgba(255,255,255,0.04)',
                 }}
               >
-                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   {session.contractions.length - i}
                 </span>
                 <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>

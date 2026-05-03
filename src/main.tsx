@@ -3,15 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// Defer analytics init to avoid blocking the main thread during first render
+// Defer GA4 init to avoid blocking the main thread during first render
 setTimeout(() => {
-  import('posthog-js').then(({ default: posthog }) => {
-    posthog.init('phc_NHYgGJLq95b4ImZloo1QT9kE3AqhrLjZzkguFEol1mG', {
-      api_host: 'https://us.i.posthog.com',
-      person_profiles: 'identified_only',
-    })
-  })
-
   const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
   if (gaMeasurementId) {
     import('react-ga4').then(({ default: ReactGA }) => {

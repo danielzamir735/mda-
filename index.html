@@ -3,17 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <!-- Blocking dark-mode script: prevents FOUC by applying dark class before React loads -->
-    <script>
-      (function () {
-        try {
-          var s = localStorage.getItem('emt-settings');
-          var theme = s ? JSON.parse(s).state.theme : 'dark';
-          if (theme !== 'light') document.documentElement.classList.add('dark');
-        } catch (_) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
+    <script src="/dark-mode-init.js"></script>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -32,12 +22,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
-      }
-    </script>
+    <script src="/sw-register.js"></script>
   </body>
 </html>
