@@ -55,7 +55,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
     'focus:border-emt-red/60 transition-colors placeholder:text-gray-400 dark:placeholder:text-emt-muted';
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-t-2xl p-5 w-full max-w-lg flex flex-col gap-4">
 
         {/* Header */}

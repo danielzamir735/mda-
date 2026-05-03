@@ -58,7 +58,8 @@
       "Bash(cp \"C:/Users/User/Downloads/Untitled/\"*.svg \"C:/Users/User/Desktop/medic-app/src/assets/body-parts/\")",
       "Bash(node *)",
       "Bash(git reset *)",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(xargs wc *)"
     ]
   },
   "hooks": {

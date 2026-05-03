@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
-import LegalDisclaimerModal from './components/LegalDisclaimerModal';
-import UpdateModal from './components/UpdateModal';
 import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
-import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
+
+const LoginPage          = lazy(() => import('./pages/LoginPage'));
+const DashboardPage      = lazy(() => import('./pages/DashboardPage'));
+const LegalDisclaimerModal = lazy(() => import('./components/LegalDisclaimerModal'));
+const UpdateModal        = lazy(() => import('./components/UpdateModal'));
+const FullInstallModal   = lazy(() => import('./features/pwa/FullInstallModal'));
+
+const AppLoader = () => <div style={{ position: 'fixed', inset: 0, backgroundColor: '#09090B' }} />;
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -85,16 +88,18 @@ export default function App() {
   return (
     <PwaInstallProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-        <Analytics />
-        <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
-        {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
-        {/* PWA modals only after legal disclaimer is dismissed */}
-        {!legalOpen && <FullInstallModal />}
+        <Suspense fallback={<AppLoader />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+          <Analytics />
+          <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
+          {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
+          {/* PWA modals only after legal disclaimer is dismissed */}
+          {!legalOpen && <FullInstallModal />}
+        </Suspense>
         <MigrationBanner />
       </BrowserRouter>
     </PwaInstallProvider>

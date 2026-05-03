@@ -141,6 +141,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
+      role="dialog" aria-modal="true"
       style={{ background: 'linear-gradient(160deg, #0d0b1e 0%, #1a1040 45%, #0f1a2e 100%)' }}
     >
       {/* ── Glassmorphism Header ────────────────────────────────────────── */}

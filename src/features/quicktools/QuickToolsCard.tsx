@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Camera, Activity, Trophy } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCameraStore } from '../../store/cameraStore';
 import { trackInteraction } from '../../utils/analytics';
-import DailyChallengeModal from '../hub/components/DailyChallengeModal';
+
+const DailyChallengeModal = lazy(() => import('../hub/components/DailyChallengeModal'));
 
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -91,10 +92,12 @@ export default function QuickToolsCard() {
         onClose={() => setAddVitalsOpen(false)}
       />
 
-      <DailyChallengeModal
-        isOpen={challengeOpen}
-        onClose={() => setChallengeOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <DailyChallengeModal
+          isOpen={challengeOpen}
+          onClose={() => setChallengeOpen(false)}
+        />
+      </Suspense>
     </>
   );
 }

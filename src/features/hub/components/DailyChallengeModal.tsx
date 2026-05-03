@@ -1642,7 +1642,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl" role="dialog" aria-modal="true">
 
       {/* ── Header ── */}
       <div className="ios-safe-header shrink-0 border-b border-emt-border">

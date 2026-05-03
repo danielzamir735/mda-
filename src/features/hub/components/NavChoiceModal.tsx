@@ -22,6 +22,7 @@ export default function NavChoiceModal({ hospital, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center"
+      role="dialog" aria-modal="true"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/60" />

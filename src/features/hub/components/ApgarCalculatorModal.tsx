@@ -72,7 +72,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
   const sev = sevKey ? SEV_STYLES[sevKey] : null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark" role="dialog" aria-modal="true">
 
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">

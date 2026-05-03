@@ -217,7 +217,7 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
   const reversed = [...logs].reverse();
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
+    <div className="fixed inset-0 z-50 bg-white dark:bg-emt-dark flex flex-col animate-fade-scale" role="dialog" aria-modal="true">
       <div className="ios-safe-header flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-emt-border shrink-0">
         <button onClick={onClose} className="p-2 text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('close')}>
           <X size={24} />

@@ -2,12 +2,19 @@
 <html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <!-- Blocking dark-mode script: prevents FOUC by applying dark class before React loads -->
-    <script src="/dark-mode-init.js"></script>
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>חובש+</title>
+    <meta name="description" content="חובש+ — אפליקציית עזר לחובשים ואנשי רפואה דחופה. מדידת דופק, מדידת נשימות, מחשבונים רפואיים, תיעוד מדדים ועוד." />
+    <meta property="og:title" content="חובש+" />
+    <meta property="og:description" content="כלי עזר לחובשים ואנשי רפואה דחופה" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+
+    <!-- Inline dark-mode init: runs synchronously before first paint to prevent FOUC -->
+    <script>(function(){try{var s=localStorage.getItem('emt-settings');var theme=s?JSON.parse(s).state.theme:'dark';if(theme!=='light')document.documentElement.classList.add('dark')}catch(_){document.documentElement.classList.add('dark')}})();</script>
+
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
@@ -22,6 +29,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script src="/sw-register.js"></script>
+    <script src="/sw-register.js" defer></script>
   </body>
 </html>

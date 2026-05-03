@@ -15,7 +15,7 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-[90%] max-w-md bg-slate-900 shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
         {/* Icon */}
         <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 mx-auto mb-4">

@@ -245,7 +245,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" role="dialog" aria-modal="true">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
         <div className="flex items-center gap-2">

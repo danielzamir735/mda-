@@ -13,7 +13,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden" role="dialog" aria-modal="true">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכזי הרעלות</h2>

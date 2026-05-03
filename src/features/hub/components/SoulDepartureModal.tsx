@@ -33,7 +33,7 @@ export default function SoulDepartureModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" role="dialog" aria-modal="true" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
 
       {/* Header */}
       <div

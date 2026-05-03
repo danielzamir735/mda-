@@ -1704,6 +1704,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[60] flex flex-col animate-fade-scale"
+      role="dialog" aria-modal="true"
       style={{ background: 'linear-gradient(160deg, #0d0d18 0%, #111827 60%, #0f172a 100%)' }}
       dir="rtl"
     >

@@ -56,6 +56,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
   return (
     <div
       className={`fixed inset-0 ${zClass} flex items-center justify-center bg-black/70 backdrop-blur-sm px-4`}
+      role="dialog" aria-modal="true"
       onClick={onClose}
     >
       <div

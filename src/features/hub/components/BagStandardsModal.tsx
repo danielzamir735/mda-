@@ -426,7 +426,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
   if (selectedBag) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
+      <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <button

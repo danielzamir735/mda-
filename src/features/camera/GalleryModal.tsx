@@ -40,7 +40,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
   return (
     <>
       {/* ── Gallery grid ── */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
+      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="ios-safe-header flex items-center justify-between px-4 py-4
                         border-b border-emt-border shrink-0">

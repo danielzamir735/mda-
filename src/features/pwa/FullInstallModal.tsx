@@ -185,6 +185,7 @@ export default function FullInstallModal() {
   return (
     <div
       className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col overflow-y-auto"
+      role="dialog" aria-modal="true"
       style={{ direction: 'rtl' }}
     >
       {/* Midnight-blue gradient background */}
