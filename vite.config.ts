@@ -7,11 +7,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-router':    ['react-router-dom'],
-          'vendor-motion':    ['framer-motion'],
-          'vendor-google-ai': ['@google/generative-ai'],
-          'vendor-supabase':  ['@supabase/supabase-js'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('/lucide-react/'))          return 'vendor-icons';
+          if (id.includes('/framer-motion/')
+           || id.includes('/@motionone/')
+           || id.includes('/motion/'))                return 'vendor-motion';
+          if (id.includes('/react-router'))           return 'vendor-router';
+          if (id.includes('/@google/generative-ai/')) return 'vendor-google-ai';
+          if (id.includes('/@supabase/'))             return 'vendor-supabase';
         },
       },
     },

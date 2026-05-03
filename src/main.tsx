@@ -4,16 +4,32 @@ import './index.css'
 import App from './App.tsx'
 import { registerGA } from './utils/analytics'
 
-// Defer GA4 init to avoid blocking the main thread during first render
-setTimeout(() => {
-  const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
-  if (gaMeasurementId) {
-    import('react-ga4').then(({ default: ReactGA }) => {
-      ReactGA.initialize(gaMeasurementId)
-      registerGA(ReactGA)
-    })
+// Load GA4 only after LCP fires so it never competes with critical rendering.
+// Falls back to a 5-second timer if PerformanceObserver isn't available.
+function _loadGA() {
+  const id = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
+  if (!id) return
+  import('react-ga4').then(({ default: ReactGA }) => {
+    ReactGA.initialize(id)
+    registerGA(ReactGA)
+  })
+}
+
+;(function deferGA() {
+  let fired = false
+  const run = () => { if (!fired) { fired = true; _loadGA() } }
+
+  if (
+    typeof PerformanceObserver !== 'undefined' &&
+    PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')
+  ) {
+    const po = new PerformanceObserver(() => { po.disconnect(); setTimeout(run, 500) })
+    try { po.observe({ type: 'largest-contentful-paint', buffered: true }) } catch { /* ignore */ }
+    setTimeout(run, 5000) // safety net
+  } else {
+    setTimeout(run, 5000)
   }
-}, 3000)
+})()
 
 // When a new Service Worker takes control (after skipWaiting + clientsClaim),
 // reload the page so users get the latest assets.

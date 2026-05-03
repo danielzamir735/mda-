@@ -10,13 +10,15 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/pwa-512x512.png" />
 
-    <!-- Preconnect to external origins to reduce connection latency -->
-    <link rel="preconnect" href="https://feoxsagxjtynxrmmzijy.supabase.co" />
-    <link rel="preconnect" href="https://www.google-analytics.com" />
-    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
+    <!-- Critical shell styles: paint dark background before CSS file arrives -->
+    <style>html{background:#09090B;color-scheme:dark}body{margin:0}#root{min-height:100dvh}</style>
 
     <!-- Inline dark-mode init: runs synchronously before first paint to prevent FOUC -->
     <script>(function(){try{var s=localStorage.getItem('emt-settings');var theme=s?JSON.parse(s).state.theme:'dark';if(theme!=='light')document.documentElement.classList.add('dark')}catch(_){document.documentElement.classList.add('dark')}})();</script>
+
+    <!-- DNS prefetch only — actual connections are opened by app code, not at HTML parse time -->
+    <link rel="dns-prefetch" href="https://feoxsagxjtynxrmmzijy.supabase.co" />
+    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
 
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon.svg" />
