@@ -60,7 +60,11 @@
       "Bash(git reset *)",
       "Bash(git restore *)",
       "Bash(xargs wc *)",
-      "Bash(xargs -0 grep -l \"<button\")"
+      "Bash(xargs -0 grep -l \"<button\")",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name)",
+      "PowerShell(dir \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\\\\src\" -Recurse | Where-Object {!$_.PSIsContainer} | Select-Object Name, Length | Sort-Object Length -Descending | Select-Object -First 30)",
+      "PowerShell(dir \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\\\\dist\\\\assets\" | Sort-Object Length -Descending | Select-Object Name, @{N='KB';E={[math]::Round\\($_.Length/1KB,1\\)}})"
     ]
   },
   "hooks": {
