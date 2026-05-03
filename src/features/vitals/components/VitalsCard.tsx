@@ -102,6 +102,7 @@ export default function VitalsCard({
             <button
               onClick={() => { if (canDecrease) { vibrate(20); onDurationChange(validDurations[idx - 1]); } }}
               disabled={!canDecrease}
+              aria-label={t('decreaseDuration')}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
                          bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
                          text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
@@ -115,6 +116,7 @@ export default function VitalsCard({
             <button
               onClick={() => { if (canIncrease) { vibrate(20); onDurationChange(validDurations[idx + 1]); } }}
               disabled={!canIncrease}
+              aria-label={t('increaseDuration')}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
                          bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
                          text-gray-500 dark:text-emt-muted active:scale-90 transition-transform

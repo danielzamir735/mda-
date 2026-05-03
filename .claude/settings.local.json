@@ -59,7 +59,8 @@
       "Bash(node *)",
       "Bash(git reset *)",
       "Bash(git restore *)",
-      "Bash(xargs wc *)"
+      "Bash(xargs wc *)",
+      "Bash(xargs -0 grep -l \"<button\")"
     ]
   },
   "hooks": {

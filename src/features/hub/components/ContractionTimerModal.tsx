@@ -276,7 +276,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>משך ממוצע</p>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>משך ממוצע</p>
                   <p className="font-black text-xl text-green-400">{fmt(avgDuration)}</p>
                 </div>
               )}
@@ -290,7 +290,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>מרווח ממוצע</p>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>מרווח ממוצע</p>
                   <p className={`font-black text-xl ${isUrgent ? 'text-red-400' : 'text-blue-400'}`}>
                     {fmt(avgInterval)}
                   </p>
@@ -305,7 +305,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                   backdropFilter: 'blur(12px)',
                 }}
               >
-                <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>צירים</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>צירים</p>
                 <p className="font-black text-xl text-purple-300">{contractions.length}</p>
               </div>
             </motion.div>
@@ -586,7 +586,7 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete }: Session
                 <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   {session.contractions.length - i}
                 </span>
-                <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.65)' }}>
                   {fmtTimestamp(c.id, c.duration)}
                 </span>
                 <span className="text-center font-black text-sm text-green-400">

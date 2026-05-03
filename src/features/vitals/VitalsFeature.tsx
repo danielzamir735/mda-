@@ -2,43 +2,43 @@ import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
 import VitalsCard from './components/VitalsCard';
 import CalculatorModal from './components/CalculatorModal';
 import ResultPopup from './components/ResultPopup';
-import VitalsHistoryModal from './components/VitalsHistoryModal';
 import MetronomeCard from '../metronome/MetronomeCard';
 import CPRTimerOverlay from '../metronome/CPRTimerOverlay';
 import QuickToolsCard from '../quicktools/QuickToolsCard';
 import { useMetronomeStore } from '../../store/metronomeStore';
 import BottomNav from '../../components/BottomNav';
-import GalleryModal from '../camera/GalleryModal';
-import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { trackEvent, trackInteraction } from '../../utils/analytics';
-import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
-import CalculatorsModal from '../hub/components/CalculatorsModal';
-import SettingsModal from '../hub/components/SettingsModal';
-import VitalsReferenceModal from '../hub/components/VitalsReferenceModal';
-import MedicalHistoryModal from '../hub/components/MedicalHistoryModal';
-import HospitalsModal from '../hub/components/HospitalsModal';
-import WhatsNewModal from '../hub/components/WhatsNewModal';
-import MedicationsModal from '../quicktools/MedicationsModal';
-import CommonMedsModal from '../hub/components/CommonMedsModal';
-import MedicalTranslatorModal from '../hub/components/MedicalTranslatorModal';
-import PoisonCentersModal from '../hub/components/PoisonCentersModal';
-import AccessibilityModal from '../hub/components/AccessibilityModal';
-import BreathingSynchronizer from '../hub/components/BreathingSynchronizer';
-import WelcomeModal from '../../components/WelcomeModal';
-import FeedbackModal from '../../components/FeedbackModal';
-import SupportModal from '../../pages/SupportPage';
-import SoulDepartureModal from '../hub/components/SoulDepartureModal';
 
-// Heavy modals — lazy-loaded so they don't bloat the initial bundle
-const HubModal              = lazy(() => import('../hub/HubModal'));
-const BagStandardsModal     = lazy(() => import('../hub/components/BagStandardsModal'));
+// All modals are lazy-loaded — none are visible on initial render
+const GalleryModal           = lazy(() => import('../camera/GalleryModal'));
+const NotesModal             = lazy(() => import('../notes/NotesModal'));
+const VitalsHistoryModal     = lazy(() => import('./components/VitalsHistoryModal'));
+const HubModal               = lazy(() => import('../hub/HubModal'));
+const AmbulanceChecklistModal = lazy(() => import('../hub/components/AmbulanceChecklistModal'));
+const CalculatorsModal       = lazy(() => import('../hub/components/CalculatorsModal'));
+const SettingsModal          = lazy(() => import('../hub/components/SettingsModal'));
+const VitalsReferenceModal   = lazy(() => import('../hub/components/VitalsReferenceModal'));
+const MedicalHistoryModal    = lazy(() => import('../hub/components/MedicalHistoryModal'));
+const HospitalsModal         = lazy(() => import('../hub/components/HospitalsModal'));
+const WhatsNewModal          = lazy(() => import('../hub/components/WhatsNewModal'));
+const BagStandardsModal      = lazy(() => import('../hub/components/BagStandardsModal'));
+const MedicationsModal       = lazy(() => import('../quicktools/MedicationsModal'));
+const CommonMedsModal        = lazy(() => import('../hub/components/CommonMedsModal'));
+const MedicalTranslatorModal = lazy(() => import('../hub/components/MedicalTranslatorModal'));
+const PoisonCentersModal     = lazy(() => import('../hub/components/PoisonCentersModal'));
+const AccessibilityModal     = lazy(() => import('../hub/components/AccessibilityModal'));
+const BreathingSynchronizer  = lazy(() => import('../hub/components/BreathingSynchronizer'));
 const MedicationScannerModal = lazy(() => import('../hub/components/MedicationScannerModal'));
-const DailyChallengeModal   = lazy(() => import('../hub/components/DailyChallengeModal'));
-const LanguageBridgeModal   = lazy(() => import('../translators/LanguageBridgeModal'));
+const DailyChallengeModal    = lazy(() => import('../hub/components/DailyChallengeModal'));
+const WelcomeModal           = lazy(() => import('../../components/WelcomeModal'));
+const FeedbackModal          = lazy(() => import('../../components/FeedbackModal'));
+const SupportModal           = lazy(() => import('../../pages/SupportPage'));
+const LanguageBridgeModal    = lazy(() => import('../translators/LanguageBridgeModal'));
+const SoulDepartureModal     = lazy(() => import('../hub/components/SoulDepartureModal'));
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -202,62 +202,11 @@ export default function VitalsFeature() {
         onClose={handleResultClose}
       />
 
-      <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
-
-      <NotesModal
-        isOpen={notesOpen}
-        onClose={() => setNotesOpen(false)}
-      />
-
-      <VitalsHistoryModal
-        isOpen={vitalsHistoryOpen}
-        onClose={() => setVitalsHistoryOpen(false)}
-      />
-
-      <AmbulanceChecklistModal
-        isOpen={checklistOpen}
-        onClose={() => { setChecklistOpen(false); setHubOpen(true); }}
-      />
-
-      <CalculatorsModal
-        isOpen={calculatorsOpen}
-        onClose={() => { setCalculatorsOpen(false); setHubOpen(true); }}
-      />
-
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => { setSettingsOpen(false); setHubOpen(true); }}
-      />
-
-      <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
-      <MedicalHistoryModal isOpen={medicalHistoryOpen} onClose={() => { setMedicalHistoryOpen(false); setHubOpen(true); }} />
-      <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
-      <WhatsNewModal
-        isOpen={updatesOpen}
-        isRead={hasSeenWhatsNew}
-        onClose={() => {
-          localStorage.setItem('whatsNew_v2_seen', 'true');
-          setHasSeenWhatsNew(true);
-          setUpdatesOpen(false);
-          if (updatesFromHub) setHubOpen(true);
-        }}
-      />
-      <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
-      <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
-      <MedicalTranslatorModal
-        isOpen={translatorOpen}
-        onClose={() => { setTranslatorOpen(false); setHubOpen(true); }}
-      />
-      <PoisonCentersModal isOpen={poisonCentersOpen} onClose={() => { setPoisonCentersOpen(false); setHubOpen(true); }} />
-      <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />
-      <BreathingSynchronizer isOpen={breathingOpen} onClose={() => { setBreathingOpen(false); setHubOpen(true); }} />
-      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
-      <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
-      <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
-      <SoulDepartureModal isOpen={soulDepartureOpen} onClose={() => { setSoulDepartureOpen(false); setHubOpen(true); }} />
-
-      {/* Lazy-loaded heavy modals — downloaded only on first open */}
+      {/* All modals lazy-loaded — none needed until user interaction */}
       <Suspense fallback={null}>
+        <GalleryModal isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
+        <NotesModal isOpen={notesOpen} onClose={() => setNotesOpen(false)} />
+        <VitalsHistoryModal isOpen={vitalsHistoryOpen} onClose={() => setVitalsHistoryOpen(false)} />
         <HubModal
           isOpen={hubOpen}
           onClose={() => setHubOpen(false)}
@@ -279,10 +228,36 @@ export default function VitalsFeature() {
           onDailyChallengeOpen={() => setDailyChallengeOpen(true)}
           onSoulDepartureOpen={() => setSoulDepartureOpen(true)}
         />
+        <AmbulanceChecklistModal isOpen={checklistOpen} onClose={() => { setChecklistOpen(false); setHubOpen(true); }} />
+        <CalculatorsModal isOpen={calculatorsOpen} onClose={() => { setCalculatorsOpen(false); setHubOpen(true); }} />
+        <SettingsModal isOpen={settingsOpen} onClose={() => { setSettingsOpen(false); setHubOpen(true); }} />
+        <VitalsReferenceModal isOpen={vitalsRefOpen} onClose={() => { setVitalsRefOpen(false); setHubOpen(true); }} />
+        <MedicalHistoryModal isOpen={medicalHistoryOpen} onClose={() => { setMedicalHistoryOpen(false); setHubOpen(true); }} />
+        <HospitalsModal isOpen={hospitalsOpen} onClose={() => { setHospitalsOpen(false); setHubOpen(true); }} />
+        <WhatsNewModal
+          isOpen={updatesOpen}
+          isRead={hasSeenWhatsNew}
+          onClose={() => {
+            localStorage.setItem('whatsNew_v2_seen', 'true');
+            setHasSeenWhatsNew(true);
+            setUpdatesOpen(false);
+            if (updatesFromHub) setHubOpen(true);
+          }}
+        />
         <BagStandardsModal isOpen={bagStandardsOpen} onClose={() => { setBagStandardsOpen(false); setHubOpen(true); }} />
+        <MedicationsModal isOpen={medicationsOpen} onClose={() => setMedicationsOpen(false)} />
+        <CommonMedsModal isOpen={commonMedsOpen} onClose={() => { setCommonMedsOpen(false); setHubOpen(true); }} />
+        <MedicalTranslatorModal isOpen={translatorOpen} onClose={() => { setTranslatorOpen(false); setHubOpen(true); }} />
+        <PoisonCentersModal isOpen={poisonCentersOpen} onClose={() => { setPoisonCentersOpen(false); setHubOpen(true); }} />
+        <AccessibilityModal isOpen={accessibilityOpen} onClose={() => { setAccessibilityOpen(false); setHubOpen(true); }} />
+        <BreathingSynchronizer isOpen={breathingOpen} onClose={() => { setBreathingOpen(false); setHubOpen(true); }} />
         <MedicationScannerModal isOpen={medicationScannerOpen} onClose={() => { setMedicationScannerOpen(false); setHubOpen(true); }} />
         <DailyChallengeModal isOpen={dailyChallengeOpen} onClose={() => { setDailyChallengeOpen(false); setHubOpen(true); }} />
         <LanguageBridgeModal isOpen={languageBridgeOpen} onClose={() => setLanguageBridgeOpen(false)} />
+        <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+        <WelcomeModal isOpen={welcomeOpen} onClose={handleWelcomeClose} />
+        <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+        <SoulDepartureModal isOpen={soulDepartureOpen} onClose={() => { setSoulDepartureOpen(false); setHubOpen(true); }} />
       </Suspense>
     </div>
   );
