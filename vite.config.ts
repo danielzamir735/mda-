@@ -4,6 +4,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-router':    ['react-router-dom'],
+          'vendor-motion':    ['framer-motion'],
+          'vendor-google-ai': ['@google/generative-ai'],
+          'vendor-supabase':  ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { registerGA } from './utils/analytics'
 
 // Defer GA4 init to avoid blocking the main thread during first render
 setTimeout(() => {
@@ -9,6 +10,7 @@ setTimeout(() => {
   if (gaMeasurementId) {
     import('react-ga4').then(({ default: ReactGA }) => {
       ReactGA.initialize(gaMeasurementId)
+      registerGA(ReactGA)
     })
   }
 }, 3000)

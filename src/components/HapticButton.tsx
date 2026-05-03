@@ -1,38 +1,43 @@
-import { motion, type HTMLMotionProps } from 'framer-motion';
+import type { ButtonHTMLAttributes, PointerEvent } from 'react';
 import { useHaptics } from '../hooks/useHaptics';
 
-interface HapticButtonProps extends HTMLMotionProps<'button'> {
-  /** Vibration pattern in ms. Default: 8ms – subtle tap. */
+interface HapticButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   hapticPattern?: VibratePattern;
-  /** Scale on press. Default: 0.93 */
   pressScale?: number;
 }
 
-/**
- * Drop-in replacement for <button> that adds:
- *  1. Spring-scale-down animation on press (whileTap)
- *  2. Haptic vibration (respects hapticsEnabled from settingsStore)
- */
 export default function HapticButton({
   hapticPattern = 8,
   pressScale = 0.93,
   onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  onPointerLeave,
   children,
   ...props
 }: HapticButtonProps) {
   const vibrate = useHaptics();
 
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    vibrate(hapticPattern);
+    e.currentTarget.style.transform = `scale(${pressScale})`;
+    onPointerDown?.(e);
+  };
+
+  const clearScale = (e: PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = '';
+  };
+
   return (
-    <motion.button
-      whileTap={{ scale: pressScale }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      onPointerDown={(e) => {
-        vibrate(hapticPattern);
-        onPointerDown?.(e);
-      }}
+    <button
       {...props}
+      style={{ transition: 'transform 100ms ease-out', ...props.style }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={(e) => { clearScale(e); onPointerUp?.(e); }}
+      onPointerCancel={(e) => { clearScale(e); onPointerCancel?.(e); }}
+      onPointerLeave={(e) => { clearScale(e); onPointerLeave?.(e); }}
     >
       {children}
-    </motion.button>
+    </button>
   );
 }

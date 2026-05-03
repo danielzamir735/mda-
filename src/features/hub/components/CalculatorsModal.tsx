@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby, HeartPulse } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackInteraction } from '../../../utils/analytics';
-import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
-import BarPsiConverterModal from './BarPsiConverterModal';
-import BurnsCalculatorModal from './BurnsCalculatorModal';
-import ApgarCalculatorModal from './ApgarCalculatorModal';
-import ContractionTimerModal from './ContractionTimerModal';
-import GlasgowCalculatorModal from './GlasgowCalculatorModal';
-import PediatricDosageCalculatorModal from './PediatricDosageCalculatorModal';
-import ShockCalculator from '../../calculators/ShockCalculator';
+
+const OxygenCalculatorModal       = lazy(() => import('../../quicktools/OxygenCalculatorModal'));
+const BarPsiConverterModal        = lazy(() => import('./BarPsiConverterModal'));
+const BurnsCalculatorModal        = lazy(() => import('./BurnsCalculatorModal'));
+const ApgarCalculatorModal        = lazy(() => import('./ApgarCalculatorModal'));
+const ContractionTimerModal       = lazy(() => import('./ContractionTimerModal'));
+const GlasgowCalculatorModal      = lazy(() => import('./GlasgowCalculatorModal'));
+const PediatricDosageCalculatorModal = lazy(() => import('./PediatricDosageCalculatorModal'));
+const ShockCalculator             = lazy(() => import('../../calculators/ShockCalculator'));
 
 interface Props {
   isOpen: boolean;
@@ -187,14 +188,16 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
         </div>
       </div>
 
-      <OxygenCalculatorModal isOpen={o2Open} onClose={() => setO2Open(false)} zClass="z-[70]" />
-      <BarPsiConverterModal isOpen={barPsiOpen} onClose={() => setBarPsiOpen(false)} />
-      <BurnsCalculatorModal isOpen={burnsOpen} onClose={() => setBurnsOpen(false)} />
-      <ContractionTimerModal isOpen={contractionOpen} onClose={() => setContractionOpen(false)} />
-      <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />
-      <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />
-      <PediatricDosageCalculatorModal isOpen={pediatricOpen} onClose={() => setPediatricOpen(false)} />
-      <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />
+      <Suspense>
+        {o2Open && <OxygenCalculatorModal isOpen={o2Open} onClose={() => setO2Open(false)} zClass="z-[70]" />}
+        {barPsiOpen && <BarPsiConverterModal isOpen={barPsiOpen} onClose={() => setBarPsiOpen(false)} />}
+        {burnsOpen && <BurnsCalculatorModal isOpen={burnsOpen} onClose={() => setBurnsOpen(false)} />}
+        {contractionOpen && <ContractionTimerModal isOpen={contractionOpen} onClose={() => setContractionOpen(false)} />}
+        {apgarOpen && <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />}
+        {gcsOpen && <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />}
+        {pediatricOpen && <PediatricDosageCalculatorModal isOpen={pediatricOpen} onClose={() => setPediatricOpen(false)} />}
+        {shockOpen && <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />}
+      </Suspense>
     </>
   );
 }
