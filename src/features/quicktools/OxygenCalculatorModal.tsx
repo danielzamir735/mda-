@@ -18,6 +18,7 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
   const [pressureUnit, setPressureUnit] = useState<PressureUnit>('bar');
   const [pressure, setPressure] = useState('');
   const [volume, setVolume] = useState('');
+  const [selectedTank, setSelectedTank] = useState<string | null>(null);
   const [flow, setFlow] = useState('');
 
   const pressureNum = parseFloat(pressure);
@@ -45,7 +46,13 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
 
   if (!isOpen) return null;
 
-  const handleReset = () => { setPressure(''); setVolume(''); setFlow(''); };
+  const TANK_PRESETS = [
+    { key: 'large', label: t('tankLarge'), value: '20' },
+    { key: 'small', label: t('tankSmall'), value: '2.4' },
+    { key: 'moto',  label: t('tankMoto'),  value: '1'   },
+  ] as const;
+
+  const handleReset = () => { setPressure(''); setVolume(''); setSelectedTank(null); setFlow(''); };
 
   const inputCls =
     'w-full bg-gray-100 dark:bg-[#1A1A20] border border-gray-200 dark:border-emt-border rounded-xl ' +
@@ -122,11 +129,31 @@ export default function OxygenCalculatorModal({ isOpen, onClose, zClass = 'z-50'
             <label className="text-sm font-semibold text-gray-500 dark:text-emt-muted uppercase tracking-wide">
               {t('tankVolume')}
             </label>
+            {/* Preset tank buttons */}
+            <div className="flex gap-2">
+              {TANK_PRESETS.map(preset => (
+                <button
+                  key={preset.key}
+                  onClick={() => {
+                    setSelectedTank(preset.key);
+                    setVolume(preset.value);
+                  }}
+                  className={[
+                    'flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all duration-150 active:scale-95',
+                    selectedTank === preset.key
+                      ? 'bg-emt-blue border-emt-blue text-white'
+                      : 'bg-gray-100 dark:bg-[#1A1A20] border-gray-200 dark:border-emt-border text-gray-600 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light',
+                  ].join(' ')}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <input
               type="number"
               inputMode="decimal"
               value={volume}
-              onChange={e => setVolume(e.target.value)}
+              onChange={e => { setVolume(e.target.value); setSelectedTank(null); }}
               placeholder="0"
               className={inputCls}
             />
