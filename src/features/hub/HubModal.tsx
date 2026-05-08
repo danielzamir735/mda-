@@ -1035,113 +1035,114 @@ https://hovesh-plus.vercel.app/`;
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Bit Sheet */}
+          <AnimatePresence>
+            {showBitSheet && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-30 bg-black/50"
+                  onClick={() => setShowBitSheet(false)}
+                />
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+                  className="absolute inset-x-0 bottom-0 z-40 rounded-t-3xl px-6 pt-6 pb-10"
+                  style={{
+                    background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
+                    borderTop: '1px solid rgba(167,139,250,0.35)',
+                  }}
+                  dir="rtl"
+                >
+                  <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
+                  <button
+                    onClick={() => setShowBitSheet(false)}
+                    className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                  >
+                    <X size={16} className="text-white/70" />
+                  </button>
+
+                  <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
+                  <p className="text-violet-300 text-sm text-center mb-4">
+                    תרמו על המספר הזה:
+                  </p>
+
+                  <div
+                    className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
+                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+                  >
+                    <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
+                      054-932-2310
+                    </span>
+                    <button
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
+                        setCampaignBitCopied(true);
+                        setTimeout(() => setCampaignBitCopied(false), 2500);
+                        setShowBitThankYou(true);
+                        setTimeout(() => setShowBitThankYou(false), 4500);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                      style={{
+                        background: campaignBitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
+                        color: campaignBitCopied ? '#86efac' : '#c4b5fd',
+                        border: `1px solid ${campaignBitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
+                      }}
+                    >
+                      {campaignBitCopied ? <Check size={15} /> : <Copy size={15} />}
+                      {campaignBitCopied ? 'הועתק!' : 'העתק'}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => { window.location.href = 'bit://'; }}
+                    className="w-full py-3.5 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform mb-4"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+                      boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
+                    }}
+                  >
+                    פתח את ביט
+                  </button>
+
+                  <p className="text-white/40 text-xs text-center leading-relaxed">
+                    כל סכום עוזר מאוד ❤️
+                  </p>
+
+                  {/* Thank-you toast after copy */}
+                  <AnimatePresence>
+                    {showBitThankYou && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                        className="mt-4 rounded-2xl px-5 py-4 text-center"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(16,185,129,0.12) 100%)',
+                          border: '1px solid rgba(34,197,94,0.35)',
+                        }}
+                      >
+                        <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
+                          תודה רבה לך על התרומה 🙏<br />
+                          תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
+                          <span className="text-green-400/80 font-normal text-xs">זה אומר לנו המון ❤️</span>
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
-      {/* Bit Sheet */}
-      <AnimatePresence>
-        {showBitSheet && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-30 bg-black/50"
-              onClick={() => setShowBitSheet(false)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-              className="absolute inset-x-0 bottom-0 z-40 rounded-t-3xl px-6 pt-6 pb-10"
-              style={{
-                background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
-                borderTop: '1px solid rgba(167,139,250,0.35)',
-              }}
-              dir="rtl"
-            >
-              <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
-              <button
-                onClick={() => setShowBitSheet(false)}
-                className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
-              >
-                <X size={16} className="text-white/70" />
-              </button>
-
-              <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
-              <p className="text-violet-300 text-sm text-center mb-4">
-                תרמו על המספר הזה:
-              </p>
-
-              <div
-                className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
-                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
-              >
-                <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
-                  054-932-2310
-                </span>
-                <button
-                  onClick={async () => {
-                    try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
-                    setCampaignBitCopied(true);
-                    setTimeout(() => setCampaignBitCopied(false), 2500);
-                    setShowBitThankYou(true);
-                    setTimeout(() => setShowBitThankYou(false), 4500);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{
-                    background: campaignBitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
-                    color: campaignBitCopied ? '#86efac' : '#c4b5fd',
-                    border: `1px solid ${campaignBitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
-                  }}
-                >
-                  {campaignBitCopied ? <Check size={15} /> : <Copy size={15} />}
-                  {campaignBitCopied ? 'הועתק!' : 'העתק'}
-                </button>
-              </div>
-
-              <button
-                onClick={() => { window.location.href = 'bit://'; }}
-                className="w-full py-3.5 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform mb-4"
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
-                  boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
-                }}
-              >
-                פתח את ביט
-              </button>
-
-              <p className="text-white/40 text-xs text-center leading-relaxed">
-                כל סכום עוזר מאוד ❤️
-              </p>
-
-              {/* Thank-you toast after copy */}
-              <AnimatePresence>
-                {showBitThankYou && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 12, scale: 0.96 }}
-                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                    className="mt-4 rounded-2xl px-5 py-4 text-center"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(16,185,129,0.12) 100%)',
-                      border: '1px solid rgba(34,197,94,0.35)',
-                    }}
-                  >
-                    <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
-                      תודה רבה לך על התרומה 🙏<br />
-                      תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
-                      <span className="text-green-400/80 font-normal text-xs">זה אומר לנו המון ❤️</span>
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* Concepts Modal */}
       <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />
