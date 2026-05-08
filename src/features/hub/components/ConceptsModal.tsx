@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, Brain, BookOpen, Sparkles, ChevronRight } from 'lucide-react';
+import { X, Plus, Trash2, Brain, BookOpen, Sparkles, ChevronRight, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
@@ -12,26 +12,40 @@ interface Props {
   onClose: () => void;
 }
 
-type View = 'list' | 'add';
+type View = 'list' | 'add' | 'edit';
 
 export default function ConceptsModal({ isOpen, onClose }: Props) {
-  const { concepts, addConcept, deleteConcept } = useConceptsStore();
+  const { concepts, addConcept, deleteConcept, updateConcept } = useConceptsStore();
   const [view, setView] = useState<View>('list');
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [term, setTerm] = useState('');
   const [definition, setDefinition] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDeleteConfirm, setEditDeleteConfirm] = useState(false);
 
   useModalBackHandler(isOpen, onClose);
-  useModalBackHandler(isOpen && view === 'add', () => setView('list'));
+  useModalBackHandler(isOpen && (view === 'add' || view === 'edit'), goToList);
+
+  function goToList() {
+    setView('list');
+    setTerm('');
+    setDefinition('');
+    setEditingId(null);
+    setEditDeleteConfirm(false);
+  }
 
   const handleAdd = () => {
     if (!term.trim() || !definition.trim()) return;
     addConcept(term, definition);
     trackEvent('concept_added');
-    setTerm('');
-    setDefinition('');
-    setView('list');
+    goToList();
+  };
+
+  const handleSaveEdit = () => {
+    if (!term.trim() || !definition.trim() || !editingId) return;
+    updateConcept(editingId, term, definition);
+    goToList();
   };
 
   const handleDelete = (id: string) => {
@@ -44,7 +58,27 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
     }
   };
 
+  const handleEditDelete = () => {
+    if (editDeleteConfirm) {
+      if (editingId) deleteConcept(editingId);
+      goToList();
+    } else {
+      setEditDeleteConfirm(true);
+      setTimeout(() => setEditDeleteConfirm(false), 3000);
+    }
+  };
+
+  const openEdit = (concept: { id: string; term: string; definition: string }) => {
+    setEditingId(concept.id);
+    setTerm(concept.term);
+    setDefinition(concept.definition);
+    setEditDeleteConfirm(false);
+    setView('edit');
+  };
+
   const flashcardData = concepts.map((c) => ({ front: c.term, back: c.definition }));
+  const isFormView = view === 'add' || view === 'edit';
+  const canSave = term.trim().length > 0 && definition.trim().length > 0;
 
   if (!isOpen) return null;
 
@@ -53,16 +87,13 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[75] flex flex-col bg-emt-dark"
-      dir="rtl"
-    >
+    <div className="fixed inset-0 z-[75] flex flex-col bg-emt-dark" dir="rtl">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
         <div className="flex items-center gap-2.5">
-          {view === 'add' ? (
+          {isFormView ? (
             <HapticButton
-              onClick={() => { setView('list'); setTerm(''); setDefinition(''); }}
+              onClick={goToList}
               hapticPattern={8}
               pressScale={0.9}
               className="w-9 h-9 rounded-xl bg-white/8 border border-white/12 flex items-center justify-center text-emt-muted"
@@ -75,21 +106,50 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             </div>
           )}
           <h2 className="text-white font-black text-xl">
-            {view === 'add' ? 'מושג חדש' : 'מושגים שלמדתי'}
+            {view === 'add' ? 'מושג חדש' : view === 'edit' ? 'עריכת מושג' : 'מרכז ידע אישי'}
           </h2>
         </div>
-        <HapticButton
-          onClick={onClose}
-          hapticPattern={8}
-          pressScale={0.9}
-          className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60"
-          aria-label="סגור"
-        >
-          <X size={20} />
-        </HapticButton>
+
+        {isFormView ? (
+          <div className="flex items-center gap-2">
+            {view === 'edit' && (
+              <HapticButton
+                onClick={handleEditDelete}
+                hapticPattern={editDeleteConfirm ? 30 : 10}
+                pressScale={0.9}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${
+                  editDeleteConfirm
+                    ? 'bg-red-500/30 border border-red-400/60 text-red-300'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400/70'
+                }`}
+              >
+                <Trash2 size={14} />
+                {editDeleteConfirm ? 'בטוח?' : 'מחק'}
+              </HapticButton>
+            )}
+            <HapticButton
+              onClick={view === 'add' ? handleAdd : handleSaveEdit}
+              hapticPattern={[10, 40, 10]}
+              pressScale={0.96}
+              disabled={!canSave}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/30 border border-purple-400/50 text-purple-100 font-black text-sm disabled:opacity-35 transition-opacity"
+            >
+              שמור ✓
+            </HapticButton>
+          </div>
+        ) : (
+          <HapticButton
+            onClick={onClose}
+            hapticPattern={8}
+            pressScale={0.9}
+            className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </HapticButton>
+        )}
       </div>
 
-      {/* List view */}
       <AnimatePresence mode="wait">
         {view === 'list' && (
           <motion.div
@@ -100,7 +160,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
           >
-            {/* Action buttons */}
             <div className="shrink-0 px-4 pt-4 pb-3 flex gap-3">
               <HapticButton
                 onClick={() => setView('add')}
@@ -124,7 +183,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               )}
             </div>
 
-            {/* Concepts count */}
             {concepts.length > 0 && (
               <div className="shrink-0 px-4 pb-2">
                 <p className="text-emt-muted text-xs font-semibold">
@@ -133,7 +191,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               </div>
             )}
 
-            {/* Concepts list */}
             <div className="flex-1 overflow-y-auto px-4 pb-safe pb-4">
               {concepts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-5 py-20 px-6">
@@ -172,18 +229,28 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                             <p className="text-white font-black text-[15px] leading-snug">{concept.term}</p>
                             <p className="text-emt-muted text-[13px] leading-relaxed mt-1.5 whitespace-pre-wrap">{concept.definition}</p>
                           </div>
-                          <HapticButton
-                            onClick={() => handleDelete(concept.id)}
-                            hapticPattern={deleteConfirmId === concept.id ? 30 : 10}
-                            pressScale={0.9}
-                            className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
-                              deleteConfirmId === concept.id
-                                ? 'bg-red-500/30 border border-red-400/60 text-red-300'
-                                : 'bg-red-500/10 border border-red-500/20 text-red-400/60'
-                            }`}
-                          >
-                            <Trash2 size={15} />
-                          </HapticButton>
+                          <div className="flex flex-col gap-1.5 shrink-0">
+                            <HapticButton
+                              onClick={() => openEdit(concept)}
+                              hapticPattern={10}
+                              pressScale={0.9}
+                              className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-400/30 text-purple-300/70"
+                            >
+                              <Pencil size={14} />
+                            </HapticButton>
+                            <HapticButton
+                              onClick={() => handleDelete(concept.id)}
+                              hapticPattern={deleteConfirmId === concept.id ? 30 : 10}
+                              pressScale={0.9}
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                                deleteConfirmId === concept.id
+                                  ? 'bg-red-500/30 border border-red-400/60 text-red-300'
+                                  : 'bg-red-500/10 border border-red-500/20 text-red-400/60'
+                              }`}
+                            >
+                              <Trash2 size={15} />
+                            </HapticButton>
+                          </div>
                         </div>
                         {deleteConfirmId === concept.id && (
                           <motion.p
@@ -203,10 +270,9 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
           </motion.div>
         )}
 
-        {/* Add view */}
-        {view === 'add' && (
+        {isFormView && (
           <motion.div
-            key="add"
+            key={view}
             className="flex-1 flex flex-col p-4 gap-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -237,26 +303,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 style={{ background: '#1a1f2e', minHeight: '140px', WebkitTextFillColor: 'white' }}
                 dir="rtl"
               />
-            </div>
-
-            <div className="shrink-0 flex gap-3">
-              <HapticButton
-                onClick={() => { setView('list'); setTerm(''); setDefinition(''); }}
-                hapticPattern={8}
-                pressScale={0.96}
-                className="flex-1 py-3.5 rounded-2xl bg-white/8 border border-white/15 text-emt-light font-bold text-sm"
-              >
-                ביטול
-              </HapticButton>
-              <HapticButton
-                onClick={handleAdd}
-                hapticPattern={[10, 40, 10]}
-                pressScale={0.96}
-                disabled={!term.trim() || !definition.trim()}
-                className="flex-1 py-3.5 rounded-2xl bg-purple-500/30 border border-purple-400/50 text-purple-100 font-black text-sm disabled:opacity-35 transition-opacity"
-              >
-                שמור מושג ✓
-              </HapticButton>
             </div>
           </motion.div>
         )}

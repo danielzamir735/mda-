@@ -445,7 +445,7 @@ https://hovesh-plus.vercel.app/`;
             }}
           >
             <Sparkles size={28} className="text-purple-300 relative z-10" />
-            <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מושגים שלמדתי</span>
+            <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
           </motion.button>
 
         </div>

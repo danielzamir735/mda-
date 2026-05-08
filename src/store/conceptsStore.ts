@@ -12,6 +12,7 @@ interface ConceptsState {
   concepts: Concept[];
   addConcept: (term: string, definition: string) => void;
   deleteConcept: (id: string) => void;
+  updateConcept: (id: string, term: string, definition: string) => void;
 }
 
 export const useConceptsStore = create<ConceptsState>()(
@@ -27,6 +28,12 @@ export const useConceptsStore = create<ConceptsState>()(
         })),
       deleteConcept: (id) =>
         set((s) => ({ concepts: s.concepts.filter((c) => c.id !== id) })),
+      updateConcept: (id, term, definition) =>
+        set((s) => ({
+          concepts: s.concepts.map((c) =>
+            c.id === id ? { ...c, term: term.trim(), definition: definition.trim() } : c
+          ),
+        })),
     }),
     { name: 'concepts-storage' },
   ),
