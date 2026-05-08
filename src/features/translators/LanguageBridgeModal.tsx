@@ -97,6 +97,7 @@ const STATIC_LANGUAGES: Language[] = [
   { code: 'bn',    name: 'בנגלית',             flag: '🇧🇩' },
   { code: 'ta',    name: 'טמילית',             flag: '🇮🇳' },
   { code: 'ne',    name: 'נפאלית',             flag: '🇳🇵' },
+  { code: 'si',    name: 'סינהלית',            flag: '🇱🇰' },
   { code: 'az',    name: 'אזרית',              flag: '🇦🇿' },
   { code: 'hy',    name: 'ארמנית',             flag: '🇦🇲' },
   { code: 'kk',    name: 'קזחית',              flag: '🇰🇿' },
