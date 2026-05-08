@@ -261,6 +261,7 @@ export default function HubModal({
   const [showPersonalCard, setShowPersonalCard] = useState(false);
   const [campaignBitCopied, setCampaignBitCopied] = useState(false);
   const [showBitSheet, setShowBitSheet] = useState(false);
+  const [showBitThankYou, setShowBitThankYou] = useState(false);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const { openFullModal } = usePwaInstall();
 
@@ -1085,6 +1086,8 @@ https://hovesh-plus.vercel.app/`;
                     try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
                     setCampaignBitCopied(true);
                     setTimeout(() => setCampaignBitCopied(false), 2500);
+                    setShowBitThankYou(true);
+                    setTimeout(() => setShowBitThankYou(false), 4500);
                   }}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
                   style={{
@@ -1112,6 +1115,29 @@ https://hovesh-plus.vercel.app/`;
               <p className="text-white/40 text-xs text-center leading-relaxed">
                 כל סכום עוזר מאוד ❤️
               </p>
+
+              {/* Thank-you toast after copy */}
+              <AnimatePresence>
+                {showBitThankYou && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                    className="mt-4 rounded-2xl px-5 py-4 text-center"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(16,185,129,0.12) 100%)',
+                      border: '1px solid rgba(34,197,94,0.35)',
+                    }}
+                  >
+                    <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
+                      תודה רבה לך על התרומה 🙏<br />
+                      תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
+                      <span className="text-green-400/80 font-normal text-xs">אנחנו מאוד מעריכים אותך ❤️</span>
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </>
         )}
