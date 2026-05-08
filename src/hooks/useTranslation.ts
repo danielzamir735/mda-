@@ -86,6 +86,13 @@ const dict = {
     hrPlaceholder: 'פ/דקה',
     breathPlaceholder: 'נ/דקה',
 
+    // patient context fields
+    patientName: 'שם מטופל',
+    examinationTime: 'שעת בדיקה',
+    patientNamePlaceholder: 'שם המטופל...',
+    generalGroup: 'כללי',
+    addRecord: 'הוסף מדדים',
+
     // vitals history
     noSavedVitals: 'אין מדדים שמורים',
     sessionDuration: 'משך סשן',
@@ -196,6 +203,13 @@ const dict = {
     clearData: 'Clear data',
     hrPlaceholder: 'bpm',
     breathPlaceholder: 'bpm',
+
+    // patient context fields
+    patientName: 'Patient Name',
+    examinationTime: 'Exam Time',
+    patientNamePlaceholder: 'Patient name...',
+    generalGroup: 'General',
+    addRecord: 'Add Vitals',
 
     // vitals history
     noSavedVitals: 'No saved vitals',

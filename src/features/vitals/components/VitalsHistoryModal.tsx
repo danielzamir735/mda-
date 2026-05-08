@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { X, Trash2, Pencil, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Trash2, Pencil, Zap, ChevronDown, ChevronUp, User, Plus } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
 import { useTranslation } from '../../../hooks/useTranslation';
 import EditVitalsModal from './EditVitalsModal';
+import AddVitalsModal from './AddVitalsModal';
 
 function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void }) {
   const t = useTranslation();
@@ -59,9 +60,7 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
           <p className="text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">
             {t('shockLog')}
           </p>
-          {/* shock table */}
           <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'rgba(245,158,11,0.2)' }}>
-            {/* header */}
             <div
               className="grid text-[0.6rem] font-black text-amber-400/50 uppercase tracking-wider bg-black/10 dark:bg-black/30 px-3 py-1.5"
               style={{ gridTemplateColumns: '1.5rem 1fr 1fr 1fr' }}
@@ -105,12 +104,21 @@ function LogCard({ log, onDelete, onEdit }: {
   log: VitalsLog; onDelete: () => void; onEdit: () => void;
 }) {
   const t = useTranslation();
+  const primaryTime = log.examinationTime ?? log.timestamp.split(' ')[1];
+  const date = log.timestamp.split(' ')[0];
+  const showSeparateDate = !!log.examinationTime;
+
   return (
     <div className="bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-4"
       style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
       {/* Timestamp + actions */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-gray-500 dark:text-emt-muted text-xs font-bold">{log.timestamp}</p>
+        <div className="flex flex-col gap-0">
+          <span className="text-gray-900 dark:text-emt-light text-sm font-black tabular-nums">{primaryTime}</span>
+          {showSeparateDate && (
+            <span className="text-gray-400 dark:text-emt-muted/70 text-[0.6rem] font-medium">{date}</span>
+          )}
+        </div>
         <div className="flex gap-1">
           <button onClick={onEdit} className="p-1.5 text-gray-400 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('edit')}>
             <Pencil size={16} />
@@ -211,10 +219,25 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
   const logs = useVitalsLogStore((s) => s.logs);
   const deleteLog = useVitalsLogStore((s) => s.deleteLog);
   const [editingLog, setEditingLog] = useState<VitalsLog | null>(null);
+  const [addingForPatient, setAddingForPatient] = useState<string | null>(null);
+
+  const patientGroups = useMemo(() => {
+    const map = new Map<string, VitalsLog[]>();
+    for (const log of [...logs].reverse()) {
+      const key = log.patientName?.trim() || '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(log);
+    }
+    const named: Array<{ name: string; logs: VitalsLog[] }> = [];
+    let general: { name: string; logs: VitalsLog[] } | null = null;
+    for (const [name, groupLogs] of map) {
+      if (name) named.push({ name, logs: groupLogs });
+      else general = { name: '', logs: groupLogs };
+    }
+    return general ? [...named, general] : named;
+  }, [logs]);
 
   if (!isOpen) return null;
-
-  const reversed = [...logs].reverse();
 
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
@@ -227,23 +250,51 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-        {reversed.length === 0 ? (
+        {logs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-gray-500 dark:text-emt-muted text-base font-medium">{t('noSavedVitals')}</p>
           </div>
         ) : (
-          reversed.map((log) =>
-            log.type === 'cpr' ? (
-              <CPRLogCard key={log.id} log={log} onDelete={() => deleteLog(log.id)} />
-            ) : (
-              <LogCard
-                key={log.id}
-                log={log}
-                onDelete={() => deleteLog(log.id)}
-                onEdit={() => setEditingLog(log)}
-              />
-            )
-          )
+          patientGroups.map((group) => (
+            <div
+              key={group.name || '__general__'}
+              className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden"
+              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            >
+              {/* Patient header */}
+              <div className="flex items-center justify-between bg-gray-100 dark:bg-emt-gray px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-gray-400 dark:text-emt-muted shrink-0" />
+                  <span className="text-gray-900 dark:text-emt-light font-black text-base">
+                    {group.name || t('generalGroup')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setAddingForPatient(group.name)}
+                  className="flex items-center gap-1 text-emt-green text-xs font-bold px-2.5 py-1.5 rounded-xl bg-emt-green/10 active:bg-emt-green/20 transition-colors shrink-0"
+                >
+                  <Plus size={12} />
+                  {t('addRecord')}
+                </button>
+              </div>
+
+              {/* Records */}
+              <div className="flex flex-col gap-2 p-2">
+                {group.logs.map((log) =>
+                  log.type === 'cpr' ? (
+                    <CPRLogCard key={log.id} log={log} onDelete={() => deleteLog(log.id)} />
+                  ) : (
+                    <LogCard
+                      key={log.id}
+                      log={log}
+                      onDelete={() => deleteLog(log.id)}
+                      onEdit={() => setEditingLog(log)}
+                    />
+                  )
+                )}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
@@ -254,6 +305,8 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
           onClose={() => setEditingLog(null)}
           logId={editingLog.id}
           initialData={{
+            patientName: editingLog.patientName ?? '',
+            examinationTime: editingLog.examinationTime ?? '',
             bloodPressure: editingLog.bloodPressure ?? '',
             heartRate: editingLog.heartRate,
             breathing: editingLog.breathing,
@@ -266,6 +319,14 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
             fastSymptomTime: editingLog.fastSymptomTime ?? '',
             notes: editingLog.notes ?? '',
           }}
+        />
+      )}
+
+      {addingForPatient !== null && (
+        <AddVitalsModal
+          isOpen={true}
+          onClose={() => setAddingForPatient(null)}
+          initialPatientName={addingForPatient}
         />
       )}
     </div>

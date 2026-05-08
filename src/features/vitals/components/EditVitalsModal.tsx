@@ -5,6 +5,8 @@ import { useVitalsLogStore } from '../../../store/vitalsLogStore';
 import { useTranslation } from '../../../hooks/useTranslation';
 
 export interface EditData {
+  patientName?: string;
+  examinationTime?: string;
   bloodPressure: string;
   heartRate: string;
   breathing: string;
@@ -59,6 +61,8 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   const t = useTranslation();
   const updateLog = useVitalsLogStore((s) => s.updateLog);
 
+  const [patientName, setPatientName] = useState(initialData.patientName ?? '');
+  const [examinationTime, setExaminationTime] = useState(initialData.examinationTime ?? '');
   const [bloodPressure, setBloodPressure] = useState(initialData.bloodPressure);
   const [heartRate, setHeartRate] = useState(initialData.heartRate);
   const [breathing, setBreathing] = useState(initialData.breathing);
@@ -78,7 +82,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   if (!isOpen) return null;
 
   const handleSave = () => {
-    updateLog(logId, { bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, fastMotorStrength, fastFacialDroop, fastSymptomTime, notes });
+    updateLog(logId, { patientName: patientName.trim(), examinationTime, bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, fastMotorStrength, fastFacialDroop, fastSymptomTime, notes });
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1500);
   };
@@ -103,6 +107,41 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
       {/* Form */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="grid grid-cols-2 gap-3">
+          {/* Patient Name */}
+          <div className="col-span-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('patientName')}</label>
+              <input
+                type="text"
+                inputMode="text"
+                placeholder={t('patientNamePlaceholder')}
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
+                           text-gray-900 dark:text-emt-light text-center text-base font-bold placeholder:text-gray-300 dark:placeholder:text-emt-border
+                           focus:outline-none focus:border-emt-red transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Examination Time */}
+          <div className="col-span-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('examinationTime')}</label>
+              <input
+                type="time"
+                value={examinationTime}
+                onChange={(e) => setExaminationTime(e.target.value)}
+                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
+                           text-gray-900 dark:text-emt-light text-center text-base font-bold
+                           focus:outline-none focus:border-emt-red transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="col-span-2 border-t border-gray-200 dark:border-emt-border" />
+
           {/* Blood Pressure — full width */}
           <div className="col-span-2">
             <InputField

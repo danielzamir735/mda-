@@ -8,6 +8,12 @@ import { useTranslation } from '../../../hooks/useTranslation';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialPatientName?: string;
+}
+
+function getCurrentTime(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 function InputField({
@@ -41,7 +47,7 @@ function formatBP(raw: string): string {
   return `${digits.slice(0, 3)}/${digits.slice(3, 6)}`;
 }
 
-export default function AddVitalsModal({ isOpen, onClose }: Props) {
+export default function AddVitalsModal({ isOpen, onClose, initialPatientName }: Props) {
   useModalBackHandler(isOpen, onClose);
   const t = useTranslation();
   const addLog = useVitalsLogStore((s) => s.addLog);
@@ -49,6 +55,8 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   const draftBreathing = useVitalsDraftStore((s) => s.draftBreathing);
   const clearDraft = useVitalsDraftStore((s) => s.clearDraft);
 
+  const [patientName, setPatientName] = useState('');
+  const [examinationTime, setExaminationTime] = useState('');
   const [bloodPressure, setBloodPressure] = useState('');
   const [heartRate, setHeartRate] = useState('');
   const [breathing, setBreathing] = useState('');
@@ -65,6 +73,8 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (isOpen) {
+      setPatientName(initialPatientName ?? '');
+      setExaminationTime(getCurrentTime());
       if (draftHeartRate) setHeartRate(draftHeartRate);
       if (draftBreathing) setBreathing(draftBreathing);
     }
@@ -75,13 +85,14 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
 
   const handleClearData = () => {
     clearDraft();
+    setExaminationTime(getCurrentTime());
     setBloodPressure(''); setHeartRate(''); setBreathing('');
     setBloodSugar(''); setSaturation(''); setTemperature(''); setFastTest('');
     setFastMotorStrength(''); setFastFacialDroop(''); setFastSymptomTime(''); setNotes('');
   };
 
   const handleSave = () => {
-    addLog({ bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, fastMotorStrength, fastFacialDroop, fastSymptomTime, notes });
+    addLog({ patientName: patientName.trim(), examinationTime, bloodPressure, heartRate, breathing, bloodSugar, saturation, temperature, fastTest, fastMotorStrength, fastFacialDroop, fastSymptomTime, notes });
     handleClearData();
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 1500);
@@ -94,7 +105,7 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
   ] as const;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
+    <div className="fixed inset-0 z-[60] bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
       {/* Header */}
       <div className="ios-safe-header flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-emt-border shrink-0">
         <button onClick={onClose} className="p-2 text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('close')}>
@@ -114,6 +125,41 @@ export default function AddVitalsModal({ isOpen, onClose }: Props) {
       {/* Form */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="grid grid-cols-2 gap-3">
+          {/* Patient Name */}
+          <div className="col-span-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('patientName')}</label>
+              <input
+                type="text"
+                inputMode="text"
+                placeholder={t('patientNamePlaceholder')}
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
+                           text-gray-900 dark:text-emt-light text-center text-base font-bold placeholder:text-gray-300 dark:placeholder:text-emt-border
+                           focus:outline-none focus:border-emt-red transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Examination Time */}
+          <div className="col-span-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('examinationTime')}</label>
+              <input
+                type="time"
+                value={examinationTime}
+                onChange={(e) => setExaminationTime(e.target.value)}
+                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
+                           text-gray-900 dark:text-emt-light text-center text-base font-bold
+                           focus:outline-none focus:border-emt-red transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="col-span-2 border-t border-gray-200 dark:border-emt-border" />
+
           {/* Blood Pressure — full width */}
           <div className="col-span-2">
             <InputField

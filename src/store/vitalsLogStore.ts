@@ -11,6 +11,8 @@ export interface VitalsLog {
   id: string;
   timestamp: string;
   type?: string;             // 'cpr' for CPR session records
+  patientName?: string;
+  examinationTime?: string;  // HH:mm — when the exam was done (user-entered)
   bloodPressure: string;
   heartRate: string;
   breathing: string;
