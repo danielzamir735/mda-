@@ -448,12 +448,12 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
         dir="rtl"
       >
         {/* Status icon — tap to cycle null → have → missing → null */}
-        <button onClick={onToggle} className="shrink-0 active:scale-90 transition-transform">
+        <button onClick={onToggle} className="shrink-0 active:scale-90 transition-transform flex flex-col items-center gap-0.5">
           {status.status === 'have'
-            ? <CheckCircle2 size={20} className="text-emerald-400" />
+            ? <CheckCircle2 size={22} className="text-emerald-400" />
             : status.status === 'missing'
-            ? <XCircle size={20} className="text-red-400" />
-            : <Circle size={20} className="text-gray-300 dark:text-slate-600" />}
+            ? <XCircle size={22} className="text-red-400" />
+            : <Circle size={22} className="text-gray-300 dark:text-slate-600" />}
         </button>
 
         <span className={`flex-1 text-sm font-medium ${
@@ -470,14 +470,15 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
 
         <button
           onClick={() => setShowDate(v => !v)}
-          className={`shrink-0 p-1 rounded-lg active:scale-90 transition-all ${
+          className={`shrink-0 flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg active:scale-90 transition-all ${
             status.expiryDate
               ? isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-emerald-400'
-              : 'text-gray-400 dark:text-slate-600'
+              : 'text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-800'
           }`}
           aria-label="תאריך תפוגה"
         >
           <Calendar size={14} />
+          {!status.expiryDate && <span className="text-[8px] font-medium leading-none">תפוגה</span>}
         </button>
 
         <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${accentBg} ${accentColor} border ${accentBorder}`}>
@@ -704,11 +705,17 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Legend */}
-        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex items-center gap-4 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
-          <span>לחץ על הסמל לסימון:</span>
-          <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
-          <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
-          <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
+        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex flex-col gap-1.5 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-semibold text-gray-500 dark:text-emt-light/70">לחץ על הסמל לסימון:</span>
+            <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
+            <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
+            <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Calendar size={11} className="text-blue-400 shrink-0" />
+            <span>לחץ על כפתור <span className="font-semibold">״תפוגה״</span> ליד פריט להוספת תאריך תפוגה</span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-gray-100 dark:divide-white/5">
@@ -844,11 +851,17 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
       {/* Legend for MDA / Hatzalah */}
       {(activeStandard === 'mda' || activeStandard === 'hatzalah') && (
-        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex items-center gap-4 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
-          <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
-          <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
-          <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
-          <span className="flex items-center gap-1 text-amber-400"><Calendar size={11} /> תפוגה</span>
+        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex flex-col gap-1.5 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-semibold text-gray-500 dark:text-emt-light/70">לחץ על הסמל לסימון:</span>
+            <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
+            <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
+            <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Calendar size={11} className="text-blue-400 shrink-0" />
+            <span>לחץ על כפתור <span className="font-semibold">״תפוגה״</span> ליד פריט להוספת תאריך תפוגה</span>
+          </div>
         </div>
       )}
 
