@@ -60,10 +60,7 @@
       "Bash(git reset *)",
       "Bash(git restore *)",
       "Bash(Get-Content \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-User-Desktop-medic-app\\\\45fc4cca-86a4-429c-9246-dbac36a4dcf5\\\\tasks\\\\bhqcoq3l1.output\" -Wait)",
-      "Bash(Select-String -Pattern \"built in|error|Error|✓|warning\" --SimpleMatch)",
-      "Bash(Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue)",
-      "Bash(Select-Object -First 100)",
-      "Bash(Format-Table FullName)"
+      "Bash(Select-String -Pattern \"built in|error|Error|✓|warning\" --SimpleMatch)"
     ]
   },
   "hooks": {
