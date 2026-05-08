@@ -70,7 +70,8 @@
       "Bash(python3 -c ' *)",
       "Bash(pip install *)",
       "Bash(python -c ' *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git -c http.sslVerify=false push origin v2-features)"
     ]
   },
   "hooks": {
