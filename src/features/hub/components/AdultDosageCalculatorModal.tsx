@@ -147,11 +147,6 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
           )}
         </div>
 
-        {/* Source note */}
-        <p className="text-center text-xs text-gray-400 dark:text-emt-muted px-4 pb-2">
-          מקור: תרופות נטן — אפריל 2024 | מבוגרים (מעל גיל 8 / 25 ק"ג)
-        </p>
-
         {/* Scenario grid */}
         <div className="px-4 mb-2">
           <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-3">בחר תרחיש</p>

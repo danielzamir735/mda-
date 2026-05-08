@@ -154,77 +154,80 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         {/* Input card */}
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 flex flex-col gap-3">
+        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 flex flex-col gap-4">
 
-          {/* Age */}
-          <div className="flex gap-2">
-            <div className="flex-1 flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">גיל</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="לדוגמה: 4"
-                value={ageInput}
-                onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
-                className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark
-                           px-4 py-3 text-gray-900 dark:text-emt-light text-base placeholder-gray-400 dark:placeholder-emt-muted
-                           focus:outline-none focus:ring-2 focus:ring-sky-400/50"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">יחידה</label>
-              <div className="flex rounded-xl border border-gray-200 dark:border-emt-border overflow-hidden h-[50px]">
-                {(['years', 'months'] as const).map(u => (
-                  <button
-                    key={u}
-                    onClick={() => { setAgeUnit(u); setCalculated(false); }}
-                    className={`px-3 text-sm font-semibold transition-colors ${
-                      ageUnit === u
-                        ? 'bg-sky-400 text-white'
-                        : 'bg-gray-50 dark:bg-emt-dark text-gray-500 dark:text-emt-muted'
-                    }`}
-                  >
-                    {u === 'years' ? 'שנים' : 'חודשים'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Weight */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">
-              משקל (ק"ג)
-              {isEstimated && estimatedWeight && (
-                <span className="mr-2 text-emt-yellow font-normal">— הערכה: ~{estimatedWeight} ק"ג</span>
-              )}
-            </label>
+          {/* Age input */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">גיל הילד</label>
             <input
               type="number"
               inputMode="decimal"
-              placeholder={estimatedWeight ? `~${estimatedWeight} ק"ג` : 'לדוגמה: 16'}
+              placeholder="הזן גיל"
+              value={ageInput}
+              onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
+              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-sky-400 transition-colors"
+            />
+          </div>
+
+          {/* Age unit toggle */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">יחידת גיל</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['years', 'months'] as const).map(u => (
+                <button
+                  key={u}
+                  onClick={() => { setAgeUnit(u); setCalculated(false); }}
+                  className={`py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${
+                    ageUnit === u
+                      ? 'bg-sky-400 text-white border-sky-400 shadow-sm'
+                      : 'bg-white dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
+                  }`}
+                >
+                  {u === 'years' ? 'שנים' : 'חודשים'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Weight input */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+              {isEstimated && estimatedWeight && (
+                <span className="text-xs font-bold text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
+                  הערכה: ~{estimatedWeight} ק"ג
+                </span>
+              )}
+            </div>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder={estimatedWeight ? `~${estimatedWeight} (הערכה לפי גיל)` : 'הזן משקל'}
               value={weightInput}
               onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
-              className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark
-                         px-4 py-3 text-gray-900 dark:text-emt-light text-base placeholder-gray-400 dark:placeholder-emt-muted
-                         focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-sky-400 transition-colors"
             />
           </div>
 
           {isEstimated && (
             <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
               <AlertCircle size={13} className="text-emt-yellow shrink-0 mt-0.5" />
-              <p className="text-emt-yellow text-xs">משקל מוערך לפי גיל — הזן משקל מדויק לתוצאות מיטביות.</p>
+              <p className="text-emt-yellow text-xs font-medium">משקל מוערך לפי גיל — הזן משקל מדויק לתוצאות מיטביות.</p>
             </div>
           )}
 
           <button
             onClick={handleCalculate}
             disabled={!displayWeight || displayWeight <= 0}
-            className="w-full rounded-xl bg-sky-400 text-white font-bold text-base py-3
-                       active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-sky-400 text-white font-bold text-base py-3 mt-1
+                       active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
+                       shadow-md shadow-sky-400/25"
           >
-            חשב
+            חשב גדלים
           </button>
         </div>
 
