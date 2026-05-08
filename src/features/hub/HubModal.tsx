@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -260,6 +260,7 @@ export default function HubModal({
   const [showConcepts, setShowConcepts] = useState(false);
   const [showPersonalCard, setShowPersonalCard] = useState(false);
   const [campaignBitCopied, setCampaignBitCopied] = useState(false);
+  const [showBitSheet, setShowBitSheet] = useState(false);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const { openFullModal } = usePwaInstall();
 
@@ -941,28 +942,21 @@ https://hovesh-plus.vercel.app/`;
                 PayBox
               </a>
               <button
-                onClick={async () => {
+                onClick={() => {
                   trackInteraction('תרומה לקמפיין — ביט', 'support');
-                  try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
-                  setCampaignBitCopied(true);
-                  setTimeout(() => setCampaignBitCopied(false), 3000);
+                  setShowBitSheet(true);
                 }}
                 className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                 style={{
-                  background: campaignBitCopied
-                    ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-                    : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                  boxShadow: campaignBitCopied
-                    ? '0 4px 24px rgba(22,163,74,0.45)'
-                    : '0 4px 24px rgba(124,58,237,0.45)',
-                  transition: 'background 0.3s, box-shadow 0.3s',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  boxShadow: '0 4px 24px rgba(124,58,237,0.45)',
                 }}
               >
-                {campaignBitCopied ? '✓ הועתק' : 'ביט'}
+                ביט
               </button>
             </div>
             <p className="text-center text-gray-600 text-xs mt-2">
-              {campaignBitCopied ? 'מספר ביט הועתק — פתח את האפליקציה ושלח לנו 054-932-2310' : 'תרומה חד-פעמית · מאובטח · כל סכום עוזר'}
+              תרומה חד-פעמית · מאובטח · כל סכום עוזר
             </p>
           </div>
 
@@ -1024,36 +1018,93 @@ https://hovesh-plus.vercel.app/`;
                     PayBox
                   </a>
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       trackInteraction('תרומה — בנימה אישית ביט', 'support');
-                      try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
-                      setCampaignBitCopied(true);
-                      setTimeout(() => setCampaignBitCopied(false), 3000);
+                      setShowBitSheet(true);
                     }}
                     className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                     style={{
-                      background: campaignBitCopied
-                        ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-                        : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                      boxShadow: campaignBitCopied
-                        ? '0 4px 24px rgba(22,163,74,0.45)'
-                        : '0 4px 24px rgba(124,58,237,0.45)',
-                      transition: 'background 0.3s, box-shadow 0.3s',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      boxShadow: '0 4px 24px rgba(124,58,237,0.45)',
                     }}
                   >
-                    {campaignBitCopied ? '✓ הועתק' : 'ביט'}
+                    ביט
                   </button>
                 </div>
-                {campaignBitCopied && (
-                  <p className="text-center text-yellow-400/70 text-xs mt-2">
-                    מספר ביט הועתק — פתח את האפליקציה ושלח לנו 054-932-2310
-                  </p>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
+
+      {/* Bit Sheet */}
+      <AnimatePresence>
+        {showBitSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-30 bg-black/50"
+              onClick={() => setShowBitSheet(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              className="absolute inset-x-0 bottom-0 z-40 rounded-t-3xl px-6 pt-6 pb-10"
+              style={{
+                background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
+                borderTop: '1px solid rgba(167,139,250,0.35)',
+              }}
+              dir="rtl"
+            >
+              <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
+              <button
+                onClick={() => setShowBitSheet(false)}
+                className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                <X size={16} className="text-white/70" />
+              </button>
+
+              <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
+              <p className="text-violet-300 text-sm text-center mb-6">
+                פתחי את ביט, לחצי על ״שלח כסף״ והכניסי את המספר:
+              </p>
+
+              <div
+                className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
+                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+              >
+                <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
+                  054-932-2310
+                </span>
+                <button
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
+                    setCampaignBitCopied(true);
+                    setTimeout(() => setCampaignBitCopied(false), 2500);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  style={{
+                    background: campaignBitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
+                    color: campaignBitCopied ? '#86efac' : '#c4b5fd',
+                    border: `1px solid ${campaignBitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
+                  }}
+                >
+                  {campaignBitCopied ? <Check size={15} /> : <Copy size={15} />}
+                  {campaignBitCopied ? 'הועתק!' : 'העתק'}
+                </button>
+              </div>
+
+              <p className="text-white/40 text-xs text-center leading-relaxed">
+                המספר שייך לדניאל זמיר · כל סכום עוזר מאוד ❤️
+              </p>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Concepts Modal */}
       <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />

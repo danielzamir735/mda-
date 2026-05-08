@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
-import { Heart, X, CheckCircle, HandHeart, Server, Zap, Lock } from 'lucide-react';
+import { Heart, X, CheckCircle, HandHeart, Server, Zap, Lock, Copy, Check } from 'lucide-react';
 import { trackInteraction } from '../utils/analytics';
 
 interface Props { isOpen: boolean; onClose: () => void; }
@@ -16,6 +16,7 @@ const BIT_PHONE = '0549322310';
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donationDone, setDonationDone] = useState(false);
   const [bitCopied, setBitCopied] = useState(false);
+  const [showBitSheet, setShowBitSheet] = useState(false);
   const count = useMotionValue(0);
   const [displayCount, setDisplayCount] = useState(0);
 
@@ -27,7 +28,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) { setDonationDone(false); setBitCopied(false); }
+    if (!isOpen) { setDonationDone(false); setBitCopied(false); setShowBitSheet(false); }
   }, [isOpen]);
 
   useEffect(() => {
@@ -156,16 +157,16 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 }}
               />
               <ShinyButton
-                label={bitCopied ? 'המספר הועתק — פתח את ביט!' : 'תרומה דרך ביט'}
-                sublabel={bitCopied ? undefined : `${BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}`}
+                label="תרומה דרך ביט"
+                sublabel={`${BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}`}
                 gradient="from-violet-600 via-purple-600 to-indigo-700"
-                done={bitCopied}
+                done={false}
                 icon={<span className="text-xl leading-none">₪</span>}
                 onClick={async () => {
                   if (navigator.vibrate) navigator.vibrate(50);
                   trackInteraction('תרומה ביט', 'support');
-                  try { await navigator.clipboard.writeText(BIT_PHONE); } catch { /* ignore */ }
-                  setBitCopied(true);
+                  setBitCopied(false);
+                  setShowBitSheet(true);
                 }}
               />
               <p className="text-white/30 text-xs text-center">
@@ -174,6 +175,69 @@ export default function SupportModal({ isOpen, onClose }: Props) {
             </motion.div>
 
           </div>
+
+          {/* Bit bottom sheet */}
+          <AnimatePresence>
+            {showBitSheet && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+                className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl px-6 pt-6 pb-10"
+                style={{
+                  background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
+                  borderTop: '1px solid rgba(167,139,250,0.35)',
+                }}
+              >
+                {/* Handle */}
+                <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
+
+                <button
+                  onClick={() => setShowBitSheet(false)}
+                  className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                >
+                  <X size={16} className="text-white/70" />
+                </button>
+
+                <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
+                <p className="text-violet-300 text-sm text-center mb-6">
+                  פתחי את ביט, לחצי על ״שלח כסף״ והכניסי את המספר:
+                </p>
+
+                {/* Phone number block */}
+                <div
+                  className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
+                  style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
+                >
+                  <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
+                    {BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      try { await navigator.clipboard.writeText(BIT_PHONE); } catch { /* ignore */ }
+                      setBitCopied(true);
+                      setTimeout(() => setBitCopied(false), 2500);
+                      if (navigator.vibrate) navigator.vibrate(40);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                    style={{
+                      background: bitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
+                      color: bitCopied ? '#86efac' : '#c4b5fd',
+                      border: `1px solid ${bitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
+                    }}
+                  >
+                    {bitCopied ? <Check size={15} /> : <Copy size={15} />}
+                    {bitCopied ? 'הועתק!' : 'העתק'}
+                  </button>
+                </div>
+
+                <p className="text-white/40 text-xs text-center leading-relaxed">
+                  המספר שייך לדניאל זמיר · כל סכום עוזר מאוד ❤️
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
