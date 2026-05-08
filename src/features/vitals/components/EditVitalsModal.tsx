@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, ChevronDown } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useVitalsLogStore } from '../../../store/vitalsLogStore';
@@ -78,6 +78,10 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   const [fastSymptomTime, setFastSymptomTime] = useState(initialData.fastSymptomTime ?? '');
   const [notes, setNotes] = useState(initialData.notes);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (fastTest === 'לא תקין') setFastExpanded(true);
+  }, [fastTest]);
 
   if (!isOpen) return null;
 
@@ -182,8 +186,8 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
             </div>
           </div>
 
-          {/* FAST Expansion */}
-          <div className="col-span-2">
+          {/* FAST Expansion — hidden when תקין, auto-open when לא תקין */}
+          {fastTest !== 'תקין' && <div className="col-span-2">
             <button
               type="button"
               onClick={() => setFastExpanded(!fastExpanded)}
@@ -230,7 +234,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Notes */}
           <div className="col-span-2 flex flex-col gap-1.5">

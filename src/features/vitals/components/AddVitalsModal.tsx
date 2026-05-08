@@ -81,6 +81,10 @@ export default function AddVitalsModal({ isOpen, onClose, initialPatientName }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  useEffect(() => {
+    if (fastTest === 'לא תקין') setFastExpanded(true);
+  }, [fastTest]);
+
   if (!isOpen) return null;
 
   const handleClearData = () => {
@@ -200,8 +204,8 @@ export default function AddVitalsModal({ isOpen, onClose, initialPatientName }: 
             </div>
           </div>
 
-          {/* FAST Expansion */}
-          <div className="col-span-2">
+          {/* FAST Expansion — hidden when תקין, auto-open when לא תקין */}
+          {fastTest !== 'תקין' && <div className="col-span-2">
             <button
               type="button"
               onClick={() => setFastExpanded(!fastExpanded)}
@@ -248,7 +252,7 @@ export default function AddVitalsModal({ isOpen, onClose, initialPatientName }: 
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Notes */}
           <div className="col-span-2 flex flex-col gap-1.5">

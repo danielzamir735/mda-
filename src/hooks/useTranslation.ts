@@ -91,7 +91,7 @@ const dict = {
     examinationTime: 'שעת בדיקה',
     patientNamePlaceholder: 'שם המטופל...',
     generalGroup: 'כללי',
-    addRecord: 'הוסף מדדים',
+    addRecord: 'סבב מדדים',
 
     // vitals history
     noSavedVitals: 'אין מדדים שמורים',
@@ -209,7 +209,7 @@ const dict = {
     examinationTime: 'Exam Time',
     patientNamePlaceholder: 'Patient name...',
     generalGroup: 'General',
-    addRecord: 'Add Vitals',
+    addRecord: 'New Round',
 
     // vitals history
     noSavedVitals: 'No saved vitals',
