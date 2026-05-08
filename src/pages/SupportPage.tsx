@@ -203,7 +203,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
 
                 <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
                 <p className="text-violet-300 text-sm text-center mb-4">
-                  תרמו על המספר הזה:
+                  תרמו למספר הזה:
                 </p>
 
                 {/* Phone number block */}
@@ -211,7 +211,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
                   style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
                 >
-                  <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
+                  <span className="text-white font-black text-2xl tracking-widest shrink-0" dir="ltr">
                     {BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}
                   </span>
                   <button
@@ -243,7 +243,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                     boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
                   }}
                 >
-                  פתח את ביט
+                  פתח ביט
                 </button>
 
                 <p className="text-white/40 text-xs text-center leading-relaxed">
