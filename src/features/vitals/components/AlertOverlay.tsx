@@ -26,8 +26,8 @@ export default function AlertOverlay({ visible, text = 'האם סדיר ונימ
       aria-live="assertive"
     >
       <p
-        className="text-emt-red font-black text-center leading-tight animate-slide-up"
-        style={{ fontSize: 'clamp(1.8rem, 7vw, 3rem)' }}
+        className="text-emt-red font-black text-center leading-snug animate-slide-up whitespace-pre-line"
+        style={{ fontSize: 'clamp(1.4rem, 5.5vw, 2.4rem)' }}
       >
         {text}
       </p>
