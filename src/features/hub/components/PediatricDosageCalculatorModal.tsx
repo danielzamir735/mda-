@@ -151,81 +151,94 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Input card */}
-        <div className="p-4 pb-0">
-          <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 flex flex-col gap-3">
 
-            {/* Age row */}
-            <div className="flex gap-2">
-              <div className="flex-1 flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">גיל</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="לדוגמה: 5"
-                  value={ageInput}
-                  onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
-                  className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark
-                             px-4 py-3 text-gray-900 dark:text-emt-light text-base placeholder-gray-400 dark:placeholder-emt-muted
-                             focus:outline-none focus:ring-2 focus:ring-emt-green/50"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">יחידה</label>
-                <div className="flex rounded-xl border border-gray-200 dark:border-emt-border overflow-hidden h-[50px]">
-                  {(['years', 'months'] as const).map(u => (
-                    <button
-                      key={u}
-                      onClick={() => { setAgeUnit(u); setCalculated(false); }}
-                      className={`px-3 text-sm font-semibold transition-colors ${
-                        ageUnit === u
-                          ? 'bg-emt-green text-white'
-                          : 'bg-gray-50 dark:bg-emt-dark text-gray-500 dark:text-emt-muted'
-                      }`}
-                    >
-                      {u === 'years' ? 'שנים' : 'חודשים'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Weight row */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-500 dark:text-emt-muted">
-                משקל (ק"ג)
-                {isEstimated && estimatedWeight && (
-                  <span className="mr-2 text-emt-yellow font-normal">— הערכה: ~{estimatedWeight} ק"ג</span>
-                )}
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder={estimatedWeight ? `~${estimatedWeight} ק"ג (הערכה)` : 'לדוגמה: 18'}
-                value={weightInput}
-                onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
-                className="w-full rounded-xl border border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark
-                           px-4 py-3 text-gray-900 dark:text-emt-light text-base placeholder-gray-400 dark:placeholder-emt-muted
-                           focus:outline-none focus:ring-2 focus:ring-emt-green/50"
-              />
-            </div>
-
-            {isEstimated && (
-              <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
-                <AlertCircle size={13} className="text-emt-yellow shrink-0 mt-0.5" />
-                <p className="text-emt-yellow text-xs">משקל מוערך לפי גיל. הזן משקל מדויק לתוצאות מיטביות.</p>
-              </div>
-            )}
-
-            <button
-              onClick={handleCalculate}
-              disabled={!displayWeight || displayWeight <= 0}
-              className="w-full rounded-xl bg-emt-green text-white font-bold text-base py-3
-                         active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              חשב מינונים
-            </button>
+        {/* Hero */}
+        <div className="flex flex-col items-center text-center px-6 pt-10 pb-8">
+          <div className="w-24 h-24 rounded-full bg-emt-green/15 border-2 border-emt-green/30 flex items-center justify-center mb-5">
+            <Baby size={44} className="text-emt-green" />
           </div>
+          <h3 className="text-gray-900 dark:text-emt-light font-bold text-2xl mb-2">מינון תרופות ילדים</h3>
+          <p className="text-gray-400 dark:text-emt-muted text-base">הזן גיל ומשקל לחישוב מינונים מדויק</p>
+        </div>
+
+        {/* Inputs */}
+        <div className="px-5 flex flex-col gap-5 pb-10">
+
+          {/* Age input */}
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-bold text-gray-700 dark:text-emt-light">גיל הילד</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="הזן גיל"
+              value={ageInput}
+              onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
+              className="w-full rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-5 py-4 text-gray-900 dark:text-emt-light text-xl placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-emt-green transition-colors"
+            />
+          </div>
+
+          {/* Unit toggle */}
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-bold text-gray-700 dark:text-emt-light">יחידת גיל</label>
+            <div className="grid grid-cols-2 gap-3">
+              {(['years', 'months'] as const).map(u => (
+                <button
+                  key={u}
+                  onClick={() => { setAgeUnit(u); setCalculated(false); }}
+                  className={`py-4 rounded-2xl text-lg font-bold transition-all border-2 ${
+                    ageUnit === u
+                      ? 'bg-emt-green text-white border-emt-green shadow-md'
+                      : 'bg-white dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
+                  }`}
+                >
+                  {u === 'years' ? 'שנים' : 'חודשים'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Weight input */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-base font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+              {isEstimated && estimatedWeight && (
+                <span className="text-sm font-bold text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-1 rounded-full">
+                  הערכה: ~{estimatedWeight} ק"ג
+                </span>
+              )}
+            </div>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder={estimatedWeight ? `~${estimatedWeight} (הערכה לפי גיל)` : 'הזן משקל'}
+              value={weightInput}
+              onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
+              className="w-full rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-5 py-4 text-gray-900 dark:text-emt-light text-xl placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-emt-green transition-colors"
+            />
+          </div>
+
+          {/* Estimated weight warning */}
+          {isEstimated && (
+            <div className="flex items-start gap-3 rounded-2xl bg-emt-yellow/10 border border-emt-yellow/30 px-4 py-3">
+              <AlertCircle size={16} className="text-emt-yellow shrink-0 mt-0.5" />
+              <p className="text-emt-yellow text-sm font-medium">משקל מוערך לפי גיל. הזן משקל מדויק לתוצאות מיטביות.</p>
+            </div>
+          )}
+
+          {/* Calculate button */}
+          <button
+            onClick={handleCalculate}
+            disabled={!displayWeight || displayWeight <= 0}
+            className="w-full rounded-2xl bg-emt-green text-white font-bold text-xl py-5 mt-2
+                       active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
+                       shadow-lg shadow-emt-green/25"
+          >
+            חשב מינונים
+          </button>
         </div>
 
         {/* Results */}
