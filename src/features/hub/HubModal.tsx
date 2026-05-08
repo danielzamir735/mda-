@@ -65,6 +65,14 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
+    id: 'calculators',
+    label: 'מחשבונים',
+    icon: Calculator,
+    color: 'text-emt-green',
+    border: 'border-emt-green/30',
+    bg: 'bg-emt-green/10',
+  },
+  {
     id: 'medication-scanner',
     label: 'מידע על תרופות',
     icon: ScanSearch,
@@ -112,14 +120,6 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
-  },
-  {
-    id: 'calculators',
-    label: 'מחשבונים',
-    icon: Calculator,
-    color: 'text-emt-green',
-    border: 'border-emt-green/30',
-    bg: 'bg-emt-green/10',
   },
   {
     id: 'hospitals',
