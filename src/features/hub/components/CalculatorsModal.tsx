@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby, HeartPulse } from 'lucide-react';
+import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby, HeartPulse, Stethoscope } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackInteraction } from '../../../utils/analytics';
 import OxygenCalculatorModal from '../../quicktools/OxygenCalculatorModal';
@@ -9,6 +9,7 @@ import ApgarCalculatorModal from './ApgarCalculatorModal';
 import ContractionTimerModal from './ContractionTimerModal';
 import GlasgowCalculatorModal from './GlasgowCalculatorModal';
 import PediatricDosageCalculatorModal from './PediatricDosageCalculatorModal';
+import AdultDosageCalculatorModal from './AdultDosageCalculatorModal';
 import ShockCalculator from '../../calculators/ShockCalculator';
 import TubeSizingCalculatorModal from './TubeSizingCalculatorModal';
 
@@ -26,6 +27,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [contractionOpen, setContractionOpen] = useState(false);
   const [gcsOpen, setGcsOpen] = useState(false);
   const [pediatricOpen, setPediatricOpen] = useState(false);
+  const [adultOpen, setAdultOpen] = useState(false);
   const [shockOpen, setShockOpen] = useState(false);
   const [tubeOpen, setTubeOpen] = useState(false);
 
@@ -49,94 +51,8 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-          {/* Contraction Timer — FIRST */}
-          <button
-            onClick={() => { trackInteraction('מחשבון צירי לידה', 'calculators'); setContractionOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
-                       bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-purple-400/20 border border-purple-400/40">
-              <Timer size={22} className="text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-purple-400 font-bold text-base">מחשבון צירי לידה</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                מדידת משך וזמן בין צירים
-              </p>
-            </div>
-          </button>
 
-          {/* Shock & Perfusion Calculator */}
-          <button
-            onClick={() => { trackInteraction('מחשבון הלם ופרפוזיה', 'calculators'); setShockOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-red-400/30
-                       bg-red-400/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-red-400/20 border border-red-400/40">
-              <HeartPulse size={22} className="text-red-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-red-400 font-bold text-base">מחשבון הלם ופרפוזיה</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                Shock Index ו־MAP — זיהוי הלם מוקדם
-              </p>
-            </div>
-          </button>
-
-          {/* O2 Calculator */}
-          <button
-            onClick={() => { trackInteraction('מחשבון חמצן', 'calculators'); setO2Open(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-emt-blue/30
-                       bg-emt-blue/10 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-blue/20 border border-emt-blue/40">
-              <Wind size={22} className="text-emt-blue" />
-            </div>
-            <div className="flex-1">
-              <p className="text-emt-blue font-bold text-base">מחשבון חמצן</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                חישוב זמן חמצן לפי לחץ, נפח וזרימה
-              </p>
-            </div>
-          </button>
-
-          {/* Bar / PSI Converter */}
-          <button
-            onClick={() => { trackInteraction('ממיר Bar / PSI', 'calculators'); setBarPsiOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
-                       bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-green/20 border border-emt-green/40">
-              <RefreshCw size={22} className="text-emt-green" />
-            </div>
-            <div className="flex-1">
-              <p className="text-emt-green font-bold text-base">ממיר Bar / PSI</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                המרת לחץ — 1 Bar = 15 PSI
-              </p>
-            </div>
-          </button>
-
-          {/* Burns Calculator */}
-          <button
-            onClick={() => { trackInteraction('מחשבון כוויות', 'calculators'); setBurnsOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-emt-red/30
-                       bg-emt-red/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-red/20 border border-emt-red/40">
-              <Flame size={22} className="text-emt-red" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-emt-red font-bold text-base">מחשבון כוויות</p>
-              </div>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                כלל תשעיות — שטח גוף עם כוויות
-              </p>
-            </div>
-          </button>
-
-          {/* Pediatric Dosage Calculator ALS — position 6 */}
+          {/* 1 — Pediatric Dosage ALS */}
           <button
             onClick={() => { trackInteraction('מינון תרופות ילדים ALS', 'calculators'); setPediatricOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
@@ -153,7 +69,75 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
-          {/* Glasgow Coma Scale */}
+          {/* 2 — Adult Dosage ALS */}
+          <button
+            onClick={() => { trackInteraction('תרופות מבוגרים ALS', 'calculators'); setAdultOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-orange-400/30
+                       bg-orange-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-orange-400/20 border border-orange-400/40">
+              <Stethoscope size={22} className="text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-orange-400 font-bold text-base">תרופות מבוגרים ALS</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                10 תרחישים — דום לב, ACS, סדציה, כאב ועוד
+              </p>
+            </div>
+          </button>
+
+          {/* 3 — Tube Sizing / LMA */}
+          <button
+            onClick={() => { trackInteraction('גדלי טיובוס ו-LMA', 'calculators'); setTubeOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-sky-400/30
+                       bg-sky-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-400/20 border border-sky-400/40">
+              <Wind size={22} className="text-sky-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sky-400 font-bold text-base">גדלי טיובוס ו-LMA</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                ETT + LMA לפי גיל ומשקל — כולל עומק הכנסה
+              </p>
+            </div>
+          </button>
+
+          {/* 4 — Contraction Timer */}
+          <button
+            onClick={() => { trackInteraction('מחשבון צירי לידה', 'calculators'); setContractionOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-purple-400/30
+                       bg-purple-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-purple-400/20 border border-purple-400/40">
+              <Timer size={22} className="text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-purple-400 font-bold text-base">מחשבון צירי לידה</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                מדידת משך וזמן בין צירים
+              </p>
+            </div>
+          </button>
+
+          {/* 5 — Burns Calculator */}
+          <button
+            onClick={() => { trackInteraction('מחשבון כוויות', 'calculators'); setBurnsOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-emt-red/30
+                       bg-emt-red/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-red/20 border border-emt-red/40">
+              <Flame size={22} className="text-emt-red" />
+            </div>
+            <div className="flex-1">
+              <p className="text-emt-red font-bold text-base">מחשבון כוויות</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                כלל תשעיות — שטח גוף עם כוויות
+              </p>
+            </div>
+          </button>
+
+          {/* 6 — Glasgow Coma Scale */}
           <button
             onClick={() => { trackInteraction('מחשבון גלזגו (GCS)', 'calculators'); setGcsOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-cyan-400/30
@@ -170,7 +154,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
-          {/* APGAR Calculator */}
+          {/* 7 — APGAR Calculator */}
           <button
             onClick={() => { trackInteraction('מחשבון APGAR', 'calculators'); setApgarOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-pink-400/30
@@ -187,22 +171,57 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
-          {/* Tube Sizing Calculator */}
+          {/* 8 — Shock & Perfusion Calculator */}
           <button
-            onClick={() => { trackInteraction('גדלי טיובוס ו-LMA', 'calculators'); setTubeOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-sky-400/30
-                       bg-sky-400/5 p-4 active:scale-95 transition-transform text-right"
+            onClick={() => { trackInteraction('מחשבון הלם ופרפוזיה', 'calculators'); setShockOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-red-400/30
+                       bg-red-400/5 p-4 active:scale-95 transition-transform text-right"
           >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-400/20 border border-sky-400/40">
-              <Wind size={22} className="text-sky-400" />
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-red-400/20 border border-red-400/40">
+              <HeartPulse size={22} className="text-red-400" />
             </div>
-            <div className="flex-1">
-              <p className="text-sky-400 font-bold text-base">גדלי טיובוס ו-LMA</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-red-400 font-bold text-base">מחשבון הלם ופרפוזיה</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                ETT + LMA לפי גיל ומשקל — כולל עומק הכנסה
+                Shock Index ו־MAP — זיהוי הלם מוקדם
               </p>
             </div>
           </button>
+
+          {/* 9 — O2 Calculator */}
+          <button
+            onClick={() => { trackInteraction('מחשבון חמצן', 'calculators'); setO2Open(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-emt-blue/30
+                       bg-emt-blue/10 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-blue/20 border border-emt-blue/40">
+              <Wind size={22} className="text-emt-blue" />
+            </div>
+            <div className="flex-1">
+              <p className="text-emt-blue font-bold text-base">מחשבון חמצן</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                חישוב זמן חמצן לפי לחץ, נפח וזרימה
+              </p>
+            </div>
+          </button>
+
+          {/* 10 — Bar / PSI Converter */}
+          <button
+            onClick={() => { trackInteraction('ממיר Bar / PSI', 'calculators'); setBarPsiOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
+                       bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-green/20 border border-emt-green/40">
+              <RefreshCw size={22} className="text-emt-green" />
+            </div>
+            <div className="flex-1">
+              <p className="text-emt-green font-bold text-base">ממיר Bar / PSI</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                המרת לחץ — 1 Bar = 15 PSI
+              </p>
+            </div>
+          </button>
+
         </div>
       </div>
 
@@ -213,6 +232,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
       <ApgarCalculatorModal isOpen={apgarOpen} onClose={() => setApgarOpen(false)} />
       <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />
       <PediatricDosageCalculatorModal isOpen={pediatricOpen} onClose={() => setPediatricOpen(false)} />
+      <AdultDosageCalculatorModal isOpen={adultOpen} onClose={() => setAdultOpen(false)} />
       <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />
       <TubeSizingCalculatorModal isOpen={tubeOpen} onClose={() => setTubeOpen(false)} />
     </>
