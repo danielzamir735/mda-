@@ -58,7 +58,9 @@
       "Bash(cp \"C:/Users/User/Downloads/Untitled/\"*.svg \"C:/Users/User/Desktop/medic-app/src/assets/body-parts/\")",
       "Bash(node *)",
       "Bash(git reset *)",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-User-Desktop-medic-app\\\\45fc4cca-86a4-429c-9246-dbac36a4dcf5\\\\tasks\\\\bhqcoq3l1.output\" -Wait)",
+      "Bash(Select-String -Pattern \"built in|error|Error|✓|warning\" --SimpleMatch)"
     ]
   },
   "hooks": {
