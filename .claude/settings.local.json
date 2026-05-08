@@ -63,7 +63,9 @@
       "Bash(Select-String -Pattern \"built in|error|Error|✓|warning\" --SimpleMatch)",
       "Bash(Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -First 100)",
-      "Bash(Format-Table FullName)"
+      "Bash(Format-Table FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)"
     ]
   },
   "hooks": {
