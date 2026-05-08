@@ -1069,8 +1069,8 @@ https://hovesh-plus.vercel.app/`;
               </button>
 
               <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
-              <p className="text-violet-300 text-sm text-center mb-6">
-                פתחי את ביט, לחצי על ״שלח כסף״ והכניסי את המספר:
+              <p className="text-violet-300 text-sm text-center mb-4">
+                תרמו על המספר הזה:
               </p>
 
               <div
@@ -1098,8 +1098,19 @@ https://hovesh-plus.vercel.app/`;
                 </button>
               </div>
 
+              <button
+                onClick={() => { window.location.href = 'bit://'; }}
+                className="w-full py-3.5 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform mb-4"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
+                  boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
+                }}
+              >
+                פתח את ביט
+              </button>
+
               <p className="text-white/40 text-xs text-center leading-relaxed">
-                המספר שייך לדניאל זמיר · כל סכום עוזר מאוד ❤️
+                כל סכום עוזר מאוד ❤️
               </p>
             </motion.div>
           </>
