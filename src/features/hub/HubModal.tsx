@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, Search } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -61,16 +61,19 @@ type HubItem = {
   border: string;
   bg: string;
   href?: string;
+  keywords?: string[];
 };
 
 const HUB_ITEMS: HubItem[] = [
   {
-    id: 'medication-scanner',
-    label: 'מידע על תרופות',
-    icon: ScanSearch,
-    color: 'text-teal-400',
+    id: 'med-center',
+    label: 'תרופות',
+    subtitle: 'מידע · נפוצות · קבוצות',
+    icon: Pill,
+    color: 'text-teal-300',
     border: 'border-teal-400/30',
-    bg: 'bg-teal-400/10',
+    bg: 'bg-teal-400/8',
+    keywords: ['תרופה', 'תרופות', 'פארמקולוגיה', 'pill', 'drug', 'medication', 'נפוצות', 'קבוצות', 'scan', 'סריקה', 'כדור', 'זריקה', 'מידע תרופות'],
   },
   {
     id: 'daily-challenge',
@@ -80,6 +83,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-yellow-400',
     border: 'border-yellow-400/40',
     bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+    keywords: ['אתגר', 'שאלות', 'BLS', 'ALS', 'challenge', 'quiz', 'בחינה', 'טריויה', 'לימוד'],
   },
   {
     id: 'medhistory',
@@ -88,22 +92,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
-  },
-  {
-    id: 'medications-classification',
-    label: 'קבוצות תרופות',
-    icon: Pill,
-    color: 'text-teal-400',
-    border: 'border-teal-400/30',
-    bg: 'bg-teal-400/10',
-  },
-  {
-    id: 'common-meds',
-    label: 'תרופות נפוצות',
-    icon: Pill,
-    color: 'text-emerald-400',
-    border: 'border-emerald-400/30',
-    bg: 'bg-emerald-400/10',
+    keywords: ['מחלות', 'רקע', 'היסטוריה', 'medical history', 'conditions', 'כרוני', 'סוכרת', 'יתר לחץ דם', 'אסתמה'],
   },
   {
     id: 'clinical',
@@ -112,6 +101,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
+    keywords: ['מדדים', 'ערכים', 'vitals', 'reference', 'נורמה', 'דופק', 'לחץ דם', 'נשימה', 'קצב'],
   },
   {
     id: 'calculators',
@@ -120,6 +110,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-emt-green',
     border: 'border-emt-green/30',
     bg: 'bg-emt-green/10',
+    keywords: ['מחשבון', 'calculator', 'חישוב', 'כוויה', 'burn', 'oxygen', 'dose', 'מינון', 'APGAR', 'גלאסגו'],
   },
   {
     id: 'hospitals',
@@ -128,6 +119,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
+    keywords: ['בית חולים', 'hospital', 'חדר מיון', 'ER', 'ניווט', 'כתובת', 'טלפון'],
   },
   {
     id: 'realtime-translate',
@@ -136,6 +128,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/10',
+    keywords: ['תרגום', 'translate', 'language', 'שפה', 'רוסית', 'ערבית', 'עברית', 'אנגלית', 'תקשורת'],
   },
   {
     id: 'updates',
@@ -144,6 +137,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
+    keywords: ['שיתוף', 'share', 'whatsapp', 'חבר', 'הפצה', 'פוסט'],
   },
   {
     id: 'install-app',
@@ -152,6 +146,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
+    keywords: ['התקנה', 'install', 'PWA', 'offline', 'הורדה', 'שמירה'],
   },
   {
     id: 'poison-centers',
@@ -160,6 +155,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-lime-400',
     border: 'border-lime-400/30',
     bg: 'bg-lime-400/10',
+    keywords: ['הרעלה', 'poison', 'רעל', 'toxin', 'שאיפה', 'גז', 'כימי', 'OD', 'מינון יתר'],
   },
   {
     id: 'settings',
@@ -168,6 +164,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-gray-500 dark:text-emt-muted',
     border: 'border-gray-200 dark:border-emt-border',
     bg: 'bg-gray-100 dark:bg-emt-gray',
+    keywords: ['הגדרות', 'settings', 'preferences', 'צבע', 'ערכת נושא', 'כהה', 'בהיר'],
   },
   {
     id: 'accessibility',
@@ -176,6 +173,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
+    keywords: ['נגישות', 'accessibility', 'contrast', 'font', 'גופן', 'גודל טקסט'],
   },
   {
     id: 'breathing',
@@ -184,6 +182,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
+    keywords: ['נשימה', 'breathe', 'מדיטציה', 'relaxation', 'קצב', 'הרגעה', 'stress'],
   },
   {
     id: 'kit-standards',
@@ -192,6 +191,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
+    keywords: ['תיק', 'כונן', 'ציוד', 'bag', 'standards', 'חובש', 'תרמיל', 'רשימה'],
   },
   {
     id: 'defibrillator',
@@ -201,6 +201,7 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-emt-red/30',
     bg: 'bg-emt-red/10',
     href: 'https://defi.co.il/#/map',
+    keywords: ['דפיברילטור', 'AED', 'מפה', 'map', 'פרפור', 'defibrillator', 'מיקום'],
   },
   {
     id: 'whatsapp-community',
@@ -210,6 +211,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/10',
+    keywords: ['קהילה', 'community', 'whatsapp', 'ערוץ', 'חברים', 'עדכונים', 'ווצאפ'],
   },
   {
     id: 'simulators',
@@ -219,6 +221,7 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
+    keywords: ['סימולטור', 'simulation', 'CPR', 'לימוד', 'תרגול', 'ECG', 'אק"ג', 'החייאה', 'אימון'],
   },
   {
     id: 'soul-departure',
@@ -228,10 +231,11 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
+    keywords: ['תפילה', 'prayer', 'נשמה', 'דת', 'דתי', 'מוות', 'יהדות'],
   },
 ];
 
-const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'med-center', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'simulators', 'soul-departure', 'whatsapp-community']);
 
 export default function HubModal({
   isOpen,
@@ -253,6 +257,7 @@ export default function HubModal({
   onDailyChallengeOpen,
   onSoulDepartureOpen,
 }: Props) {
+  const [showMedCenter, setShowMedCenter] = useState(false);
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
@@ -261,52 +266,87 @@ export default function HubModal({
   const [showPersonalCard, setShowPersonalCard] = useState(false);
   const [campaignBitCopied, setCampaignBitCopied] = useState(false);
   const [showBitSheet, setShowBitSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { openFullModal } = usePwaInstall();
 
   const handleCampaignScroll = useCallback(() => {
     if (_personalCardShown) return;
     const el = campaignScrollRef.current;
     if (!el) return;
-    // pb-40 adds 160px of padding; trigger when the last card row first becomes visible
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
       _personalCardShown = true;
       setShowPersonalCard(true);
     }
   }, []);
 
-  // Reset simulators view when hub closes so re-opening always shows the tools menu
+  const handleCancelSearch = useCallback(() => {
+    setSearchQuery('');
+    setIsSearchFocused(false);
+    searchInputRef.current?.blur();
+  }, []);
+
   useEffect(() => {
-    if (!isOpen) setShowSimulators(false);
+    if (!isOpen) {
+      setShowSimulators(false);
+      setShowMedCenter(false);
+      setSearchQuery('');
+      setIsSearchFocused(false);
+    }
   }, [isOpen]);
 
+  // Escape key: resets search state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (searchQuery || isSearchFocused) {
+        e.stopPropagation();
+        setSearchQuery('');
+        setIsSearchFocused(false);
+        searchInputRef.current?.blur();
+      }
+    };
+    if (isOpen) document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, searchQuery, isSearchFocused]);
+
+  const searchLower = searchQuery.toLowerCase().trim();
+  const isItemMatch = (item: HubItem) => {
+    if (!searchLower) return true;
+    return (
+      item.label.toLowerCase().includes(searchLower) ||
+      (item.subtitle?.toLowerCase().includes(searchLower) ?? false) ||
+      (item.keywords?.some(k => k.toLowerCase().includes(searchLower)) ?? false)
+    );
+  };
+
   useModalBackHandler(isOpen, onClose);
-  // Give simulators its own back-button layer so back returns to the tools menu, not home
+  useModalBackHandler(showMedCenter, () => setShowMedCenter(false));
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
   useModalBackHandler(showWhatsAppCommunity, () => setShowWhatsAppCommunity(false));
   useModalBackHandler(showCampaign, () => setShowCampaign(false));
   if (!isOpen) return null;
 
   const HUB_TRACKING: Record<string, [string, string]> = {
-    'daily-challenge':            ['האתגר היומי',             'learning'],
-    calculators:                  ['מחשבונים',                'calculators'],
-    settings:                     ['הגדרות',                  'utility'],
-    clinical:                     ['טבלת מדדים',              'medical_knowledge'],
-    medhistory:                   ['מחלות רקע נפוצות',        'medical_knowledge'],
-    hospitals:                    ['מידע בתי חולים',           'emergency_info'],
-    updates:                      ['שיתוף האפליקציה',          'utility'],
-    'kit-standards':              ['תקנים לתיקי כונן',         'tools'],
-    'medications-classification': ['קבוצות תרופות',            'medical_knowledge'],
-    'common-meds':                ['תרופות נפוצות',            'medical_knowledge'],
-    'realtime-translate':         ['תרגום רפואי',              'tools'],
-    'poison-centers':             ['מרכזי הרעלות',             'emergency_info'],
-    accessibility:                ['נגישות',                  'utility'],
-    breathing:                    ['מסנכרן נשימות',            'tools'],
-    'medication-scanner':         ['מידע על תרופות',           'tools'],
-    simulators:                   ['סימולטורים ללמידה',        'community_learning'],
-    'soul-departure':             ['תפילה ליציאת נשמה',        'tools'],
-    'install-app':                ['התקנת האפליקציה',          'utility'],
-    'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
+    'daily-challenge':   ['האתגר היומי',          'learning'],
+    calculators:         ['מחשבונים',              'calculators'],
+    settings:            ['הגדרות',                'utility'],
+    clinical:            ['טבלת מדדים',            'medical_knowledge'],
+    medhistory:          ['מחלות רקע נפוצות',      'medical_knowledge'],
+    hospitals:           ['מידע בתי חולים',         'emergency_info'],
+    updates:             ['שיתוף האפליקציה',        'utility'],
+    'kit-standards':     ['תקנים לתיקי כונן',       'tools'],
+    'med-center':        ['מרכז תרופות',            'medical_knowledge'],
+    'realtime-translate':['תרגום רפואי',            'tools'],
+    'poison-centers':    ['מרכזי הרעלות',           'emergency_info'],
+    accessibility:       ['נגישות',                'utility'],
+    breathing:           ['מסנכרן נשימות',          'tools'],
+    simulators:          ['סימולטורים ללמידה',      'community_learning'],
+    'soul-departure':    ['תפילה ליציאת נשמה',      'tools'],
+    'install-app':       ['התקנת האפליקציה',        'utility'],
+    'whatsapp-community':['קהילת חובש +',           'community_learning'],
   };
 
   const handleItemClick = (id: string) => {
@@ -338,20 +378,20 @@ https://hovesh-plus.vercel.app/`;
         navigator.clipboard?.writeText(shareText).catch(() => {});
       }
     }
-    if (id === 'kit-standards') onBagStandardsOpen();
-    if (id === 'medications-classification') onMedicationsOpen();
-    if (id === 'common-meds') onCommonMedsOpen();
+    if (id === 'kit-standards')    onBagStandardsOpen();
     if (id === 'realtime-translate') onTranslatorOpen();
-    if (id === 'poison-centers') onPoisonCentersOpen();
-    if (id === 'accessibility') onAccessibilityOpen();
-    if (id === 'breathing') onBreathingOpen();
-    if (id === 'medication-scanner') onMedicationScannerOpen();
-    if (id === 'daily-challenge') onDailyChallengeOpen();
-    if (id === 'soul-departure') onSoulDepartureOpen();
-    if (id === 'simulators') setShowSimulators(true);
+    if (id === 'poison-centers')   onPoisonCentersOpen();
+    if (id === 'accessibility')    onAccessibilityOpen();
+    if (id === 'breathing')        onBreathingOpen();
+    if (id === 'daily-challenge')  onDailyChallengeOpen();
+    if (id === 'soul-departure')   onSoulDepartureOpen();
+    if (id === 'simulators')       { handleCancelSearch(); setShowSimulators(true); }
     if (id === 'whatsapp-community') setShowWhatsAppCommunity(true);
-    if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
+    if (id === 'med-center')       { handleCancelSearch(); setShowMedCenter(true); }
+    if (id === 'install-app')      { onClose(); setTimeout(openFullModal, 150); }
   };
+
+  const noResults = searchLower !== '' && HUB_ITEMS.every(item => !isItemMatch(item));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden">
@@ -370,15 +410,14 @@ https://hovesh-plus.vercel.app/`;
         </HapticButton>
       </div>
 
-      {/* Grid */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
 
-        {/* Campaign + Placeholder cards — above feedback button */}
+        {/* Campaign + Concepts cards */}
         <div className="grid grid-cols-2 gap-3">
 
           {/* Campaign Card — rotating gradient border */}
           <div className="relative">
-            {/* Outer glow bloom — subtle, synced to gradient rotation */}
             <motion.div
               className="pointer-events-none absolute rounded-2xl"
               style={{ inset: -3 }}
@@ -392,7 +431,6 @@ https://hovesh-plus.vercel.app/`;
               }}
               transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
             />
-
             <motion.button
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -400,7 +438,6 @@ https://hovesh-plus.vercel.app/`;
               onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
               className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
             >
-              {/* Rotating conic-gradient — GPU-accelerated, clipped by overflow-hidden */}
               <motion.div
                 className="pointer-events-none absolute"
                 style={{
@@ -410,8 +447,6 @@ https://hovesh-plus.vercel.app/`;
                 animate={{ rotate: 360 }}
                 transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
               />
-
-              {/* Inner card — covers the interior leaving 2px border strip */}
               <div
                 className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
                 style={{
@@ -431,7 +466,7 @@ https://hovesh-plus.vercel.app/`;
             </motion.button>
           </div>
 
-          {/* Concepts Card — מושגים שלמדתי */}
+          {/* Concepts Card */}
           <motion.button
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -451,9 +486,117 @@ https://hovesh-plus.vercel.app/`;
 
         </div>
 
+        {/* Search Bar */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-emt-muted pointer-events-none"
+            />
+            <input
+              ref={searchInputRef}
+              dir="rtl"
+              type="search"
+              placeholder="חיפוש כלי..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray
+                         pr-10 pl-9 py-3 text-sm text-gray-900 dark:text-emt-light
+                         placeholder-gray-400 dark:placeholder-emt-muted
+                         outline-none focus:border-teal-400/70 dark:focus:border-teal-400/60
+                         transition-colors"
+            />
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.15 }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full
+                             bg-gray-300 dark:bg-white/20 flex items-center justify-center"
+                  aria-label="נקה חיפוש"
+                >
+                  <X size={11} className="text-gray-700 dark:text-white" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+          <AnimatePresence>
+            {isSearchFocused && (
+              <motion.button
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 18 }}
+                transition={{ duration: 0.18 }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleCancelSearch}
+                className="text-gray-500 dark:text-emt-muted text-sm font-medium whitespace-nowrap shrink-0"
+              >
+                ביטול
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Tool Tiles Grid */}
         <div className="grid grid-cols-2 gap-3">
-          {HUB_ITEMS.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
+          {HUB_ITEMS.map((item) => {
+            const { id, label, subtitle, icon: Icon, color, border, bg, href } = item;
             const enabled = ENABLED.has(id);
+            const matched = isItemMatch(item);
+            const dimmed = searchLower !== '' && !matched;
+
+            if (id === 'med-center') {
+              return (
+                <motion.div
+                  key={id}
+                  className="col-span-2"
+                  animate={{ opacity: dimmed ? 0.15 : 1, scale: dimmed ? 0.97 : 1 }}
+                  style={{ pointerEvents: dimmed ? 'none' : 'auto' }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HapticButton
+                    pressScale={0.97}
+                    onClick={() => handleItemClick('med-center')}
+                    className="w-full relative overflow-hidden rounded-2xl border border-teal-400/30"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(20,184,166,0.12) 0%, rgba(16,185,129,0.08) 50%, rgba(6,182,212,0.06) 100%)',
+                      backdropFilter: 'blur(14px)',
+                      WebkitBackdropFilter: 'blur(14px)',
+                      boxShadow: '0 0 20px rgba(20,184,166,0.10), inset 0 1px 0 rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    {/* Ambient glow */}
+                    <div className="pointer-events-none absolute -top-6 -right-6 w-28 h-28 rounded-full bg-teal-400/10 blur-2xl" />
+                    <div className="relative z-10 flex items-center gap-4 px-5 py-4">
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border border-teal-400/35"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(20,184,166,0.22) 0%, rgba(16,185,129,0.12) 100%)',
+                          boxShadow: '0 0 16px rgba(20,184,166,0.18)',
+                        }}
+                      >
+                        <Pill size={28} className="text-teal-300" />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-teal-100 font-bold text-lg leading-tight">תרופות</span>
+                        <span className="text-teal-400/70 text-xs leading-tight">מידע · נפוצות · קבוצות</span>
+                      </div>
+                      <div className="mr-auto flex items-center gap-1 text-teal-400/50">
+                        <span className="text-xs">3 כלים</span>
+                        <span className="text-sm">←</span>
+                      </div>
+                    </div>
+                  </HapticButton>
+                </motion.div>
+              );
+            }
+
             const sharedClass = [
               'flex flex-col items-center justify-center gap-2',
               'rounded-2xl border', border, bg,
@@ -469,9 +612,7 @@ https://hovesh-plus.vercel.app/`;
                   <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
                 )}
                 {id === 'install-app' && (
-                  <span className="text-xs text-slate-400 text-center leading-tight">
-                    גישה ללא רשת
-                  </span>
+                  <span className="text-xs text-slate-400 text-center leading-tight">גישה ללא רשת</span>
                 )}
                 {!enabled && (
                   <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
@@ -483,32 +624,58 @@ https://hovesh-plus.vercel.app/`;
 
             if (href) {
               return (
-                <a
+                <motion.div
                   key={id}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={sharedClass}
-                  onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                  animate={{ opacity: dimmed ? 0.15 : 1, scale: dimmed ? 0.94 : 1 }}
+                  style={{ pointerEvents: dimmed ? 'none' : 'auto' }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {content}
-                </a>
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={sharedClass}
+                    onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                  >
+                    {content}
+                  </a>
+                </motion.div>
               );
             }
 
             return (
-              <HapticButton
+              <motion.div
                 key={id}
-                disabled={!enabled}
-                onClick={(e) => { e.stopPropagation(); handleItemClick(id); }}
-                className={sharedClass}
-                pressScale={enabled ? 0.93 : 1}
+                animate={{ opacity: dimmed ? 0.15 : 1, scale: dimmed ? 0.94 : 1 }}
+                style={{ pointerEvents: dimmed ? 'none' : 'auto' }}
+                transition={{ duration: 0.2 }}
               >
-                {content}
-              </HapticButton>
+                <HapticButton
+                  disabled={!enabled}
+                  onClick={(e) => { e.stopPropagation(); handleItemClick(id); }}
+                  className={sharedClass}
+                  pressScale={enabled ? 0.93 : 1}
+                >
+                  {content}
+                </HapticButton>
+              </motion.div>
             );
           })}
         </div>
+
+        {/* No results */}
+        <AnimatePresence>
+          {noResults && (
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center text-gray-400 dark:text-emt-muted text-sm py-2"
+            >
+              לא נמצאו כלים עבור &ldquo;{searchQuery}&rdquo;
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         {/* Feedback button */}
         <HapticButton
@@ -523,10 +690,96 @@ https://hovesh-plus.vercel.app/`;
 
       </div>
 
-      {/* Simulators Modal */}
-      {showSimulators && (
+      {/* ── Medication Center overlay ── */}
+      {showMedCenter && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
           {/* Header */}
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+            <div className="flex items-center gap-2">
+              <Pill size={22} className="text-teal-400" />
+              <div>
+                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">מרכז תרופות</h2>
+                <p className="text-gray-500 dark:text-emt-muted text-xs">מידע · נפוצות · קבוצות</p>
+              </div>
+            </div>
+            <HapticButton
+              onClick={() => setShowMedCenter(false)}
+              pressScale={0.88}
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                         flex items-center justify-center
+                         text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+              aria-label="סגור"
+            >
+              <X size={20} />
+            </HapticButton>
+          </div>
+
+          {/* Sub-tools */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            {[
+              {
+                id: 'medication-scanner',
+                label: 'מידע על תרופות',
+                sublabel: 'זיהוי וסריקת תרופות · AI',
+                icon: ScanSearch,
+                color: 'text-teal-400',
+                border: 'border-teal-400/30',
+                bg: 'bg-teal-400/5',
+                iconBg: 'bg-teal-400/20 border-teal-400/40',
+                action: () => { setShowMedCenter(false); onMedicationScannerOpen(); },
+              },
+              {
+                id: 'common-meds',
+                label: 'תרופות נפוצות',
+                sublabel: 'תרופות שכיחות לפי קטגוריה',
+                icon: Pill,
+                color: 'text-emerald-400',
+                border: 'border-emerald-400/30',
+                bg: 'bg-emerald-400/5',
+                iconBg: 'bg-emerald-400/20 border-emerald-400/40',
+                action: () => { setShowMedCenter(false); onCommonMedsOpen(); },
+              },
+              {
+                id: 'med-classification',
+                label: 'קבוצות תרופות',
+                sublabel: 'פרמקולוגיה לפי מערכות גוף',
+                icon: Pill,
+                color: 'text-teal-400',
+                border: 'border-teal-400/30',
+                bg: 'bg-teal-400/5',
+                iconBg: 'bg-teal-400/20 border-teal-400/40',
+                action: () => { setShowMedCenter(false); onMedicationsOpen(); },
+              },
+            ].map(({ id, label, sublabel, icon: Icon, color, border, bg, iconBg, action }) => (
+              <motion.div
+                key={id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 * ['medication-scanner','common-meds','med-classification'].indexOf(id) }}
+              >
+                <HapticButton
+                  pressScale={0.97}
+                  onClick={action}
+                  className={`w-full rounded-2xl border ${border} ${bg} backdrop-blur-sm px-4 py-4 flex items-center gap-4`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${iconBg}`}>
+                    <Icon size={22} className={color} />
+                  </div>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className={`${color} font-bold text-base leading-tight`}>{label}</span>
+                    <span className="text-gray-500 dark:text-emt-muted text-xs">{sublabel}</span>
+                  </div>
+                  <div className={`mr-auto ${color} opacity-40 text-base`}>←</div>
+                </HapticButton>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Simulators overlay ── */}
+      {showSimulators && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
             <div className="flex items-center gap-2">
               <HeartPulse size={22} className="text-rose-400" />
@@ -547,10 +800,7 @@ https://hovesh-plus.vercel.app/`;
             </HapticButton>
           </div>
 
-          {/* Simulator list */}
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-
-            {/* Flashcard trainer */}
             <HapticButton
               pressScale={0.97}
               onClick={() => setSimFlashcardOpen(true)}
@@ -635,17 +885,15 @@ https://hovesh-plus.vercel.app/`;
         <FlashcardTrainer data={SIMULATOR_FLASHCARDS} onClose={() => setSimFlashcardOpen(false)} />
       )}
 
-      {/* WhatsApp Community — full-screen page */}
+      {/* ── WhatsApp Community ── */}
       {showWhatsAppCommunity && (
         <div
           className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
           style={{ background: 'linear-gradient(160deg, #071207 0%, #040a04 55%, #020602 100%)' }}
         >
-          {/* Ambient glows — decorative, non-interactive */}
           <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-green-500/12 blur-3xl" />
           <div className="pointer-events-none absolute bottom-32 -right-16 w-56 h-56 rounded-full bg-green-600/8 blur-3xl" />
 
-          {/* Header */}
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
             <div />
             <HapticButton
@@ -658,10 +906,7 @@ https://hovesh-plus.vercel.app/`;
             </HapticButton>
           </div>
 
-          {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto pb-36">
-
-            {/* Hero */}
             <div className="flex flex-col items-center text-center px-6 pt-2 pb-8">
               <div
                 className="w-24 h-24 rounded-3xl flex items-center justify-center border border-green-400/35 mb-5"
@@ -672,15 +917,10 @@ https://hovesh-plus.vercel.app/`;
               >
                 <Users size={46} className="text-green-400" />
               </div>
-              <h1 className="text-white font-bold text-2xl leading-tight mb-1">
-                קהילת חובש + 🚑
-              </h1>
-              <p className="text-green-400/75 text-sm font-medium tracking-wide">
-                ערוץ עדכונים רשמי · WhatsApp
-              </p>
+              <h1 className="text-white font-bold text-2xl leading-tight mb-1">קהילת חובש + 🚑</h1>
+              <p className="text-green-400/75 text-sm font-medium tracking-wide">ערוץ עדכונים רשמי · WhatsApp</p>
             </div>
 
-            {/* Intro banner */}
             <div
               className="mx-4 mb-4 rounded-2xl border border-green-400/18 p-4"
               style={{ background: 'rgba(37,211,102,0.055)' }}
@@ -692,53 +932,20 @@ https://hovesh-plus.vercel.app/`;
               </p>
             </div>
 
-            {/* Benefit cards */}
             <div className="px-4 flex flex-col gap-3">
               {[
-                {
-                  emoji: '💡',
-                  title: 'טיפים מקצועיים לשטח',
-                  desc: 'פרוטוקולים, תזכורות קליניות ועצות מניסיון שיחסכו לכם שניות קריטיות בשטח',
-                  glow: 'rgba(250,204,21,0.06)',
-                  border: 'rgba(250,204,21,0.15)',
-                },
-                {
-                  emoji: '🆕',
-                  title: 'עדכונים לפני כולם',
-                  desc: 'גלו כלים ומחשבונים חדשים ראשונים, עם הסברים ודוגמאות שימוש מיד בשחרור',
-                  glow: 'rgba(56,189,248,0.06)',
-                  border: 'rgba(56,189,248,0.15)',
-                },
-                {
-                  emoji: '🛒',
-                  title: 'מבצעים בלעדיים לחברי הקהילה',
-                  desc: 'הנחות ועסקאות על ציוד רפואי ואביזרי שטח — רק דרך הערוץ שלנו',
-                  glow: 'rgba(52,211,153,0.06)',
-                  border: 'rgba(52,211,153,0.15)',
-                },
-                {
-                  emoji: '📢',
-                  title: 'פרסומים חשובים בזמן אמת',
-                  desc: 'שינויי פרוטוקול, עדכוני קורסים ומידע שכל איש צוות חייב לדעת',
-                  glow: 'rgba(251,146,60,0.06)',
-                  border: 'rgba(251,146,60,0.15)',
-                },
-                {
-                  emoji: '🤝',
-                  title: 'קהילה מכל הארגונים',
-                  desc: 'מד"א · איחוד הצלה · צה"ל · מתנדבים — כולם במקום אחד',
-                  glow: 'rgba(167,139,250,0.06)',
-                  border: 'rgba(167,139,250,0.15)',
-                },
+                { emoji: '💡', title: 'טיפים מקצועיים לשטח', desc: 'פרוטוקולים, תזכורות קליניות ועצות מניסיון שיחסכו לכם שניות קריטיות בשטח', glow: 'rgba(250,204,21,0.06)', border: 'rgba(250,204,21,0.15)' },
+                { emoji: '🆕', title: 'עדכונים לפני כולם', desc: 'גלו כלים ומחשבונים חדשים ראשונים, עם הסברים ודוגמאות שימוש מיד בשחרור', glow: 'rgba(56,189,248,0.06)', border: 'rgba(56,189,248,0.15)' },
+                { emoji: '🛒', title: 'מבצעים בלעדיים לחברי הקהילה', desc: 'הנחות ועסקאות על ציוד רפואי ואביזרי שטח — רק דרך הערוץ שלנו', glow: 'rgba(52,211,153,0.06)', border: 'rgba(52,211,153,0.15)' },
+                { emoji: '📢', title: 'פרסומים חשובים בזמן אמת', desc: 'שינויי פרוטוקול, עדכוני קורסים ומידע שכל איש צוות חייב לדעת', glow: 'rgba(251,146,60,0.06)', border: 'rgba(251,146,60,0.15)' },
+                { emoji: '🤝', title: 'קהילה מכל הארגונים', desc: 'מד"א · איחוד הצלה · צה"ל · מתנדבים — כולם במקום אחד', glow: 'rgba(167,139,250,0.06)', border: 'rgba(167,139,250,0.15)' },
               ].map(({ emoji, title, desc, glow, border }) => (
                 <div
                   key={title}
                   className="flex items-start gap-3 rounded-2xl p-4"
                   style={{ background: glow, border: `1px solid ${border}` }}
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
-                    {emoji}
-                  </div>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">{emoji}</div>
                   <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-white font-bold text-sm leading-tight">{title}</span>
                     <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
@@ -746,10 +953,8 @@ https://hovesh-plus.vercel.app/`;
                 </div>
               ))}
             </div>
-
           </div>
 
-          {/* Sticky CTA — floats above scroll with gradient fade */}
           <div
             className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
             style={{ background: 'linear-gradient(to top, #020602 65%, transparent)' }}
@@ -767,24 +972,20 @@ https://hovesh-plus.vercel.app/`;
             >
               הצטרפות לערוץ הוואטסאפ
             </a>
-            <p className="text-center text-gray-600 text-xs mt-2">
-              ערוץ חד-כיווני · ללא ספאם · ניתן לעזוב בכל עת
-            </p>
+            <p className="text-center text-gray-600 text-xs mt-2">ערוץ חד-כיווני · ללא ספאם · ניתן לעזוב בכל עת</p>
           </div>
         </div>
       )}
 
-      {/* Campaign Landing Page */}
+      {/* ── Campaign Landing Page ── */}
       {showCampaign && (
         <div
           className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
           style={{ background: 'linear-gradient(160deg, #020b18 0%, #050d1f 50%, #010810 100%)' }}
         >
-          {/* Ambient glows */}
           <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-sky-500/10 blur-3xl" />
           <div className="pointer-events-none absolute bottom-40 -right-20 w-64 h-64 rounded-full bg-blue-600/8 blur-3xl" />
 
-          {/* Header */}
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
             <div />
             <HapticButton
@@ -797,14 +998,11 @@ https://hovesh-plus.vercel.app/`;
             </HapticButton>
           </div>
 
-          {/* Scrollable body */}
           <div
             ref={campaignScrollRef}
             onScroll={handleCampaignScroll}
             className="flex-1 overflow-y-auto pb-40"
           >
-
-            {/* Hero */}
             <div className="flex flex-col items-center text-center px-6 pt-2 pb-8">
               <motion.div
                 initial={{ scale: 0.7, opacity: 0 }}
@@ -829,7 +1027,6 @@ https://hovesh-plus.vercel.app/`;
                 />
                 <Rocket size={46} className="text-sky-300" />
               </motion.div>
-
               <motion.h1
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -848,7 +1045,6 @@ https://hovesh-plus.vercel.app/`;
               </motion.p>
             </div>
 
-            {/* Intro banner */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -862,44 +1058,13 @@ https://hovesh-plus.vercel.app/`;
               </p>
             </motion.div>
 
-            {/* Reason cards */}
             <div className="px-4 flex flex-col gap-3">
               {[
-                {
-                  emoji: '📱',
-                  title: 'גישה לכל חובש דרך החנויות',
-                  desc: 'כיום האפליקציה זמינה רק דרך הדפדפן. עלייה ל-App Store ו-Google Play תאפשר לחובשים, פרמדיקים ומע"רים להוריד אותה בקלות — בדיוק כמו כל אפליקציה אחרת.',
-                  glow: 'rgba(14,165,233,0.07)',
-                  border: 'rgba(56,189,248,0.18)',
-                },
-                {
-                  emoji: '🔔',
-                  title: 'עדכונים אוטומטיים שמצילים חיים',
-                  desc: 'משתמשי החנות יקבלו עדכוני פרוטוקול ותכנים חדשים ישירות לטלפון — ללא צורך לזכור לפתוח דפדפן מחדש. כל עדכון יכול להשפיע על החלטה בשטח.',
-                  glow: 'rgba(37,99,235,0.07)',
-                  border: 'rgba(99,102,241,0.18)',
-                },
-                {
-                  emoji: '💰',
-                  title: 'יש הרבה עלויות מאחורי הקלעים',
-                  desc: 'חשבון מפתח ב-Apple ו-Google, שרתים, תשתיות ואישורים — כולם עולים כסף. הפיתוח נעשה מאהבה, אבל התשתית דורשת מימון.',
-                  glow: 'rgba(250,204,21,0.05)',
-                  border: 'rgba(250,204,21,0.15)',
-                },
-                {
-                  emoji: '💚',
-                  title: 'חינמי לנצח — זה החזון',
-                  desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש, . אתם משקיעים בתשתית, לא בתוכן נעול.',
-                  glow: 'rgba(52,211,153,0.06)',
-                  border: 'rgba(52,211,153,0.15)',
-                },
-                {
-                  emoji: '🏆',
-                  title: 'השפעה מדידה — אלפי חובשים',
-                  desc: 'כבר עכשיו אלפי אנשי צוות משתמשים בחובש + בכל משמרת. עלייה לחנויות תכפיל את המספר הזה — וכל אחד מהם יכול להציל חיים עם הכלים הנכונים.',
-                  glow: 'rgba(244,114,182,0.05)',
-                  border: 'rgba(244,114,182,0.15)',
-                },
+                { emoji: '📱', title: 'גישה לכל חובש דרך החנויות', desc: 'כיום האפליקציה זמינה רק דרך הדפדפן. עלייה ל-App Store ו-Google Play תאפשר לחובשים, פרמדיקים ומע"רים להוריד אותה בקלות — בדיוק כמו כל אפליקציה אחרת.', glow: 'rgba(14,165,233,0.07)', border: 'rgba(56,189,248,0.18)' },
+                { emoji: '🔔', title: 'עדכונים אוטומטיים שמצילים חיים', desc: 'משתמשי החנות יקבלו עדכוני פרוטוקול ותכנים חדשים ישירות לטלפון — ללא צורך לזכור לפתוח דפדפן מחדש. כל עדכון יכול להשפיע על החלטה בשטח.', glow: 'rgba(37,99,235,0.07)', border: 'rgba(99,102,241,0.18)' },
+                { emoji: '💰', title: 'יש הרבה עלויות מאחורי הקלעים', desc: 'חשבון מפתח ב-Apple ו-Google, שרתים, תשתיות ואישורים — כולם עולים כסף. הפיתוח נעשה מאהבה, אבל התשתית דורשת מימון.', glow: 'rgba(250,204,21,0.05)', border: 'rgba(250,204,21,0.15)' },
+                { emoji: '💚', title: 'חינמי לנצח — זה החזון', desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש. אתם משקיעים בתשתית, לא בתוכן נעול.', glow: 'rgba(52,211,153,0.06)', border: 'rgba(52,211,153,0.15)' },
+                { emoji: '🏆', title: 'השפעה מדידה — אלפי חובשים', desc: 'כבר עכשיו אלפי אנשי צוות משתמשים בחובש + בכל משמרת. עלייה לחנויות תכפיל את המספר הזה — וכל אחד מהם יכול להציל חיים עם הכלים הנכונים.', glow: 'rgba(244,114,182,0.05)', border: 'rgba(244,114,182,0.15)' },
               ].map(({ emoji, title, desc, glow, border }, i) => (
                 <motion.div
                   key={title}
@@ -909,9 +1074,7 @@ https://hovesh-plus.vercel.app/`;
                   className="flex items-start gap-3 rounded-2xl p-4"
                   style={{ background: glow, border: `1px solid ${border}` }}
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
-                    {emoji}
-                  </div>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">{emoji}</div>
                   <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-white font-bold text-sm leading-tight">{title}</span>
                     <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
@@ -919,10 +1082,8 @@ https://hovesh-plus.vercel.app/`;
                 </motion.div>
               ))}
             </div>
-
           </div>
 
-          {/* Sticky CTA */}
           <div
             className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
             style={{ background: 'linear-gradient(to top, #010810 65%, transparent)' }}
@@ -942,10 +1103,7 @@ https://hovesh-plus.vercel.app/`;
                 PayBox
               </a>
               <button
-                onClick={() => {
-                  trackInteraction('תרומה לקמפיין — ביט', 'support');
-                  setShowBitSheet(true);
-                }}
+                onClick={() => { trackInteraction('תרומה לקמפיין — ביט', 'support'); setShowBitSheet(true); }}
                 className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                 style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
@@ -955,12 +1113,10 @@ https://hovesh-plus.vercel.app/`;
                 ביט
               </button>
             </div>
-            <p className="text-center text-gray-600 text-xs mt-2">
-              תרומה חד-פעמית · מאובטח · כל סכום עוזר
-            </p>
+            <p className="text-center text-gray-600 text-xs mt-2">תרומה חד-פעמית · מאובטח · כל סכום עוזר</p>
           </div>
 
-          {/* Personal Appeal Card — slides up once when user reaches the bottom */}
+          {/* Personal appeal card */}
           <AnimatePresence>
             {showPersonalCard && (
               <motion.div
@@ -977,7 +1133,6 @@ https://hovesh-plus.vercel.app/`;
                   boxShadow: '0 -8px 48px rgba(234, 179, 8, 0.18), 0 -1px 0 rgba(234, 179, 8, 0.3)',
                 }}
               >
-                {/* Close button */}
                 <button
                   onClick={() => setShowPersonalCard(false)}
                   className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400 active:scale-90 transition-transform"
@@ -985,24 +1140,14 @@ https://hovesh-plus.vercel.app/`;
                 >
                   <X size={15} />
                 </button>
-
-                {/* Gold accent line */}
-                <div
-                  className="mx-auto mb-4 rounded-full"
-                  style={{ width: 40, height: 3, background: 'rgba(234, 179, 8, 0.7)' }}
-                />
-
-                <h2 className="text-white font-bold text-xl text-center mb-3 leading-tight">
-                  ועכשיו, בנימה אישית... ❤️
-                </h2>
-
+                <div className="mx-auto mb-4 rounded-full" style={{ width: 40, height: 3, background: 'rgba(234, 179, 8, 0.7)' }} />
+                <h2 className="text-white font-bold text-xl text-center mb-3 leading-tight">ועכשיו, בנימה אישית... ❤️</h2>
                 <p className="text-gray-300 text-sm leading-relaxed text-center mb-5 px-1" dir="rtl">
                    כאן דניאל , המפתח של חובש +. כבר כמה חודשים שאלפי חובשים וחובשות משתמשים באפליקציה.
                   האפליקציה הזו היא פרויקט של הלב, ללא מטרות רווח וללא פרסומות. כדי שנוכל להמשיך
                   לגדול ולהגיע לכל חובש בארץ, אני מזמין אותכם להיות שותפים. תרומה של 50 או 100 ש״ח תעזור
                   לנו לכסות את עלויות התחזוקה ולהעלות את האפליקציה לחנויות. בואו נעשה את זה ביחד!
                 </p>
-
                 <div className="flex gap-2">
                   <a
                     href="https://links.payboxapp.com/ikLxTdoky1b"
@@ -1018,10 +1163,7 @@ https://hovesh-plus.vercel.app/`;
                     PayBox
                   </a>
                   <button
-                    onClick={() => {
-                      trackInteraction('תרומה — בנימה אישית ביט', 'support');
-                      setShowBitSheet(true);
-                    }}
+                    onClick={() => { trackInteraction('תרומה — בנימה אישית ביט', 'support'); setShowBitSheet(true); }}
                     className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
@@ -1037,7 +1179,7 @@ https://hovesh-plus.vercel.app/`;
         </div>
       )}
 
-      {/* Bit Sheet */}
+      {/* ── Bit Sheet ── */}
       <AnimatePresence>
         {showBitSheet && (
           <>
@@ -1067,19 +1209,15 @@ https://hovesh-plus.vercel.app/`;
               >
                 <X size={16} className="text-white/70" />
               </button>
-
               <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
               <p className="text-violet-300 text-sm text-center mb-6">
                 פתחי את ביט, לחצי על ״שלח כסף״ והכניסי את המספר:
               </p>
-
               <div
                 className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
                 style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
               >
-                <span className="text-white font-black text-2xl tracking-widest" dir="ltr">
-                  054-932-2310
-                </span>
+                <span className="text-white font-black text-2xl tracking-widest" dir="ltr">054-932-2310</span>
                 <button
                   onClick={async () => {
                     try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
@@ -1097,7 +1235,6 @@ https://hovesh-plus.vercel.app/`;
                   {campaignBitCopied ? 'הועתק!' : 'העתק'}
                 </button>
               </div>
-
               <p className="text-white/40 text-xs text-center leading-relaxed">
                 המספר שייך לדניאל זמיר · כל סכום עוזר מאוד ❤️
               </p>
