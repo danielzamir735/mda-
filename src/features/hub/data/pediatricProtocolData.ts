@@ -52,8 +52,8 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             dose: w => `${fmt(clamp(w * 0.3, 0.15, 20))} mg`,
             max: '0.2–0.3 mg/kg | מקס׳ 20 mg',
             prep: (w: number) => w < 10
-              ? 'שאבי 1cc (2mg) במזרק 10 — לכל 1 ק"ג תני 1–1.5cc'
-              : 'לכל 10 ק"ג שאבי 1cc (2mg), עוד שנתה (0.4mg) לכל 2 ק"ג',
+              ? 'שאב 1cc (2mg) במזרק 10 — לכל 1 ק"ג תן 1–1.5cc'
+              : 'לכל 10 ק"ג שאב 1cc (2mg), עוד שנתה (0.4mg) לכל 2 ק"ג',
           },
         ],
       },
@@ -67,14 +67,14 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             dose: w => `${fmt(clamp(w * 2.5, 1, 100), 1)} mg`,
             max: '2–3 mg/kg',
             prep: (w: number) => w <= 25
-              ? 'שאבי 1cc (50mg) במזרק 5 — כל 1 ק"ג = שנתה אחת'
+              ? 'שאב 1cc (50mg) במזרק 5 — כל 1 ק"ג = שנתה אחת'
               : 'מינון ישיר לפי חישוב',
           },
           {
             route: 'IM',
             dose: w => `${fmt(clamp(w * 5.5, 2.5, 200), 1)} mg`,
             max: '5–6 mg/kg',
-            prep: 'שאבי 5cc במזרק 10, השלם עם סליין — כל ק"ג = שנתה (5mg)',
+            prep: 'שאב 5cc במזרק 10, השלם עם סליין — כל ק"ג = שנתה (5mg)',
           },
         ],
       },
@@ -87,7 +87,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'IV',
             dose: w => `${fmt(clamp(w * 0.1, 0.05, 5))} mg`,
             max: '0.1 mg/kg | מקס׳ 5 mg',
-            prep: 'שאבי אמפולה (5mg) למזרק 10 — לכל ק"ג שנתה אחת',
+            prep: 'שאב אמפולה (5mg) למזרק 10 — לכל ק"ג שנתה אחת',
           },
         ],
       },
@@ -135,7 +135,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'אינהלציה',
             dose: w => `${fmt(clamp(w * 0.15, 0.075, 5))} mg`,
             max: '0.15 mg/kg | מקס׳ 5 mg',
-            prep: 'שאבי 1cc, השלם ל5cc — כל שנתה קטנה = 0.2mg',
+            prep: 'שאב 1cc, השלם ל5cc — כל שנתה קטנה = 0.2mg',
           },
           {
             route: 'דרך טובוס',
@@ -171,7 +171,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'אינהלציה (סטרידור)',
             dose: w => `${fmt(clamp(w * 0.375, 0.125, 5), 2)} mg`,
             max: '0.25–0.5 mg/kg | מקס׳ 5 mg',
-            prep: 'שאבי חצי ממשקל הילד, השלם ל5cc',
+            prep: 'שאב חצי ממשקל הילד, השלם ל5cc',
           },
         ],
       },
@@ -184,7 +184,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'IV',
             dose: w => `${fmt(clamp(w * 2, 1, 125), 0)} mg`,
             max: '2 mg/kg | מקס׳ 125 mg',
-            prep: 'שאבי חצי אמפולה (62.5mg/1cc), השלם ל3cc — כל שנתה = 2mg',
+            prep: 'שאב חצי אמפולה (62.5mg/1cc), השלם ל3cc — כל שנתה = 2mg',
           },
         ],
       },
@@ -197,7 +197,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'IV איטי',
             dose: w => `${fmt(clamp(w * 37.5, 12.5, 2000), 0)} mg`,
             max: '25–50 mg/kg | מקס׳ 2g',
-            prep: 'שאבי 2cc (1g) במזרק 10 — כל שנתה = 20mg',
+            prep: 'שאב 2cc (1g) במזרק 10 — כל שנתה = 20mg',
           },
         ],
       },
@@ -222,8 +222,8 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             dose: w => `${fmt(clamp(w * 0.1, 0.05, 6))} mg`,
             max: '0.1 mg/kg | מקס׳ 6 mg',
             prep: (w: number) => w <= 10
-              ? 'שאבי 1cc, השלם ל3cc — כל 1 ק"ג = שנתה'
-              : 'שאבי אמפולה, השלם ל6cc — כל 10 ק"ג = 1cc',
+              ? 'שאב 1cc, השלם ל3cc — כל 1 ק"ג = שנתה'
+              : 'שאב אמפולה, השלם ל6cc — כל 10 ק"ג = 1cc',
           },
           {
             route: 'IV מהיר — מנה 2',
@@ -242,7 +242,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             dose: w => `${fmt(clamp(w * 5, 2.5, 300), 0)} mg`,
             max: '5 mg/kg | מקס׳ 300 mg',
             prep: (w: number) => w <= 20
-              ? 'שאבי 2cc, השלם ל10cc — לכל 1 ק"ג 0.5cc'
+              ? 'שאב 2cc, השלם ל10cc — לכל 1 ק"ג 0.5cc'
               : 'מינון ישיר לפי חישוב',
           },
         ],
@@ -256,7 +256,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'IV איטי',
             dose: w => `${fmt(clamp(w * 37.5, 12.5, 2000), 0)} mg`,
             max: '25–50 mg/kg | מקס׳ 2g',
-            prep: 'שאבי 2cc (1g) במזרק 10 — כל שנתה = 20mg',
+            prep: 'שאב 2cc (1g) במזרק 10 — כל שנתה = 20mg',
           },
         ],
       },

@@ -82,6 +82,17 @@ function DrugCard({ drug, w }: { drug: Drug; w: number }) {
   );
 }
 
+// Solid background colors for the ACTIVE scenario button (white text on top)
+const SCENARIO_SOLID: Record<string, string> = {
+  airway:      'bg-sky-500',
+  respiratory: 'bg-teal-500',
+  cardiac:     'bg-red-500',
+  neuro:       'bg-violet-500',
+  anaphylaxis: 'bg-red-600',
+  pain:        'bg-pink-500',
+  trauma:      'bg-amber-500',
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Props) {
@@ -228,16 +239,18 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
               </span>
             </div>
 
-            {/* Scenario grid — all visible at once, always colored */}
-            <div className="grid grid-cols-2 gap-2.5 px-4 mt-3">
+            {/* Scenario grid — all visible at once */}
+            <div className="grid grid-cols-2 gap-3 px-4 mt-3">
               {PEDIATRIC_SCENARIOS.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => handleScenarioChange(i)}
                   className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
                     ${i === PEDIATRIC_SCENARIOS.length - 1 && PEDIATRIC_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
-                    ${s.bgColor} ${s.color} ${s.borderColor}
-                    ${i === activeScenario ? 'opacity-100 scale-[1.03] shadow-md' : 'opacity-50'}
+                    ${i === activeScenario
+                      ? `${SCENARIO_SOLID[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
+                      : `bg-white dark:bg-emt-gray ${s.color} ${s.borderColor}`
+                    }
                   `}
                 >
                   {s.label}
