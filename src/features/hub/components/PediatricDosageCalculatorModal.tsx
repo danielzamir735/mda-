@@ -153,20 +153,20 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
       <div className="flex-1 overflow-y-auto">
 
         {/* Hero */}
-        <div className="flex flex-col items-center text-center px-6 pt-6 pb-5">
-          <div className="w-16 h-16 rounded-full bg-emt-green/15 border-2 border-emt-green/30 flex items-center justify-center mb-3">
-            <Baby size={30} className="text-emt-green" />
+        <div className="flex flex-col items-center text-center px-6 pt-4 pb-3">
+          <div className="w-12 h-12 rounded-full bg-emt-green/15 border-2 border-emt-green/30 flex items-center justify-center mb-2">
+            <Baby size={22} className="text-emt-green" />
           </div>
-          <h3 className="text-gray-900 dark:text-emt-light font-bold text-xl mb-1">מינון תרופות ילדים</h3>
-          <p className="text-gray-400 dark:text-emt-muted text-sm">הזן גיל ומשקל לחישוב מינונים מדויק</p>
+          <h3 className="text-gray-900 dark:text-emt-light font-bold text-base mb-0.5">מינון תרופות ילדים</h3>
+          <p className="text-gray-400 dark:text-emt-muted text-xs">הזן גיל ומשקל לחישוב מינונים מדויק</p>
         </div>
 
         {/* Inputs */}
-        <div className="px-4 flex flex-col gap-4 pb-7">
+        <div className="px-4 flex flex-col gap-3 pb-5">
 
           {/* Age input */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-gray-700 dark:text-emt-light">גיל הילד</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">גיל הילד</label>
             <input
               type="number"
               inputMode="decimal"
@@ -174,22 +174,22 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
               value={ageInput}
               onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
               className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-4 py-3 text-gray-900 dark:text-emt-light text-lg placeholder-gray-300 dark:placeholder-emt-muted
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
                          focus:outline-none focus:border-emt-green transition-colors"
             />
           </div>
 
           {/* Unit toggle */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-gray-700 dark:text-emt-light">יחידת גיל</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">יחידת גיל</label>
             <div className="grid grid-cols-2 gap-2">
               {(['years', 'months'] as const).map(u => (
                 <button
                   key={u}
                   onClick={() => { setAgeUnit(u); setCalculated(false); }}
-                  className={`py-3 rounded-xl text-base font-bold transition-all border-2 ${
+                  className={`py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${
                     ageUnit === u
-                      ? 'bg-emt-green text-white border-emt-green shadow-md'
+                      ? 'bg-emt-green text-white border-emt-green shadow-sm'
                       : 'bg-white dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
                   }`}
                 >
@@ -200,11 +200,11 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
           </div>
 
           {/* Weight input */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+              <label className="text-xs font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
               {isEstimated && estimatedWeight && (
-                <span className="text-xs font-bold text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
                   הערכה: ~{estimatedWeight} ק"ג
                 </span>
               )}
@@ -216,15 +216,15 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
               value={weightInput}
               onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
               className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-4 py-3 text-gray-900 dark:text-emt-light text-lg placeholder-gray-300 dark:placeholder-emt-muted
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
                          focus:outline-none focus:border-emt-green transition-colors"
             />
           </div>
 
           {/* Estimated weight warning */}
           {isEstimated && (
-            <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2.5">
-              <AlertCircle size={14} className="text-emt-yellow shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
+              <AlertCircle size={13} className="text-emt-yellow shrink-0 mt-0.5" />
               <p className="text-emt-yellow text-xs font-medium">משקל מוערך לפי גיל. הזן משקל מדויק לתוצאות מיטביות.</p>
             </div>
           )}
@@ -233,7 +233,7 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
           <button
             onClick={handleCalculate}
             disabled={!displayWeight || displayWeight <= 0}
-            className="w-full rounded-xl bg-emt-green text-white font-bold text-lg py-4 mt-1
+            className="w-full rounded-xl bg-emt-green text-white font-bold text-base py-3 mt-1
                        active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                        shadow-md shadow-emt-green/25"
           >
