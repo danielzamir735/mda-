@@ -11,8 +11,11 @@ const REASONS = [
   { icon: Lock,    color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'חינמי', desc: 'נגיש לכל חובש' },
 ];
 
+const BIT_PHONE = '0549322310';
+
 export default function SupportModal({ isOpen, onClose }: Props) {
   const [donationDone, setDonationDone] = useState(false);
+  const [bitCopied, setBitCopied] = useState(false);
   const count = useMotionValue(0);
   const [displayCount, setDisplayCount] = useState(0);
 
@@ -24,7 +27,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) setDonationDone(false);
+    if (!isOpen) { setDonationDone(false); setBitCopied(false); }
   }, [isOpen]);
 
   useEffect(() => {
@@ -150,6 +153,19 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   trackInteraction('תרומה', 'support');
                   setDonationDone(true);
                   window.open('https://links.payboxapp.com/ikLxTdoky1b', '_blank');
+                }}
+              />
+              <ShinyButton
+                label={bitCopied ? 'המספר הועתק — פתח את ביט!' : 'תרומה דרך ביט'}
+                sublabel={bitCopied ? undefined : `${BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}`}
+                gradient="from-violet-600 via-purple-600 to-indigo-700"
+                done={bitCopied}
+                icon={<span className="text-xl leading-none">₪</span>}
+                onClick={async () => {
+                  if (navigator.vibrate) navigator.vibrate(50);
+                  trackInteraction('תרומה ביט', 'support');
+                  try { await navigator.clipboard.writeText(BIT_PHONE); } catch { /* ignore */ }
+                  setBitCopied(true);
                 }}
               />
               <p className="text-white/30 text-xs text-center">

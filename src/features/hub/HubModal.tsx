@@ -259,6 +259,7 @@ export default function HubModal({
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
   const [showPersonalCard, setShowPersonalCard] = useState(false);
+  const [campaignBitCopied, setCampaignBitCopied] = useState(false);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const { openFullModal } = usePwaInstall();
 
@@ -925,21 +926,43 @@ https://hovesh-plus.vercel.app/`;
             className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
             style={{ background: 'linear-gradient(to top, #010810 65%, transparent)' }}
           >
-            <a
-              href="https://links.payboxapp.com/ikLxTdoky1b"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackInteraction('תרומה לקמפיין — PayBox', 'support')}
-              className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
-              style={{
-                background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-                boxShadow: '0 4px 32px rgba(14,165,233,0.50)',
-              }}
-            >
-              לתרומה מהירה דרך PayBox
-            </a>
+            <div className="flex gap-2">
+              <a
+                href="https://links.payboxapp.com/ikLxTdoky1b"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackInteraction('תרומה לקמפיין — PayBox', 'support')}
+                className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                style={{
+                  background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+                  boxShadow: '0 4px 32px rgba(14,165,233,0.50)',
+                }}
+              >
+                PayBox
+              </a>
+              <button
+                onClick={async () => {
+                  trackInteraction('תרומה לקמפיין — ביט', 'support');
+                  try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
+                  setCampaignBitCopied(true);
+                  setTimeout(() => setCampaignBitCopied(false), 3000);
+                }}
+                className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                style={{
+                  background: campaignBitCopied
+                    ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
+                    : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  boxShadow: campaignBitCopied
+                    ? '0 4px 24px rgba(22,163,74,0.45)'
+                    : '0 4px 24px rgba(124,58,237,0.45)',
+                  transition: 'background 0.3s, box-shadow 0.3s',
+                }}
+              >
+                {campaignBitCopied ? '✓ הועתק' : 'ביט'}
+              </button>
+            </div>
             <p className="text-center text-gray-600 text-xs mt-2">
-              תרומה חד-פעמית · מאובטח · כל סכום עוזר
+              {campaignBitCopied ? 'מספר ביט הועתק — פתח את האפליקציה ושלח לנו 054-932-2310' : 'תרומה חד-פעמית · מאובטח · כל סכום עוזר'}
             </p>
           </div>
 
@@ -986,19 +1009,46 @@ https://hovesh-plus.vercel.app/`;
                   לנו לכסות את עלויות התחזוקה ולהעלות את האפליקציה לחנויות. בואו נעשה את זה ביחד!
                 </p>
 
-                <a
-                  href="https://links.payboxapp.com/ikLxTdoky1b"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackInteraction('תרומה — בנימה אישית', 'support')}
-                  className="block w-full py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
-                  style={{
-                    background: 'linear-gradient(135deg, #b45309 0%, #ca8a04 50%, #d97706 100%)',
-                    boxShadow: '0 4px 28px rgba(202, 138, 4, 0.50)',
-                  }}
-                >
-                  אני רוצה להיות שותף ולתרום
-                </a>
+                <div className="flex gap-2">
+                  <a
+                    href="https://links.payboxapp.com/ikLxTdoky1b"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackInteraction('תרומה — בנימה אישית PayBox', 'support')}
+                    className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                    style={{
+                      background: 'linear-gradient(135deg, #b45309 0%, #ca8a04 50%, #d97706 100%)',
+                      boxShadow: '0 4px 28px rgba(202, 138, 4, 0.50)',
+                    }}
+                  >
+                    PayBox
+                  </a>
+                  <button
+                    onClick={async () => {
+                      trackInteraction('תרומה — בנימה אישית ביט', 'support');
+                      try { await navigator.clipboard.writeText('0549322310'); } catch { /* ignore */ }
+                      setCampaignBitCopied(true);
+                      setTimeout(() => setCampaignBitCopied(false), 3000);
+                    }}
+                    className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
+                    style={{
+                      background: campaignBitCopied
+                        ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
+                        : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      boxShadow: campaignBitCopied
+                        ? '0 4px 24px rgba(22,163,74,0.45)'
+                        : '0 4px 24px rgba(124,58,237,0.45)',
+                      transition: 'background 0.3s, box-shadow 0.3s',
+                    }}
+                  >
+                    {campaignBitCopied ? '✓ הועתק' : 'ביט'}
+                  </button>
+                </div>
+                {campaignBitCopied && (
+                  <p className="text-center text-yellow-400/70 text-xs mt-2">
+                    מספר ביט הועתק — פתח את האפליקציה ושלח לנו 054-932-2310
+                  </p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

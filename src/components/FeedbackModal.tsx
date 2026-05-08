@@ -26,7 +26,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
   };
 
   const handleSend = async () => {
-    if (!message.trim() || status === 'sending') return;
+    if (!name.trim() || !phone.trim() || !message.trim() || status === 'sending') return;
 
     const lines: string[] = [];
     if (name.trim()) lines.push(`שם: ${name.trim()}`);
@@ -92,10 +92,10 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
           </div>
         ) : (
           <>
-            {/* Optional fields */}
+            {/* Required fields */}
             <input
               type="text"
-              placeholder="שם (אופציונלי)"
+              placeholder="שם מלא *"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={status === 'sending'}
@@ -104,7 +104,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
             <input
               type="tel"
               dir="rtl"
-              placeholder="טלפון (אופציונלי)"
+              placeholder="טלפון *"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               disabled={status === 'sending'}
@@ -139,7 +139,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
               </button>
               <button
                 onClick={handleSend}
-                disabled={!message.trim() || status === 'sending'}
+                disabled={!name.trim() || !phone.trim() || !message.trim() || status === 'sending'}
                 className="flex-1 py-2.5 rounded-xl bg-emt-red text-white text-sm font-bold
                            active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                            flex items-center justify-center gap-2"
