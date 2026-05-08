@@ -30,26 +30,26 @@ function DrugCard({ drug, w }: { drug: Drug; w: number }) {
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden">
       <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className={`font-bold text-base ${drug.color}`}>{drug.name}</p>
-            <p className="text-gray-400 dark:text-emt-muted text-xs mt-0.5">{drug.sub}</p>
+            <p className={`font-bold text-lg ${drug.color}`}>{drug.name}</p>
+            <p className="text-gray-400 dark:text-emt-muted text-sm mt-0.5">{drug.sub}</p>
             {drug.note && (
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-1 leading-relaxed">{drug.note}</p>
+              <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{drug.note}</p>
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5 items-end shrink-0">
+          <div className="flex flex-col gap-2 items-end shrink-0">
             {drug.routes.map((r, i) => (
               <div key={i} className="flex flex-col items-end">
-                <p className="text-gray-900 dark:text-emt-light font-bold text-base leading-tight whitespace-pre-line text-left" dir="ltr">
+                <p className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight whitespace-pre-line text-left" dir="ltr">
                   {r.dose(w)}
                 </p>
-                <span className="text-xs text-gray-400 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-2 py-0.5 rounded-full mt-0.5">
+                <span className="text-sm text-gray-400 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-2.5 py-0.5 rounded-full mt-1">
                   {r.route}
                 </span>
                 {r.max && (
-                  <p className="text-gray-400 dark:text-emt-muted text-xs mt-0.5 text-left" dir="ltr">{r.max}</p>
+                  <p className="text-gray-400 dark:text-emt-muted text-sm mt-0.5 text-left" dir="ltr">{r.max}</p>
                 )}
               </div>
             ))}
@@ -59,9 +59,9 @@ function DrugCard({ drug, w }: { drug: Drug; w: number }) {
         {hasPrep && (
           <button
             onClick={() => setExpanded(v => !v)}
-            className="mt-2 flex items-center gap-1 text-xs text-gray-400 dark:text-emt-muted active:opacity-70"
+            className="mt-3 flex items-center gap-1.5 text-sm text-gray-400 dark:text-emt-muted active:opacity-70"
           >
-            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
             הכנת תרופה
           </button>
         )}
@@ -70,9 +70,9 @@ function DrugCard({ drug, w }: { drug: Drug; w: number }) {
       {expanded && hasPrep && (
         <div className="px-4 pb-4 border-t border-gray-100 dark:border-emt-border">
           {drug.routes.filter(r => r.prep).map((r, i) => (
-            <div key={i} className="mt-2">
-              <p className="text-xs font-semibold text-gray-500 dark:text-emt-muted">{r.route}</p>
-              <p className="text-xs text-gray-600 dark:text-emt-light mt-0.5 leading-relaxed">{resolvePrep(r.prep, w)}</p>
+            <div key={i} className="mt-3">
+              <p className="text-sm font-bold text-gray-500 dark:text-emt-muted">{r.route}</p>
+              <p className="text-base text-gray-700 dark:text-emt-light mt-1 leading-relaxed">{resolvePrep(r.prep, w)}</p>
             </div>
           ))}
         </div>
@@ -126,7 +126,7 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
           <Baby size={22} className="text-emt-green" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מינון תרופות ילדים</h2>
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מינון תרופות ילדים ALS</h2>
         </div>
         <button
           onClick={onClose}
@@ -222,19 +222,19 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
           <>
             {/* Weight badge */}
             <div className="px-4 mt-4 flex items-center justify-between">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-base">בחר תרחיש</p>
+              <p className="text-gray-900 dark:text-emt-light font-bold text-xl">בחר תרחיש</p>
               <span className="text-sm font-bold text-emt-green bg-emt-green/10 px-3 py-1 rounded-full border border-emt-green/30">
                 {w} ק"ג{isEstimated ? ' (הערכה)' : ''}
               </span>
             </div>
 
             {/* Scenario tabs — horizontal scroll */}
-            <div ref={tabsRef} className="flex gap-2 px-4 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+            <div ref={tabsRef} className="flex gap-2.5 px-4 mt-3 overflow-x-auto pb-1 scrollbar-hide">
               {PEDIATRIC_SCENARIOS.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => handleScenarioChange(i)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold border transition-colors ${
+                  className={`shrink-0 rounded-full px-5 py-3 text-base font-bold border-2 transition-colors ${
                     i === activeScenario
                       ? `${s.bgColor} ${s.color} ${s.borderColor}`
                       : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'

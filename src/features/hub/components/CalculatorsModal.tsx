@@ -136,6 +136,23 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
+          {/* Pediatric Dosage Calculator ALS — position 6 */}
+          <button
+            onClick={() => { trackInteraction('מינון תרופות ילדים ALS', 'calculators'); setPediatricOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
+                       bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-green/20 border border-emt-green/40">
+              <Baby size={22} className="text-emt-green" />
+            </div>
+            <div className="flex-1">
+              <p className="text-emt-green font-bold text-base">מינון תרופות ילדים ALS</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                7 תרחישים — אירווי, לב, נשימה, כאב ועוד
+              </p>
+            </div>
+          </button>
+
           {/* Glasgow Coma Scale */}
           <button
             onClick={() => { trackInteraction('מחשבון גלזגו (GCS)', 'calculators'); setGcsOpen(true); }}
@@ -166,23 +183,6 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <p className="text-pink-400 font-bold text-base">מחשבון APGAR</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 הערכת מצב יילוד — ציון 0–10
-              </p>
-            </div>
-          </button>
-
-          {/* Pediatric Dosage Calculator */}
-          <button
-            onClick={() => { trackInteraction('מינון תרופות ילדים', 'calculators'); setPediatricOpen(true); }}
-            className="flex items-center gap-4 w-full rounded-2xl border border-emt-green/30
-                       bg-emt-green/5 p-4 active:scale-95 transition-transform text-right"
-          >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emt-green/20 border border-emt-green/40">
-              <Baby size={22} className="text-emt-green" />
-            </div>
-            <div className="flex-1">
-              <p className="text-emt-green font-bold text-base">מינון תרופות ילדים</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                7 תרחישים — אירווי, לב, נשימה, כאב ועוד
               </p>
             </div>
           </button>
