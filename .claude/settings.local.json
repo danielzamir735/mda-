@@ -65,7 +65,12 @@
       "Bash(Select-Object -First 100)",
       "Bash(Format-Table FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\" -Recurse -Directory)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Read(//c/Users/User/Downloads/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(python *)"
     ]
   },
   "hooks": {
