@@ -1,33 +1,18 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, Backpack, CheckCircle2, Circle, RotateCcw } from 'lucide-react';
+import { ChevronRight, Backpack, CheckCircle2, Circle, XCircle, RotateCcw, Calendar, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { trackEvent } from '../../../utils/analytics';
 
-interface BagItem {
-  name: string;
-  qty: string;
-}
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-interface Bag {
-  id: string;
-  title: string;
-  subtitle: string;
-  color: string;
-  border: string;
-  bg: string;
-  iconColor: string;
-  items: BagItem[];
-}
+interface BagItem { name: string; qty: string }
+interface Bag { id: string; title: string; subtitle: string; color: string; border: string; bg: string; iconColor: string; items: BagItem[] }
+interface MDACategory { id: string; title: string; color: string; border: string; bg: string; items: BagItem[] }
+interface ItemStatus { status: 'have' | 'missing' | null; expiryDate?: string }
+type BagInventory = Record<string, ItemStatus>
 
-interface MDACategory {
-  id: string;
-  title: string;
-  color: string;
-  border: string;
-  bg: string;
-  items: BagItem[];
-}
+// ─── Data ────────────────────────────────────────────────────────────────────
 
 const BAGS: Bag[] = [
   {
@@ -96,7 +81,7 @@ const BAGS: Bag[] = [
       { name: 'פנס ראש', qty: '1' },
       { name: 'תחבושות אלסטיות', qty: '5' },
       { name: "גלוקוג'ל", qty: '1' },
-      { name: 'אספירין', qty: '10' },
+      { name: 'אספירין 300מ"ג', qty: '10' },
       { name: 'תחבושת המוסטטית', qty: '5' },
       { name: 'מד חום', qty: '2' },
       { name: 'מזרק אפיפן', qty: '1' },
@@ -238,7 +223,7 @@ const HATZALAH_CATEGORIES: MDACategory[] = [
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: 'אספירין 100 מ"ג', qty: '10' },
+      { name: 'אספירין 300 מ"ג', qty: '10' },
       { name: "גלוקוג'ל", qty: '2' },
       { name: 'סליין 0.5 ליטר', qty: '1' },
       { name: 'סט שטיפה לעירוי', qty: '1' },
@@ -340,6 +325,228 @@ const MDA_CATEGORIES: MDACategory[] = [
   },
 ];
 
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function daysUntilExpiry(dateStr: string): number {
+  const expiry = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatExpiryLabel(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split('-');
+  const dateFormatted = `${day}/${month}/${year}`;
+  if (days < 0) return `פג תוקף! ${dateFormatted}`;
+  if (days === 0) return `פג תוקף היום - ${dateFormatted}`;
+  if (days === 1) return `פג תוקף מחר - ${dateFormatted}`;
+  if (days <= 7) return `פג תוקף בעוד ${days} ימים - ${dateFormatted}`;
+  return `תוקף עד ${dateFormatted}`;
+}
+
+function loadInventory(key: string): BagInventory {
+  const stored = localStorage.getItem(key);
+  if (!stored) return {};
+  try {
+    const parsed = JSON.parse(stored);
+    const vals = Object.values(parsed);
+    if (vals.length > 0 && typeof vals[0] === 'boolean') {
+      const migrated: BagInventory = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        migrated[k] = { status: v ? 'have' : null };
+      }
+      return migrated;
+    }
+    return parsed as BagInventory;
+  } catch {
+    return {};
+  }
+}
+
+function saveInventory(key: string, inv: BagInventory) {
+  localStorage.setItem(key, JSON.stringify(inv));
+}
+
+function cycleStatus(current: 'have' | 'missing' | null): 'have' | 'missing' | null {
+  if (current === null) return 'have';
+  if (current === 'have') return 'missing';
+  return null;
+}
+
+function clearStatusOnly(inv: BagInventory): BagInventory {
+  const cleared: BagInventory = {};
+  for (const [k, v] of Object.entries(inv)) {
+    cleared[k] = { status: null, expiryDate: v.expiryDate };
+  }
+  return cleared;
+}
+
+function checkExpiryNotifications() {
+  if (!('Notification' in window)) return;
+  const today = new Date().toDateString();
+  if (localStorage.getItem('bag-expiry-notif-date') === today) return;
+  localStorage.setItem('bag-expiry-notif-date', today);
+
+  const keys = [
+    'mda-kit-checklist',
+    'hatzalah-kit-checklist',
+    ...BAGS.map(b => `bag-checklist-${b.id}`),
+  ];
+
+  let expired = 0, soon = 0;
+  for (const key of keys) {
+    for (const { expiryDate } of Object.values(loadInventory(key))) {
+      if (!expiryDate) continue;
+      const d = daysUntilExpiry(expiryDate);
+      if (d < 0) expired++;
+      else if (d <= 7) soon++;
+    }
+  }
+
+  if (expired + soon === 0) return;
+
+  const doNotify = () => {
+    const parts: string[] = [];
+    if (expired > 0) parts.push(`${expired} פריטים פג תוקפם`);
+    if (soon > 0) parts.push(`${soon} פריטים פגים תוקף תוך שבוע`);
+    new Notification('⚠️ בדיקת תיק הצלה', { body: parts.join(', ') + '.' });
+  };
+
+  if (Notification.permission === 'granted') doNotify();
+  else if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => { if (p === 'granted') doNotify(); });
+  }
+}
+
+// ─── ItemRow ─────────────────────────────────────────────────────────────────
+
+interface ItemRowProps {
+  item: BagItem;
+  itemKey: string;
+  status: ItemStatus;
+  accentColor: string;
+  accentBg: string;
+  accentBorder: string;
+  onToggle: () => void;
+  onExpiryChange: (date: string | undefined) => void;
+}
+
+function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, onExpiryChange }: ItemRowProps) {
+  const [showDate, setShowDate] = useState(false);
+  const days = status.expiryDate != null ? daysUntilExpiry(status.expiryDate) : null;
+  const isExpired = days !== null && days < 0;
+  const isSoon = days !== null && days >= 0 && days <= 7;
+  const hasWarning = isExpired || isSoon;
+
+  return (
+    <div className="flex flex-col">
+      <div
+        className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+          status.status === 'have' ? 'bg-emerald-950/20' :
+          status.status === 'missing' ? 'bg-red-950/20' : ''
+        }`}
+        dir="rtl"
+      >
+        {/* Status icon — tap to cycle null → have → missing → null */}
+        <button onClick={onToggle} className="shrink-0 active:scale-90 transition-transform">
+          {status.status === 'have'
+            ? <CheckCircle2 size={20} className="text-emerald-400" />
+            : status.status === 'missing'
+            ? <XCircle size={20} className="text-red-400" />
+            : <Circle size={20} className="text-gray-300 dark:text-slate-600" />}
+        </button>
+
+        <span className={`flex-1 text-sm font-medium ${
+          status.status === 'missing' ? 'text-red-400' :
+          status.status === 'have' ? 'text-emerald-400' :
+          'text-gray-900 dark:text-emt-light'
+        }`}>
+          {item.name}
+        </span>
+
+        {hasWarning && (
+          <AlertTriangle size={15} className={`shrink-0 ${isExpired ? 'text-red-400' : 'text-amber-400'}`} />
+        )}
+
+        <button
+          onClick={() => setShowDate(v => !v)}
+          className={`shrink-0 p-1 rounded-lg active:scale-90 transition-all ${
+            status.expiryDate
+              ? isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-emerald-400'
+              : 'text-gray-400 dark:text-slate-600'
+          }`}
+          aria-label="תאריך תפוגה"
+        >
+          <Calendar size={14} />
+        </button>
+
+        <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${accentBg} ${accentColor} border ${accentBorder}`}>
+          {item.qty}
+        </span>
+      </div>
+
+      {/* Expiry label (collapsed) */}
+      {status.expiryDate && !showDate && (
+        <p
+          className={`px-14 pb-2 text-xs font-medium ${
+            isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-gray-500 dark:text-emt-muted'
+          }`}
+          dir="rtl"
+        >
+          {formatExpiryLabel(status.expiryDate, days!)}
+        </p>
+      )}
+
+      {/* Date picker (expanded) */}
+      {showDate && (
+        <div className="px-4 pb-3 flex items-center gap-2" dir="rtl">
+          <input
+            type="date"
+            value={status.expiryDate ?? ''}
+            onChange={e => {
+              const val = e.target.value || undefined;
+              onExpiryChange(val);
+              if (val && 'Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+              }
+            }}
+            className="flex-1 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-emt-border rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-emt-light"
+          />
+          {status.expiryDate && (
+            <button
+              onClick={() => onExpiryChange(undefined)}
+              className="text-red-400 text-xs px-2 py-2 rounded-xl bg-red-950/20 shrink-0"
+            >
+              מחק
+            </button>
+          )}
+          <button
+            onClick={() => setShowDate(false)}
+            className="text-gray-500 text-xs px-2 py-2 rounded-xl bg-gray-100 dark:bg-slate-700 shrink-0"
+          >
+            סגור
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helper: count expiry warnings in an inventory ────────────────────────────
+
+function countWarnings(inv: BagInventory): { expired: number; soon: number } {
+  let expired = 0, soon = 0;
+  for (const { expiryDate } of Object.values(inv)) {
+    if (!expiryDate) continue;
+    const d = daysUntilExpiry(expiryDate);
+    if (d < 0) expired++;
+    else if (d <= 7) soon++;
+  }
+  return { expired, soon };
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 type Standard = 'moh' | 'mda' | 'hatzalah';
 
 interface Props {
@@ -350,87 +557,119 @@ interface Props {
 export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const t = useTranslation();
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [mohInventory, setMohInventory] = useState<BagInventory>({});
+  const [mdaInventory, setMdaInventory] = useState<BagInventory>({});
+  const [hatzalahInventory, setHatzalahInventory] = useState<BagInventory>({});
   const [activeStandard, setActiveStandard] = useState<Standard>('moh');
-  const [mdaCheckedItems, setMdaCheckedItems] = useState<Record<string, boolean>>({});
-  const [hatzalahCheckedItems, setHatzalahCheckedItems] = useState<Record<string, boolean>>({});
 
+  // Check expiry notifications once on mount
+  useEffect(() => { checkExpiryNotifications(); }, []);
+
+  // Load MOH bag inventory when a bag is selected
   useEffect(() => {
     if (!selectedBag) return;
-    const stored = localStorage.getItem(`bag-checklist-${selectedBag.id}`);
-    setCheckedItems(stored ? JSON.parse(stored) : {});
+    setMohInventory(loadInventory(`bag-checklist-${selectedBag.id}`));
   }, [selectedBag]);
 
+  // Load MDA & Hatzalah inventories on mount
   useEffect(() => {
-    const stored = localStorage.getItem('mda-kit-checklist');
-    setMdaCheckedItems(stored ? JSON.parse(stored) : {});
+    setMdaInventory(loadInventory('mda-kit-checklist'));
+    setHatzalahInventory(loadInventory('hatzalah-kit-checklist'));
   }, []);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('hatzalah-kit-checklist');
-    setHatzalahCheckedItems(stored ? JSON.parse(stored) : {});
-  }, []);
+  // ── MOH bag handlers ───────────────────────────────────────────────────────
 
-  const clearChecklist = () => {
-    setCheckedItems({});
-    localStorage.removeItem(`bag-checklist-${selectedBag!.id}`);
-  };
-
-  const toggleItem = (key: string) => {
-    setCheckedItems((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem(`bag-checklist-${selectedBag!.id}`, JSON.stringify(next));
+  const toggleMohItem = (key: string) => {
+    setMohInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, status: cycleStatus(cur.status) } };
+      saveInventory(`bag-checklist-${selectedBag!.id}`, next);
       return next;
     });
   };
 
+  const setMohExpiry = (key: string, date: string | undefined) => {
+    setMohInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, expiryDate: date } };
+      saveInventory(`bag-checklist-${selectedBag!.id}`, next);
+      return next;
+    });
+  };
+
+  const clearMohChecklist = () => {
+    const cleared = clearStatusOnly(mohInventory);
+    saveInventory(`bag-checklist-${selectedBag!.id}`, cleared);
+    setMohInventory(cleared);
+  };
+
+  // ── MDA handlers ───────────────────────────────────────────────────────────
+
   const toggleMdaItem = (key: string) => {
-    setMdaCheckedItems((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('mda-kit-checklist', JSON.stringify(next));
+    setMdaInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, status: cycleStatus(cur.status) } };
+      saveInventory('mda-kit-checklist', next);
+      return next;
+    });
+  };
+
+  const setMdaExpiry = (key: string, date: string | undefined) => {
+    setMdaInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, expiryDate: date } };
+      saveInventory('mda-kit-checklist', next);
       return next;
     });
   };
 
   const clearMdaChecklist = () => {
-    setMdaCheckedItems({});
-    localStorage.removeItem('mda-kit-checklist');
+    const cleared = clearStatusOnly(mdaInventory);
+    saveInventory('mda-kit-checklist', cleared);
+    setMdaInventory(cleared);
   };
 
+  // ── Hatzalah handlers ──────────────────────────────────────────────────────
+
   const toggleHatzalahItem = (key: string) => {
-    setHatzalahCheckedItems((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('hatzalah-kit-checklist', JSON.stringify(next));
+    setHatzalahInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, status: cycleStatus(cur.status) } };
+      saveInventory('hatzalah-kit-checklist', next);
+      return next;
+    });
+  };
+
+  const setHatzalahExpiry = (key: string, date: string | undefined) => {
+    setHatzalahInventory(prev => {
+      const cur = prev[key] ?? { status: null };
+      const next = { ...prev, [key]: { ...cur, expiryDate: date } };
+      saveInventory('hatzalah-kit-checklist', next);
       return next;
     });
   };
 
   const clearHatzalahChecklist = () => {
-    setHatzalahCheckedItems({});
-    localStorage.removeItem('hatzalah-kit-checklist');
+    const cleared = clearStatusOnly(hatzalahInventory);
+    saveInventory('hatzalah-kit-checklist', cleared);
+    setHatzalahInventory(cleared);
   };
 
   useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
 
   if (!isOpen) return null;
 
-  const handleSelectBag = (bag: Bag) => {
-    setSelectedBag(bag);
-    trackEvent('bag_standards_view', { bag_id: bag.id, bag_title: bag.title });
-    window.history.pushState({ bagDetail: true }, '');
-  };
-
-  const handleBackFromDetail = () => {
-    window.history.back();
-  };
+  // ── Selected bag detail view ───────────────────────────────────────────────
 
   if (selectedBag) {
+    const haveCount = selectedBag.items.filter(item => mohInventory[item.name]?.status === 'have').length;
+    const missingCount = selectedBag.items.filter(item => mohInventory[item.name]?.status === 'missing').length;
+
     return (
       <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
-        {/* Header */}
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
           <button
-            onClick={handleBackFromDetail}
+            onClick={() => window.history.back()}
             className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                        flex items-center justify-center active:scale-90 transition-transform
                        text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
@@ -440,7 +679,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           </button>
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{selectedBag.title}</h2>
           <button
-            onClick={clearChecklist}
+            onClick={clearMohChecklist}
             className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
@@ -449,47 +688,112 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           </button>
         </div>
 
-        {/* Item count badge */}
-        <div className="shrink-0 px-4 py-2 border-b border-gray-200 dark:border-emt-border">
+        {/* Status summary */}
+        <div className="shrink-0 px-4 py-2 border-b border-gray-200 dark:border-emt-border flex items-center gap-3" dir="rtl">
           <span className="text-sm text-gray-500 dark:text-emt-muted">{selectedBag.items.length} {t('items')}</span>
+          {haveCount > 0 && (
+            <span className="text-xs font-medium text-emerald-400 flex items-center gap-1">
+              <CheckCircle2 size={12} /> {haveCount} יש
+            </span>
+          )}
+          {missingCount > 0 && (
+            <span className="text-xs font-medium text-red-400 flex items-center gap-1">
+              <XCircle size={12} /> {missingCount} אין
+            </span>
+          )}
         </div>
 
-        {/* Items list */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-          {selectedBag.items.map((item, i) => {
-            const isChecked = !!checkedItems[item.name];
-            return (
-              <button
-                key={i}
-                onClick={() => toggleItem(item.name)}
-                className={`w-full rounded-xl p-4 flex items-center gap-3 border text-right transition-colors active:scale-[0.98] ${
-                  isChecked
-                    ? 'bg-emerald-950/30 border-emerald-500/30'
-                    : 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-emt-border'
-                }`}
-              >
-                {isChecked
-                  ? <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
-                  : <Circle size={20} className="text-gray-300 dark:text-slate-600 shrink-0" />}
-                <span className={`flex-1 text-sm font-medium ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
-                  {item.name}
-                </span>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${selectedBag.bg} ${selectedBag.color} border ${selectedBag.border}`}>
-                  {item.qty}
-                </span>
-              </button>
-            );
-          })}
+        {/* Legend */}
+        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex items-center gap-4 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
+          <span>לחץ על הסמל לסימון:</span>
+          <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
+          <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
+          <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-gray-100 dark:divide-white/5">
+          {selectedBag.items.map((item) => (
+            <ItemRow
+              key={item.name}
+              item={item}
+              itemKey={item.name}
+              status={mohInventory[item.name] ?? { status: null }}
+              accentColor={selectedBag.color}
+              accentBg={selectedBag.bg}
+              accentBorder={selectedBag.border}
+              onToggle={() => toggleMohItem(item.name)}
+              onExpiryChange={(date) => setMohExpiry(item.name, date)}
+            />
+          ))}
         </div>
       </div>
     );
   }
+
+  // ── Standard selector tabs ─────────────────────────────────────────────────
 
   const STANDARDS: { id: Standard; label: string }[] = [
     { id: 'moh', label: 'תקן משרד החינוך' },
     { id: 'mda', label: 'תקן מד״א' },
     { id: 'hatzalah', label: 'תקן איחוד הצלה' },
   ];
+
+  // ── List view ──────────────────────────────────────────────────────────────
+
+  const renderCategoryChecklist = (
+    categories: MDACategory[],
+    inventory: BagInventory,
+    onToggle: (key: string) => void,
+    onExpiry: (key: string, date: string | undefined) => void,
+  ) => (
+    <div className="flex flex-col gap-4" dir="rtl">
+      {categories.map((cat) => {
+        const haveCount = cat.items.filter((_, i) => inventory[`${cat.id}-${i}`]?.status === 'have').length;
+        const catWarnings = cat.items.reduce((acc, _, i) => {
+          const inv = inventory[`${cat.id}-${i}`];
+          if (!inv?.expiryDate) return acc;
+          const d = daysUntilExpiry(inv.expiryDate);
+          if (d < 0) acc.expired++;
+          else if (d <= 7) acc.soon++;
+          return acc;
+        }, { expired: 0, soon: 0 });
+
+        return (
+          <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
+            <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
+              <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+              <div className="flex items-center gap-2">
+                {(catWarnings.expired > 0 || catWarnings.soon > 0) && (
+                  <AlertTriangle size={14} className={catWarnings.expired > 0 ? 'text-red-400' : 'text-amber-400'} />
+                )}
+                <span className={`text-xs font-medium ${cat.color} opacity-70`}>
+                  {haveCount}/{cat.items.length}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col divide-y divide-white/5">
+              {cat.items.map((item, i) => {
+                const key = `${cat.id}-${i}`;
+                return (
+                  <ItemRow
+                    key={i}
+                    item={item}
+                    itemKey={key}
+                    status={inventory[key] ?? { status: null }}
+                    accentColor={cat.color}
+                    accentBg={cat.bg}
+                    accentBorder={cat.border}
+                    onToggle={() => onToggle(key)}
+                    onExpiryChange={(date) => onExpiry(key, date)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
@@ -519,13 +823,9 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         )}
       </div>
 
-      {/* Standard selector tabs */}
+      {/* Tabs */}
       <div className="shrink-0 px-4 py-3 border-b border-gray-100 dark:border-white/10">
-        <div
-          className="flex rounded-2xl p-1 gap-1"
-          style={{ background: 'rgba(120,120,128,0.12)' }}
-          dir="rtl"
-        >
+        <div className="flex rounded-2xl p-1 gap-1" style={{ background: 'rgba(120,120,128,0.12)' }} dir="rtl">
           {STANDARDS.map(({ id, label }) => (
             <button
               key={id}
@@ -542,118 +842,58 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         </div>
       </div>
 
+      {/* Legend for MDA / Hatzalah */}
+      {(activeStandard === 'mda' || activeStandard === 'hatzalah') && (
+        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex items-center gap-4 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
+          <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
+          <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
+          <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
+          <span className="flex items-center gap-1 text-amber-400"><Calendar size={11} /> תפוגה</span>
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {/* MOH — bag selection cards */}
         {activeStandard === 'moh' && (
           <div className="flex flex-col gap-3">
-            {BAGS.map((bag) => (
-              <button
-                key={bag.id}
-                onClick={() => handleSelectBag(bag)}
-                className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
-                            flex items-center gap-4 active:scale-[0.98] transition-transform`}
-              >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
-                  <Backpack size={24} className={bag.iconColor} />
-                </div>
-                <div className="flex-1 text-right">
-                  <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
-                  <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+            {BAGS.map((bag) => {
+              const bagInv = loadInventory(`bag-checklist-${bag.id}`);
+              const { expired, soon } = countWarnings(bagInv);
+              const hasAnyWarning = expired > 0 || soon > 0;
 
-        {/* MDA — interactive checklist by category */}
-        {activeStandard === 'mda' && (
-          <div className="flex flex-col gap-4" dir="rtl">
-            {MDA_CATEGORIES.map((cat) => {
-              const checkedCount = cat.items.filter((_, i) => mdaCheckedItems[`${cat.id}-${i}`]).length;
               return (
-                <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
-                  <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
-                    <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
-                    <span className={`text-xs font-medium ${cat.color} opacity-70`}>
-                      {checkedCount}/{cat.items.length}
-                    </span>
+                <button
+                  key={bag.id}
+                  onClick={() => {
+                    setSelectedBag(bag);
+                    trackEvent('bag_standards_view', { bag_id: bag.id, bag_title: bag.title });
+                    window.history.pushState({ bagDetail: true }, '');
+                  }}
+                  className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
+                              flex items-center gap-4 active:scale-[0.98] transition-transform`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
+                    <Backpack size={24} className={bag.iconColor} />
                   </div>
-                  <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
-                    {cat.items.map((item, i) => {
-                      const key = `${cat.id}-${i}`;
-                      const isChecked = !!mdaCheckedItems[key];
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => toggleMdaItem(key)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-right transition-colors active:scale-[0.98] ${
-                            isChecked ? 'opacity-60' : ''
-                          }`}
-                          dir="rtl"
-                        >
-                          {isChecked
-                            ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                            : <Circle size={18} className="text-gray-300 dark:text-slate-600 shrink-0" />}
-                          <span className={`flex-1 text-sm font-medium text-right ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
-                            {item.name}
-                          </span>
-                          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
-                            {item.qty}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  <div className="flex-1 text-right">
+                    <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
                   </div>
-                </div>
+                  {hasAnyWarning && (
+                    <AlertTriangle size={18} className={expired > 0 ? 'text-red-400' : 'text-amber-400'} />
+                  )}
+                </button>
               );
             })}
           </div>
         )}
 
-        {/* Hatzalah — interactive checklist by category */}
-        {activeStandard === 'hatzalah' && (
-          <div className="flex flex-col gap-4" dir="rtl">
-            {HATZALAH_CATEGORIES.map((cat) => {
-              const checkedCount = cat.items.filter((_, i) => hatzalahCheckedItems[`${cat.id}-${i}`]).length;
-              return (
-                <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
-                  <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
-                    <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
-                    <span className={`text-xs font-medium ${cat.color} opacity-70`}>
-                      {checkedCount}/{cat.items.length}
-                    </span>
-                  </div>
-                  <div className="flex flex-col divide-y divide-white/5 dark:divide-white/5">
-                    {cat.items.map((item, i) => {
-                      const key = `${cat.id}-${i}`;
-                      const isChecked = !!hatzalahCheckedItems[key];
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => toggleHatzalahItem(key)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-right transition-colors active:scale-[0.98] ${
-                            isChecked ? 'opacity-60' : ''
-                          }`}
-                          dir="rtl"
-                        >
-                          {isChecked
-                            ? <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                            : <Circle size={18} className="text-gray-300 dark:text-slate-600 shrink-0" />}
-                          <span className={`flex-1 text-sm font-medium text-right ${isChecked ? 'line-through text-slate-500' : 'text-gray-900 dark:text-emt-light'}`}>
-                            {item.name}
-                          </span>
-                          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${cat.bg} ${cat.color} border ${cat.border}`}>
-                            {item.qty}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {activeStandard === 'mda' && renderCategoryChecklist(
+          MDA_CATEGORIES, mdaInventory, toggleMdaItem, setMdaExpiry,
+        )}
+
+        {activeStandard === 'hatzalah' && renderCategoryChecklist(
+          HATZALAH_CATEGORIES, hatzalahInventory, toggleHatzalahItem, setHatzalahExpiry,
         )}
       </div>
     </div>
