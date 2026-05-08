@@ -13,6 +13,7 @@ import { supabase } from '../../../lib/supabase';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 type BlockId = 'A' | 'B' | 'C' | 'D';
 
@@ -91,9 +92,11 @@ const CACHE_KEYS = {
   red_flag: 'daily_challenge_redflag_v2',
 } as const;
 
-const STATS_CACHE_KEY: Record<ClinicalCategory, string> = {
+const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   bls: 'daily_stats_bls_v1',
   als: 'daily_stats_als_v1',
+  med_v3: 'daily_stats_med_v1',
+  abbr: 'daily_stats_abbr_v1',
 };
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
@@ -210,7 +213,7 @@ function markSuccessSeenToday() {
   localStorage.setItem(SUCCESS_SEEN_KEY, JSON.stringify({ date: getToday() }));
 }
 
-function loadCachedStats(cat: ClinicalCategory): GlobalStats | null {
+function loadCachedStats(cat: QuizCategory): GlobalStats | null {
   try {
     const raw = localStorage.getItem(STATS_CACHE_KEY[cat]);
     if (!raw) return null;
@@ -219,7 +222,7 @@ function loadCachedStats(cat: ClinicalCategory): GlobalStats | null {
   } catch { return null; }
 }
 
-function saveCachedStats(cat: ClinicalCategory, stats: GlobalStats) {
+function saveCachedStats(cat: QuizCategory, stats: GlobalStats) {
   try { localStorage.setItem(STATS_CACHE_KEY[cat], JSON.stringify({ date: getToday(), stats })); } catch { /* noop */ }
 }
 
@@ -365,7 +368,7 @@ async function fetchOrCreateBlock<T>(questionType: string, generate: () => Promi
   }
 }
 
-async function saveClinicalResponse(category: ClinicalCategory, is_correct: boolean, time_taken: number, answer_index: number) {
+async function saveClinicalResponse(category: QuizCategory, is_correct: boolean, time_taken: number, answer_index: number) {
   const full = { session_id: getSessionId(), question_type: category, question_date: getToday(), is_correct, time_taken, answer_index: Number(answer_index) };
   const { error } = await supabase.from('daily_responses').insert(full);
   if (!error) return;
@@ -377,7 +380,7 @@ async function saveClinicalResponse(category: ClinicalCategory, is_correct: bool
   console.error('[DailySync] INSERT error:', error.message);
 }
 
-async function fetchGlobalStats(category: ClinicalCategory, correctIndex: number | null): Promise<{ stats: GlobalStats; offline: boolean }> {
+async function fetchGlobalStats(category: QuizCategory, correctIndex: number | null): Promise<{ stats: GlobalStats; offline: boolean }> {
   const today = getToday();
   const emptyStats: GlobalStats = { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
   for (let attempt = 0; attempt <= 2; attempt++) {
@@ -861,12 +864,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [medData, setMedData] = useState<MedOfDay | null>(null);
   const [medAnsweredIdx, setMedAnsweredIdx] = useState<number | null>(null);
   const [showMedExpl, setShowMedExpl] = useState(false);
+  const [medStats, setMedStats] = useState<GlobalStats | null>(null);
 
   // Block C — Abbreviation
   const [abbrStatus, setAbbrStatus] = useState<LoadStatus>('idle');
   const [abbrQuestion, setAbbrQuestion] = useState<AbbreviationQ | null>(null);
   const [abbrAnsweredIdx, setAbbrAnsweredIdx] = useState<number | null>(null);
   const [showAbbrExpl, setShowAbbrExpl] = useState(false);
+  const [abbrStats, setAbbrStats] = useState<GlobalStats | null>(null);
 
   // Block D — Red Flag
   const [redStatus, setRedStatus] = useState<LoadStatus>('idle');
@@ -974,6 +979,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setMedData(cachedMed.data);
       setMedAnsweredIdx(cachedMed.answeredIdx ?? null);
       setMedStatus('ready');
+      if (cachedMed.answeredIdx !== null && cachedMed.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('med_v3');
+        if (seeded) setMedStats(seeded);
+        fetchGlobalStats('med_v3', cachedMed.data.correct_index).then(({ stats }) => {
+          setMedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
     } else {
       setMedStatus('loading');
       fetchOrCreateBlock<MedOfDay>('med_v4', generateMed).then((med) => {
@@ -988,6 +1000,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setAbbrQuestion(cachedAbbr.data);
       setAbbrAnsweredIdx(cachedAbbr.answeredIdx ?? null);
       setAbbrStatus('ready');
+      if (cachedAbbr.answeredIdx !== null && cachedAbbr.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('abbr');
+        if (seeded) setAbbrStats(seeded);
+        fetchGlobalStats('abbr', cachedAbbr.data.correct_index).then(({ stats }) => {
+          setAbbrStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
     } else {
       setAbbrStatus('loading');
       fetchOrCreateBlock<AbbreviationQ>('abbr', generateAbbreviation).then((q) => {
@@ -1020,8 +1039,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setClinicalCategory(null); setClinicalStatus('idle'); setClinicalQuestion(null);
       setClinicalAnsweredIdx(null); setClinicalTimeTaken(null); setShowClinicalExpl(false);
       setGlobalStats(null); setIsStatsOffline(false);
-      setMedStatus('idle'); setMedData(null); setMedAnsweredIdx(null); setShowMedExpl(false);
-      setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false);
+      setMedStatus('idle'); setMedData(null); setMedAnsweredIdx(null); setShowMedExpl(false); setMedStats(null);
+      setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false); setAbbrStats(null);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false);
       setShowSuccess(false);
     }
@@ -1162,19 +1181,39 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx]);
 
   // ── Block B handler ──
-  const handleMedAnswer = useCallback((idx: number) => {
+  const handleMedAnswer = useCallback(async (idx: number) => {
     if (!medData || medAnsweredIdx !== null) return;
+    const isCorrect = idx === medData.correct_index;
     setMedAnsweredIdx(idx);
     saveCache(CACHE_KEYS.med, medData, idx);
-    trackEvent('daily_challenge_med_answered', { correct: idx === medData.correct_index });
+    setMedStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_med_answered', { correct: isCorrect });
+    await saveClinicalResponse('med_v3', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('med_v3', medData.correct_index);
+    setMedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
   }, [medData, medAnsweredIdx]);
 
   // ── Block C handler ──
-  const handleAbbrAnswer = useCallback((idx: number) => {
+  const handleAbbrAnswer = useCallback(async (idx: number) => {
     if (!abbrQuestion || abbrAnsweredIdx !== null) return;
+    const isCorrect = idx === abbrQuestion.correct_index;
     setAbbrAnsweredIdx(idx);
     saveCache(CACHE_KEYS.abbr, abbrQuestion, idx);
-    trackEvent('daily_challenge_abbr_answered', { correct: idx === abbrQuestion.correct_index });
+    setAbbrStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_abbr_answered', { correct: isCorrect });
+    await saveClinicalResponse('abbr', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('abbr', abbrQuestion.correct_index);
+    setAbbrStats((prev) => (prev && stats.total < prev.total ? prev : stats));
   }, [abbrQuestion, abbrAnsweredIdx]);
 
   // ── Block D handler ──
@@ -1443,6 +1482,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           correctIndex={medData.correct_index}
           answeredIdx={medAnsweredIdx}
           onAnswer={handleMedAnswer}
+          stats={medStats}
           accentCorrect="border-emerald-400/55 bg-emerald-500/12 text-emerald-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
@@ -1530,6 +1570,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           correctIndex={abbrQuestion.correct_index}
           answeredIdx={abbrAnsweredIdx}
           onAnswer={handleAbbrAnswer}
+          stats={abbrStats}
           accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
