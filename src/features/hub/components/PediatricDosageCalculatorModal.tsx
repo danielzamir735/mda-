@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { X, Baby, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
@@ -90,7 +90,6 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
   const [weightInput, setWeightInput] = useState('');
   const [calculated, setCalculated] = useState(false);
   const [activeScenario, setActiveScenario] = useState(0);
-  const tabsRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
 
@@ -228,13 +227,17 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
               </span>
             </div>
 
-            {/* Scenario tabs — horizontal scroll */}
-            <div ref={tabsRef} className="flex gap-2.5 px-4 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+            {/* Scenario grid — all visible at once */}
+            <div className="grid grid-cols-2 gap-2.5 px-4 mt-3">
               {PEDIATRIC_SCENARIOS.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => handleScenarioChange(i)}
-                  className={`shrink-0 rounded-full px-5 py-3 text-base font-bold border-2 transition-colors ${
+                  className={`rounded-2xl py-4 text-base font-bold border-2 transition-colors w-full ${
+                    i === PEDIATRIC_SCENARIOS.length - 1 && PEDIATRIC_SCENARIOS.length % 2 !== 0
+                      ? 'col-span-2'
+                      : ''
+                  } ${
                     i === activeScenario
                       ? `${s.bgColor} ${s.color} ${s.borderColor}`
                       : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
