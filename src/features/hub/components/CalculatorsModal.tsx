@@ -10,6 +10,7 @@ import ContractionTimerModal from './ContractionTimerModal';
 import GlasgowCalculatorModal from './GlasgowCalculatorModal';
 import PediatricDosageCalculatorModal from './PediatricDosageCalculatorModal';
 import ShockCalculator from '../../calculators/ShockCalculator';
+import TubeSizingCalculatorModal from './TubeSizingCalculatorModal';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [gcsOpen, setGcsOpen] = useState(false);
   const [pediatricOpen, setPediatricOpen] = useState(false);
   const [shockOpen, setShockOpen] = useState(false);
+  const [tubeOpen, setTubeOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -180,7 +182,24 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             <div className="flex-1">
               <p className="text-emt-green font-bold text-base">מינון תרופות ילדים</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
-                פרוטוקול חירום — מינון לפי משקל
+                7 תרחישים — אירווי, לב, נשימה, כאב ועוד
+              </p>
+            </div>
+          </button>
+
+          {/* Tube Sizing Calculator */}
+          <button
+            onClick={() => { trackInteraction('גדלי טיובוס ו-LMA', 'calculators'); setTubeOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-sky-400/30
+                       bg-sky-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-sky-400/20 border border-sky-400/40">
+              <Wind size={22} className="text-sky-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sky-400 font-bold text-base">גדלי טיובוס ו-LMA</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                ETT + LMA לפי גיל ומשקל — כולל עומק הכנסה
               </p>
             </div>
           </button>
@@ -195,6 +214,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
       <GlasgowCalculatorModal isOpen={gcsOpen} onClose={() => setGcsOpen(false)} />
       <PediatricDosageCalculatorModal isOpen={pediatricOpen} onClose={() => setPediatricOpen(false)} />
       <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />
+      <TubeSizingCalculatorModal isOpen={tubeOpen} onClose={() => setTubeOpen(false)} />
     </>
   );
 }
