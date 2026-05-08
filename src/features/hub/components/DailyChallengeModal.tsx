@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
-  Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft,
+  Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +26,8 @@ interface ClinicalQuestion {
 
 interface MedOfDay {
   name: string;
+  name_he?: string;
+  name_en?: string;
   drug_class: string;
   description: string;
   question: string;
@@ -150,6 +152,8 @@ function buildMedPrompt(): string {
 פלט JSON בלבד, ללא markdown:
 {
   "name": "שם מסחרי ישראלי + גנרי — לדוגמה: אליקוויס (Apixaban)",
+  "name_he": "שם מסחרי בעברית בלבד — לדוגמה: אליקוויס",
+  "name_en": "שם גנרי באנגלית בלבד — לדוגמה: Apixaban",
   "drug_class": "קבוצה ומנגנון קצר — לדוגמה: NOAC — מעכב פקטור Xa",
   "description": "הסבר בשורה-שורה וחצי: מה התרופה הזאת עושה בגוף ולמה רושמים אותה — בשפה ברורה שכל חובש יבין. לדוגמה: תרופה מדללת דם — מונעת קרישי דם בחולים עם פרפור פרוזדורים, לאחר ניתוח אורתופדי, או לטיפול בתסחיף ריאתי.",
   "question": "שאלת MCQ על הסכנה/אינדיקציה/זהירות — לדוגמה: מטופל על אליקוויס חווה טראומה בטנית. מה החשש הקריטי ביותר?",
@@ -1443,7 +1447,28 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               <Pill size={20} className="text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-emerald-200 font-black text-xl leading-tight">{medData.name}</span>
+              <span className="text-emerald-200 font-black text-xl leading-tight">
+                {medData.name_he ?? medData.name.replace(/\s*\(.*\)/, '').trim()}
+              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-emerald-300/80 text-[13px] font-semibold leading-tight">
+                  {medData.name_en ?? (medData.name.match(/\(([^)]+)\)/)?.[1] ?? '')}
+                </span>
+                <button
+                  onClick={() => {
+                    const nameToSpeak = medData.name_en ?? (medData.name.match(/\(([^)]+)\)/)?.[1] ?? medData.name);
+                    const utter = new SpeechSynthesisUtterance(nameToSpeak);
+                    utter.lang = 'en-US';
+                    utter.rate = 0.85;
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(utter);
+                  }}
+                  className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-400/15 border border-emerald-400/30 hover:bg-emerald-400/25 active:scale-90 transition-all shrink-0"
+                  aria-label="הגה את שם התרופה"
+                >
+                  <Volume2 size={12} className="text-emerald-400" />
+                </button>
+              </div>
               <p className="text-emerald-400/70 text-[11px] font-semibold mt-0.5 leading-tight">{medData.drug_class}</p>
             </div>
           </div>
