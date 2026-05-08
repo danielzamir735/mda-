@@ -103,6 +103,18 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
           },
         ],
       },
+      {
+        name: 'קטמין',
+        sub: 'Ketamine — שימור סדציה (Drip)',
+        color: 'text-amber-300',
+        routes: [
+          {
+            route: 'IV Drip',
+            dose: w => `${fmt(clamp(w * 0.5, 0.25, 20))} mg בולוס\n${fmt(clamp(w * 0.5, 0.25, 20))} mg/hr`,
+            max: '0.5 mg/kg בולוס | 0.5 mg/kg/hr',
+          },
+        ],
+      },
     ],
   },
 
@@ -244,6 +256,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
             route: 'IV איטי',
             dose: w => `${fmt(clamp(w * 37.5, 12.5, 2000), 0)} mg`,
             max: '25–50 mg/kg | מקס׳ 2g',
+            prep: 'שאבי 2cc (1g) במזרק 10 — כל שנתה = 20mg',
           },
         ],
       },
