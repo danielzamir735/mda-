@@ -202,8 +202,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
 
                 <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
                 <p className="text-violet-300 text-sm text-center mb-6">
-                  פתחי את ביט, לחצי על ״שלח כסף״ והכניסי את המספר:
-                </p>
+                                 </p>
 
                 {/* Phone number block */}
                 <div
@@ -233,7 +232,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 </div>
 
                 <p className="text-white/40 text-xs text-center leading-relaxed">
-                  המספר שייך לדניאל זמיר · כל סכום עוזר מאוד ❤️
+                  תודה רבה  · כל סכום עוזר מאוד ❤️
                 </p>
               </motion.div>
             )}
