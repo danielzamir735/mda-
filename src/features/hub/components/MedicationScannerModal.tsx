@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit } from 'lucide-react';
+import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit, Activity } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
@@ -28,10 +28,23 @@ const SYSTEM_PROMPT =
   '[משפט אחד או שניים על אזהרה קריטית או תופעת לוואי חריגה שחובה לשים לב אליה].\n\n' +
   'אם אתה רוצה, אפשר להשוות אותה לתרופות מקבילות או לבדוק התאמה למצב מסוים 👍';
 
-const LOADING_STEPS = [
+const IMAGE_LOADING_STEPS = [
   { text: 'מעבד תמונה...', Icon: Image },
+  { text: 'מזהה תווית...', Icon: Scan },
   { text: 'מחלץ נתונים...', Icon: Cpu },
-  { text: 'בודק במאגרי מידע...', Icon: Database },
+  { text: 'בודק מאגר תרופות...', Icon: Database },
+  { text: 'מנתח מינון...', Icon: Activity },
+  { text: 'בודק אינטראקציות...', Icon: AlertCircle },
+  { text: 'מכין סיכום...', Icon: FileEdit },
+];
+
+const TEXT_LOADING_STEPS = [
+  { text: 'מזהה תרופה...', Icon: Search },
+  { text: 'בודק מאגר תרופות...', Icon: Database },
+  { text: 'מחפש מידע קליני...', Icon: Scan },
+  { text: 'מנתח נתונים...', Icon: Cpu },
+  { text: 'מנתח מינון...', Icon: Activity },
+  { text: 'בודק אינטראקציות...', Icon: AlertCircle },
   { text: 'מכין סיכום...', Icon: FileEdit },
 ];
 
@@ -130,6 +143,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   const [searchHistory, setSearchHistory] = useState<HistoryItem[]>(loadHistory);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
+  const [isImageSearch, setIsImageSearch] = useState(false);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -139,7 +153,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     if (state !== 'loading') return;
     setLoadingPhraseIndex(0);
     const interval = setInterval(() => {
-      setLoadingPhraseIndex(i => (i + 1) % LOADING_STEPS.length);
+      setLoadingPhraseIndex(i => (i + 1) % 7);
     }, 3500);
     return () => clearInterval(interval);
   }, [state]);
@@ -183,6 +197,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     const query = textQuery.trim();
     if (!query) return;
 
+    setIsImageSearch(false);
     setState('loading');
     setResultText('');
     setPreview(null);
@@ -208,6 +223,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     if (!file) return;
 
     setPreview(URL.createObjectURL(file));
+    setIsImageSearch(true);
     setState('loading');
     setResultText('');
     trackEvent('med_scan_photo');
@@ -364,7 +380,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
         {/* Loading — cycling steps with icon */}
         {state === 'loading' && (() => {
-          const { text, Icon: StepIcon } = LOADING_STEPS[loadingPhraseIndex];
+          const steps = isImageSearch ? IMAGE_LOADING_STEPS : TEXT_LOADING_STEPS;
+          const { text, Icon: StepIcon } = steps[loadingPhraseIndex];
           return (
             <div className="flex flex-col items-center gap-4 py-8">
               <div className="w-12 h-12 border-4 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
@@ -463,8 +480,11 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                   {searchHistory
                     .filter(item => {
                       if (!historySearch.trim()) return true;
-                      const name = extractMedName(item.result).toLowerCase();
-                      return name.includes(historySearch.trim().toLowerCase());
+                      const searchTerm = historySearch.trim().toLowerCase();
+                      return (
+                        item.query.toLowerCase().includes(searchTerm) ||
+                        extractMedName(item.result).toLowerCase().includes(searchTerm)
+                      );
                     })
                     .map(item => {
                       const d = new Date(item.timestamp);
@@ -480,7 +500,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                                      hover:bg-white/5 active:bg-white/10 transition-colors"
                         >
                           <span className="text-emt-light text-sm font-semibold truncate flex-1 min-w-0">
-                            {extractMedName(item.result)}
+                            {item.query}
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0 mr-3">
                             <span className="text-emt-muted text-xs">{formatted}</span>
