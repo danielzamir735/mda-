@@ -60,6 +60,7 @@ export default function VitalsFeature() {
   const [hubOpen, setHubOpen] = useState(false);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [calculatorsOpen, setCalculatorsOpen] = useState(false);
+  const [calculatorsFromHub, setCalculatorsFromHub] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [vitalsRefOpen, setVitalsRefOpen] = useState(false);
@@ -170,7 +171,7 @@ export default function VitalsFeature() {
       <BottomNav
         onGalleryOpen={() => { trackInteraction('גלריה', 'navigation'); setGalleryOpen(true); }}
         onNotesOpen={() => { trackInteraction('הערות', 'navigation'); setNotesOpen(true); }}
-        onVitalsOpen={() => { trackInteraction('היסטוריית מדדים', 'navigation'); setVitalsHistoryOpen(true); }}
+        onCalculatorsOpen={() => { trackInteraction('מחשבונים', 'navigation'); setCalculatorsFromHub(false); setCalculatorsOpen(true); }}
         onHubOpen={() => { trackInteraction('כלי עזר', 'navigation'); setHubOpen(true); }}
         onSupportOpen={() => { trackInteraction('תמיכה', 'navigation'); setSupportOpen(true); }}
         onLanguageBridgeOpen={() => { trackInteraction('גשר שפות', 'navigation'); setLanguageBridgeOpen(true); }}
@@ -215,7 +216,7 @@ export default function VitalsFeature() {
       <HubModal
         isOpen={hubOpen}
         onClose={() => setHubOpen(false)}
-        onCalculatorsOpen={() => setCalculatorsOpen(true)}
+        onCalculatorsOpen={() => { setCalculatorsFromHub(true); setCalculatorsOpen(true); }}
         onSettingsOpen={() => setSettingsOpen(true)}
         onVitalsReferenceOpen={() => setVitalsRefOpen(true)}
         onFeedbackOpen={() => setFeedbackOpen(true)}
@@ -241,7 +242,7 @@ export default function VitalsFeature() {
 
       <CalculatorsModal
         isOpen={calculatorsOpen}
-        onClose={() => { setCalculatorsOpen(false); setHubOpen(true); }}
+        onClose={() => { setCalculatorsOpen(false); if (calculatorsFromHub) setHubOpen(true); }}
       />
 
       <SettingsModal

@@ -1,17 +1,17 @@
-import { FileText, Images, Activity, LayoutGrid, Heart, Globe } from 'lucide-react';
+import { FileText, Images, Calculator, LayoutGrid, Heart, Globe } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import HapticButton from './HapticButton';
 
 interface Props {
   onGalleryOpen: () => void;
   onNotesOpen: () => void;
-  onVitalsOpen: () => void;
+  onCalculatorsOpen: () => void;
   onHubOpen: () => void;
   onSupportOpen?: () => void;
   onLanguageBridgeOpen?: () => void;
 }
 
-export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, onHubOpen, onSupportOpen, onLanguageBridgeOpen }: Props) {
+export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpen, onHubOpen, onSupportOpen, onLanguageBridgeOpen }: Props) {
   const t = useTranslation();
 
   return (
@@ -69,14 +69,14 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onVitalsOpen, on
       </HapticButton>
 
       <HapticButton
-        onClick={onVitalsOpen}
+        onClick={onCalculatorsOpen}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-green-600 dark:text-green-400"
-        aria-label={t('vitalsHistory')}
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-indigo-600 dark:text-indigo-400"
+        aria-label={t('calculators')}
       >
-        <Activity size={24} strokeWidth={1.5} />
-        <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('vitalsHistory')}</span>
+        <Calculator size={24} strokeWidth={1.5} />
+        <span className="text-[0.6rem] font-semibold leading-tight text-center">{t('calculators')}</span>
       </HapticButton>
 
       <HapticButton

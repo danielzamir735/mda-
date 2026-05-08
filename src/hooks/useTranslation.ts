@@ -121,6 +121,7 @@ const dict = {
 
     // translation assistance
     languageBridge: 'סיוע בתרגום',
+    calculators: 'מחשבונים',
   },
   en: {
     // existing
@@ -242,6 +243,7 @@ const dict = {
 
     // translation assistance
     languageBridge: 'Translation Assistance',
+    calculators: 'Calculators',
   },
 } as const;
 

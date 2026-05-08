@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Camera, Activity, Trophy } from 'lucide-react';
+import { Camera, Activity, Trophy, History } from 'lucide-react';
 import CameraCapture from '../camera/CameraCapture';
 import AddVitalsModal from '../vitals/components/AddVitalsModal';
+import VitalsHistoryModal from '../vitals/components/VitalsHistoryModal';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useCameraStore } from '../../store/cameraStore';
 import { trackInteraction } from '../../utils/analytics';
@@ -10,6 +11,7 @@ import DailyChallengeModal from '../hub/components/DailyChallengeModal';
 export default function QuickToolsCard() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [addVitalsOpen, setAddVitalsOpen] = useState(false);
+  const [vitalsHistoryOpen, setVitalsHistoryOpen] = useState(false);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const t = useTranslation();
   const addPhoto = useCameraStore((s) => s.addPhoto);
@@ -59,6 +61,22 @@ export default function QuickToolsCard() {
             <span className="text-emt-green text-sm font-bold">{t('addVitals')}</span>
           </button>
 
+          {/* Vitals History */}
+          <button
+            onClick={() => { trackInteraction('היסטוריית מדדים', 'main_tools'); setVitalsHistoryOpen(true); }}
+            className="flex items-center gap-3 px-3 py-2 rounded-2xl
+                       transition-all duration-200 active:scale-95"
+            aria-label={t('vitalsHistory')}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
+                         border border-emt-green/40 bg-emt-green/10"
+            >
+              <History size={18} className="text-emt-green" />
+            </div>
+            <span className="text-emt-green text-sm font-bold">{t('vitalsHistory')}</span>
+          </button>
+
           {/* Daily Challenge */}
           <button
             onClick={() => { trackInteraction('האתגר היומי', 'main_tools'); setChallengeOpen(true); }}
@@ -89,6 +107,11 @@ export default function QuickToolsCard() {
       <AddVitalsModal
         isOpen={addVitalsOpen}
         onClose={() => setAddVitalsOpen(false)}
+      />
+
+      <VitalsHistoryModal
+        isOpen={vitalsHistoryOpen}
+        onClose={() => setVitalsHistoryOpen(false)}
       />
 
       <DailyChallengeModal
