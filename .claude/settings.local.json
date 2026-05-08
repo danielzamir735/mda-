@@ -71,7 +71,8 @@
       "Bash(pip install *)",
       "Bash(python -c ' *)",
       "Bash(python *)",
-      "Bash(git -c http.sslVerify=false push origin v2-features)"
+      "Bash(git -c http.sslVerify=false push origin v2-features)",
+      "Bash(Get-ChildItem *)"
     ]
   },
   "hooks": {
