@@ -29,50 +29,51 @@ function DrugCard({ drug, w }: { drug: Drug; w: number }) {
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <p className={`font-bold text-lg ${drug.color}`}>{drug.name}</p>
-            <p className="text-gray-400 dark:text-emt-muted text-sm mt-0.5">{drug.sub}</p>
-            {drug.note && (
-              <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{drug.note}</p>
-            )}
-          </div>
+      <div className="p-5">
+        {/* Drug name + sub */}
+        <div className="mb-4">
+          <p className={`font-bold text-2xl ${drug.color}`}>{drug.name}</p>
+          <p className="text-gray-400 dark:text-emt-muted text-base mt-0.5">{drug.sub}</p>
+          {drug.note && (
+            <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{drug.note}</p>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-2 items-end shrink-0">
-            {drug.routes.map((r, i) => (
-              <div key={i} className="flex flex-col items-end">
-                <p className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight whitespace-pre-line text-left" dir="ltr">
-                  {r.dose(w)}
-                </p>
-                <span className="text-sm text-gray-400 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-2.5 py-0.5 rounded-full mt-1">
-                  {r.route}
-                </span>
-                {r.max && (
-                  <p className="text-gray-400 dark:text-emt-muted text-sm mt-0.5 text-left" dir="ltr">{r.max}</p>
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Routes — each in its own stacked block */}
+        <div className="flex flex-col gap-4">
+          {drug.routes.map((r, i) => (
+            <div key={i} className={i > 0 ? 'border-t border-gray-100 dark:border-emt-border pt-4' : ''}>
+              <span className="inline-block text-base font-bold text-gray-500 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-4 py-1.5 rounded-full mb-2">
+                {r.route}
+              </span>
+              <p className="text-gray-900 dark:text-emt-light font-bold text-4xl leading-tight whitespace-pre-line" dir="ltr">
+                {r.dose(w)}
+              </p>
+              {r.max && (
+                <p className="text-gray-400 dark:text-emt-muted text-sm mt-1.5 leading-relaxed" dir="ltr">{r.max}</p>
+              )}
+            </div>
+          ))}
         </div>
 
         {hasPrep && (
           <button
             onClick={() => setExpanded(v => !v)}
-            className="mt-3 flex items-center gap-1.5 text-sm text-gray-400 dark:text-emt-muted active:opacity-70"
+            className="mt-5 flex items-center justify-center gap-2 text-base font-bold text-gray-600 dark:text-emt-muted
+                       bg-gray-100 dark:bg-emt-dark rounded-xl px-4 py-3 w-full active:opacity-70 transition-opacity"
           >
-            {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            {expanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
             הכנת תרופה
           </button>
         )}
       </div>
 
       {expanded && hasPrep && (
-        <div className="px-4 pb-4 border-t border-gray-100 dark:border-emt-border">
+        <div className="px-5 pb-5 border-t border-gray-100 dark:border-emt-border">
           {drug.routes.filter(r => r.prep).map((r, i) => (
-            <div key={i} className="mt-3">
-              <p className="text-sm font-bold text-gray-500 dark:text-emt-muted">{r.route}</p>
-              <p className="text-base text-gray-700 dark:text-emt-light mt-1 leading-relaxed">{resolvePrep(r.prep, w)}</p>
+            <div key={i} className="mt-4">
+              <p className="text-base font-bold text-gray-500 dark:text-emt-muted mb-1">{r.route}</p>
+              <p className="text-lg text-gray-800 dark:text-emt-light leading-relaxed">{resolvePrep(r.prep, w)}</p>
             </div>
           ))}
         </div>
@@ -227,21 +228,17 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
               </span>
             </div>
 
-            {/* Scenario grid — all visible at once */}
+            {/* Scenario grid — all visible at once, always colored */}
             <div className="grid grid-cols-2 gap-2.5 px-4 mt-3">
               {PEDIATRIC_SCENARIOS.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => handleScenarioChange(i)}
-                  className={`rounded-2xl py-4 text-base font-bold border-2 transition-colors w-full ${
-                    i === PEDIATRIC_SCENARIOS.length - 1 && PEDIATRIC_SCENARIOS.length % 2 !== 0
-                      ? 'col-span-2'
-                      : ''
-                  } ${
-                    i === activeScenario
-                      ? `${s.bgColor} ${s.color} ${s.borderColor}`
-                      : 'bg-gray-100 dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
-                  }`}
+                  className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
+                    ${i === PEDIATRIC_SCENARIOS.length - 1 && PEDIATRIC_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
+                    ${s.bgColor} ${s.color} ${s.borderColor}
+                    ${i === activeScenario ? 'opacity-100 scale-[1.03] shadow-md' : 'opacity-50'}
+                  `}
                 >
                   {s.label}
                 </button>
