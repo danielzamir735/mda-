@@ -271,7 +271,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
                   תודה רבה לך על התרומה 🙏<br />
                   תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
-                  <span className="text-green-400/80 font-normal text-xs">אנחנו מאוד מעריכים אותך ❤️</span>
+                  <span className="text-green-400/80 font-normal text-xs">זה אומר לנו המון ❤️</span>
                 </p>
               </motion.div>
             )}
