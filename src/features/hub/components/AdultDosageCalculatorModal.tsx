@@ -107,6 +107,17 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
     setActiveScenario(0);
   }
 
+  function handleReset() {
+    setWeightInput('');
+    setAgeInput('');
+    setConfirmed(false);
+    setActiveScenario(0);
+    try {
+      localStorage.removeItem(STORAGE_WEIGHT);
+      localStorage.removeItem(STORAGE_AGE);
+    } catch {}
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-x-hidden">
       {/* Header */}
@@ -242,6 +253,17 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
               {scenario.drugs.map(drug => (
                 <DrugCard key={`${drug.name}-${drug.sub}`} drug={drug} weight={weight} />
               ))}
+            </div>
+
+            {/* Reset button */}
+            <div className="px-4 pb-8 pt-2">
+              <button
+                onClick={handleReset}
+                className="w-full rounded-2xl border-2 border-red-400 text-red-400 font-bold text-xl py-4
+                           active:scale-95 transition-transform bg-red-400/10"
+              >
+                אפס גיל ומשקל
+              </button>
             </div>
           </>
         )}
