@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, type CSSProperties } from 're
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Phone, Globe, ChevronRight, UserPlus, Clock, Check,
-  Loader2, AlertCircle, Search, Plus, Languages, Info, Send,
+  Loader2, AlertCircle, AlertTriangle, Search, Plus, Languages, Info, Send,
   HelpCircle, ShieldCheck, Users, Video, Share2,
   Moon, CalendarDays,
 } from 'lucide-react';
@@ -523,7 +523,10 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
           {count} מתרגמים
         </span>
       ) : (
-        <span className="text-[0.6rem] text-white/40">אין רשומים</span>
+        <span className="flex items-center gap-1 text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
+          <AlertTriangle size={9} className="flex-shrink-0" />
+          עזור לנו לאייש
+        </span>
       )}
     </button>
   );
