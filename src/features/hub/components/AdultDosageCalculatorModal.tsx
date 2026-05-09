@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Stethoscope, Scale } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
@@ -6,6 +6,9 @@ import { ADULT_SCENARIOS } from '../data/adultProtocolData';
 import type { AdultDrug, AdultDrugRoute } from '../data/adultProtocolData';
 
 interface Props { isOpen: boolean; onClose: () => void; }
+
+const STORAGE_WEIGHT = 'adult-dosage-weight';
+const STORAGE_AGE = 'adult-dosage-age';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -64,20 +67,34 @@ const solidBg: Record<string, string> = Object.fromEntries(
 
 export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
-  const [weightInput, setWeightInput] = useState('');
+  const [weightInput, setWeightInput] = useState(() => {
+    try { return localStorage.getItem(STORAGE_WEIGHT) ?? ''; } catch { return ''; }
+  });
+  const [ageInput, setAgeInput] = useState(() => {
+    try { return localStorage.getItem(STORAGE_AGE) ?? ''; } catch { return ''; }
+  });
   const [confirmed, setConfirmed] = useState(false);
   const [activeScenario, setActiveScenario] = useState(0);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_WEIGHT, weightInput); } catch {}
+  }, [weightInput]);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_AGE, ageInput); } catch {}
+  }, [ageInput]);
 
   if (!isOpen) return null;
 
   const weightNum = weightInput !== '' && Number(weightInput) > 0 ? Number(weightInput) : null;
+  const ageNum = ageInput !== '' && Number(ageInput) > 0 ? Number(ageInput) : null;
   const weight = weightNum ?? 0;
   const scenario = ADULT_SCENARIOS[activeScenario];
 
   function handleConfirm() {
     if (!weightNum) return;
     setConfirmed(true);
-    trackEvent('adult_weight_confirmed', { weight: weightNum });
+    trackEvent('adult_weight_confirmed', { weight: weightNum, age: ageNum });
   }
 
   function handleScenarioChange(i: number) {
@@ -91,7 +108,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-x-hidden">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
@@ -112,33 +129,56 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
       <div className="flex-1 overflow-y-auto">
 
         {!confirmed ? (
-          /* ── Weight entry screen ── */
-          <div className="flex flex-col items-center px-6 pt-8 pb-6">
+          /* ── Weight + Age entry screen ── */
+          <div className="flex flex-col items-center px-6 pt-8 pb-6 w-full">
             {/* Icon */}
             <div className="w-20 h-20 rounded-full bg-orange-400/15 border-2 border-orange-400/30 flex items-center justify-center mb-5">
               <Scale size={36} className="text-orange-400" />
             </div>
 
-            <h3 className="text-gray-900 dark:text-emt-light font-bold text-2xl mb-1 text-center">משקל המטופל</h3>
-            <p className="text-gray-400 dark:text-emt-muted text-sm text-center mb-8">הזן משקל לחישוב מינונים מדויק</p>
+            <h3 className="text-gray-900 dark:text-emt-light font-bold text-2xl mb-1 text-center">פרטי המטופל</h3>
+            <p className="text-gray-400 dark:text-emt-muted text-sm text-center mb-8">הזן פרטים לחישוב מינונים מדויק</p>
 
-            {/* Weight input */}
-            <div className="w-full max-w-sm">
-              <div className="rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-5 py-4 flex items-center gap-3 focus-within:border-orange-400 transition-colors mb-4">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder='הזן משקל בק"ג'
-                  value={weightInput}
-                  onChange={e => setWeightInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && weightNum && handleConfirm()}
-                  autoFocus
-                  className="flex-1 bg-transparent text-gray-900 dark:text-emt-light text-3xl font-bold
-                             placeholder-gray-300 dark:placeholder-emt-muted focus:outline-none text-center"
-                />
-                {weightNum && (
-                  <span className="text-base font-bold text-orange-400 shrink-0">ק"ג</span>
-                )}
+            <div className="w-full max-w-sm flex flex-col gap-4">
+              {/* Weight input */}
+              <div>
+                <p className="text-gray-500 dark:text-emt-muted text-sm font-bold mb-2 text-right">משקל</p>
+                <div className="rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-5 py-4 flex items-center gap-3 focus-within:border-orange-400 transition-colors">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder='הזן משקל בק"ג'
+                    value={weightInput}
+                    onChange={e => setWeightInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && weightNum && handleConfirm()}
+                    autoFocus
+                    className="flex-1 min-w-0 bg-transparent text-gray-900 dark:text-emt-light text-3xl font-bold
+                               placeholder-gray-300 dark:placeholder-emt-muted focus:outline-none text-center"
+                  />
+                  {weightNum && (
+                    <span className="text-base font-bold text-orange-400 shrink-0">ק"ג</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Age input */}
+              <div>
+                <p className="text-gray-500 dark:text-emt-muted text-sm font-bold mb-2 text-right">גיל</p>
+                <div className="rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-5 py-4 flex items-center gap-3 focus-within:border-orange-400 transition-colors">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="הזן גיל"
+                    value={ageInput}
+                    onChange={e => setAgeInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && weightNum && handleConfirm()}
+                    className="flex-1 min-w-0 bg-transparent text-gray-900 dark:text-emt-light text-3xl font-bold
+                               placeholder-gray-300 dark:placeholder-emt-muted focus:outline-none text-center"
+                  />
+                  {ageNum && (
+                    <span className="text-base font-bold text-orange-400 shrink-0">שנים</span>
+                  )}
+                </div>
               </div>
 
               <button
@@ -146,7 +186,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
                 disabled={!weightNum}
                 className="w-full rounded-2xl bg-orange-400 text-white font-bold text-xl py-4
                            active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
-                           shadow-lg shadow-orange-400/30"
+                           shadow-lg shadow-orange-400/30 mt-2"
               >
                 חשב מינונים
               </button>
@@ -155,17 +195,24 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
         ) : (
           /* ── Results screen ── */
           <>
-            {/* Weight badge + back */}
+            {/* Patient info badge + back */}
             <div className="px-4 mt-4 flex items-center justify-between">
               <button
                 onClick={handleBack}
                 className="text-sm font-bold text-orange-400 active:opacity-60 transition-opacity"
               >
-                ← שנה משקל
+                ← שנה פרטים
               </button>
-              <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
-                {weight} ק"ג
-              </span>
+              <div className="flex items-center gap-2">
+                {ageNum && (
+                  <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
+                    גיל {ageNum}
+                  </span>
+                )}
+                <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
+                  {weight} ק"ג
+                </span>
+              </div>
             </div>
 
             {/* Scenario grid */}
