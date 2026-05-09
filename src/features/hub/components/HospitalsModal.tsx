@@ -38,6 +38,8 @@ const LEVEL_B: Hospital[] = [
   { name: 'ברזילי',            city: 'אשקלון',      central: '08-674-5111', er: '08-674-5561', lat: 31.669, lng: 34.573 },
   { name: 'אסף הרופא',         city: 'צריפין',      central: '08-977-9020', er: '08-977-9333', lat: 31.930, lng: 34.830 },
   { name: 'הדסה הר הצופים',   city: 'ירושלים',     central: '02-584-4111', er: '02-584-4111', lat: 31.794, lng: 35.239, navQueries: { general: 'מיון הדסה הר הצופים ירושלים', pediatric: 'מיון ילדים הדסה הר הצופים', maternity: 'מיון יולדות הדסה הר הצופים' } },
+  { name: 'אסותא אשדוד',      city: 'אשדוד',       central: '08-300-4100', er: '072-339-8728', lat: 31.801, lng: 34.644, navQueries: { general: 'מיון אסותא אשדוד',              pediatric: 'מיון ילדים אסותא אשדוד',              maternity: 'מיון יולדות אסותא אשדוד' } },
+  { name: 'יוספטל',           city: 'אילת',        central: '08-635-8011', er: '08-635-8011', lat: 29.557, lng: 34.964, navQueries: { general: 'מיון יוספטל אילת',               pediatric: 'מיון ילדים יוספטל אילת',               maternity: 'מיון יולדות יוספטל אילת' } },
 ];
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
