@@ -75,7 +75,8 @@
       "Bash(Get-ChildItem *)",
       "WebFetch(domain:hospitals.clalit.co.il)",
       "WebFetch(domain:www.assutaashdod.co.il)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(dir *)"
     ]
   },
   "hooks": {
