@@ -1835,7 +1835,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               style={{ boxShadow: '0 0 20px rgba(245,158,11,0.12)' }}>
               <div className="bg-amber-500/20 px-4 py-2.5 flex items-center gap-2 border-b border-amber-500/25">
                 <AlertTriangle size={14} className="text-amber-300 shrink-0" />
-                <p className="text-amber-200 text-xs font-black uppercase tracking-widest">אזהרת חירום</p>
+                <p className="text-amber-200 text-xs font-black uppercase tracking-widest">אזהרה</p>
               </div>
               <div className="bg-amber-950/25 px-4 py-3.5">
                 <p className="text-white/90 text-[14px] leading-relaxed font-medium">{medData.emergency_note}</p>
