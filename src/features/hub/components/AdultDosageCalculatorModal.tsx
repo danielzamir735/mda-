@@ -8,13 +8,13 @@ import type { AdultDrug, AdultDrugRoute } from '../data/adultProtocolData';
 interface Props { isOpen: boolean; onClose: () => void; }
 
 const STORAGE_WEIGHT = 'adult-dosage-weight';
-const STORAGE_AGE = 'adult-dosage-age';
+const STORAGE_AGE    = 'adult-dosage-age';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function resolveDose(route: AdultDrugRoute, weight: number): { text: string; needsWeight: boolean } {
-  if (typeof route.dose === 'string') return { text: route.dose, needsWeight: false };
-  return { text: route.dose(weight), needsWeight: false };
+function resolveDose(route: AdultDrugRoute, weight: number): string {
+  if (typeof route.dose === 'string') return route.dose;
+  return route.dose(weight);
 }
 
 // ─── Drug Card ────────────────────────────────────────────────────────────────
@@ -32,25 +32,22 @@ function DrugCard({ drug, weight }: { drug: AdultDrug; weight: number }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          {drug.routes.map((r, i) => {
-            const { text } = resolveDose(r, weight);
-            return (
-              <div key={i} className={i > 0 ? 'border-t border-gray-100 dark:border-emt-border pt-4' : ''}>
-                <span className="inline-block text-base font-bold text-gray-500 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-4 py-1.5 rounded-full mb-2">
-                  {r.route}
-                </span>
-                <p className="text-gray-900 dark:text-emt-light font-bold text-4xl leading-tight" dir="ltr">
-                  {text}
-                </p>
-                {r.max && (
-                  <p className="text-gray-400 dark:text-emt-muted text-sm mt-1.5 leading-relaxed" dir="ltr">{r.max}</p>
-                )}
-                {r.note && (
-                  <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{r.note}</p>
-                )}
-              </div>
-            );
-          })}
+          {drug.routes.map((r, i) => (
+            <div key={i} className={i > 0 ? 'border-t border-gray-100 dark:border-emt-border pt-4' : ''}>
+              <span className="inline-block text-base font-bold text-gray-500 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-4 py-1.5 rounded-full mb-2">
+                {r.route}
+              </span>
+              <p className="text-gray-900 dark:text-emt-light font-bold text-4xl leading-tight" dir="ltr">
+                {resolveDose(r, weight)}
+              </p>
+              {r.max && (
+                <p className="text-gray-400 dark:text-emt-muted text-sm mt-1.5 leading-relaxed" dir="ltr">{r.max}</p>
+              )}
+              {r.note && (
+                <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{r.note}</p>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -67,13 +64,14 @@ const solidBg: Record<string, string> = Object.fromEntries(
 
 export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+
   const [weightInput, setWeightInput] = useState(() => {
     try { return localStorage.getItem(STORAGE_WEIGHT) ?? ''; } catch { return ''; }
   });
   const [ageInput, setAgeInput] = useState(() => {
     try { return localStorage.getItem(STORAGE_AGE) ?? ''; } catch { return ''; }
   });
-  const [confirmed, setConfirmed] = useState(false);
+  const [calculated, setCalculated] = useState(false);
   const [activeScenario, setActiveScenario] = useState(0);
 
   useEffect(() => {
@@ -87,35 +85,19 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const weightNum = weightInput !== '' && Number(weightInput) > 0 ? Number(weightInput) : null;
-  const ageNum = ageInput !== '' && Number(ageInput) > 0 ? Number(ageInput) : null;
-  const weight = weightNum ?? 0;
+  const ageNum    = ageInput   !== '' && Number(ageInput)   > 0 ? Number(ageInput)   : null;
+  const w = weightNum ?? 0;
   const scenario = ADULT_SCENARIOS[activeScenario];
 
-  function handleConfirm() {
+  function handleCalculate() {
     if (!weightNum) return;
-    setConfirmed(true);
+    setCalculated(true);
     trackEvent('adult_weight_confirmed', { weight: weightNum, ...(ageNum ? { age: ageNum } : {}) });
   }
 
   function handleScenarioChange(i: number) {
     setActiveScenario(i);
-    trackEvent('adult_scenario_switch', { scenario: ADULT_SCENARIOS[i].id });
-  }
-
-  function handleBack() {
-    setConfirmed(false);
-    setActiveScenario(0);
-  }
-
-  function handleReset() {
-    setWeightInput('');
-    setAgeInput('');
-    setConfirmed(false);
-    setActiveScenario(0);
-    try {
-      localStorage.removeItem(STORAGE_WEIGHT);
-      localStorage.removeItem(STORAGE_AGE);
-    } catch {}
+    if (calculated) trackEvent('adult_scenario_switch', { scenario: ADULT_SCENARIOS[i].id });
   }
 
   return (
@@ -124,7 +106,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
           <Stethoscope size={22} className="text-orange-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרופות מבוגרים ALS</h2>
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מינון תרופות מבוגרים ALS</h2>
         </div>
         <button
           onClick={onClose}
@@ -139,81 +121,66 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto">
 
-        {!confirmed ? (
-          /* ── Weight + Age entry screen ── */
-          <div className="flex flex-col items-center px-6 pt-8 pb-6 w-full">
-            {/* Icon */}
-            <div className="w-20 h-20 rounded-full bg-orange-400/15 border-2 border-orange-400/30 flex items-center justify-center mb-5">
-              <Scale size={36} className="text-orange-400" />
-            </div>
-
-            <h3 className="text-gray-900 dark:text-emt-light font-bold text-2xl mb-1 text-center">פרטי המטופל</h3>
-            <p className="text-gray-400 dark:text-emt-muted text-sm text-center mb-8">הזן פרטים לחישוב מינונים מדויק</p>
-
-            <div className="w-full max-w-sm flex flex-col gap-4">
-              {/* Weight input */}
-              <div>
-                <p className="text-gray-500 dark:text-emt-muted text-sm font-bold mb-2 text-right">משקל</p>
-                <div className="rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-5 py-4 flex items-center gap-3 focus-within:border-orange-400 transition-colors">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder='הזן משקל בק"ג'
-                    value={weightInput}
-                    onChange={e => setWeightInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && weightNum && handleConfirm()}
-                    autoFocus
-                    className="flex-1 min-w-0 bg-transparent text-gray-900 dark:text-emt-light text-3xl font-bold
-                               placeholder-gray-300 dark:placeholder-emt-muted focus:outline-none text-center"
-                  />
-                  {weightNum && (
-                    <span className="text-base font-bold text-orange-400 shrink-0">ק"ג</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Age input */}
-              <div>
-                <p className="text-gray-500 dark:text-emt-muted text-sm font-bold mb-2 text-right">גיל</p>
-                <div className="rounded-2xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-5 py-4 flex items-center gap-3 focus-within:border-orange-400 transition-colors">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="הזן גיל"
-                    value={ageInput}
-                    onChange={e => setAgeInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && weightNum && handleConfirm()}
-                    className="flex-1 min-w-0 bg-transparent text-gray-900 dark:text-emt-light text-3xl font-bold
-                               placeholder-gray-300 dark:placeholder-emt-muted focus:outline-none text-center"
-                  />
-                  {ageNum && (
-                    <span className="text-base font-bold text-orange-400 shrink-0">שנים</span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={handleConfirm}
-                disabled={!weightNum}
-                className="w-full rounded-2xl bg-orange-400 text-white font-bold text-xl py-4
-                           active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
-                           shadow-lg shadow-orange-400/30 mt-2"
-              >
-                חשב מינונים
-              </button>
-            </div>
+        {/* Hero */}
+        <div className="flex flex-col items-center text-center px-6 pt-4 pb-3">
+          <div className="w-12 h-12 rounded-full bg-orange-400/15 border-2 border-orange-400/30 flex items-center justify-center mb-2">
+            <Scale size={22} className="text-orange-400" />
           </div>
-        ) : (
-          /* ── Results screen ── */
+          <h3 className="text-gray-900 dark:text-emt-light font-bold text-base mb-0.5">מינון תרופות מבוגרים</h3>
+          <p className="text-gray-400 dark:text-emt-muted text-xs">הזן גיל ומשקל לחישוב מינונים מדויק</p>
+        </div>
+
+        {/* Inputs */}
+        <div className="px-4 flex flex-col gap-3 pb-5">
+
+          {/* Age input */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">גיל המטופל</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="הזן גיל"
+              value={ageInput}
+              onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
+              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-orange-400 transition-colors"
+            />
+          </div>
+
+          {/* Weight input */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder='הזן משקל בק"ג'
+              value={weightInput}
+              onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
+              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
+                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+                         focus:outline-none focus:border-orange-400 transition-colors"
+            />
+          </div>
+
+          {/* Calculate button */}
+          <button
+            onClick={handleCalculate}
+            disabled={!weightNum}
+            className="w-full rounded-xl bg-orange-400 text-white font-bold text-base py-3 mt-1
+                       active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
+                       shadow-md shadow-orange-400/25"
+          >
+            חשב מינונים
+          </button>
+        </div>
+
+        {/* Results */}
+        {calculated && w > 0 && (
           <>
-            {/* Patient info badge + back */}
+            {/* Info badge */}
             <div className="px-4 mt-4 flex items-center justify-between">
-              <button
-                onClick={handleBack}
-                className="text-sm font-bold text-orange-400 active:opacity-60 transition-opacity"
-              >
-                ← שנה פרטים
-              </button>
+              <p className="text-gray-900 dark:text-emt-light font-bold text-xl">בחר תרחיש</p>
               <div className="flex items-center gap-2">
                 {ageNum && (
                   <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
@@ -221,49 +188,35 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
                   </span>
                 )}
                 <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
-                  {weight} ק"ג
+                  {w} ק"ג
                 </span>
               </div>
             </div>
 
             {/* Scenario grid */}
-            <div className="px-4 mt-4 mb-2">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-3">בחר תרחיש</p>
-              <div className="grid grid-cols-2 gap-3">
-                {ADULT_SCENARIOS.map((s, i) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleScenarioChange(i)}
-                    className={`rounded-2xl py-4 text-lg font-bold border-2 transition-all w-full
-                      ${i === ADULT_SCENARIOS.length - 1 && ADULT_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
-                      ${i === activeScenario
-                        ? `${solidBg[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
-                        : `bg-white dark:bg-emt-gray ${s.color} ${s.borderColor}`
-                      }
-                    `}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-3 px-4 mt-3">
+              {ADULT_SCENARIOS.map((s, i) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleScenarioChange(i)}
+                  className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
+                    ${i === ADULT_SCENARIOS.length - 1 && ADULT_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
+                    ${i === activeScenario
+                      ? `${solidBg[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
+                      : `bg-white dark:bg-emt-gray ${s.color} ${s.borderColor}`
+                    }
+                  `}
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
 
             {/* Drug cards */}
             <div className="flex flex-col gap-2 p-4 pt-3">
               {scenario.drugs.map(drug => (
-                <DrugCard key={`${drug.name}-${drug.sub}`} drug={drug} weight={weight} />
+                <DrugCard key={`${drug.name}-${drug.sub}`} drug={drug} weight={w} />
               ))}
-            </div>
-
-            {/* Reset button */}
-            <div className="px-4 pb-8 pt-2">
-              <button
-                onClick={handleReset}
-                className="w-full rounded-2xl border-2 border-red-400 text-red-400 font-bold text-xl py-4
-                           active:scale-95 transition-transform bg-red-400/10"
-              >
-                אפס גיל ומשקל
-              </button>
             </div>
           </>
         )}
