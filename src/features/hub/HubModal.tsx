@@ -754,9 +754,6 @@ https://hovesh-plus.vercel.app/`;
             >
               הצטרפות לערוץ הוואטסאפ
             </a>
-            <p className="text-center text-gray-600 text-xs mt-2">
-              ערוץ חד-כיווני · ללא ספאם · ניתן לעזוב בכל עת
-            </p>
           </div>
         </div>
       )}
