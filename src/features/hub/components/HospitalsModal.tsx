@@ -52,40 +52,77 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function NearestERButton() {
-  const [loading, setLoading] = useState(false);
+type NearbyHospital = Hospital & { lat: number; lng: number; distKm: number };
 
-  function navigateToNearest() {
+function NearestERButton() {
+  const [phase, setPhase] = useState<'idle' | 'loading' | 'list'>('idle');
+  const [nearby, setNearby] = useState<NearbyHospital[]>([]);
+
+  function findNearby() {
     if (!navigator.geolocation) {
       trackEvent('hospital_nav_nearest_er_fallback');
       window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
       return;
     }
 
-    setLoading(true);
+    setPhase('loading');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const all = [...LEVEL_A, ...LEVEL_B].filter(
           (h): h is Hospital & { lat: number; lng: number } => h.lat !== undefined && h.lng !== undefined,
         );
-        let nearest = all[0];
-        let minDist = Infinity;
-        for (const h of all) {
-          const d = haversineKm(coords.latitude, coords.longitude, h.lat, h.lng);
-          if (d < minDist) { minDist = d; nearest = h; }
-        }
-        const query = nearest.navQueries?.general ?? `מיון ${nearest.name} ${nearest.city}`;
-        trackEvent('hospital_nav_nearest_er');
-        window.open(`https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`, '_blank');
-        setLoading(false);
+        const sorted = all
+          .map(h => ({ ...h, distKm: haversineKm(coords.latitude, coords.longitude, h.lat, h.lng) }))
+          .sort((a, b) => a.distKm - b.distKm)
+          .slice(0, 5);
+        setNearby(sorted);
+        setPhase('list');
+        trackEvent('hospital_nav_nearby_list');
       },
       () => {
-        // Location denied — fall back to generic search
         trackEvent('hospital_nav_nearest_er_fallback');
         window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
-        setLoading(false);
+        setPhase('idle');
       },
       { timeout: 8000 },
+    );
+  }
+
+  function navigateTo(h: NearbyHospital) {
+    const query = h.navQueries?.general ?? `מיון ${h.name} ${h.city}`;
+    trackEvent('hospital_nav_nearest_er', { hospital: h.name });
+    window.open(`https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`, '_blank');
+  }
+
+  if (phase === 'list') {
+    return (
+      <div className="flex flex-col gap-2 py-2 mb-1">
+        <div className="flex items-center justify-between px-1 pb-1">
+          <span className="text-gray-500 dark:text-emt-muted text-xs font-medium">בתי חולים קרובים — בחר/י יעד</span>
+          <button
+            onClick={() => setPhase('idle')}
+            className="text-gray-400 dark:text-emt-muted hover:text-gray-700 dark:hover:text-emt-light active:scale-90 transition-all p-1 -m-1"
+            aria-label="סגור"
+          >
+            <X size={15} />
+          </button>
+        </div>
+        {nearby.map(h => (
+          <button
+            key={h.name}
+            onClick={() => navigateTo(h)}
+            className="flex items-center justify-between w-full rounded-xl px-4 py-3.5
+                       bg-red-50 dark:bg-emt-red/10 border border-red-200 dark:border-emt-red/30
+                       active:scale-95 transition-transform"
+          >
+            <div className="flex flex-col text-right gap-0.5">
+              <span className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight">{h.name}</span>
+              <span className="text-gray-500 dark:text-emt-muted text-xs">{h.city} · {h.distKm.toFixed(1)} ק"מ</span>
+            </div>
+            <Navigation size={20} className="text-emt-red shrink-0" />
+          </button>
+        ))}
+      </div>
     );
   }
 
@@ -116,10 +153,10 @@ function NearestERButton() {
           }}
         />
 
-        {/* Main circle button — uses geolocation to find nearest hospital in our list */}
+        {/* Main circle button */}
         <button
-          onClick={navigateToNearest}
-          disabled={loading}
+          onClick={findNearby}
+          disabled={phase === 'loading'}
           className="relative z-10 flex flex-col items-center justify-center gap-1.5
                      w-28 h-28 rounded-full text-white font-black text-center
                      active:scale-90 transition-transform disabled:opacity-70"
@@ -128,12 +165,12 @@ function NearestERButton() {
             boxShadow: '0 6px 32px rgba(239,35,60,0.7), 0 0 0 3px rgba(239,35,60,0.3)',
           }}
         >
-          {loading
+          {phase === 'loading'
             ? <Loader2 size={28} strokeWidth={2.5} className="animate-spin" />
             : <Navigation size={28} strokeWidth={2.5} />
           }
           <span className="text-[9px] leading-tight font-black tracking-wide px-1">
-            ניווט לבית החולים<br />הקרוב ביותר
+            בתי חולים<br />קרובים אליי
           </span>
         </button>
       </div>
