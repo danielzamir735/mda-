@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS daily_questions (
   id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   question_date date        NOT NULL,
-  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als', 'med_v3', 'abbr', 'red_flag')),
+  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als', 'med_v3', 'med_v4', 'abbr', 'red_flag', 'spot_error', 'radio_challenge')),
   content       jsonb       NOT NULL,
   created_at    timestamptz DEFAULT now(),
   CONSTRAINT unique_daily_question UNIQUE (question_date, question_type)
@@ -21,14 +21,20 @@ CREATE POLICY "dq_insert_all" ON daily_questions FOR INSERT WITH CHECK (true);
 CREATE TABLE IF NOT EXISTS daily_responses (
   id            uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   session_id    text        NOT NULL,
-  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als')),
+  question_type text        NOT NULL CHECK (question_type IN ('bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'radio_challenge')),
   question_date date        NOT NULL DEFAULT CURRENT_DATE,
-  is_correct    boolean     NOT NULL,
-  time_taken    integer     NOT NULL,
+  is_correct    boolean,
+  time_taken    integer,
   answer_index  integer     NOT NULL CHECK (answer_index BETWEEN 0 AND 3),
   created_at    timestamptz DEFAULT now(),
   CONSTRAINT unique_session_response UNIQUE (session_id, question_type, question_date)
 );
+
+-- Migration: widen the question_type check constraint to include all 6 block types
+-- Run this if upgrading an existing database:
+-- ALTER TABLE daily_responses DROP CONSTRAINT IF EXISTS daily_responses_question_type_check;
+-- ALTER TABLE daily_responses ADD CONSTRAINT daily_responses_question_type_check
+--   CHECK (question_type IN ('bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'radio_challenge'));
 
 CREATE INDEX IF NOT EXISTS idx_dr_date_type
   ON daily_responses (question_date, question_type);

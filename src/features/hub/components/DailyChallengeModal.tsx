@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
+  Search, Mic,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,9 +14,9 @@ import { supabase } from '../../../lib/supabase';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
-type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr' | 'red_flag' | 'spot_error' | 'radio_challenge';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
-type BlockId = 'A' | 'B' | 'C' | 'D';
+type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
 interface ClinicalQuestion {
   question: string;
@@ -51,6 +52,26 @@ interface RedFlagQ {
   options: string[];
   correct_index: number;
   explanation: string;
+}
+
+interface SpotErrorQ {
+  dispatch_opener: string;
+  scenario: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+  topic_tag: string;
+}
+
+interface RadioChallengeQ {
+  dispatch_opener: string;
+  scenario: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+  topic_tag: string;
 }
 
 interface DayCache<T> {
@@ -92,6 +113,8 @@ const CACHE_KEYS = {
   med: 'daily_challenge_med_v4',
   abbr: 'daily_challenge_abbr_v2',
   red_flag: 'daily_challenge_redflag_v2',
+  spot_error: 'daily_challenge_spoterror_v1',
+  radio: 'daily_challenge_radio_v1',
 } as const;
 
 const STATS_CACHE_KEY: Record<QuizCategory, string> = {
@@ -99,7 +122,12 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   als: 'daily_stats_als_v1',
   med_v3: 'daily_stats_med_v1',
   abbr: 'daily_stats_abbr_v1',
+  red_flag: 'daily_stats_redflag_v1',
+  spot_error: 'daily_stats_spoterror_v1',
+  radio_challenge: 'daily_stats_radio_v1',
 };
+
+const PARTICIPANT_BASE = 430;
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
 const CATEGORY_FULL: Record<ClinicalCategory, string> = { bls: 'החייאה בסיסית', als: 'החייאה מתקדמת' };
@@ -187,6 +215,60 @@ const RED_FLAG_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. �
   "correct_index": X,
   "explanation": "הסבר קליני (2-3 משפטים) — מדוע זהו הסימן הקריטי ומה ההשלכות הפיזיולוגיות"
 }`;
+
+function buildSpotErrorPrompt(recentTopics: string[]): string {
+  const avoidSection = recentTopics.length > 0
+    ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
+    : '';
+  return `אתה מדריך פרמדיק בכיר של מד"א (מגן דוד אדום). משימתך: כתוב תרחיש קליני ריאליסטי המכיל טעות מקצועית אחת ברורה, מוטמעת בתוך הנרטיב.
+
+כללים מחייבים:
+1. פתח עם משפט שיגור קצר: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום/נסיבות קצרות]"
+2. תאר את ההתערבות בעברית רפואית מקצועית גבוהה (3-4 משפטים) — כולל פעולה אחת שגויה לפי פרוטוקולי מד"א. דוגמאות לטעויות: תרופה שגויה, מינון שגוי, עיתוי לא נכון, פרוטוקול מיושן, ממצא שהוחמץ, התוויית נגד שנעלמה, סדר עדיפויות שגוי.
+3. השאלה: "מה הטעות המקצועית שזוהתה בטיפול?"
+4. 4 תשובות: אחת היא הטעות האמיתית (ספציפית ומדויקת), השאר — פעולות שלא קרו בתרחיש, או פעולות שנראות חשודות אך נכונות.
+5. הסבר (2-3 משפטים): מה הייתה הטעות, מה הנזק הפוטנציאלי לפי פיזיולוגיה, ומה היה הנכון על פי פרוטוקולי מד"א.
+6. שפה: עברית רפואית מקצועית גבוהה — "בילטרלי", "יציב המודינמית", "נשימות אגונליות", "ספקטרום רחב".
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "dispatch_opener": "משפט שיגור אחד תמציתי",
+  "scenario": "תיאור התרחיש המלא עם הטעות המוטמעת (3-4 משפטים קליניים מפורטים)",
+  "question": "מה הטעות המקצועית שזוהתה בטיפול?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר קליני (2-3 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי פרוטוקולי מד\\"א",
+  "topic_tag": "נושא קצר בעברית (1-3 מילים)"
+}`;
+}
+
+function buildRadioChallengePrompt(recentTopics: string[]): string {
+  const avoidSection = recentTopics.length > 0
+    ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
+    : '';
+  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש מורכב וכאוטי ו-4 סיכומי SBAR לדיווח לרופא המאשר.
+
+כללים מחייבים:
+1. פתח עם משפט שיגור: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום]"
+2. תאר תרחיש עם ממצאים מרובים: הכרה, סימנים חיוניים, ממצאים פיזיקליים, רקע רפואי, פעולות שבוצעו (4-5 משפטים).
+3. השאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?"
+4. 4 אפשרויות SBAR:
+   - אחת אידיאלית: מדויקת, תמציתית, סדורה (Situation → Background → Assessment → Recommendation).
+   - שלוש עם פגמים: מידע קריטי חסר, סדר לא נכון, מילולית מדי, הערכה שגויה, המלצה לא מתאימה לחומרת המצב.
+5. הסבר (2-3 משפטים): מה מייחד את הסיכום הנכון ומה הבעיה בשאר.
+6. שפה: עברית רפואית מקצועית גבוהה.
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "dispatch_opener": "משפט שיגור אחד תמציתי",
+  "scenario": "תיאור התרחיש המורכב (4-5 משפטים עם ממצאים מרובים)",
+  "question": "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?",
+  "options": ["SBAR א — ...", "SBAR ב — ...", "SBAR ג — ...", "SBAR ד — ..."],
+  "correct_index": X,
+  "explanation": "הסבר (2-3 משפטים): מה מייחד את הסיכום הנכון ומה חסר/שגוי בשאר",
+  "topic_tag": "נושא קצר בעברית (1-3 מילים)"
+}`;
+}
 
 // ─── Cache helpers ────────────────────────────────────────────────────────────
 
@@ -317,6 +399,37 @@ async function generateRedFlag(): Promise<RedFlagQ> {
   return r;
 }
 
+async function getRecentTopicsForDiversity(): Promise<string[]> {
+  const { data } = await supabase
+    .from('daily_questions')
+    .select('content')
+    .in('question_type', ['bls', 'als', 'spot_error', 'radio_challenge'])
+    .order('question_date', { ascending: false })
+    .limit(60);
+  if (!data) return [];
+  return data
+    .map((r: { content?: { topic_tag?: string } }) => r.content?.topic_tag as string)
+    .filter(Boolean);
+}
+
+async function generateSpotError(): Promise<SpotErrorQ> {
+  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
+  const q = await withRetry(() => parseGeminiJSON<SpotErrorQ>(buildSpotErrorPrompt(recentTopics)));
+  if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+    throw new Error('Invalid spot error format');
+  }
+  return q;
+}
+
+async function generateRadioChallenge(): Promise<RadioChallengeQ> {
+  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
+  const q = await withRetry(() => parseGeminiJSON<RadioChallengeQ>(buildRadioChallengePrompt(recentTopics)));
+  if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+    throw new Error('Invalid radio challenge format');
+  }
+  return q;
+}
+
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
 function parseClinicalContent(c: ClinicalQuestion): ClinicalQuestion {
@@ -412,7 +525,7 @@ async function fetchGlobalStats(category: QuizCategory, correctIndex: number | n
 }
 
 async function shareChallengeResult(score: number): Promise<void> {
-  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/4! 🏆`;
+  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/6! 🏆`;
   const url = typeof window !== 'undefined' ? window.location.origin : '';
   const shareData: ShareData = { title: 'חובש +', text, url };
   try {
@@ -660,16 +773,16 @@ function SuccessScreen({ score, streak, onClose }: {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 240, damping: 20, delay: 0.05 }}
       >
-        <div className="flex items-center gap-2">
-          {[0, 1, 2, 3].map((i) => (
+        <div className="flex items-center gap-1.5">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <motion.div
               key={i}
               initial={{ scale: 0, rotate: -30 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.2 + i * 0.08 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.2 + i * 0.07 }}
             >
               <Star
-                size={36}
+                size={28}
                 className={i < score ? 'text-amber-400 fill-amber-400' : 'text-emt-border fill-transparent'}
               />
             </motion.div>
@@ -683,9 +796,9 @@ function SuccessScreen({ score, streak, onClose }: {
           className="text-center"
         >
           <p className="text-emt-light font-black text-2xl leading-tight">
-            {score === 4 ? '🏆 מושלם! כל הכבוד!' : score >= 3 ? '⭐ כמעט מושלם!' : score >= 2 ? '💪 לא רע!' : '📚 המשך ללמוד!'}
+            {score === 6 ? '🏆 מושלם! כל הכבוד!' : score >= 5 ? '⭐ כמעט מושלם!' : score >= 4 ? '💪 מצוין!' : score >= 3 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
           </p>
-          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/4</p>
+          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/6</p>
         </motion.div>
 
         {streak > 0 && (
@@ -757,12 +870,14 @@ function GridCard({
   status,
   isAnswered,
   isCorrect,
+  participantCount,
   onClick,
 }: {
   config: GridCardConfig;
   status: LoadStatus;
   isAnswered: boolean;
   isCorrect?: boolean;
+  participantCount?: number;
   onClick: () => void;
 }) {
   const borderClass = isAnswered
@@ -827,7 +942,13 @@ function GridCard({
         {config.blockTitle}
       </p>
 
-      {!isAnswered && status === 'ready' && (
+      {!isAnswered && status === 'ready' && participantCount !== undefined && participantCount > 0 && (
+        <div className="absolute bottom-3 z-10 flex items-center gap-1">
+          <Users size={9} className="text-white/25" />
+          <span className="text-white/25 text-[9px] font-semibold tabular-nums">{participantCount.toLocaleString('he-IL')}</span>
+        </div>
+      )}
+      {!isAnswered && status === 'ready' && (participantCount === undefined || participantCount === 0) && (
         <p className="absolute bottom-4 z-10 text-white/20 text-[10px] font-semibold tracking-wide">הקש לשחק</p>
       )}
       {!isAnswered && status === 'error' && (
@@ -882,10 +1003,26 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [redQuestion, setRedQuestion] = useState<RedFlagQ | null>(null);
   const [redAnsweredIdx, setRedAnsweredIdx] = useState<number | null>(null);
   const [showRedExpl, setShowRedExpl] = useState(false);
+  const [redStats, setRedStats] = useState<GlobalStats | null>(null);
+
+  // Block E — Spot the Error
+  const [spotStatus, setSpotStatus] = useState<LoadStatus>('idle');
+  const [spotQuestion, setSpotQuestion] = useState<SpotErrorQ | null>(null);
+  const [spotAnsweredIdx, setSpotAnsweredIdx] = useState<number | null>(null);
+  const [showSpotExpl, setShowSpotExpl] = useState(false);
+  const [spotStats, setSpotStats] = useState<GlobalStats | null>(null);
+
+  // Block F — Radio Challenge
+  const [radioStatus, setRadioStatus] = useState<LoadStatus>('idle');
+  const [radioQuestion, setRadioQuestion] = useState<RadioChallengeQ | null>(null);
+  const [radioAnsweredIdx, setRadioAnsweredIdx] = useState<number | null>(null);
+  const [showRadioExpl, setShowRadioExpl] = useState(false);
+  const [radioStats, setRadioStats] = useState<GlobalStats | null>(null);
 
   // Overall
   const [streak, setStreak] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [blockParticipants, setBlockParticipants] = useState<Partial<Record<BlockId, number>>>({});
 
   const questionStartRef = useRef<number | null>(null);
 
@@ -894,23 +1031,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const medIsAnswered = medAnsweredIdx !== null;
   const abbrIsAnswered = abbrAnsweredIdx !== null;
   const redIsAnswered = redAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered;
+  const spotIsAnswered = spotAnsweredIdx !== null;
+  const radioIsAnswered = radioAnsweredIdx !== null;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered && spotIsAnswered && radioIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
     medIsAnswered && medAnsweredIdx === medData?.correct_index,
     abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index,
     redIsAnswered && redAnsweredIdx === redQuestion?.correct_index,
+    spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index,
+    radioIsAnswered && radioAnsweredIdx === radioQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered, spotIsAnswered, radioIsAnswered].filter(Boolean).length;
 
-  const participantCount = (() => {
-    const today = getToday();
-    let hash = 0;
-    for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
-    return (globalStats?.total ?? 0) + 70 + (hash % 181);
-  })();
+  const clinicalParticipantCount = (globalStats?.total ?? 0) + PARTICIPANT_BASE;
 
   // ── Grid card configs ──
   const BLOCK_CONFIGS: Record<BlockId, GridCardConfig> = {
@@ -967,6 +1103,32 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       iconBorder: 'border-orange-400/35',
       blockTitle: 'נורת אזהרה',
       emoji: '🚨',
+    },
+    E: {
+      neonBorder: 'border-rose-500/55',
+      glowColor: '0 0 30px rgba(244,63,94,0.22)',
+      cardBg: 'bg-gradient-to-b from-rose-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(244,63,94,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(244,63,94,0.4)',
+      labelColor: 'text-rose-400',
+      icon: <Search size={20} className="text-rose-400" />,
+      iconBg: 'bg-rose-400/20',
+      iconBorder: 'border-rose-400/35',
+      blockTitle: 'הפוסל במומו',
+      emoji: '🔎',
+    },
+    F: {
+      neonBorder: 'border-cyan-500/55',
+      glowColor: '0 0 30px rgba(6,182,212,0.22)',
+      cardBg: 'bg-gradient-to-b from-cyan-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(6,182,212,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(6,182,212,0.4)',
+      labelColor: 'text-cyan-400',
+      icon: <Mic size={20} className="text-cyan-400" />,
+      iconBg: 'bg-cyan-400/20',
+      iconBorder: 'border-cyan-400/35',
+      blockTitle: 'תיעוד ב-60 שניות',
+      emoji: '🎙️',
     },
   };
 
@@ -1025,6 +1187,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setRedQuestion(cachedRed.data);
       setRedAnsweredIdx(cachedRed.answeredIdx ?? null);
       setRedStatus('ready');
+      if (cachedRed.answeredIdx !== null && cachedRed.answeredIdx !== undefined) {
+        fetchGlobalStats('spot_error', null).then(() => {}); // warm connection
+      }
     } else {
       setRedStatus('loading');
       fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag).then((q) => {
@@ -1033,6 +1198,74 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setRedStatus('ready');
       }).catch(() => setRedStatus('error'));
     }
+
+    const cachedSpot = loadCache<SpotErrorQ>(CACHE_KEYS.spot_error);
+    if (cachedSpot) {
+      setSpotQuestion(cachedSpot.data);
+      setSpotAnsweredIdx(cachedSpot.answeredIdx ?? null);
+      setSpotStatus('ready');
+      if (cachedSpot.answeredIdx !== null && cachedSpot.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('spot_error');
+        if (seeded) setSpotStats(seeded);
+        fetchGlobalStats('spot_error', cachedSpot.data.correct_index).then(({ stats }) => {
+          setSpotStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
+    } else {
+      setSpotStatus('loading');
+      fetchOrCreateBlock<SpotErrorQ>('spot_error', generateSpotError).then((q) => {
+        setSpotQuestion(q);
+        saveCache(CACHE_KEYS.spot_error, q);
+        setSpotStatus('ready');
+      }).catch(() => setSpotStatus('error'));
+    }
+
+    const cachedRadio = loadCache<RadioChallengeQ>(CACHE_KEYS.radio);
+    if (cachedRadio) {
+      setRadioQuestion(cachedRadio.data);
+      setRadioAnsweredIdx(cachedRadio.answeredIdx ?? null);
+      setRadioStatus('ready');
+      if (cachedRadio.answeredIdx !== null && cachedRadio.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('radio_challenge');
+        if (seeded) setRadioStats(seeded);
+        fetchGlobalStats('radio_challenge', cachedRadio.data.correct_index).then(({ stats }) => {
+          setRadioStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
+    } else {
+      setRadioStatus('loading');
+      fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge).then((q) => {
+        setRadioQuestion(q);
+        saveCache(CACHE_KEYS.radio, q);
+        setRadioStatus('ready');
+      }).catch(() => setRadioStatus('error'));
+    }
+
+    // Fetch all participant counts for grid tiles
+    const fetchParticipants = async () => {
+      const t = getToday();
+      try {
+        const { data } = await supabase
+          .from('daily_responses')
+          .select('question_type')
+          .eq('question_date', t)
+          .in('question_type', ['bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'radio_challenge']);
+        if (!data) return;
+        const counts: Record<string, number> = {};
+        data.forEach((r: { question_type: string }) => {
+          counts[r.question_type] = (counts[r.question_type] ?? 0) + 1;
+        });
+        setBlockParticipants({
+          A: ((counts['bls'] ?? 0) + (counts['als'] ?? 0)) + PARTICIPANT_BASE,
+          B: (counts['med_v3'] ?? 0) + PARTICIPANT_BASE,
+          C: (counts['abbr'] ?? 0) + PARTICIPANT_BASE,
+          D: (counts['red_flag'] ?? 0) + PARTICIPANT_BASE,
+          E: (counts['spot_error'] ?? 0) + PARTICIPANT_BASE,
+          F: (counts['radio_challenge'] ?? 0) + PARTICIPANT_BASE,
+        });
+      } catch { /* noop */ }
+    };
+    fetchParticipants();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -1045,7 +1278,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setGlobalStats(null); setIsStatsOffline(false);
       setMedStatus('idle'); setMedData(null); setMedAnsweredIdx(null); setShowMedExpl(false); setMedStats(null);
       setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false); setAbbrStats(null);
-      setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false);
+      setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
+      setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
+      setRadioStatus('idle'); setRadioQuestion(null); setRadioAnsweredIdx(null); setShowRadioExpl(false); setRadioStats(null);
       setShowSuccess(false);
     }
   }, [isOpen]);
@@ -1089,6 +1324,20 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag)
           .then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); })
           .catch(() => setRedStatus('error'));
+      }
+    } else if (activeBlock === 'E' && spotStatus !== 'loading') {
+      if (!loadCache<SpotErrorQ>(CACHE_KEYS.spot_error)) {
+        setSpotStatus('loading'); setSpotQuestion(null); setSpotAnsweredIdx(null);
+        fetchOrCreateBlock<SpotErrorQ>('spot_error', generateSpotError)
+          .then(q => { setSpotQuestion(q); saveCache(CACHE_KEYS.spot_error, q); setSpotStatus('ready'); })
+          .catch(() => setSpotStatus('error'));
+      }
+    } else if (activeBlock === 'F' && radioStatus !== 'loading') {
+      if (!loadCache<RadioChallengeQ>(CACHE_KEYS.radio)) {
+        setRadioStatus('loading'); setRadioQuestion(null); setRadioAnsweredIdx(null);
+        fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge)
+          .then(q => { setRadioQuestion(q); saveCache(CACHE_KEYS.radio, q); setRadioStatus('ready'); })
+          .catch(() => setRadioStatus('error'));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1221,27 +1470,66 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   }, [abbrQuestion, abbrAnsweredIdx]);
 
   // ── Block D handler ──
-  const handleRedAnswer = useCallback((idx: number) => {
+  const handleRedAnswer = useCallback(async (idx: number) => {
     if (!redQuestion || redAnsweredIdx !== null) return;
+    const isCorrect = idx === redQuestion.correct_index;
     setRedAnsweredIdx(idx);
     saveCache(CACHE_KEYS.red_flag, redQuestion, idx);
-    trackEvent('daily_challenge_redflag_answered', { correct: idx === redQuestion.correct_index });
+    setRedStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_redflag_answered', { correct: isCorrect });
+    await saveClinicalResponse('red_flag', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('red_flag', redQuestion.correct_index);
+    setRedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
   }, [redQuestion, redAnsweredIdx]);
+
+  // ── Block E handler ──
+  const handleSpotAnswer = useCallback(async (idx: number) => {
+    if (!spotQuestion || spotAnsweredIdx !== null) return;
+    const isCorrect = idx === spotQuestion.correct_index;
+    setSpotAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.spot_error, spotQuestion, idx);
+    setSpotStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_spot_answered', { correct: isCorrect });
+    await saveClinicalResponse('spot_error', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('spot_error', spotQuestion.correct_index);
+    setSpotStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [spotQuestion, spotAnsweredIdx]);
+
+  // ── Block F handler ──
+  const handleRadioAnswer = useCallback(async (idx: number) => {
+    if (!radioQuestion || radioAnsweredIdx !== null) return;
+    const isCorrect = idx === radioQuestion.correct_index;
+    setRadioAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.radio, radioQuestion, idx);
+    setRadioStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_radio_answered', { correct: isCorrect });
+    await saveClinicalResponse('radio_challenge', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('radio_challenge', radioQuestion.correct_index);
+    setRadioStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [radioQuestion, radioAnsweredIdx]);
 
   if (!isOpen) return null;
 
   // ── Expanded block header ──
   const renderExpandedHeader = (blockId: BlockId) => {
     const cfg = BLOCK_CONFIGS[blockId];
-    const isAnswered =
-      blockId === 'A' ? clinicalIsAnswered :
-      blockId === 'B' ? medIsAnswered :
-      blockId === 'C' ? abbrIsAnswered : redIsAnswered;
-    const isCorrect =
-      blockId === 'A' ? (clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index) :
-      blockId === 'B' ? (medIsAnswered && medAnsweredIdx === medData?.correct_index) :
-      blockId === 'C' ? (abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index) :
-      (redIsAnswered && redAnsweredIdx === redQuestion?.correct_index);
+    const isAnswered = blockIsAnswered(blockId);
+    const isCorrect = blockIsCorrect(blockId);
 
     return (
       <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
@@ -1341,8 +1629,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
             <Users size={11} className="text-emt-muted shrink-0" />
             <span className="text-[10px] text-emt-muted font-semibold">{isStatsOffline ? 'מתחבר...' : 'משתתפים:'}</span>
-            <motion.span key={participantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
-              className="text-[11px] font-black text-emt-light tabular-nums">{participantCount.toLocaleString('he-IL')}
+            <motion.span key={clinicalParticipantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
+              className="text-[11px] font-black text-emt-light tabular-nums">{clinicalParticipantCount.toLocaleString('he-IL')}
             </motion.span>
             {!isStatsOffline && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
           </div>
@@ -1667,6 +1955,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           correctIndex={redQuestion.correct_index}
           answeredIdx={redAnsweredIdx}
           onAnswer={handleRedAnswer}
+          stats={redStats}
           accentCorrect="border-orange-400/55 bg-orange-500/12 text-orange-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
@@ -1683,26 +1972,190 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     );
   };
 
+  // ── Block E content ──
+  const renderBlockE = () => {
+    if (spotStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-rose-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
+        </div>
+      );
+    }
+    if (spotStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setSpotStatus('loading'); fetchOrCreateBlock<SpotErrorQ>('spot_error', generateSpotError).then(q => { setSpotQuestion(q); saveCache(CACHE_KEYS.spot_error, q); setSpotStatus('ready'); }).catch(() => setSpotStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-400/15 border border-rose-400/30 text-rose-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
+        </div>
+      );
+    }
+    if (!spotQuestion) return null;
+
+    const spotCorrect = spotAnsweredIdx === spotQuestion.correct_index;
+
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Dispatch opener */}
+        <div className="rounded-3xl bg-gradient-to-b from-rose-950/50 to-slate-950 border border-rose-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(244,63,94,0.12)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Search size={14} className="text-rose-400 shrink-0" />
+            <p className="text-rose-400 text-[11px] font-black uppercase tracking-widest">קריאת שיגור</p>
+          </div>
+          <p className="text-rose-200/90 text-[14px] font-semibold leading-relaxed mb-3">{spotQuestion.dispatch_opener}</p>
+          <div className="h-px bg-rose-500/20 mb-3" />
+          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{spotQuestion.scenario}</p>
+        </div>
+
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-rose-950/40 to-slate-950/60 border border-rose-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{spotQuestion.question}</p>
+        </div>
+
+        {/* Result banner */}
+        {spotIsAnswered && (
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${spotCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {spotCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${spotCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {spotCorrect ? 'מצאת את הטעות!' : 'לא בדיוק — ראה הסבר'}
+            </span>
+          </motion.div>
+        )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+
+        <MCQOptions
+          options={spotQuestion.options}
+          correctIndex={spotQuestion.correct_index}
+          answeredIdx={spotAnsweredIdx}
+          onAnswer={handleSpotAnswer}
+          stats={spotStats}
+          accentCorrect="border-rose-400/55 bg-rose-500/12 text-rose-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {spotIsAnswered && !showSpotExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowSpotExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-400/15 border border-rose-400/35 py-3.5 text-rose-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר קליני
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Block F content ──
+  const renderBlockF = () => {
+    if (radioStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-cyan-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
+        </div>
+      );
+    }
+    if (radioStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setRadioStatus('loading'); fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge).then(q => { setRadioQuestion(q); saveCache(CACHE_KEYS.radio, q); setRadioStatus('ready'); }).catch(() => setRadioStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
+        </div>
+      );
+    }
+    if (!radioQuestion) return null;
+
+    const radioCorrect = radioAnsweredIdx === radioQuestion.correct_index;
+
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Dispatch opener + scenario */}
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(6,182,212,0.12)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Mic size={14} className="text-cyan-400 shrink-0" />
+            <p className="text-cyan-400 text-[11px] font-black uppercase tracking-widest">קריאת שיגור</p>
+          </div>
+          <p className="text-cyan-200/90 text-[14px] font-semibold leading-relaxed mb-3">{radioQuestion.dispatch_opener}</p>
+          <div className="h-px bg-cyan-500/20 mb-3" />
+          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{radioQuestion.scenario}</p>
+        </div>
+
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/40 to-slate-950/60 border border-cyan-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{radioQuestion.question}</p>
+        </div>
+
+        {/* Result banner */}
+        {radioIsAnswered && (
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${radioCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {radioCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${radioCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {radioCorrect ? 'דיווח מושלם!' : 'ניתן לשיפור — ראה הסבר'}
+            </span>
+          </motion.div>
+        )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר סיכום SBAR —</p>
+
+        <MCQOptions
+          options={radioQuestion.options}
+          correctIndex={radioQuestion.correct_index}
+          answeredIdx={radioAnsweredIdx}
+          onAnswer={handleRadioAnswer}
+          stats={radioStats}
+          accentCorrect="border-cyan-400/55 bg-cyan-500/12 text-cyan-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {radioIsAnswered && !showRadioExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowRadioExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 border border-cyan-400/35 py-3.5 text-cyan-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
   // ── Block status helpers (for grid cards) ──
   const blockStatus = (id: BlockId): LoadStatus => {
     if (id === 'A') return clinicalStatus === 'idle' ? 'ready' : clinicalStatus;
     if (id === 'B') return medStatus;
     if (id === 'C') return abbrStatus;
-    return redStatus;
+    if (id === 'D') return redStatus;
+    if (id === 'E') return spotStatus;
+    return radioStatus;
   };
 
   const blockIsAnswered = (id: BlockId): boolean => {
     if (id === 'A') return clinicalIsAnswered;
     if (id === 'B') return medIsAnswered;
     if (id === 'C') return abbrIsAnswered;
-    return redIsAnswered;
+    if (id === 'D') return redIsAnswered;
+    if (id === 'E') return spotIsAnswered;
+    return radioIsAnswered;
   };
 
   const blockIsCorrect = (id: BlockId): boolean => {
     if (id === 'A') return clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index;
     if (id === 'B') return medIsAnswered && medAnsweredIdx === medData?.correct_index;
     if (id === 'C') return abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index;
-    return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
+    if (id === 'D') return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
+    if (id === 'E') return spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index;
+    return radioIsAnswered && radioAnsweredIdx === radioQuestion?.correct_index;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1748,14 +2201,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         {/* Progress bar */}
         <div className="px-4 pb-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/4 הושלמו</span>
+            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/6 הושלמו</span>
             <span className="text-amber-400/70 text-[11px] font-semibold">{score} נק׳</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"
               initial={{ width: '0%' }}
-              animate={{ width: `${(blocksCompleted / 4) * 100}%` }}
+              animate={{ width: `${(blocksCompleted / 6) * 100}%` }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           </div>
@@ -1775,14 +2228,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               exit="exit"
               className="absolute inset-0 p-4"
             >
-              <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
-                {(['A', 'B', 'C', 'D'] as BlockId[]).map((id) => (
+              <div className="grid grid-cols-2 grid-rows-3 gap-3 h-full">
+                {(['A', 'B', 'C', 'D', 'E', 'F'] as BlockId[]).map((id) => (
                   <GridCard
                     key={id}
                     config={BLOCK_CONFIGS[id]}
                     status={blockStatus(id)}
                     isAnswered={blockIsAnswered(id)}
                     isCorrect={blockIsCorrect(id)}
+                    participantCount={blockParticipants[id]}
                     onClick={() => setActiveBlock(id)}
                   />
                 ))}
@@ -1805,6 +2259,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   {activeBlock === 'B' && renderBlockB()}
                   {activeBlock === 'C' && renderBlockC()}
                   {activeBlock === 'D' && renderBlockD()}
+                  {activeBlock === 'E' && renderBlockE()}
+                  {activeBlock === 'F' && renderBlockF()}
                 </div>
               </div>
 
@@ -1864,6 +2320,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             isCorrect={redAnsweredIdx === redQuestion.correct_index}
             accentColor="orange"
             onClose={() => setShowRedExpl(false)}
+          />
+        )}
+        {showSpotExpl && spotQuestion && spotAnsweredIdx !== null && (
+          <SimpleExplanationModal
+            explanation={spotQuestion.explanation}
+            isCorrect={spotAnsweredIdx === spotQuestion.correct_index}
+            accentColor="purple"
+            onClose={() => setShowSpotExpl(false)}
+          />
+        )}
+        {showRadioExpl && radioQuestion && radioAnsweredIdx !== null && (
+          <SimpleExplanationModal
+            explanation={radioQuestion.explanation}
+            isCorrect={radioAnsweredIdx === radioQuestion.correct_index}
+            accentColor="green"
+            onClose={() => setShowRadioExpl(false)}
           />
         )}
         {showSuccess && (
