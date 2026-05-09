@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Search, Navigation } from 'lucide-react';
+import { X, Search, Navigation, Loader2 } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
@@ -40,7 +40,50 @@ const LEVEL_B: Hospital[] = [
   { name: 'הדסה הר הצופים',   city: 'ירושלים',     central: '02-584-4111', er: '02-584-4111', lat: 31.794, lng: 35.239, navQueries: { general: 'מיון הדסה הר הצופים ירושלים', pediatric: 'מיון ילדים הדסה הר הצופים', maternity: 'מיון יולדות הדסה הר הצופים' } },
 ];
 
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function NearestERButton() {
+  const [loading, setLoading] = useState(false);
+
+  function navigateToNearest() {
+    if (!navigator.geolocation) {
+      trackEvent('hospital_nav_nearest_er_fallback');
+      window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const all = [...LEVEL_A, ...LEVEL_B];
+        let nearest = all[0];
+        let minDist = Infinity;
+        for (const h of all) {
+          const d = haversineKm(coords.latitude, coords.longitude, h.lat, h.lng);
+          if (d < minDist) { minDist = d; nearest = h; }
+        }
+        trackEvent('hospital_nav_nearest_er');
+        window.open(`https://waze.com/ul?ll=${nearest.lat},${nearest.lng}&navigate=yes`, '_blank');
+        setLoading(false);
+      },
+      () => {
+        // Location denied — fall back to generic search
+        trackEvent('hospital_nav_nearest_er_fallback');
+        window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
+        setLoading(false);
+      },
+      { timeout: 8000 },
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center py-6 mb-1">
       <div className="relative flex items-center justify-center">
@@ -68,25 +111,26 @@ function NearestERButton() {
           }}
         />
 
-        {/* Main circle button — opens Waze search for nearest ER */}
-        <a
-          href="https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent('hospital_nav_nearest_er')}
+        {/* Main circle button — uses geolocation to find nearest hospital in our list */}
+        <button
+          onClick={navigateToNearest}
+          disabled={loading}
           className="relative z-10 flex flex-col items-center justify-center gap-1.5
                      w-28 h-28 rounded-full text-white font-black text-center
-                     active:scale-90 transition-transform"
+                     active:scale-90 transition-transform disabled:opacity-70"
           style={{
             background: 'linear-gradient(135deg, #ef233c 0%, #b01020 100%)',
             boxShadow: '0 6px 32px rgba(239,35,60,0.7), 0 0 0 3px rgba(239,35,60,0.3)',
           }}
         >
-          <Navigation size={28} strokeWidth={2.5} />
+          {loading
+            ? <Loader2 size={28} strokeWidth={2.5} className="animate-spin" />
+            : <Navigation size={28} strokeWidth={2.5} />
+          }
           <span className="text-[9px] leading-tight font-black tracking-wide px-1">
             ניווט לבית החולים<br />הקרוב ביותר
           </span>
-        </a>
+        </button>
       </div>
     </div>
   );
