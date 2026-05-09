@@ -248,14 +248,27 @@ function buildMedBagPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך פרמדיק בכיר של מד"א. משימה: צור אתגר "תיק התרופות" — חובש מגיע למקום ומוצא את תרופות המטופל על השולחן. מתוך התרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית ביותר.
+  return `אתה מדריך פרמדיק בכיר של מד"א. משימה: צור אתגר "תיק התרופות" — חובש מגיע לביתו של מטופל ומוצא את תרופותיו הכרוניות על השולחן. מהתרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית לטיפול.
 
 כללים מחייבים:
-1. סיטואציה (2 משפטים): תרחיש מציאותי — מטופל עם ערפול הכרה / קוצר נשימה / כאב / נפילה, גיל ומין. המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
-2. תרופות: רשימה של 3-4 תרופות אמיתיות הנמצאות ליד המטופל (שם מסחרי ישראלי + גנרי). השילוב יצביע בבירור על מצב רפואי אחד קריטי לזיהוי.
+1. סיטואציה (2 משפטים): תרחיש ביתי מציאותי — מטופל עם ערפול הכרה / קוצר נשימה / כאב / נפילה, גיל ומין ספציפיים. המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
+2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים:
+   נוגדי קרישה: אליקוויס (Apixaban), קסרלטו (Rivaroxaban), פרדקסה (Dabigatran), סינטרום (Acenocoumarol), קומדין (Warfarin)
+   לב/קצב: קרדילוק (Bisoprolol), ביטלוק (Metoprolol), קונקור (Bisoprolol), טנורמין (Atenolol), דיגוקסין (Digoxin)
+   יתר לחץ דם: אמלודיפין/נורבסק (Amlodipine), לוסרטן/ואזר (Losartan), ליסינופריל/זסטריל (Lisinopril), רמיפריל/טריטייס (Ramipril), פרינדופריל (Perindopril)
+   משתנים: פורוסמיד/לסיקס (Furosemide), אלדקטון (Spironolactone)
+   סוכרת: גלוקופאג' (Metformin), ג'ארדיאנס (Empagliflozin), ג'אנוביה (Sitagliptin), נובורפיד/הומולוג (Insulin)
+   בלוטת התריס: אויטירוקס/אלטרוקסין (Levothyroxine)
+   כולסטרול: ליפיטור/טורבסטט (Atorvastatin), קרסטור (Rosuvastatin), זוקור (Simvastatin)
+   ניטרטים: איזוקט (Isosorbide), ניטרודרם (Nitroglycerin patch)
+   נוגדי טסיות: אספירין, פלביקס (Clopidogrel), בריליק (Ticagrelor)
+   COPD/אסתמה: ונטולין (Salbutamol), סימביקורט (Budesonide/Formoterol), ספיריבה (Tiotropium)
+   אפילפסיה: לאמיקטל (Lamotrigine), טגרטול (Carbamazepine), קפרה (Levetiracetam), דפאקין (Valproate)
+   נפשי/נוירו: ריספרדל (Risperidone), זיפרקסה (Olanzapine), ציפרלקס (Escitalopram), ליתיום (Lithium)
+   סטרואידים: פרדניזון (Prednisone), מדרול (Methylprednisolone)
 3. שאלה: "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?"
-4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
-5. הסבר (2-3 משפטים): מה מצביעות התרופות, מהי הסכנה הקריטית, ומה יש לדווח.
+4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
+5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
 6. topic_tag: נושא קצר בעברית (1-3 מילים) לגיוון.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
@@ -265,7 +278,7 @@ ${avoidSection}
   "question": "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים): מה מצביעות התרופות, הסכנה הקריטית, ומה לדווח",
+  "explanation": "הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, הסכנה הקריטית, ומה לדווח לצוות המקבל",
   "topic_tag": "נושא קצר בעברית (1-3 מילים)"
 }`;
 }
@@ -2099,14 +2112,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           <p className="text-indigo-300/80 text-[13px] font-semibold leading-snug">קרא את הסיטואציה ואת תרופות המטופל — ואז זהה את הסכנה הקריטית.</p>
         </div>
 
-        {/* Participant count */}
-        {blockParticipants['F'] !== undefined && blockParticipants['F'] > 0 && (
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
-            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['F'] ?? 0).toLocaleString('he-IL')}</span>
-          </div>
-        )}
+        {/* Participant count — always show at least PARTICIPANT_BASE */}
+        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+          <Users size={11} className="text-emt-muted shrink-0" />
+          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+          <motion.span
+            key={blockParticipants['F'] ?? PARTICIPANT_BASE}
+            initial={{ scale: 0.9, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-[11px] font-black text-emt-light tabular-nums"
+          >
+            {(blockParticipants['F'] ?? PARTICIPANT_BASE).toLocaleString('he-IL')}
+          </motion.span>
+        </div>
 
         {/* Situation card */}
         <div className="rounded-3xl bg-gradient-to-b from-indigo-950/50 to-slate-950 border border-indigo-500/30 p-5"
