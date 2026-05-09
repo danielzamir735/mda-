@@ -94,7 +94,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   function handleConfirm() {
     if (!weightNum) return;
     setConfirmed(true);
-    trackEvent('adult_weight_confirmed', { weight: weightNum, age: ageNum });
+    trackEvent('adult_weight_confirmed', { weight: weightNum, ...(ageNum ? { age: ageNum } : {}) });
   }
 
   function handleScenarioChange(i: number) {
