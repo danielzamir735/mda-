@@ -220,24 +220,25 @@ function buildSpotErrorPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך פרמדיק בכיר של מד"א (מגן דוד אדום). משימתך: כתוב תרחיש קליני ריאליסטי המכיל טעות מקצועית אחת ברורה, מוטמעת בתוך הנרטיב.
+  return `אתה מדריך פרמדיק בכיר של מד"א (מגן דוד אדום). משימתך: כתוב תרחיש BLS קצר המכיל טעות מקצועית אחת ברורה, מוטמעת בתוך הנרטיב.
+
+תחום: BLS בלבד — טראומה, נשימה, CPR בסיסי, אנפילקסיס, שבץ, סוכר. ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
 
 כללים מחייבים:
-1. פתח עם משפט שיגור קצר: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום/נסיבות קצרות]"
-2. תאר את ההתערבות בעברית רפואית מקצועית גבוהה (3-4 משפטים) — כולל פעולה אחת שגויה לפי פרוטוקולי מד"א. דוגמאות לטעויות: תרופה שגויה, מינון שגוי, עיתוי לא נכון, פרוטוקול מיושן, ממצא שהוחמץ, התוויית נגד שנעלמה, סדר עדיפויות שגוי.
+1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה/מנגנון]" — ללא ניסוח שיגור.
+2. תאר את ההתערבות בעברית רפואית (2 משפטים בלבד) — כולל פעולה אחת שגויה לפי פרוטוקולי מד"א. דוגמאות: ממצא שהוחמץ, סדר עדיפויות שגוי, פרוטוקול מיושן, התוויית נגד שנעלמה.
 3. השאלה: "מה הטעות המקצועית שזוהתה בטיפול?"
-4. 4 תשובות: אחת היא הטעות האמיתית (ספציפית ומדויקת), השאר — פעולות שלא קרו בתרחיש, או פעולות שנראות חשודות אך נכונות.
-5. הסבר (2-3 משפטים): מה הייתה הטעות, מה הנזק הפוטנציאלי לפי פיזיולוגיה, ומה היה הנכון על פי פרוטוקולי מד"א.
-6. שפה: עברית רפואית מקצועית גבוהה — "בילטרלי", "יציב המודינמית", "נשימות אגונליות", "ספקטרום רחב".
+4. 4 תשובות קצרות: אחת היא הטעות האמיתית, השאר — פעולות שלא קרו או נראות חשודות אך נכונות.
+5. הסבר (2 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי פרוטוקולי מד"א.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
-  "dispatch_opener": "משפט שיגור אחד תמציתי",
-  "scenario": "תיאור התרחיש המלא עם הטעות המוטמעת (3-4 משפטים קליניים מפורטים)",
+  "dispatch_opener": "",
+  "scenario": "תיאור קצר עם הטעות המוטמעת (2 משפטים בלבד)",
   "question": "מה הטעות המקצועית שזוהתה בטיפול?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר קליני (2-3 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי פרוטוקולי מד\\"א",
+  "explanation": "הסבר קצר (2 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי פרוטוקולי מד\\"א",
   "topic_tag": "נושא קצר בעברית (1-3 מילים)"
 }`;
 }
@@ -246,26 +247,27 @@ function buildRadioChallengePrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש מורכב וכאוטי ו-4 סיכומי SBAR לדיווח לרופא המאשר.
+  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש BLS קצר ו-4 סיכומי SBAR לדיווח לרופא המאשר.
+
+תחום: BLS בלבד — טראומה, נשימה, CPR בסיסי, אנפילקסיס, שבץ, סוכר. ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
 
 כללים מחייבים:
-1. פתח עם משפט שיגור: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום]"
-2. תאר תרחיש עם ממצאים מרובים: הכרה, סימנים חיוניים, ממצאים פיזיקליים, רקע רפואי, פעולות שבוצעו (4-5 משפטים).
+1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה]" — ללא ניסוח שיגור.
+2. תאר תרחיש עם הממצאים הרלוונטיים (2-3 משפטים בלבד): סימנים חיוניים, ממצאים, פעולות שבוצעו.
 3. השאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?"
-4. 4 אפשרויות SBAR:
+4. 4 אפשרויות SBAR קצרות (לא יותר מ-2 משפטים כל אחת):
    - אחת אידיאלית: מדויקת, תמציתית, סדורה (Situation → Background → Assessment → Recommendation).
-   - שלוש עם פגמים: מידע קריטי חסר, סדר לא נכון, מילולית מדי, הערכה שגויה, המלצה לא מתאימה לחומרת המצב.
-5. הסבר (2-3 משפטים): מה מייחד את הסיכום הנכון ומה הבעיה בשאר.
-6. שפה: עברית רפואית מקצועית גבוהה.
+   - שלוש עם פגם אחד: מידע קריטי חסר, הערכה שגויה, או המלצה לא מתאימה.
+5. הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה הבעיה בשאר.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
-  "dispatch_opener": "משפט שיגור אחד תמציתי",
-  "scenario": "תיאור התרחיש המורכב (4-5 משפטים עם ממצאים מרובים)",
+  "dispatch_opener": "",
+  "scenario": "תיאור קצר (2-3 משפטים בלבד) עם ממצאים רלוונטיים",
   "question": "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?",
   "options": ["SBAR א — ...", "SBAR ב — ...", "SBAR ג — ...", "SBAR ד — ..."],
   "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים): מה מייחד את הסיכום הנכון ומה חסר/שגוי בשאר",
+  "explanation": "הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה חסר/שגוי בשאר",
   "topic_tag": "נושא קצר בעברית (1-3 מילים)"
 }`;
 }
@@ -1999,15 +2001,30 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     return (
       <div className="flex flex-col gap-5">
-        {/* Dispatch opener */}
+        {/* Game explanation */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-rose-500/8 border border-rose-400/20">
+          <Search size={14} className="text-rose-400 shrink-0" />
+          <p className="text-rose-300/80 text-[13px] font-semibold leading-snug">קרא את התרחיש — טעות מקצועית אחת מוסתרת בנרטיב. זהה אותה מבין 4 אפשרויות.</p>
+        </div>
+
+        {/* Participant count */}
+        {blockParticipants['E'] !== undefined && blockParticipants['E'] > 0 && (
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['E'] ?? 0).toLocaleString('he-IL')}</span>
+          </div>
+        )}
+
+        {/* Scenario card */}
         <div className="rounded-3xl bg-gradient-to-b from-rose-950/50 to-slate-950 border border-rose-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(244,63,94,0.12)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Search size={14} className="text-rose-400 shrink-0" />
-            <p className="text-rose-400 text-[11px] font-black uppercase tracking-widest">קריאת שיגור</p>
-          </div>
-          <p className="text-rose-200/90 text-[14px] font-semibold leading-relaxed mb-3">{spotQuestion.dispatch_opener}</p>
-          <div className="h-px bg-rose-500/20 mb-3" />
+          {spotQuestion.dispatch_opener ? (
+            <>
+              <p className="text-rose-200/90 text-[14px] font-semibold leading-relaxed mb-3">{spotQuestion.dispatch_opener}</p>
+              <div className="h-px bg-rose-500/20 mb-3" />
+            </>
+          ) : null}
           <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{spotQuestion.scenario}</p>
         </div>
 
@@ -2078,15 +2095,30 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     return (
       <div className="flex flex-col gap-5">
-        {/* Dispatch opener + scenario */}
+        {/* Game explanation */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
+          <Mic size={14} className="text-cyan-400 shrink-0" />
+          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את הסיכום הקליני ובחר את דיווח ה-SBAR הנכון לרופא המאשר.</p>
+        </div>
+
+        {/* Participant count */}
+        {blockParticipants['F'] !== undefined && blockParticipants['F'] > 0 && (
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['F'] ?? 0).toLocaleString('he-IL')}</span>
+          </div>
+        )}
+
+        {/* Scenario card */}
         <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(6,182,212,0.12)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Mic size={14} className="text-cyan-400 shrink-0" />
-            <p className="text-cyan-400 text-[11px] font-black uppercase tracking-widest">קריאת שיגור</p>
-          </div>
-          <p className="text-cyan-200/90 text-[14px] font-semibold leading-relaxed mb-3">{radioQuestion.dispatch_opener}</p>
-          <div className="h-px bg-cyan-500/20 mb-3" />
+          {radioQuestion.dispatch_opener ? (
+            <>
+              <p className="text-cyan-200/90 text-[14px] font-semibold leading-relaxed mb-3">{radioQuestion.dispatch_opener}</p>
+              <div className="h-px bg-cyan-500/20 mb-3" />
+            </>
+          ) : null}
           <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{radioQuestion.scenario}</p>
         </div>
 
