@@ -74,8 +74,9 @@ function NearestERButton() {
           const d = haversineKm(coords.latitude, coords.longitude, h.lat, h.lng);
           if (d < minDist) { minDist = d; nearest = h; }
         }
+        const query = nearest.navQueries?.general ?? `מיון ${nearest.name} ${nearest.city}`;
         trackEvent('hospital_nav_nearest_er');
-        window.open(`https://waze.com/ul?ll=${nearest.lat},${nearest.lng}&navigate=yes`, '_blank');
+        window.open(`https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`, '_blank');
         setLoading(false);
       },
       () => {
