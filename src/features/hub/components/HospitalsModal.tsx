@@ -63,7 +63,9 @@ function NearestERButton() {
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const all = [...LEVEL_A, ...LEVEL_B];
+        const all = [...LEVEL_A, ...LEVEL_B].filter(
+          (h): h is Hospital & { lat: number; lng: number } => h.lat !== undefined && h.lng !== undefined,
+        );
         let nearest = all[0];
         let minDist = Infinity;
         for (const h of all) {
