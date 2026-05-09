@@ -2,7 +2,7 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Mic,
+  Search, Stethoscope,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,7 @@ import { supabase } from '../../../lib/supabase';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
-type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr' | 'red_flag' | 'spot_error' | 'radio_challenge';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr' | 'red_flag' | 'spot_error' | 'med_bag';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
@@ -64,9 +64,9 @@ interface SpotErrorQ {
   topic_tag: string;
 }
 
-interface RadioChallengeQ {
-  dispatch_opener: string;
-  scenario: string;
+interface MedBagQ {
+  situation: string;
+  medications: string[];
   question: string;
   options: string[];
   correct_index: number;
@@ -114,7 +114,7 @@ const CACHE_KEYS = {
   abbr: 'daily_challenge_abbr_v2',
   red_flag: 'daily_challenge_redflag_v2',
   spot_error: 'daily_challenge_spoterror_v1',
-  radio: 'daily_challenge_radio_v1',
+  med_bag: 'daily_challenge_medbag_v1',
 } as const;
 
 const STATS_CACHE_KEY: Record<QuizCategory, string> = {
@@ -124,7 +124,7 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   abbr: 'daily_stats_abbr_v1',
   red_flag: 'daily_stats_redflag_v1',
   spot_error: 'daily_stats_spoterror_v1',
-  radio_challenge: 'daily_stats_radio_v1',
+  med_bag: 'daily_stats_medbag_v1',
 };
 
 const PARTICIPANT_BASE = 430;
@@ -244,32 +244,28 @@ ${avoidSection}
 }`;
 }
 
-function buildRadioChallengePrompt(recentTopics: string[]): string {
+function buildMedBagPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש BLS קצר ו-4 סיכומי SBAR לדיווח לרופא המקבל במיון.
-
-תחום: BLS בלבד — טראומה, נשימה, CPR בסיסי, אנפילקסיס, שבץ, סוכר. ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
+  return `אתה מדריך פרמדיק בכיר של מד"א. משימה: צור אתגר "תיק התרופות" — חובש מגיע למקום ומוצא את תרופות המטופל על השולחן. מתוך התרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית ביותר.
 
 כללים מחייבים:
-1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה]" — ללא ניסוח שיגור.
-2. תאר תרחיש עם הממצאים הרלוונטיים (2-3 משפטים בלבד): סימנים חיוניים, ממצאים, פעולות שבוצעו.
-3. השאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המקבל במיון?"
-4. 4 אפשרויות SBAR קצרות (לא יותר מ-2 משפטים כל אחת):
-   - אחת אידיאלית: מדויקת, תמציתית, סדורה (Situation → Background → Assessment → Recommendation).
-   - שלוש עם פגם אחד: מידע קריטי חסר, הערכה שגויה, או המלצה לא מתאימה.
-5. הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה הבעיה בשאר.
-6. שפה: עברית רפואית תקנית בלבד — ללא תעתיקים מאנגלית. "ירידה בהכרה" ולא "סמי הכרה", "בלבול" ולא "קונפוזיה", "ספירת חמצן" ולא "סטורציה".
+1. סיטואציה (2 משפטים): תרחיש מציאותי — מטופל עם ערפול הכרה / קוצר נשימה / כאב / נפילה, גיל ומין. המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
+2. תרופות: רשימה של 3-4 תרופות אמיתיות הנמצאות ליד המטופל (שם מסחרי ישראלי + גנרי). השילוב יצביע בבירור על מצב רפואי אחד קריטי לזיהוי.
+3. שאלה: "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?"
+4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
+5. הסבר (2-3 משפטים): מה מצביעות התרופות, מהי הסכנה הקריטית, ומה יש לדווח.
+6. topic_tag: נושא קצר בעברית (1-3 מילים) לגיוון.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
-  "dispatch_opener": "",
-  "scenario": "תיאור קצר (2-3 משפטים בלבד) עם ממצאים רלוונטיים",
-  "question": "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המקבל במיון?",
-  "options": ["SBAR א — ...", "SBAR ב — ...", "SBAR ג — ...", "SBAR ד — ..."],
+  "situation": "תיאור הסיטואציה (2 משפטים בעברית מקצועית)",
+  "medications": ["שם מסחרי א (גנרי)", "שם מסחרי ב (גנרי)", "שם מסחרי ג (גנרי)"],
+  "question": "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה חסר/שגוי בשאר",
+  "explanation": "הסבר (2-3 משפטים): מה מצביעות התרופות, הסכנה הקריטית, ומה לדווח",
   "topic_tag": "נושא קצר בעברית (1-3 מילים)"
 }`;
 }
@@ -407,7 +403,7 @@ async function getRecentTopicsForDiversity(): Promise<string[]> {
   const { data } = await supabase
     .from('daily_questions')
     .select('content')
-    .in('question_type', ['bls', 'als', 'spot_error', 'radio_challenge'])
+    .in('question_type', ['bls', 'als', 'spot_error', 'med_bag'])
     .order('question_date', { ascending: false })
     .limit(60);
   if (!data) return [];
@@ -425,11 +421,11 @@ async function generateSpotError(): Promise<SpotErrorQ> {
   return q;
 }
 
-async function generateRadioChallenge(): Promise<RadioChallengeQ> {
+async function generateMedBag(): Promise<MedBagQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => parseGeminiJSON<RadioChallengeQ>(buildRadioChallengePrompt(recentTopics)));
-  if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
-    throw new Error('Invalid radio challenge format');
+  const q = await withRetry(() => parseGeminiJSON<MedBagQ>(buildMedBagPrompt(recentTopics)));
+  if (!q.situation || !Array.isArray(q.medications) || q.medications.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+    throw new Error('Invalid med bag format');
   }
   return q;
 }
@@ -1016,12 +1012,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [showSpotExpl, setShowSpotExpl] = useState(false);
   const [spotStats, setSpotStats] = useState<GlobalStats | null>(null);
 
-  // Block F — Radio Challenge
-  const [radioStatus, setRadioStatus] = useState<LoadStatus>('idle');
-  const [radioQuestion, setRadioQuestion] = useState<RadioChallengeQ | null>(null);
-  const [radioAnsweredIdx, setRadioAnsweredIdx] = useState<number | null>(null);
-  const [showRadioExpl, setShowRadioExpl] = useState(false);
-  const [radioStats, setRadioStats] = useState<GlobalStats | null>(null);
+  // Block F — Med Bag (תיק התרופות)
+  const [medBagStatus, setMedBagStatus] = useState<LoadStatus>('idle');
+  const [medBagQuestion, setMedBagQuestion] = useState<MedBagQ | null>(null);
+  const [medBagAnsweredIdx, setMedBagAnsweredIdx] = useState<number | null>(null);
+  const [showMedBagExpl, setShowMedBagExpl] = useState(false);
+  const [medBagStats, setMedBagStats] = useState<GlobalStats | null>(null);
 
   // Overall
   const [streak, setStreak] = useState(0);
@@ -1036,8 +1032,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const abbrIsAnswered = abbrAnsweredIdx !== null;
   const redIsAnswered = redAnsweredIdx !== null;
   const spotIsAnswered = spotAnsweredIdx !== null;
-  const radioIsAnswered = radioAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered && spotIsAnswered && radioIsAnswered;
+  const medBagIsAnswered = medBagAnsweredIdx !== null;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
@@ -1045,10 +1041,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index,
     redIsAnswered && redAnsweredIdx === redQuestion?.correct_index,
     spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index,
-    radioIsAnswered && radioAnsweredIdx === radioQuestion?.correct_index,
+    medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered, spotIsAnswered, radioIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered].filter(Boolean).length;
 
   const clinicalParticipantCount = (globalStats?.total ?? 0) + PARTICIPANT_BASE;
 
@@ -1122,17 +1118,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       emoji: '🔎',
     },
     F: {
-      neonBorder: 'border-cyan-500/55',
-      glowColor: '0 0 30px rgba(6,182,212,0.22)',
-      cardBg: 'bg-gradient-to-b from-cyan-950/50 to-slate-950',
-      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(6,182,212,0.7) 0%, transparent 70%)',
-      iconGlow: '0 0 22px rgba(6,182,212,0.4)',
-      labelColor: 'text-cyan-400',
-      icon: <Mic size={20} className="text-cyan-400" />,
-      iconBg: 'bg-cyan-400/20',
-      iconBorder: 'border-cyan-400/35',
-      blockTitle: 'תיעוד ב-60 שניות',
-      emoji: '🎙️',
+      neonBorder: 'border-indigo-500/55',
+      glowColor: '0 0 30px rgba(99,102,241,0.22)',
+      cardBg: 'bg-gradient-to-b from-indigo-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(99,102,241,0.4)',
+      labelColor: 'text-indigo-400',
+      icon: <Stethoscope size={20} className="text-indigo-400" />,
+      iconBg: 'bg-indigo-400/20',
+      iconBorder: 'border-indigo-400/35',
+      blockTitle: 'תיק התרופות',
+      emoji: '🩺',
     },
   };
 
@@ -1224,25 +1220,25 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       }).catch(() => setSpotStatus('error'));
     }
 
-    const cachedRadio = loadCache<RadioChallengeQ>(CACHE_KEYS.radio);
-    if (cachedRadio) {
-      setRadioQuestion(cachedRadio.data);
-      setRadioAnsweredIdx(cachedRadio.answeredIdx ?? null);
-      setRadioStatus('ready');
-      if (cachedRadio.answeredIdx !== null && cachedRadio.answeredIdx !== undefined) {
-        const seeded = loadCachedStats('radio_challenge');
-        if (seeded) setRadioStats(seeded);
-        fetchGlobalStats('radio_challenge', cachedRadio.data.correct_index).then(({ stats }) => {
-          setRadioStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+    const cachedMedBag = loadCache<MedBagQ>(CACHE_KEYS.med_bag);
+    if (cachedMedBag) {
+      setMedBagQuestion(cachedMedBag.data);
+      setMedBagAnsweredIdx(cachedMedBag.answeredIdx ?? null);
+      setMedBagStatus('ready');
+      if (cachedMedBag.answeredIdx !== null && cachedMedBag.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('med_bag');
+        if (seeded) setMedBagStats(seeded);
+        fetchGlobalStats('med_bag', cachedMedBag.data.correct_index).then(({ stats }) => {
+          setMedBagStats((prev) => (prev && stats.total < prev.total ? prev : stats));
         });
       }
     } else {
-      setRadioStatus('loading');
-      fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge).then((q) => {
-        setRadioQuestion(q);
-        saveCache(CACHE_KEYS.radio, q);
-        setRadioStatus('ready');
-      }).catch(() => setRadioStatus('error'));
+      setMedBagStatus('loading');
+      fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag).then((q) => {
+        setMedBagQuestion(q);
+        saveCache(CACHE_KEYS.med_bag, q);
+        setMedBagStatus('ready');
+      }).catch(() => setMedBagStatus('error'));
     }
 
     // Fetch all participant counts for grid tiles
@@ -1253,7 +1249,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'radio_challenge']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'med_bag']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
@@ -1265,7 +1261,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           C: (counts['abbr'] ?? 0) + PARTICIPANT_BASE,
           D: (counts['red_flag'] ?? 0) + PARTICIPANT_BASE,
           E: (counts['spot_error'] ?? 0) + PARTICIPANT_BASE,
-          F: (counts['radio_challenge'] ?? 0) + PARTICIPANT_BASE,
+          F: (counts['med_bag'] ?? 0) + PARTICIPANT_BASE,
         });
       } catch { /* noop */ }
     };
@@ -1284,7 +1280,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false); setAbbrStats(null);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
-      setRadioStatus('idle'); setRadioQuestion(null); setRadioAnsweredIdx(null); setShowRadioExpl(false); setRadioStats(null);
+      setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null);
       setShowSuccess(false);
     }
   }, [isOpen]);
@@ -1336,12 +1332,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .then(q => { setSpotQuestion(q); saveCache(CACHE_KEYS.spot_error, q); setSpotStatus('ready'); })
           .catch(() => setSpotStatus('error'));
       }
-    } else if (activeBlock === 'F' && radioStatus !== 'loading') {
-      if (!loadCache<RadioChallengeQ>(CACHE_KEYS.radio)) {
-        setRadioStatus('loading'); setRadioQuestion(null); setRadioAnsweredIdx(null);
-        fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge)
-          .then(q => { setRadioQuestion(q); saveCache(CACHE_KEYS.radio, q); setRadioStatus('ready'); })
-          .catch(() => setRadioStatus('error'));
+    } else if (activeBlock === 'F' && medBagStatus !== 'loading') {
+      if (!loadCache<MedBagQ>(CACHE_KEYS.med_bag)) {
+        setMedBagStatus('loading'); setMedBagQuestion(null); setMedBagAnsweredIdx(null);
+        fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag)
+          .then(q => { setMedBagQuestion(q); saveCache(CACHE_KEYS.med_bag, q); setMedBagStatus('ready'); })
+          .catch(() => setMedBagStatus('error'));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1510,22 +1506,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   }, [spotQuestion, spotAnsweredIdx]);
 
   // ── Block F handler ──
-  const handleRadioAnswer = useCallback(async (idx: number) => {
-    if (!radioQuestion || radioAnsweredIdx !== null) return;
-    const isCorrect = idx === radioQuestion.correct_index;
-    setRadioAnsweredIdx(idx);
-    saveCache(CACHE_KEYS.radio, radioQuestion, idx);
-    setRadioStats((prev) => {
+  const handleMedBagAnswer = useCallback(async (idx: number) => {
+    if (!medBagQuestion || medBagAnsweredIdx !== null) return;
+    const isCorrect = idx === medBagQuestion.correct_index;
+    setMedBagAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.med_bag, medBagQuestion, idx);
+    setMedBagStats((prev) => {
       const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
       const counts = [...base.answer_counts];
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
-    trackEvent('daily_challenge_radio_answered', { correct: isCorrect });
-    await saveClinicalResponse('radio_challenge', isCorrect, 0, idx);
-    const { stats } = await fetchGlobalStats('radio_challenge', radioQuestion.correct_index);
-    setRadioStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [radioQuestion, radioAnsweredIdx]);
+    trackEvent('daily_challenge_medbag_answered', { correct: isCorrect });
+    await saveClinicalResponse('med_bag', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('med_bag', medBagQuestion.correct_index);
+    setMedBagStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [medBagQuestion, medBagAnsweredIdx]);
 
   if (!isOpen) return null;
 
@@ -2072,35 +2068,35 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // ── Block F content ──
   const renderBlockF = () => {
-    if (radioStatus === 'loading') {
+    if (medBagStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-cyan-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-indigo-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תיק תרופות...</p>
         </div>
       );
     }
-    if (radioStatus === 'error') {
+    if (medBagStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
           <XCircle size={28} className="text-red-400" />
           <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setRadioStatus('loading'); fetchOrCreateBlock<RadioChallengeQ>('radio_challenge', generateRadioChallenge).then(q => { setRadioQuestion(q); saveCache(CACHE_KEYS.radio, q); setRadioStatus('ready'); }).catch(() => setRadioStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 font-bold text-xs">
+          <HapticButton onClick={() => { setMedBagStatus('loading'); fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag).then(q => { setMedBagQuestion(q); saveCache(CACHE_KEYS.med_bag, q); setMedBagStatus('ready'); }).catch(() => setMedBagStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-400/15 border border-indigo-400/30 text-indigo-300 font-bold text-xs">
             <RefreshCw size={13} />נסה שוב
           </HapticButton>
         </div>
       );
     }
-    if (!radioQuestion) return null;
+    if (!medBagQuestion) return null;
 
-    const radioCorrect = radioAnsweredIdx === radioQuestion.correct_index;
+    const medBagCorrect = medBagAnsweredIdx === medBagQuestion.correct_index;
 
     return (
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
-          <Mic size={14} className="text-cyan-400 shrink-0" />
-          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את הסיכום הקליני ובחר את דיווח ה-SBAR הנכון לרופא המקבל במיון.</p>
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-indigo-500/8 border border-indigo-400/20">
+          <Stethoscope size={14} className="text-indigo-400 shrink-0" />
+          <p className="text-indigo-300/80 text-[13px] font-semibold leading-snug">קרא את הסיטואציה ואת תרופות המטופל — ואז זהה את הסכנה הקריטית.</p>
         </div>
 
         {/* Participant count */}
@@ -2112,50 +2108,58 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           </div>
         )}
 
-        {/* Scenario card */}
-        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
-          style={{ boxShadow: '0 0 26px rgba(6,182,212,0.12)' }}>
-          {radioQuestion.dispatch_opener ? (
-            <>
-              <p className="text-cyan-200/90 text-[14px] font-semibold leading-relaxed mb-3">{radioQuestion.dispatch_opener}</p>
-              <div className="h-px bg-cyan-500/20 mb-3" />
-            </>
-          ) : null}
-          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{radioQuestion.scenario}</p>
+        {/* Situation card */}
+        <div className="rounded-3xl bg-gradient-to-b from-indigo-950/50 to-slate-950 border border-indigo-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(99,102,241,0.12)' }}>
+          <p className="text-indigo-200/70 text-[11px] font-black uppercase tracking-widest mb-2">הסיטואציה</p>
+          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{medBagQuestion.situation}</p>
+        </div>
+
+        {/* Medications card */}
+        <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
+          <p className="text-white/50 text-[11px] font-black uppercase tracking-widest mb-3">תרופות שנמצאו על השולחן</p>
+          <div className="flex flex-wrap gap-2">
+            {medBagQuestion.medications.map((med, i) => (
+              <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 border border-indigo-400/30">
+                <Pill size={12} className="text-indigo-300 shrink-0" />
+                <span className="text-indigo-200 text-[13px] font-bold">{med}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/40 to-slate-950/60 border border-cyan-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{radioQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-indigo-950/40 to-slate-950/60 border border-indigo-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{medBagQuestion.question}</p>
         </div>
 
         {/* Result banner */}
-        {radioIsAnswered && (
+        {medBagIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${radioCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {radioCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${radioCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {radioCorrect ? 'דיווח מושלם!' : 'ניתן לשיפור — ראה הסבר'}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${medBagCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {medBagCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${medBagCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {medBagCorrect ? 'זיהוי מדויק!' : 'לא בדיוק — ראה הסבר'}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר סיכום SBAR —</p>
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— מה הסכנה הקריטית? —</p>
 
         <MCQOptions
-          options={radioQuestion.options}
-          correctIndex={radioQuestion.correct_index}
-          answeredIdx={radioAnsweredIdx}
-          onAnswer={handleRadioAnswer}
-          stats={radioStats}
-          accentCorrect="border-cyan-400/55 bg-cyan-500/12 text-cyan-100"
+          options={medBagQuestion.options}
+          correctIndex={medBagQuestion.correct_index}
+          answeredIdx={medBagAnsweredIdx}
+          onAnswer={handleMedBagAnswer}
+          stats={medBagStats}
+          accentCorrect="border-indigo-400/55 bg-indigo-500/12 text-indigo-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
-        {radioIsAnswered && !showRadioExpl && (
+        {medBagIsAnswered && !showMedBagExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <HapticButton onClick={() => setShowRadioExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 border border-cyan-400/35 py-3.5 text-cyan-300 font-bold text-sm">
+            <HapticButton onClick={() => setShowMedBagExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-400/15 border border-indigo-400/35 py-3.5 text-indigo-300 font-bold text-sm">
               <Brain size={14} />הצג הסבר
             </HapticButton>
           </motion.div>
@@ -2171,7 +2175,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return abbrStatus;
     if (id === 'D') return redStatus;
     if (id === 'E') return spotStatus;
-    return radioStatus;
+    return medBagStatus;
   };
 
   const blockIsAnswered = (id: BlockId): boolean => {
@@ -2180,7 +2184,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return abbrIsAnswered;
     if (id === 'D') return redIsAnswered;
     if (id === 'E') return spotIsAnswered;
-    return radioIsAnswered;
+    return medBagIsAnswered;
   };
 
   const blockIsCorrect = (id: BlockId): boolean => {
@@ -2189,7 +2193,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index;
     if (id === 'D') return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
     if (id === 'E') return spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index;
-    return radioIsAnswered && radioAnsweredIdx === radioQuestion?.correct_index;
+    return medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2364,12 +2368,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             onClose={() => setShowSpotExpl(false)}
           />
         )}
-        {showRadioExpl && radioQuestion && radioAnsweredIdx !== null && (
+        {showMedBagExpl && medBagQuestion && medBagAnsweredIdx !== null && (
           <SimpleExplanationModal
-            explanation={radioQuestion.explanation}
-            isCorrect={radioAnsweredIdx === radioQuestion.correct_index}
-            accentColor="green"
-            onClose={() => setShowRadioExpl(false)}
+            explanation={medBagQuestion.explanation}
+            isCorrect={medBagAnsweredIdx === medBagQuestion.correct_index}
+            accentColor="purple"
+            onClose={() => setShowMedBagExpl(false)}
           />
         )}
         {showSuccess && (
