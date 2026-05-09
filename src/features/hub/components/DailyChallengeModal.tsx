@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
@@ -230,6 +230,7 @@ function buildSpotErrorPrompt(recentTopics: string[]): string {
 3. השאלה: "מה הטעות המקצועית שזוהתה בטיפול?"
 4. 4 תשובות קצרות: אחת היא הטעות האמיתית, השאר — פעולות שלא קרו או נראות חשודות אך נכונות.
 5. הסבר (2 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי פרוטוקולי מד"א.
+6. שפה: עברית רפואית תקנית בלבד — ללא תעתיקים מאנגלית. "ירידה בהכרה" ולא "סמי הכרה", "בלבול" ולא "קונפוזיה", "ספירת חמצן" ולא "סטורציה".
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
@@ -247,24 +248,25 @@ function buildRadioChallengePrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש BLS קצר ו-4 סיכומי SBAR לדיווח לרופא המאשר.
+  return `אתה מדריך פרמדיק בכיר של מד"א. משימתך: כתוב תרחיש BLS קצר ו-4 סיכומי SBAR לדיווח לרופא המקבל במיון.
 
 תחום: BLS בלבד — טראומה, נשימה, CPR בסיסי, אנפילקסיס, שבץ, סוכר. ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
 
 כללים מחייבים:
 1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה]" — ללא ניסוח שיגור.
 2. תאר תרחיש עם הממצאים הרלוונטיים (2-3 משפטים בלבד): סימנים חיוניים, ממצאים, פעולות שבוצעו.
-3. השאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?"
+3. השאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המקבל במיון?"
 4. 4 אפשרויות SBAR קצרות (לא יותר מ-2 משפטים כל אחת):
    - אחת אידיאלית: מדויקת, תמציתית, סדורה (Situation → Background → Assessment → Recommendation).
    - שלוש עם פגם אחד: מידע קריטי חסר, הערכה שגויה, או המלצה לא מתאימה.
 5. הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה הבעיה בשאר.
+6. שפה: עברית רפואית תקנית בלבד — ללא תעתיקים מאנגלית. "ירידה בהכרה" ולא "סמי הכרה", "בלבול" ולא "קונפוזיה", "ספירת חמצן" ולא "סטורציה".
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
   "dispatch_opener": "",
   "scenario": "תיאור קצר (2-3 משפטים בלבד) עם ממצאים רלוונטיים",
-  "question": "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?",
+  "question": "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המקבל במיון?",
   "options": ["SBAR א — ...", "SBAR ב — ...", "SBAR ג — ...", "SBAR ד — ..."],
   "correct_index": X,
   "explanation": "הסבר (2 משפטים): מה מייחד את הסיכום הנכון ומה חסר/שגוי בשאר",
@@ -2098,7 +2100,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
           <Mic size={14} className="text-cyan-400 shrink-0" />
-          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את הסיכום הקליני ובחר את דיווח ה-SBAR הנכון לרופא המאשר.</p>
+          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את הסיכום הקליני ובחר את דיווח ה-SBAR הנכון לרופא המקבל במיון.</p>
         </div>
 
         {/* Participant count */}
