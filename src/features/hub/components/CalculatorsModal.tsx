@@ -12,6 +12,7 @@ import PediatricDosageCalculatorModal from './PediatricDosageCalculatorModal';
 import AdultDosageCalculatorModal from './AdultDosageCalculatorModal';
 import ShockCalculator from '../../calculators/ShockCalculator';
 import TubeSizingCalculatorModal from './TubeSizingCalculatorModal';
+import QSofaCalculatorModal from './QSofaCalculatorModal';
 
 interface Props {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
   const [adultOpen, setAdultOpen] = useState(false);
   const [shockOpen, setShockOpen] = useState(false);
   const [tubeOpen, setTubeOpen] = useState(false);
+  const [qsofaOpen, setQsofaOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -154,7 +156,24 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
             </div>
           </button>
 
-          {/* 7 — APGAR Calculator */}
+          {/* 7 — qSOFA */}
+          <button
+            onClick={() => { trackInteraction('מחשבון qSOFA', 'calculators'); setQsofaOpen(true); }}
+            className="flex items-center gap-4 w-full rounded-2xl border border-amber-400/30
+                       bg-amber-400/5 p-4 active:scale-95 transition-transform text-right"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-amber-400/20 border border-amber-400/40">
+              <Activity size={22} className="text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-amber-400 font-bold text-base">מחשבון qSOFA</p>
+              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
+                הערכת ספסיס מהירה — 3 קריטריונים
+              </p>
+            </div>
+          </button>
+
+          {/* 8 — APGAR Calculator */}
           <button
             onClick={() => { trackInteraction('מחשבון APGAR', 'calculators'); setApgarOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-pink-400/30
@@ -235,6 +254,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
       <AdultDosageCalculatorModal isOpen={adultOpen} onClose={() => setAdultOpen(false)} />
       <ShockCalculator isOpen={shockOpen} onClose={() => setShockOpen(false)} />
       <TubeSizingCalculatorModal isOpen={tubeOpen} onClose={() => setTubeOpen(false)} />
+      <QSofaCalculatorModal isOpen={qsofaOpen} onClose={() => setQsofaOpen(false)} />
     </>
   );
 }
