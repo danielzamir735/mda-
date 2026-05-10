@@ -103,7 +103,10 @@
       "PowerShell($r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; \\($r.Content | ConvertFrom-Json\\).icons | ForEach-Object { Write-Host \"$\\($_.src\\) | $\\($_.sizes\\) | $\\($_.purpose\\)\" })",
       "PowerShell(& \"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp -keypass sQBiVCXck3Vp 2>&1)",
       "PowerShell(where.exe java 2>&1; where.exe keytool 2>&1; $env:JAVA_HOME)",
-      "PowerShell(& \"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp 2>&1)"
+      "PowerShell(& \"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp 2>&1)",
+      "Bash(vercel --version)",
+      "Bash(vercel link *)",
+      "Bash(vercel deploy *)"
     ]
   },
   "hooks": {
