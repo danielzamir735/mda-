@@ -8,11 +8,18 @@ interface Props {
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
 
+interface Errors {
+  name?: string;
+  phone?: string;
+  message?: string;
+}
+
 export default function FeedbackModal({ isOpen, onClose }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<Status>('idle');
+  const [errors, setErrors] = useState<Errors>({});
 
   if (!isOpen) return null;
 
@@ -22,16 +29,31 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
     setPhone('');
     setMessage('');
     setStatus('idle');
+    setErrors({});
     onClose();
   };
 
+  const validate = (): Errors => {
+    const e: Errors = {};
+    if (!name.trim()) e.name = 'נא למלא שם מלא';
+    if (!phone.trim()) e.phone = 'נא למלא מספר טלפון';
+    if (!message.trim()) e.message = 'נא למלא הודעה';
+    return e;
+  };
+
   const handleSend = async () => {
-    if (!name.trim() || !phone.trim() || !message.trim() || status === 'sending') return;
+    if (status === 'sending') return;
+
+    const e = validate();
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
 
     const lines: string[] = [];
-    if (name.trim()) lines.push(`שם: ${name.trim()}`);
-    if (phone.trim()) lines.push(`טלפון: ${phone.trim()}`);
-    if (lines.length) lines.push('');
+    lines.push(`שם: ${name.trim()}`);
+    lines.push(`טלפון: ${phone.trim()}`);
+    lines.push('');
     lines.push(message.trim());
 
     setStatus('sending');
@@ -49,10 +71,23 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
     }
   };
 
-  const inputCls =
-    'w-full rounded-xl border border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark ' +
-    'text-gray-900 dark:text-emt-light px-4 py-2.5 text-sm outline-none ' +
-    'focus:border-emt-red/60 transition-colors placeholder:text-gray-400 dark:placeholder:text-emt-muted';
+  const inputCls = (hasError: boolean) =>
+    'w-full rounded-xl border bg-gray-50 dark:bg-emt-dark ' +
+    'text-gray-900 dark:text-emt-light px-4 py-2.5 text-sm outline-none transition-colors ' +
+    'placeholder:text-gray-400 dark:placeholder:text-emt-muted ' +
+    (hasError
+      ? 'border-red-400 focus:border-red-500'
+      : 'border-gray-200 dark:border-emt-border focus:border-emt-red/60');
+
+  const RequiredLabel = ({ children }: { children: string }) => (
+    <label className="text-sm font-semibold text-gray-700 dark:text-emt-light flex items-center gap-1">
+      {children}
+      <span className="text-red-500">*</span>
+    </label>
+  );
+
+  const FieldError = ({ msg }: { msg?: string }) =>
+    msg ? <p className="text-red-500 text-xs mt-1 pr-1">{msg}</p> : null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm">
@@ -92,34 +127,45 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
           </div>
         ) : (
           <>
-            {/* Required fields */}
-            <input
-              type="text"
-              placeholder="שם מלא *"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={status === 'sending'}
-              className={inputCls}
-            />
-            <input
-              type="tel"
-              dir="rtl"
-              placeholder="טלפון *"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              disabled={status === 'sending'}
-              className={`${inputCls} text-right`}
-            />
+            <div className="flex flex-col gap-0.5">
+              <RequiredLabel>שם מלא</RequiredLabel>
+              <input
+                type="text"
+                placeholder="ישראל ישראלי"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: undefined })); }}
+                disabled={status === 'sending'}
+                className={inputCls(!!errors.name)}
+              />
+              <FieldError msg={errors.name} />
+            </div>
 
-            {/* Message — required */}
-            <textarea
-              placeholder="הערה / הצעה לשיפור..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              disabled={status === 'sending'}
-              className={`${inputCls} resize-none`}
-            />
+            <div className="flex flex-col gap-0.5">
+              <RequiredLabel>טלפון</RequiredLabel>
+              <input
+                type="tel"
+                dir="rtl"
+                placeholder="050-0000000"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: undefined })); }}
+                disabled={status === 'sending'}
+                className={`${inputCls(!!errors.phone)} text-right`}
+              />
+              <FieldError msg={errors.phone} />
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <RequiredLabel>הודעה</RequiredLabel>
+              <textarea
+                placeholder="הערה / הצעה לשיפור..."
+                value={message}
+                onChange={(e) => { setMessage(e.target.value); setErrors(prev => ({ ...prev, message: undefined })); }}
+                rows={4}
+                disabled={status === 'sending'}
+                className={`${inputCls(!!errors.message)} resize-none`}
+              />
+              <FieldError msg={errors.message} />
+            </div>
 
             {/* Error */}
             {status === 'error' && (
@@ -139,7 +185,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
               </button>
               <button
                 onClick={handleSend}
-                disabled={!name.trim() || !phone.trim() || !message.trim() || status === 'sending'}
+                disabled={status === 'sending'}
                 className="flex-1 py-2.5 rounded-xl bg-emt-red text-white text-sm font-bold
                            active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                            flex items-center justify-center gap-2"
