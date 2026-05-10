@@ -79,7 +79,11 @@
       "Bash(dir *)",
       "Bash(Remove-Item *)",
       "PowerShell(New-Item *)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\\\\dist\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object Name, Length | Sort-Object Name)"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\\\\dist\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object Name, Length | Sort-Object Name)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $r.Content | ConvertFrom-Json | Select-Object id, name, short_name, categories, prefer_related_applications, @{n='icon_count';e={$_.icons.Count}} } catch { Write-Host \"Error: $_\" })",
+      "PowerShell(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\"; $maxAttempts = 12; $attempt = 0; $deployed = $false; while \\($attempt -lt $maxAttempts -and -not $deployed\\) { $attempt++; Start-Sleep -Seconds 15; try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $m = $r.Content | ConvertFrom-Json; if \\($m.id -eq \"/\"\\) { Write-Host \"DEPLOYED! name=$\\($m.name\\) id=$\\($m.id\\) icons=$\\($m.icons.Count\\)\"; $deployed = $true } else { Write-Host \"Attempt $attempt - still old manifest \\(id=$\\($m.id\\)\\)\" } } catch { Write-Host \"Attempt $attempt - error: $_\" } }; if \\(-not $deployed\\) { Write-Host \"Timeout - deployment taking longer than expected\" })",
+      "PowerShell(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\"; $maxAttempts = 15; $attempt = 0; $deployed = $false; while \\($attempt -lt $maxAttempts -and -not $deployed\\) { $attempt++; Start-Sleep -Seconds 20; try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $m = $r.Content | ConvertFrom-Json; if \\($m.id -eq \"/\"\\) { Write-Host \"DEPLOYED! name=[$\\($m.name\\)] id=[$\\($m.id\\)] icons=[$\\($m.icons.Count\\)] categories=[$\\($m.categories -join ','\\)]\"; $deployed = $true } else { Write-Host \"Attempt $attempt/15 - old manifest still live\" } } catch { Write-Host \"Attempt $attempt - fetch error\" } }; if \\(-not $deployed\\) { Write-Host \"Still deploying - check Vercel dashboard\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/.well-known/assetlinks.json\" -UseBasicParsing; Write-Host \"OK: $\\($r.Content\\)\" } catch { Write-Host \"FAIL: $_\" })"
     ]
   },
   "hooks": {
