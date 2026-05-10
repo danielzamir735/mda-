@@ -140,7 +140,12 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
         sub: 'Amiodarone — NCT / WCT',
         color: 'text-orange-400',
         routes: [
-          { route: 'IV (10 דקות)', dose: '150 mg', max: '300 mg סה"כ' },
+          { route: 'IV NCT (10 דקות)', dose: '150 mg', max: '300 mg סה"כ' },
+          {
+            route: 'IV WCT (20–30 דקות)',
+            dose: (w) => `${fmt0(clamp(w * 5, 100, 300))} mg`,
+            doseSummary: '5 mg/kg | מקס׳ 300 mg',
+          },
           { route: 'IV Drip (לאחר המרה)', dose: '1 mg/דקה' },
         ],
       },
@@ -270,7 +275,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
         sub: 'Epinephrine 1:1,000 — IM',
         color: 'text-red-500',
         routes: [
-          { route: 'IM (ירך) — קל/בינוני', dose: '0.3 mg SC', max: 'מנה יחידה' },
+          { route: 'SC (ירך) — קל/בינוני', dose: '0.3 mg', max: 'מנה יחידה' },
           { route: 'IM (ירך) — קשה', dose: '0.3–0.5 mg', max: '3 מנות | כל 10 דקות', note: 'זהירות גיל >40 / IHD' },
           { route: 'IV Push — קשה', dose: '10–20 mcg', max: 'כל 2 דקות' },
         ],
@@ -544,7 +549,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
         color: 'text-green-400',
         routes: [
           { route: 'IN', dose: '0.4 mg', max: 'חזרה לאחר 5–10 דקות' },
-          { route: 'IV איטי', dose: '0.4 mg', note: 'מהול ב-10cc סליין, לאט', max: 'חזרה לאחר 5–10 דקות' },
+          { route: 'IV איטי', dose: '0.4 mg', note: 'מהול ב-10cc סליין, לאט', max: 'חזרה לאחר 5–10 דקות | סה"כ עד 2 mg' },
         ],
       },
       {

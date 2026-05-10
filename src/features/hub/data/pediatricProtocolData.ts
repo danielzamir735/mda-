@@ -151,7 +151,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
         routes: [
           {
             route: 'אינהלציה',
-            dose: w => w <= 30 ? '0.25 mg' : '0.5 mg',
+            dose: w => w <= 20 ? '0.25 mg' : '0.5 mg',
             max: 'מקס׳ 0.5 mg',
           },
         ],
@@ -342,8 +342,8 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
         routes: [
           {
             route: 'IV/IO',
-            dose: w => `${fmt(clamp(w * 2.5, 1, 50), 0)} מ"ל`,
-            max: '0.25 g/kg (2.5cc/kg של גלוקוז 10%)',
+            dose: w => `${fmt(clamp(w * 2.5, 1, 125), 0)} מ"ל`,
+            max: '0.25 g/kg | מקס׳ 12.5g (125 מ"ל של גלוקוז 10%)',
           },
         ],
       },
@@ -359,7 +359,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
           },
           {
             route: 'IN',
-            dose: () => '2 mg במנות של 0.4 mg',
+            dose: () => '0.4 mg | ניתן לחזור פעם אחת לאחר 5–10 דקות',
           },
         ],
       },
@@ -381,8 +381,8 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
         routes: [
           {
             route: 'IM (ירך)',
-            dose: w => `${fmt(clamp(w * 0.01, 0.005, 0.4))} mg`,
-            max: '0.01 mg/kg | מקס׳ 0.4 mg',
+            dose: w => `${fmt(clamp(w * 0.01, 0.005, 0.5))} mg`,
+            max: '0.01 mg/kg | מקס׳ 0.5 mg',
             prep: 'אמפולה 1:1,000 — כל 1 ק"ג = 0.01mL',
           },
         ],
