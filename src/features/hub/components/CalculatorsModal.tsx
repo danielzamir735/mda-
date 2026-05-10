@@ -71,7 +71,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* 2 — Adult Dosage ALS */}
           <button
-            onClick={() => { trackInteraction('תרופות מבוגרים ALS', 'calculators'); setAdultOpen(true); }}
+            onClick={() => { trackInteraction('מינון תרופות מבוגרים ALS', 'calculators'); setAdultOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-orange-400/30
                        bg-orange-400/5 p-4 active:scale-95 transition-transform text-right"
           >
