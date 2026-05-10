@@ -81,7 +81,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <Stethoscope size={22} className="text-orange-400" />
             </div>
             <div className="flex-1">
-              <p className="text-orange-400 font-bold text-base">תרופות מבוגרים ALS</p>
+              <p className="text-orange-400 font-bold text-base">מינון תרופות מבוגרים ALS</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 10 תרחישים — דום לב, ACS, סדציה, כאב ועוד
               </p>
