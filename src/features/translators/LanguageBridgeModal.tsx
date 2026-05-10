@@ -249,15 +249,31 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.3 } }}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
       >
         <h2 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
           סיוע בתרגום
         </h2>
-        <p className="text-[0.95rem] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-          צריך עזרה בתרגום מול מטופל? בחר שפה, מצא חובש זמין, והתקשר בלחיצת כפתור.
-          גם אתה יכול להצטרף לצוות המתרגמים שלנו!
+        <p className="text-[0.9rem] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
+          צריך עזרה בתרגום מול מטופל? מתרגמים מתנדבים מוכנים לסייע לך בזמן אמת.
         </p>
+        {/* How it works steps */}
+        <div className="flex flex-col gap-2 max-w-xs mx-auto w-full text-right">
+          {[
+            { num: '1', text: 'בחר שפה מהרשימה' },
+            { num: '2', text: 'מצא מתרגם פנוי (נקודה ירוקה)' },
+            { num: '3', text: 'התקשר או שלח וואטסאפ בלחיצת כפתור' },
+          ].map(step => (
+            <div key={step.num} className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
+              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.18)' }}>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)' }}>
+                {step.num}
+              </span>
+              <span className="text-sm font-semibold text-gray-700 dark:text-white/80">{step.text}</span>
+            </div>
+          ))}
+        </div>
       </motion.div>
 
       {/* CTA */}
@@ -314,7 +330,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
             </div>
           </div>
           <p className="text-xs text-white/55 font-semibold leading-relaxed">
-            אינטראקציות רפואיות מצילות חיים בוצעו עד כה
+            שיחות חירום בוצעו דרך המערכת
           </p>
         </motion.div>
       )}
@@ -508,7 +524,7 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 px-2 border
+      className="relative overflow-hidden flex flex-col items-center justify-center gap-2 rounded-2xl py-5 px-2 border
         bg-white/10 border-white/20
         active:scale-95 transition-all hover:border-white/40 hover:bg-white/15"
       style={{
@@ -516,6 +532,16 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
         boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}
     >
+      {count === 0 && (
+        <motion.div
+          className="absolute inset-y-0 w-[55%] pointer-events-none"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,200,100,0.18) 50%, transparent 100%)',
+          }}
+          animate={{ x: ['120%', '-150%'] }}
+          transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 2.8 }}
+        />
+      )}
       <span className="text-4xl leading-none">{lang.flag}</span>
       <span className="text-sm font-bold text-white">{lang.name}</span>
       {count > 0 ? (
@@ -523,9 +549,9 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
           {count} מתרגמים
         </span>
       ) : (
-        <span className="flex items-center gap-1 text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
+        <span className="flex items-center gap-1 text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
           <AlertTriangle size={9} className="flex-shrink-0" />
-          עזור לנו לאייש
+          עזרו לנו לאייש
         </span>
       )}
     </button>
