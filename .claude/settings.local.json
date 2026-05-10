@@ -100,7 +100,10 @@
       "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\"\" 2>&1\")",
       "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\\\\bin\"\" 2>&1 | Select-String \"\"java\"\"\")",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $m = $r.Content | ConvertFrom-Json; Write-Host \"name: $\\($m.name\\)\"; Write-Host \"id: $\\($m.id\\)\"; Write-Host \"start_url: $\\($m.start_url\\)\"; Write-Host \"display: $\\($m.display\\)\"; Write-Host \"icons: $\\($m.icons.Count\\)\"; Write-Host \"maskable: $\\(\\($m.icons | Where-Object { $_.purpose -eq 'maskable' }\\).Count\\)\" } catch { Write-Host \"Error: $_\" })",
-      "PowerShell($r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; \\($r.Content | ConvertFrom-Json\\).icons | ForEach-Object { Write-Host \"$\\($_.src\\) | $\\($_.sizes\\) | $\\($_.purpose\\)\" })"
+      "PowerShell($r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; \\($r.Content | ConvertFrom-Json\\).icons | ForEach-Object { Write-Host \"$\\($_.src\\) | $\\($_.sizes\\) | $\\($_.purpose\\)\" })",
+      "PowerShell(& \"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp -keypass sQBiVCXck3Vp 2>&1)",
+      "PowerShell(where.exe java 2>&1; where.exe keytool 2>&1; $env:JAVA_HOME)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp 2>&1)"
     ]
   },
   "hooks": {
