@@ -53,7 +53,7 @@ export default function AuthCard({ onGoogleSignIn, onEmailSignIn, onEmailSignUp 
           <div className="bg-emt-red rounded-full p-4 shadow-lg shadow-red-600/30">
             <Heart className="text-white w-8 h-8" strokeWidth={2.5} aria-hidden />
           </div>
-          <h1 className="text-2xl font-bold text-emt-light tracking-wide">עוזר חובש</h1>
+          <h1 className="text-2xl font-bold text-emt-light tracking-wide">חובש פלוס</h1>
           <p className="text-emt-muted text-sm text-center">מערכת ניהול מטופלים לחובשים בשטח</p>
         </div>
 
