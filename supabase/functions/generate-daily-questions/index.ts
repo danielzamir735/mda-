@@ -71,9 +71,9 @@ async function getAllRecentTopics(supabase: SupabaseClient, days: number): Promi
   const { data } = await supabase
     .from('daily_questions')
     .select('content')
-    .in('question_type', ['bls', 'als', 'spot_error', 'radio_challenge'])
+    .in('question_type', ['bls', 'als', 'spot_error', 'radio_challenge', 'red_flag'])
     .order('question_date', { ascending: false })
-    .limit(days * 4)
+    .limit(days * 5)
   if (!data) return []
   return data
     // deno-lint-ignore no-explicit-any
@@ -178,17 +178,25 @@ function buildAbbrPrompt(usedAbbreviations: string[]): string {
 }`
 }
 
-const RED_FLAG_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. צור מקרה חירום קצר שבו יש לזהות סימן אדום קריטי מסכן חיים.
+function buildRedFlagPrompt(recentTopics: string[]): string {
+  const avoidSection = recentTopics.length > 0
+    ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
+    : ''
+  return `אתה מדריך פרמדיק בכיר ישראלי. צור מקרה חירום קצר שבו יש לזהות סימן אדום קריטי מסכן חיים.
+סבב בין הנושאים הבאים: טראומה, קרדיולוגיה, נשימה, נוירולוגיה, חירום סביבתי, רעלנות, ילדים, אינטרנה. לא יותר מ-25% מהשאלות יהיו מאותו תחום.
 המקרה: תיאור ספציפי — גיל, מנגנון/תלונה, סימנים חיוניים, תסמינים. 2-3 משפטים.
 ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+${avoidSection}
 פלט JSON בלבד, ללא markdown:
 {
   "scenario": "תיאור המקרה (2-3 משפטים בעברית מקצועית, עם גיל, מנגנון/תלונה, סימנים חיוניים רלוונטיים)",
   "question": "מה הסימן האדום הקריטי המצריך התערבות מיידית?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר קליני (2-3 משפטים) — מדוע זהו הסימן הקריטי ומה ההשלכות הפיזיולוגיות"
+  "explanation": "הסבר קליני (2-3 משפטים) — מדוע זהו הסימן הקריטי ומה ההשלכות הפיזיולוגיות",
+  "topic_tag": "נושא קצר בעברית (1-3 מילים)"
 }`
+}
 
 function buildSpotErrorPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
@@ -276,6 +284,7 @@ interface RedFlagQ {
   options: string[]
   correct_index: number
   explanation: string
+  topic_tag: string
 }
 
 interface SpotErrorQ {
@@ -324,8 +333,9 @@ async function generateAbbreviation(supabase: SupabaseClient): Promise<Abbreviat
   return a
 }
 
-async function generateRedFlag(): Promise<RedFlagQ> {
-  const r = await withRetry(() => parseGeminiJSON<RedFlagQ>(RED_FLAG_PROMPT))
+async function generateRedFlag(supabase: SupabaseClient): Promise<RedFlagQ> {
+  const recentTopics = await getAllRecentTopics(supabase, 15)
+  const r = await withRetry(() => parseGeminiJSON<RedFlagQ>(buildRedFlagPrompt(recentTopics)))
   if (!r.scenario || !r.question || !Array.isArray(r.options) || r.options.length !== 4) throw new Error('Invalid red flag format')
   return r
 }
@@ -371,7 +381,7 @@ Deno.serve(async (req) => {
     { type: 'als', generate: () => generateClinical('ALS', supabase) },
     { type: 'med_v4', generate: () => generateMed(today) },
     { type: 'abbr', generate: () => generateAbbreviation(supabase) },
-    { type: 'red_flag', generate: () => generateRedFlag() },
+    { type: 'red_flag', generate: () => generateRedFlag(supabase) },
     { type: 'spot_error', generate: () => generateSpotError(supabase) },
     { type: 'radio_challenge', generate: () => generateRadioChallenge(supabase) },
   ]
