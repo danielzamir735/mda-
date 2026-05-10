@@ -139,7 +139,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <div className="flex items-center gap-2">
           <Wind size={22} className="text-sky-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">גדלי טיובוס ו-LMA</h2>
+          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">גדלי טובוס ו-LMA</h2>
         </div>
         <button
           onClick={onClose}

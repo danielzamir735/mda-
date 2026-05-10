@@ -90,7 +90,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
 
           {/* 3 — Tube Sizing / LMA */}
           <button
-            onClick={() => { trackInteraction('גדלי טיובוס ו-LMA', 'calculators'); setTubeOpen(true); }}
+            onClick={() => { trackInteraction('גדלי טובוס ו-LMA', 'calculators'); setTubeOpen(true); }}
             className="flex items-center gap-4 w-full rounded-2xl border border-sky-400/30
                        bg-sky-400/5 p-4 active:scale-95 transition-transform text-right"
           >
@@ -98,7 +98,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               <Wind size={22} className="text-sky-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sky-400 font-bold text-base">גדלי טיובוס ו-LMA</p>
+              <p className="text-sky-400 font-bold text-base">גדלי טובוס ו-LMA</p>
               <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">
                 ETT + LMA לפי גיל ומשקל — כולל עומק הכנסה
               </p>
