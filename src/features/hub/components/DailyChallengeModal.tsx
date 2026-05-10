@@ -605,9 +605,9 @@ function MCQOptions({
         if (isAnswered) {
           if (isCorrect) cls = accentCorrect;
           else if (isSelected) cls = accentWrong;
-          else cls = 'border-white/6 bg-white/3 text-emt-muted/60';
+          else cls = 'border-sky-400/30 bg-sky-500/10 text-sky-200/80';
         }
-        const fillColor = isCorrect ? 'bg-green-500/20' : isSelected ? 'bg-red-500/20' : 'bg-white/6';
+        const fillColor = isCorrect ? 'bg-green-500/20' : isSelected ? 'bg-red-500/20' : 'bg-sky-500/15';
 
         return (
           <HapticButton
@@ -631,6 +631,7 @@ function MCQOptions({
               <span className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-sm font-black border transition-colors ${
                 isAnswered && isCorrect ? 'bg-green-500/35 border-green-400/60 text-green-200'
                 : isAnswered && isSelected ? 'bg-red-500/35 border-red-400/60 text-red-200'
+                : isAnswered ? 'bg-sky-500/20 border-sky-400/35 text-sky-200/80'
                 : 'bg-white/8 border-white/18 text-white/55'
               }`}>
                 {HEBREW_LETTERS[idx]}
@@ -644,7 +645,7 @@ function MCQOptions({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 + idx * 0.06 }}
-                    className={`text-xs font-black tabular-nums ${isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-emt-muted/50'}`}
+                    className={`text-xs font-black tabular-nums ${isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-sky-300'}`}
                   >
                     {chosenPct}%
                   </motion.span>
