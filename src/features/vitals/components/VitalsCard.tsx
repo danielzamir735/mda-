@@ -69,7 +69,7 @@ export default function VitalsCard({
       {createPortal(
         <AlertOverlay
           visible={isRunning}
-          text={isHeartRate ? 'האם סדיר ונימוש?' : 'סימני מצוקה נשימתית?\nשימוש בשרירי עזר?'}
+          text={isHeartRate ? 'האם סדיר ונימוש?' : 'סימני מצוקה נשימתית?'}
         />,
         document.body,
       )}

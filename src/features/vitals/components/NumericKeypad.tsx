@@ -27,14 +27,11 @@ export default function NumericKeypad({
     <div className="flex flex-col gap-3 w-full" dir="ltr">
       {/* Display */}
       <div className="bg-black/40 border border-emt-border rounded-2xl px-4 py-3 text-center">
-        <p className="text-emt-muted text-sm mb-0.5">
-          {multiplier} ×
-        </p>
         <p
           className="text-emt-light font-mono font-bold tabular-nums leading-none"
           style={{ fontSize: 'clamp(2.5rem, 10vw, 4rem)' }}
         >
-          {displayInput}
+          {multiplier} × {displayInput}
         </p>
       </div>
 
