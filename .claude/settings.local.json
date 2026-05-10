@@ -83,7 +83,22 @@
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $r.Content | ConvertFrom-Json | Select-Object id, name, short_name, categories, prefer_related_applications, @{n='icon_count';e={$_.icons.Count}} } catch { Write-Host \"Error: $_\" })",
       "PowerShell(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\"; $maxAttempts = 12; $attempt = 0; $deployed = $false; while \\($attempt -lt $maxAttempts -and -not $deployed\\) { $attempt++; Start-Sleep -Seconds 15; try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $m = $r.Content | ConvertFrom-Json; if \\($m.id -eq \"/\"\\) { Write-Host \"DEPLOYED! name=$\\($m.name\\) id=$\\($m.id\\) icons=$\\($m.icons.Count\\)\"; $deployed = $true } else { Write-Host \"Attempt $attempt - still old manifest \\(id=$\\($m.id\\)\\)\" } } catch { Write-Host \"Attempt $attempt - error: $_\" } }; if \\(-not $deployed\\) { Write-Host \"Timeout - deployment taking longer than expected\" })",
       "PowerShell(cd \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\"; $maxAttempts = 15; $attempt = 0; $deployed = $false; while \\($attempt -lt $maxAttempts -and -not $deployed\\) { $attempt++; Start-Sleep -Seconds 20; try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/manifest.json\" -UseBasicParsing; $m = $r.Content | ConvertFrom-Json; if \\($m.id -eq \"/\"\\) { Write-Host \"DEPLOYED! name=[$\\($m.name\\)] id=[$\\($m.id\\)] icons=[$\\($m.icons.Count\\)] categories=[$\\($m.categories -join ','\\)]\"; $deployed = $true } else { Write-Host \"Attempt $attempt/15 - old manifest still live\" } } catch { Write-Host \"Attempt $attempt - fetch error\" } }; if \\(-not $deployed\\) { Write-Host \"Still deploying - check Vercel dashboard\" })",
-      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/.well-known/assetlinks.json\" -UseBasicParsing; Write-Host \"OK: $\\($r.Content\\)\" } catch { Write-Host \"FAIL: $_\" })"
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://hovesh-plus.vercel.app/.well-known/assetlinks.json\" -UseBasicParsing; Write-Host \"OK: $\\($r.Content\\)\" } catch { Write-Host \"FAIL: $_\" })",
+      "PowerShell(java *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\Common Files\\\\Oracle\\\\Java\\\\javapath\" | Select-Object Name; \\(Get-Item \"C:\\\\Program Files \\(x86\\)\\\\Common Files\\\\Oracle\\\\Java\\\\javapath\\\\java.exe\"\\).Target 2>&1)",
+      "PowerShell(cmd /c \"java -version\" 2>&1; cmd /c \"javac -version\" 2>&1; cmd /c \"where java\" 2>&1)",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Program Files \\(x86\\)\\\\Java\"\" 2>&1\"; cmd /c \"dir \"\"C:\\\\Program Files\\\\Java\"\" 2>&1\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Android\\\\Sdk\"\" 2>&1\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\licenses\"\" 2>&1\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Program Files\\\\Java\\\\jdk1.8.0_202\\\\bin\\\\javac.exe\"\" 2>&1\")",
+      "PowerShell(Get-Content *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Java\\\\jdk1.8.0_202\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $sdkManager = \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\"; Write-Host \"yes\" | cmd /c \"$sdkManager\" \"--licenses\" \"--sdk_root=$env:ANDROID_HOME\" 2>&1 | Select-Object -Last 3)",
+      "PowerShell(winget search *)",
+      "PowerShell(cmd /c \"dir /s /b \"\"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\bin\\\\java.exe\"\" 2>&1\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\"\" 2>&1\")",
+      "PowerShell(cmd /c \"dir \"\"C:\\\\Users\\\\User\\\\.bubblewrap\\\\jdk\\\\jdk17u-jdk-17.0.11-9\\\\bin\"\" 2>&1 | Select-String \"\"java\"\"\")"
     ]
   },
   "hooks": {

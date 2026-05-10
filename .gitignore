@@ -17,6 +17,14 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Android / Bubblewrap — keystore must never be committed
+android.keystore
+*.keystore
+*.jks
+# Bubblewrap build output
+app/
+output/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
