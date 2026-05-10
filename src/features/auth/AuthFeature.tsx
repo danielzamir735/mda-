@@ -2,17 +2,17 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import AuthCard from './components/AuthCard';
+import ProfileSetupCard from './components/ProfileSetupCard';
 
 export default function AuthFeature() {
-  const { session, loading, signInWithGoogle } = useAuth();
+  const { session, profile, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, updateProfile } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users away from the login screen
   useEffect(() => {
-    if (!loading && session) {
+    if (!loading && session && profile?.full_name) {
       navigate('/', { replace: true });
     }
-  }, [session, loading, navigate]);
+  }, [session, loading, profile, navigate]);
 
   if (loading) {
     return (
@@ -26,5 +26,23 @@ export default function AuthFeature() {
     );
   }
 
-  return <AuthCard onGoogleSignIn={signInWithGoogle} isLoading={false} />;
+  if (session && !profile?.full_name) {
+    return (
+      <ProfileSetupCard
+        userEmail={session.user.email ?? ''}
+        onComplete={async (fullName) => {
+          await updateProfile({ full_name: fullName });
+          navigate('/', { replace: true });
+        }}
+      />
+    );
+  }
+
+  return (
+    <AuthCard
+      onGoogleSignIn={signInWithGoogle}
+      onEmailSignIn={signInWithEmail}
+      onEmailSignUp={signUpWithEmail}
+    />
+  );
 }
