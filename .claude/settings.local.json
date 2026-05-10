@@ -106,7 +106,8 @@
       "PowerShell(& \"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot\\\\bin\\\\keytool.exe\" -list -v -keystore \"C:\\\\Users\\\\User\\\\Downloads\\\\חובש+ - Google Play package\\\\signing.keystore\" -alias my-key-alias -storepass sQBiVCXck3Vp 2>&1)",
       "Bash(vercel --version)",
       "Bash(vercel link *)",
-      "Bash(vercel deploy *)"
+      "Bash(vercel deploy *)",
+      "Bash(vercel env *)"
     ]
   },
   "hooks": {
