@@ -7,13 +7,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       filename: 'sw.js',
       manifestFilename: 'manifest.json',
       injectRegister: null, // App.tsx handles registration via useRegisterSW
       workbox: {
         clientsClaim: true,
-        skipWaiting: false, // prompt flow handles this via updateServiceWorker(true)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/.well-known\//],

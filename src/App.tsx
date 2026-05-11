@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
 import LegalDisclaimerModal from './components/LegalDisclaimerModal';
-import UpdateModal from './components/UpdateModal';
 import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
 import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
@@ -20,10 +19,7 @@ export default function App() {
   const [legalOpen, setLegalOpen] = useState(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
+  useRegisterSW({
     onRegistered(r) {
       if (r) registrationRef.current = r;
     },
@@ -92,7 +88,6 @@ export default function App() {
         </Routes>
         <Analytics />
         <LegalDisclaimerModal isOpen={legalOpen} onAccept={handleLegalAccept} />
-        {needRefresh && <UpdateModal onUpdate={() => updateServiceWorker(true)} />}
         {/* PWA modals only after legal disclaimer is dismissed */}
         {!legalOpen && <FullInstallModal />}
         <MigrationBanner />
