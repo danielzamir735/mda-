@@ -52,7 +52,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-type NearbyHospital = Hospital & { lat: number; lng: number; distKm: number };
+type NearbyHospital = Hospital & { lat: number; lng: number; distKm: number; level: 'A' | 'B' };
 
 function NearestERButton() {
   const [phase, setPhase] = useState<'idle' | 'loading' | 'list'>('idle');
@@ -68,8 +68,11 @@ function NearestERButton() {
     setPhase('loading');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const all = [...LEVEL_A, ...LEVEL_B].filter(
-          (h): h is Hospital & { lat: number; lng: number } => h.lat !== undefined && h.lng !== undefined,
+        const all = [
+          ...LEVEL_A.map(h => ({ ...h, level: 'A' as const })),
+          ...LEVEL_B.map(h => ({ ...h, level: 'B' as const })),
+        ].filter(
+          (h): h is typeof h & { lat: number; lng: number } => h.lat !== undefined && h.lng !== undefined,
         );
         const sorted = all
           .map(h => ({ ...h, distKm: haversineKm(coords.latitude, coords.longitude, h.lat, h.lng) }))
@@ -116,7 +119,16 @@ function NearestERButton() {
                        active:scale-95 transition-transform"
           >
             <div className="flex flex-col text-right gap-0.5">
-              <span className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight">{h.name}</span>
+              <div className="flex items-center gap-2 justify-end">
+                <span className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight">{h.name}</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none ${
+                  h.level === 'A'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-yellow-400 text-yellow-900'
+                }`}>
+                  {h.level === 'A' ? 'LEVEL A' : 'LEVEL B'}
+                </span>
+              </div>
               <span className="text-gray-500 dark:text-emt-muted text-xs">{h.city} · {h.distKm.toFixed(1)} ק"מ</span>
             </div>
             <Navigation size={20} className="text-emt-red shrink-0" />
