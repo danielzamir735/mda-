@@ -76,7 +76,8 @@
       "WebFetch(domain:hospitals.clalit.co.il)",
       "WebFetch(domain:www.assutaashdod.co.il)",
       "WebSearch",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "Bash(Select-String \"dnd|drag|sortable|framer\")"
     ]
   },
   "hooks": {
