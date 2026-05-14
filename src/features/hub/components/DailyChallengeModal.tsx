@@ -1184,7 +1184,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       icon: <Wrench size={20} className="text-teal-400" />,
       iconBg: 'bg-teal-400/20',
       iconBorder: 'border-teal-400/35',
-      blockTitle: 'חובש ללא ציוד',
+      blockTitle: 'אומנות האלתור',
       emoji: '🛠️',
     },
     D: {
@@ -1982,7 +1982,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           style={{ boxShadow: '0 0 26px rgba(20,184,166,0.12)' }}>
           <div className="flex items-center gap-2 mb-3">
             <Wrench size={14} className="text-teal-400 shrink-0" />
-            <p className="text-teal-400 text-[11px] font-black uppercase tracking-widest">חובש ללא ציוד</p>
+            <p className="text-teal-400 text-[11px] font-black uppercase tracking-widest">אומנות האלתור</p>
           </div>
           <p className="text-white/90 text-[15px] leading-[1.65] font-medium">{improvQuestion.scenario}</p>
         </div>
