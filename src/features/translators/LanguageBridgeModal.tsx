@@ -532,16 +532,6 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
         boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}
     >
-      {count === 0 && (
-        <motion.div
-          className="absolute inset-y-0 w-[55%] pointer-events-none"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(255,200,100,0.18) 50%, transparent 100%)',
-          }}
-          animate={{ x: ['120%', '-150%'] }}
-          transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 2.8 }}
-        />
-      )}
       <span className="text-4xl leading-none">{lang.flag}</span>
       <span className="text-sm font-bold text-white">{lang.name}</span>
       {count > 0 ? (
