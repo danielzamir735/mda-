@@ -55,7 +55,7 @@ export default function VitalsCard({
         'transition-all duration-300',
         !isRunning ? 'cursor-pointer select-none' : '',
         isRunning
-          ? 'bg-[#180408] border-2 border-emt-red'
+          ? 'bg-rose-50 dark:bg-[#180408] border-2 border-emt-red'
           : 'bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border',
       ].join(' ')}
       style={isRunning ? {

@@ -1,8 +1,8 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
-  Share2, Pill, BookOpen, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope,
+  Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
+  Search, Stethoscope, Wrench,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,7 @@ import { supabase } from '../../../lib/supabase';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
-type QuizCategory = ClinicalCategory | 'med_v3' | 'abbr' | 'red_flag' | 'spot_error' | 'med_bag';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'improvised' | 'red_flag' | 'spot_error' | 'med_bag';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
@@ -38,12 +38,13 @@ interface MedOfDay {
   emergency_note: string;
 }
 
-interface AbbreviationQ {
-  abbreviation: string;
+interface ImprovisedQ {
+  scenario: string;
   question: string;
   options: string[];
   correct_index: number;
   explanation: string;
+  topic_tag?: string;
 }
 
 interface RedFlagQ {
@@ -112,7 +113,7 @@ const CACHE_KEYS = {
   bls: 'daily_challenge_bls_v7',
   als: 'daily_challenge_als_v7',
   med: 'daily_challenge_med_v4',
-  abbr: 'daily_challenge_abbr_v2',
+  improvised: 'daily_challenge_improvised_v1',
   red_flag: 'daily_challenge_redflag_v2',
   spot_error: 'daily_challenge_spoterror_v1',
   med_bag: 'daily_challenge_medbag_v1',
@@ -122,13 +123,15 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   bls: 'daily_stats_bls_v1',
   als: 'daily_stats_als_v1',
   med_v3: 'daily_stats_med_v1',
-  abbr: 'daily_stats_abbr_v1',
+  improvised: 'daily_stats_improvised_v1',
   red_flag: 'daily_stats_redflag_v1',
   spot_error: 'daily_stats_spoterror_v1',
   med_bag: 'daily_stats_medbag_v1',
 };
 
-const PARTICIPANT_BASE = 430;
+function getParticipantBase(): number {
+  return new Date().getDate() % 2 === 0 ? 230 : 430;
+}
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
 const CATEGORY_FULL: Record<ClinicalCategory, string> = { bls: 'החייאה בסיסית', als: 'החייאה מתקדמת' };
@@ -193,17 +196,85 @@ function buildMedPrompt(): string {
 }`;
 }
 
-const ABBR_PROMPT = `אתה מדריך פרמדיק בכיר ישראלי. צור שאלת MCQ על קיצור רפואי חשוב בעולם ההצלה הישראלי.
-בחר קיצור מהרשימה: GCS, AVPU, FAST, OPQRST, SAMPLE, MIST, AED, BVM, CPAP, PEEP, MAP, SpO2, EtCO2, IM, IV, IO, ROSC, PEA, VF, VT, SVT, CVA, MI, AMI, STEMI, NSTEMI, CHF, COPD, DKA, MCI, JVD, EMT, MICU, HR, BP, RR, LOC.
-ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
-פלט JSON בלבד, ללא markdown:
+const IMPROVISED_SETTINGS = [
+  'פיקניק בפארק ציבורי',
+  'קניון קומת מזון (פוד קורט)',
+  'אוטובוס בין-עירוני בנסיעה',
+  'חדר אוכל של בית ספר תיכון',
+  'חתונה באולם שמחות',
+  'חוף הים (קייטנה)',
+  'מסעדה שוקקת',
+  'שוק הכרמל / שוק מחנה יהודה',
+  'חדר כושר / ספורטק',
+  'גן ילדים / פעוטון',
+  'מגרש כדורגל בשכונה',
+  'בית כנסת',
+  'סופרמרקט גדול',
+  'מסיבת יום הולדת ביתית',
+  'פאב / בר',
+  'טיול שנתי בהר מירון',
+  'קמפינג ביער הכרמל',
+  'בריכת שחייה ציבורית',
+  'תחנת רכבת / רציף',
+  'מוזיאון',
+  'ספרייה עירונית',
+  'בית אבות',
+  'גינת שכונה',
+  'אצטדיון יציעים',
+  'מספרה / סלון יופי',
+  'רכבת ישראל (קרון נוסעים)',
+  'שדה תעופה — טרמינל המתנה',
+  'גן לאומי / שמורת טבע',
+  'פארק מים',
+  'אולם קולנוע',
+  'קמפוס אוניברסיטה',
+  'מסדרון בית חולים (כמבקר)',
+  'מועדון לילה / דיסקוטק',
+  'אירוע חברה / כנס עסקי',
+  'שוק פשפשים בשטח פתוח',
+  'גג בניין מגורים',
+  'מרפאה קהילתית — חדר המתנה',
+  'משרד פתוח / קומת hi-tech',
+  'קניית מכוניות (מגרש מכוניות)',
+  'ים המלח / ספא',
+];
+
+function getTodayImprovisedSetting(): string {
+  const today = getToday();
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+  return IMPROVISED_SETTINGS[hash % IMPROVISED_SETTINGS.length];
+}
+
+function buildImprovisedPrompt(recentTopics: string[]): string {
+  const setting = getTodayImprovisedSetting();
+  const avoidSection = recentTopics.length > 0
+    ? `\nנושאי חירום שנשאלו לאחרונה — בחר סוג חירום שונה לחלוטין: ${recentTopics.join(', ')}.\n`
+    : '';
+  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" — תרחיש חירום אמיתי בחיי היומיום, ללא תיק רפואי. החובש צריך לחשוב יצירתית ולהשתמש בחפצים זמינים במקום.
+
+מיקום היום (חובה להשתמש): ${setting}
+
+כללים מחייבים:
+1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי.
+2. תרחיש (2-3 משפטים): תיאור ספציפי — גיל, מין, מנגנון/תסמינים, ומה זמין במקום (חפצים אופייניים למיקום זה).
+3. שאלה: "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?"
+4. 4 תשובות: חפצים ופעולות ספציפיים למיקום זה — אחת נכונה, שלוש מסיחות הגיוניות. ערבב מיקום התשובה.
+5. הסבר (2-3 משפטים): מדוע זהו הפתרון הטוב ביותר, כיצד הוא עוזר בפועל.
+6. topic_tag: סוג החירום בלבד (1-3 מילים, לא המיקום).
+
+סוגי חירום לסבב ביניהם: חנק, דימום פתוח, כוויה, אובדן הכרה, כאב לב/כאב חזה, נפילה/שבר, אנפילקסיס, מכת חום, עקיצת דבורה/צרעה, טביעה, ילד בבכי ללא תגובה, היפוגליקמיה.
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
 {
-  "abbreviation": "הקיצור",
-  "question": "מה המשמעות של [קיצור]?",
+  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, מה זמין ב${setting})",
+  "question": "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר קצר (1-2 משפטים) — משמעות הקיצור ושימושו הקליני"
+  "explanation": "הסבר (2-3 משפטים) — מדוע זהו הפתרון הטוב ביותר ואיך הוא מסייע בפועל",
+  "topic_tag": "סוג החירום בלבד (1-3 מילים)"
 }`;
+}
 
 function buildRedFlagPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
@@ -409,10 +480,11 @@ async function generateMed(): Promise<MedOfDay> {
   return m;
 }
 
-async function generateAbbreviation(): Promise<AbbreviationQ> {
-  const a = await withRetry(() => parseGeminiJSON<AbbreviationQ>(ABBR_PROMPT));
-  if (!a.abbreviation || !a.question || !Array.isArray(a.options) || a.options.length !== 4) throw new Error('Invalid abbr format');
-  return a;
+async function generateImprovised(): Promise<ImprovisedQ> {
+  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
+  const q = await withRetry(() => parseGeminiJSON<ImprovisedQ>(buildImprovisedPrompt(recentTopics)));
+  if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) throw new Error('Invalid improvised format');
+  return q;
 }
 
 async function generateRedFlag(): Promise<RedFlagQ> {
@@ -1015,12 +1087,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [showMedExpl, setShowMedExpl] = useState(false);
   const [medStats, setMedStats] = useState<GlobalStats | null>(null);
 
-  // Block C — Abbreviation
-  const [abbrStatus, setAbbrStatus] = useState<LoadStatus>('idle');
-  const [abbrQuestion, setAbbrQuestion] = useState<AbbreviationQ | null>(null);
-  const [abbrAnsweredIdx, setAbbrAnsweredIdx] = useState<number | null>(null);
-  const [showAbbrExpl, setShowAbbrExpl] = useState(false);
-  const [abbrStats, setAbbrStats] = useState<GlobalStats | null>(null);
+  // Block C — Improvised Medicine
+  const [improvStatus, setImprovStatus] = useState<LoadStatus>('idle');
+  const [improvQuestion, setImprovQuestion] = useState<ImprovisedQ | null>(null);
+  const [improvAnsweredIdx, setImprovAnsweredIdx] = useState<number | null>(null);
+  const [showImprovExpl, setShowImprovExpl] = useState(false);
+  const [improvStats, setImprovStats] = useState<GlobalStats | null>(null);
 
   // Block D — Red Flag
   const [redStatus, setRedStatus] = useState<LoadStatus>('idle');
@@ -1053,24 +1125,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ── Derived ──
   const clinicalIsAnswered = clinicalAnsweredIdx !== null;
   const medIsAnswered = medAnsweredIdx !== null;
-  const abbrIsAnswered = abbrAnsweredIdx !== null;
+  const improvIsAnswered = improvAnsweredIdx !== null;
   const redIsAnswered = redAnsweredIdx !== null;
   const spotIsAnswered = spotAnsweredIdx !== null;
   const medBagIsAnswered = medBagAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medIsAnswered && abbrIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
     medIsAnswered && medAnsweredIdx === medData?.correct_index,
-    abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index,
+    improvIsAnswered && improvAnsweredIdx === improvQuestion?.correct_index,
     redIsAnswered && redAnsweredIdx === redQuestion?.correct_index,
     spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index,
     medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, abbrIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, improvIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered].filter(Boolean).length;
 
-  const clinicalParticipantCount = (globalStats?.total ?? 0) + PARTICIPANT_BASE;
+  const clinicalParticipantCount = (globalStats?.total ?? 0) + getParticipantBase();
 
   // ── Grid card configs ──
   const BLOCK_CONFIGS: Record<BlockId, GridCardConfig> = {
@@ -1103,17 +1175,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       emoji: '💊',
     },
     C: {
-      neonBorder: 'border-violet-500/55',
-      glowColor: '0 0 30px rgba(139,92,246,0.22)',
-      cardBg: 'bg-gradient-to-b from-violet-950/50 to-slate-950',
-      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.7) 0%, transparent 70%)',
-      iconGlow: '0 0 22px rgba(139,92,246,0.4)',
-      labelColor: 'text-violet-400',
-      icon: <BookOpen size={20} className="text-violet-400" />,
-      iconBg: 'bg-violet-400/20',
-      iconBorder: 'border-violet-400/35',
-      blockTitle: 'קיצורים רפואיים',
-      emoji: '📋',
+      neonBorder: 'border-teal-500/55',
+      glowColor: '0 0 30px rgba(20,184,166,0.22)',
+      cardBg: 'bg-gradient-to-b from-teal-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(20,184,166,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(20,184,166,0.4)',
+      labelColor: 'text-teal-400',
+      icon: <Wrench size={20} className="text-teal-400" />,
+      iconBg: 'bg-teal-400/20',
+      iconBorder: 'border-teal-400/35',
+      blockTitle: 'אומנות האלתור',
+      emoji: '🛠️',
     },
     D: {
       neonBorder: 'border-orange-500/55',
@@ -1185,25 +1257,25 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       }).catch(() => setMedStatus('error'));
     }
 
-    const cachedAbbr = loadCache<AbbreviationQ>(CACHE_KEYS.abbr);
-    if (cachedAbbr) {
-      setAbbrQuestion(cachedAbbr.data);
-      setAbbrAnsweredIdx(cachedAbbr.answeredIdx ?? null);
-      setAbbrStatus('ready');
-      if (cachedAbbr.answeredIdx !== null && cachedAbbr.answeredIdx !== undefined) {
-        const seeded = loadCachedStats('abbr');
-        if (seeded) setAbbrStats(seeded);
-        fetchGlobalStats('abbr', cachedAbbr.data.correct_index).then(({ stats }) => {
-          setAbbrStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+    const cachedImprov = loadCache<ImprovisedQ>(CACHE_KEYS.improvised);
+    if (cachedImprov) {
+      setImprovQuestion(cachedImprov.data);
+      setImprovAnsweredIdx(cachedImprov.answeredIdx ?? null);
+      setImprovStatus('ready');
+      if (cachedImprov.answeredIdx !== null && cachedImprov.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('improvised');
+        if (seeded) setImprovStats(seeded);
+        fetchGlobalStats('improvised', cachedImprov.data.correct_index).then(({ stats }) => {
+          setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
         });
       }
     } else {
-      setAbbrStatus('loading');
-      fetchOrCreateBlock<AbbreviationQ>('abbr', generateAbbreviation).then((q) => {
-        setAbbrQuestion(q);
-        saveCache(CACHE_KEYS.abbr, q);
-        setAbbrStatus('ready');
-      }).catch(() => setAbbrStatus('error'));
+      setImprovStatus('loading');
+      fetchOrCreateBlock<ImprovisedQ>('improvised', generateImprovised).then((q) => {
+        setImprovQuestion(q);
+        saveCache(CACHE_KEYS.improvised, q);
+        setImprovStatus('ready');
+      }).catch(() => setImprovStatus('error'));
     }
 
     const cachedRed = loadCache<RedFlagQ>(CACHE_KEYS.red_flag);
@@ -1212,7 +1284,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setRedAnsweredIdx(cachedRed.answeredIdx ?? null);
       setRedStatus('ready');
       if (cachedRed.answeredIdx !== null && cachedRed.answeredIdx !== undefined) {
-        fetchGlobalStats('spot_error', null).then(() => {}); // warm connection
+        const seeded = loadCachedStats('red_flag');
+        if (seeded) setRedStats(seeded);
+        fetchGlobalStats('red_flag', cachedRed.data.correct_index).then(({ stats }) => {
+          setRedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
       }
     } else {
       setRedStatus('loading');
@@ -1268,24 +1344,25 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     // Fetch all participant counts for grid tiles
     const fetchParticipants = async () => {
       const t = getToday();
+      const base = getParticipantBase();
       try {
         const { data } = await supabase
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'abbr', 'red_flag', 'spot_error', 'med_bag']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
           counts[r.question_type] = (counts[r.question_type] ?? 0) + 1;
         });
         setBlockParticipants({
-          A: ((counts['bls'] ?? 0) + (counts['als'] ?? 0)) + PARTICIPANT_BASE,
-          B: (counts['med_v3'] ?? 0) + PARTICIPANT_BASE,
-          C: (counts['abbr'] ?? 0) + PARTICIPANT_BASE,
-          D: (counts['red_flag'] ?? 0) + PARTICIPANT_BASE,
-          E: (counts['spot_error'] ?? 0) + PARTICIPANT_BASE,
-          F: (counts['med_bag'] ?? 0) + PARTICIPANT_BASE,
+          A: ((counts['bls'] ?? 0) + (counts['als'] ?? 0)) + base,
+          B: (counts['med_v3'] ?? 0) + base,
+          C: (counts['improvised'] ?? 0) + base,
+          D: (counts['red_flag'] ?? 0) + base,
+          E: (counts['spot_error'] ?? 0) + base,
+          F: (counts['med_bag'] ?? 0) + base,
         });
       } catch { /* noop */ }
     };
@@ -1301,7 +1378,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setClinicalAnsweredIdx(null); setClinicalTimeTaken(null); setShowClinicalExpl(false);
       setGlobalStats(null); setIsStatsOffline(false);
       setMedStatus('idle'); setMedData(null); setMedAnsweredIdx(null); setShowMedExpl(false); setMedStats(null);
-      setAbbrStatus('idle'); setAbbrQuestion(null); setAbbrAnsweredIdx(null); setShowAbbrExpl(false); setAbbrStats(null);
+      setImprovStatus('idle'); setImprovQuestion(null); setImprovAnsweredIdx(null); setShowImprovExpl(false); setImprovStats(null);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
       setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null);
@@ -1335,12 +1412,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); })
           .catch(() => setMedStatus('error'));
       }
-    } else if (activeBlock === 'C' && abbrStatus !== 'loading') {
-      if (!loadCache<AbbreviationQ>(CACHE_KEYS.abbr)) {
-        setAbbrStatus('loading'); setAbbrQuestion(null); setAbbrAnsweredIdx(null);
-        fetchOrCreateBlock<AbbreviationQ>('abbr', generateAbbreviation)
-          .then(q => { setAbbrQuestion(q); saveCache(CACHE_KEYS.abbr, q); setAbbrStatus('ready'); })
-          .catch(() => setAbbrStatus('error'));
+    } else if (activeBlock === 'C' && improvStatus !== 'loading') {
+      if (!loadCache<ImprovisedQ>(CACHE_KEYS.improvised)) {
+        setImprovStatus('loading'); setImprovQuestion(null); setImprovAnsweredIdx(null);
+        fetchOrCreateBlock<ImprovisedQ>('improvised', generateImprovised)
+          .then(q => { setImprovQuestion(q); saveCache(CACHE_KEYS.improvised, q); setImprovStatus('ready'); })
+          .catch(() => setImprovStatus('error'));
       }
     } else if (activeBlock === 'D' && redStatus !== 'loading') {
       if (!loadCache<RedFlagQ>(CACHE_KEYS.red_flag)) {
@@ -1476,22 +1553,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   }, [medData, medAnsweredIdx]);
 
   // ── Block C handler ──
-  const handleAbbrAnswer = useCallback(async (idx: number) => {
-    if (!abbrQuestion || abbrAnsweredIdx !== null) return;
-    const isCorrect = idx === abbrQuestion.correct_index;
-    setAbbrAnsweredIdx(idx);
-    saveCache(CACHE_KEYS.abbr, abbrQuestion, idx);
-    setAbbrStats((prev) => {
+  const handleImprovAnswer = useCallback(async (idx: number) => {
+    if (!improvQuestion || improvAnsweredIdx !== null) return;
+    const isCorrect = idx === improvQuestion.correct_index;
+    setImprovAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.improvised, improvQuestion, idx);
+    setImprovStats((prev) => {
       const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
       const counts = [...base.answer_counts];
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
-    trackEvent('daily_challenge_abbr_answered', { correct: isCorrect });
-    await saveClinicalResponse('abbr', isCorrect, 0, idx);
-    const { stats } = await fetchGlobalStats('abbr', abbrQuestion.correct_index);
-    setAbbrStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [abbrQuestion, abbrAnsweredIdx]);
+    trackEvent('daily_challenge_improvised_answered', { correct: isCorrect });
+    await saveClinicalResponse('improvised', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('improvised', improvQuestion.correct_index);
+    setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [improvQuestion, improvAnsweredIdx]);
 
   // ── Block D handler ──
   const handleRedAnswer = useCallback(async (idx: number) => {
@@ -1860,42 +1937,68 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // ── Block C content ──
   const renderBlockC = () => {
-    if (abbrStatus === 'loading') {
+    if (improvStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-purple-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">טוען קיצור...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-teal-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
         </div>
       );
     }
-    if (abbrStatus === 'error') {
+    if (improvStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
           <XCircle size={28} className="text-red-400" />
           <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setImprovStatus('loading'); fetchOrCreateBlock<ImprovisedQ>('improvised', generateImprovised).then(q => { setImprovQuestion(q); saveCache(CACHE_KEYS.improvised, q); setImprovStatus('ready'); }).catch(() => setImprovStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-teal-400/15 border border-teal-400/30 text-teal-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
         </div>
       );
     }
-    if (!abbrQuestion) return null;
+    if (!improvQuestion) return null;
+
+    const improvCorrect = improvAnsweredIdx === improvQuestion.correct_index;
 
     return (
       <div className="flex flex-col gap-5">
-        {/* Abbreviation hero badge */}
-        <div className="rounded-3xl bg-gradient-to-b from-violet-950/55 to-slate-950 border border-violet-500/35 p-6 flex flex-col items-center gap-2"
-          style={{ boxShadow: '0 0 28px rgba(139,92,246,0.14)' }}>
-          <span className="text-violet-200 font-black text-5xl tracking-[0.2em] leading-none" dir="ltr">
-            {abbrQuestion.abbreviation}
-          </span>
-          <p className="text-violet-400/60 text-xs font-semibold mt-1">{abbrQuestion.question}</p>
+        {/* Game explanation */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-teal-500/8 border border-teal-400/20">
+          <Wrench size={14} className="text-teal-400 shrink-0" />
+          <p className="text-teal-300/80 text-[13px] font-semibold leading-snug">אתה בשטח ללא תיק — חשוב יצירתי ובחר את הפתרון הטוב ביותר עם מה שיש.</p>
+        </div>
+
+        {/* Participant count */}
+        {blockParticipants['C'] !== undefined && blockParticipants['C'] > 0 && (
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['C'] ?? 0).toLocaleString('he-IL')}</span>
+          </div>
+        )}
+
+        {/* Scenario card */}
+        <div className="rounded-3xl bg-gradient-to-b from-teal-950/50 to-slate-950 border border-teal-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(20,184,166,0.12)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench size={14} className="text-teal-400 shrink-0" />
+            <p className="text-teal-400 text-[11px] font-black uppercase tracking-widest">אומנות האלתור</p>
+          </div>
+          <p className="text-white/90 text-[15px] leading-[1.65] font-medium">{improvQuestion.scenario}</p>
+        </div>
+
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-teal-950/40 to-slate-950/60 border border-teal-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{improvQuestion.question}</p>
         </div>
 
         {/* Result banner */}
-        {abbrIsAnswered && (
+        {improvIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {abbrAnsweredIdx === abbrQuestion.correct_index ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${abbrAnsweredIdx === abbrQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-              {abbrAnsweredIdx === abbrQuestion.correct_index ? 'נכון!' : 'שגוי'}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${improvCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {improvCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${improvCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {improvCorrect ? 'פתרון נכון!' : 'לא הפתרון האופטימלי'}
             </span>
           </motion.div>
         )}
@@ -1903,19 +2006,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
 
         <MCQOptions
-          options={abbrQuestion.options}
-          correctIndex={abbrQuestion.correct_index}
-          answeredIdx={abbrAnsweredIdx}
-          onAnswer={handleAbbrAnswer}
-          stats={abbrStats}
-          accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-100"
+          options={improvQuestion.options}
+          correctIndex={improvQuestion.correct_index}
+          answeredIdx={improvAnsweredIdx}
+          onAnswer={handleImprovAnswer}
+          stats={improvStats}
+          accentCorrect="border-teal-400/55 bg-teal-500/12 text-teal-100"
           accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
         />
 
-        {abbrIsAnswered && !showAbbrExpl && (
+        {improvIsAnswered && !showImprovExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <HapticButton onClick={() => setShowAbbrExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-violet-400/15 border border-violet-400/35 py-3.5 text-violet-300 font-bold text-sm">
+            <HapticButton onClick={() => setShowImprovExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-teal-400/15 border border-teal-400/35 py-3.5 text-teal-300 font-bold text-sm">
               <Brain size={14} />הצג הסבר
             </HapticButton>
           </motion.div>
@@ -2128,12 +2231,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           <Users size={11} className="text-emt-muted shrink-0" />
           <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
           <motion.span
-            key={blockParticipants['F'] ?? PARTICIPANT_BASE}
+            key={blockParticipants['F'] ?? getParticipantBase()}
             initial={{ scale: 0.9, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
             className="text-[11px] font-black text-emt-light tabular-nums"
           >
-            {(blockParticipants['F'] ?? PARTICIPANT_BASE).toLocaleString('he-IL')}
+            {(blockParticipants['F'] ?? getParticipantBase()).toLocaleString('he-IL')}
           </motion.span>
         </div>
 
@@ -2201,7 +2304,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const blockStatus = (id: BlockId): LoadStatus => {
     if (id === 'A') return clinicalStatus === 'idle' ? 'ready' : clinicalStatus;
     if (id === 'B') return medStatus;
-    if (id === 'C') return abbrStatus;
+    if (id === 'C') return improvStatus;
     if (id === 'D') return redStatus;
     if (id === 'E') return spotStatus;
     return medBagStatus;
@@ -2210,7 +2313,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const blockIsAnswered = (id: BlockId): boolean => {
     if (id === 'A') return clinicalIsAnswered;
     if (id === 'B') return medIsAnswered;
-    if (id === 'C') return abbrIsAnswered;
+    if (id === 'C') return improvIsAnswered;
     if (id === 'D') return redIsAnswered;
     if (id === 'E') return spotIsAnswered;
     return medBagIsAnswered;
@@ -2219,7 +2322,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const blockIsCorrect = (id: BlockId): boolean => {
     if (id === 'A') return clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index;
     if (id === 'B') return medIsAnswered && medAnsweredIdx === medData?.correct_index;
-    if (id === 'C') return abbrIsAnswered && abbrAnsweredIdx === abbrQuestion?.correct_index;
+    if (id === 'C') return improvIsAnswered && improvAnsweredIdx === improvQuestion?.correct_index;
     if (id === 'D') return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
     if (id === 'E') return spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index;
     return medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index;
@@ -2373,12 +2476,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             onClose={() => setShowMedExpl(false)}
           />
         )}
-        {showAbbrExpl && abbrQuestion && abbrAnsweredIdx !== null && (
+        {showImprovExpl && improvQuestion && improvAnsweredIdx !== null && (
           <SimpleExplanationModal
-            explanation={abbrQuestion.explanation}
-            isCorrect={abbrAnsweredIdx === abbrQuestion.correct_index}
-            accentColor="purple"
-            onClose={() => setShowAbbrExpl(false)}
+            explanation={improvQuestion.explanation}
+            isCorrect={improvAnsweredIdx === improvQuestion.correct_index}
+            accentColor="green"
+            onClose={() => setShowImprovExpl(false)}
           />
         )}
         {showRedExpl && redQuestion && redAnsweredIdx !== null && (

@@ -8,9 +8,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      filename: 'sw.js',
-      manifestFilename: 'manifest.json',
-      injectRegister: null, // App.tsx handles registration via useRegisterSW
       workbox: {
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

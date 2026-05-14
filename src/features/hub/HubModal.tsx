@@ -1,9 +1,9 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
 let _personalCardShown = false;
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
@@ -64,6 +64,22 @@ type HubItem = {
 };
 
 const HUB_ITEMS: HubItem[] = [
+  {
+    id: 'campaign',
+    label: 'חובש + עולה לחנויות!',
+    icon: Rocket,
+    color: 'text-sky-300',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+  },
+  {
+    id: 'concepts',
+    label: 'מרכז ידע אישי',
+    icon: Sparkles,
+    color: 'text-purple-300',
+    border: 'border-purple-400/35',
+    bg: 'bg-purple-400/10',
+  },
   {
     id: 'calculators',
     label: 'מחשבונים',
@@ -231,7 +247,51 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+const ENABLED = new Set(['campaign', 'concepts', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+
+const HUB_STORAGE_KEY = 'hub_order_v2';
+const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
+
+function loadHubOrder(): string[] {
+  try {
+    const saved = localStorage.getItem(HUB_STORAGE_KEY);
+    if (saved) {
+      const parsed: string[] = JSON.parse(saved);
+      const valid = parsed.filter(id => DEFAULT_HUB_ORDER.includes(id));
+      const missing = DEFAULT_HUB_ORDER.filter(id => !valid.includes(id));
+      return [...valid, ...missing];
+    }
+  } catch {}
+  return DEFAULT_HUB_ORDER;
+}
+
+function DraggableHubRow({ item }: { item: HubItem }) {
+  const controls = useDragControls();
+  const { icon: Icon, label, subtitle, color, border, bg } = item;
+  return (
+    <Reorder.Item
+      value={item}
+      dragListener={false}
+      dragControls={controls}
+      className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 select-none`}
+      whileDrag={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 10 }}
+    >
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${bg} border ${border}`}>
+        <Icon size={22} className={color} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`${color} font-bold text-base`}>{label}</p>
+        {subtitle && <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{subtitle}</p>}
+      </div>
+      <div
+        onPointerDown={(e) => controls.start(e)}
+        className="p-2 -m-2 cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical size={22} className="text-gray-400 dark:text-emt-muted" />
+      </div>
+    </Reorder.Item>
+  );
+}
 
 export default function HubModal({
   isOpen,
@@ -256,6 +316,16 @@ export default function HubModal({
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [hubOrder, setHubOrder] = useState<string[]>(() => loadHubOrder());
+
+  const orderedItems = hubOrder.map(id => HUB_ITEMS.find(item => item.id === id)!).filter(Boolean);
+
+  const handleHubReorder = (newItems: HubItem[]) => {
+    const newOrder = newItems.map(item => item.id);
+    setHubOrder(newOrder);
+    localStorage.setItem(HUB_STORAGE_KEY, JSON.stringify(newOrder));
+  };
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
   const [showPersonalCard, setShowPersonalCard] = useState(false);
@@ -314,6 +384,8 @@ export default function HubModal({
     const tracking = HUB_TRACKING[id];
     if (tracking) trackInteraction(tracking[0], tracking[1]);
 
+    if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
+    if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -360,157 +432,177 @@ https://hovesh-plus.vercel.app/`;
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכז כלים</h2>
-        <HapticButton
-          onClick={onClose}
-          pressScale={0.88}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                     flex items-center justify-center
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-          aria-label="סגור"
-        >
-          <X size={20} />
-        </HapticButton>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setEditMode(e => !e)}
+            className={`w-10 h-10 rounded-full border flex items-center justify-center active:scale-90 transition-all
+              ${editMode
+                ? 'bg-emt-green/15 border-emt-green/40 text-emt-green'
+                : 'bg-emt-green/5 dark:bg-emt-green/10 border-emt-green/40 text-emt-green/70 hover:text-emt-green'
+              }`}
+            aria-label={editMode ? 'סיום עריכה' : 'סדר כלים'}
+          >
+            {editMode ? <Check size={18} /> : <Pencil size={18} />}
+          </button>
+          <HapticButton
+            onClick={onClose}
+            pressScale={0.88}
+            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                       flex items-center justify-center
+                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+            aria-label="סגור"
+          >
+            <X size={20} />
+          </HapticButton>
+        </div>
       </div>
+
+      {/* Edit mode hint */}
+      {editMode && (
+        <div className="shrink-0 px-4 py-2 bg-emt-green/5 border-b border-emt-green/20">
+          <p className="text-xs text-emt-green/80 text-center font-medium">החזק את הידית ⠿ וגרור • לחץ ✓ לסיום</p>
+        </div>
+      )}
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
 
-        {/* Campaign + Placeholder cards — above feedback button */}
-        <div className="grid grid-cols-2 gap-3">
-
-          {/* Campaign Card — rotating gradient border */}
-          <div className="relative">
-            {/* Outer glow bloom — subtle, synced to gradient rotation */}
-            <motion.div
-              className="pointer-events-none absolute rounded-2xl"
-              style={{ inset: -3 }}
-              animate={{
-                boxShadow: [
-                  '0 0 6px 1px rgba(16,185,129,0.20)',
-                  '0 0 12px 3px rgba(59,130,246,0.25)',
-                  '0 0 8px 2px rgba(124,58,237,0.20)',
-                  '0 0 6px 1px rgba(16,185,129,0.20)',
-                ],
-              }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-            />
-
-            <motion.button
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.1 }}
-              onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
-              className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
-            >
-              {/* Rotating conic-gradient — GPU-accelerated, clipped by overflow-hidden */}
-              <motion.div
-                className="pointer-events-none absolute"
-                style={{
-                  inset: -80,
-                  background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
-              />
-
-              {/* Inner card — covers the interior leaving 2px border strip */}
-              <div
-                className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
-                style={{
-                  background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
-                  backdropFilter: 'blur(14px)',
-                  WebkitBackdropFilter: 'blur(14px)',
-                }}
-              >
-                <Rocket size={28} className="text-sky-300" />
-                <span className="text-sky-200 font-bold text-sm leading-tight">
-                  חובש + עולה לחנויות!
-                </span>
-                <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
-                  לפרטים ←
-                </span>
-              </div>
-            </motion.button>
-          </div>
-
-          {/* Concepts Card — מושגים שלמדתי */}
-          <motion.button
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.2 }}
-            onClick={() => { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); }}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
-            style={{
-              background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-              boxShadow: '0 0 18px rgba(168,85,247,0.12)',
-            }}
+        {editMode ? (
+          <Reorder.Group
+            axis="y"
+            values={orderedItems}
+            onReorder={handleHubReorder}
+            className="flex flex-col gap-3 list-none m-0 p-0"
           >
-            <Sparkles size={28} className="text-purple-300 relative z-10" />
-            <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
-          </motion.button>
+            {orderedItems.map(item => (
+              <DraggableHubRow key={item.id} item={item} />
+            ))}
+          </Reorder.Group>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {orderedItems.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
+              if (id === 'campaign') {
+                return (
+                  <div key={id} className="relative">
+                    <motion.div
+                      className="pointer-events-none absolute rounded-2xl"
+                      style={{ inset: -3 }}
+                      animate={{
+                        boxShadow: [
+                          '0 0 6px 1px rgba(16,185,129,0.20)',
+                          '0 0 12px 3px rgba(59,130,246,0.25)',
+                          '0 0 8px 2px rgba(124,58,237,0.20)',
+                          '0 0 6px 1px rgba(16,185,129,0.20)',
+                        ],
+                      }}
+                      transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+                    />
+                    <motion.button
+                      onClick={() => handleItemClick('campaign')}
+                      className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
+                    >
+                      <motion.div
+                        className="pointer-events-none absolute"
+                        style={{
+                          inset: -80,
+                          background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
+                        }}
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
+                      />
+                      <div
+                        className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
+                        style={{
+                          background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
+                          backdropFilter: 'blur(14px)',
+                          WebkitBackdropFilter: 'blur(14px)',
+                        }}
+                      >
+                        <Rocket size={28} className="text-sky-300" />
+                        <span className="text-sky-200 font-bold text-sm leading-tight">חובש + עולה לחנויות!</span>
+                        <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">לפרטים ←</span>
+                      </div>
+                    </motion.button>
+                  </div>
+                );
+              }
 
-        </div>
+              if (id === 'concepts') {
+                return (
+                  <motion.button
+                    key={id}
+                    onClick={() => handleItemClick('concepts')}
+                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
+                    style={{
+                      background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
+                      backdropFilter: 'blur(14px)',
+                      WebkitBackdropFilter: 'blur(14px)',
+                      boxShadow: '0 0 18px rgba(168,85,247,0.12)',
+                    }}
+                  >
+                    <Sparkles size={28} className="text-purple-300 relative z-10" />
+                    <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
+                  </motion.button>
+                );
+              }
 
-        <div className="grid grid-cols-2 gap-3">
-          {HUB_ITEMS.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
-            const enabled = ENABLED.has(id);
-            const sharedClass = [
-              'flex flex-col items-center justify-center gap-2',
-              'rounded-2xl border', border, bg,
-              'h-36 transition-transform px-2',
-              enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed',
-            ].join(' ');
+              const enabled = ENABLED.has(id);
+              const sharedClass = [
+                'flex flex-col items-center justify-center gap-2',
+                'rounded-2xl border', border, bg,
+                'h-36 transition-transform px-2',
+                enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed',
+              ].join(' ');
 
-            const content = (
-              <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
-                <Icon size={36} className={color} />
-                <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
-                {subtitle && (
-                  <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
-                )}
-                {id === 'install-app' && (
-                  <span className="text-xs text-slate-400 text-center leading-tight">
-                    גישה ללא רשת
-                  </span>
-                )}
-                {!enabled && (
-                  <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
-                    בקרוב
-                  </span>
-                )}
-              </div>
-            );
+              const content = (
+                <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
+                  <Icon size={36} className={color} />
+                  <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
+                  {subtitle && (
+                    <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
+                  )}
+                  {id === 'install-app' && (
+                    <span className="text-xs text-slate-400 text-center leading-tight">
+                      גישה ללא רשת
+                    </span>
+                  )}
+                  {!enabled && (
+                    <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
+                      בקרוב
+                    </span>
+                  )}
+                </div>
+              );
 
-            if (href) {
+              if (href) {
+                return (
+                  <a
+                    key={id}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={sharedClass}
+                    onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                  >
+                    {content}
+                  </a>
+                );
+              }
+
               return (
-                <a
+                <HapticButton
                   key={id}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  disabled={!enabled}
+                  onClick={(e) => { e.stopPropagation(); handleItemClick(id); }}
                   className={sharedClass}
-                  onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                  pressScale={enabled ? 0.93 : 1}
                 >
                   {content}
-                </a>
+                </HapticButton>
               );
-            }
-
-            return (
-              <HapticButton
-                key={id}
-                disabled={!enabled}
-                onClick={(e) => { e.stopPropagation(); handleItemClick(id); }}
-                className={sharedClass}
-                pressScale={enabled ? 0.93 : 1}
-              >
-                {content}
-              </HapticButton>
-            );
-          })}
-        </div>
+            })}
+          </div>
+        )}
 
         {/* Feedback button */}
         <HapticButton

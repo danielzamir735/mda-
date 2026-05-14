@@ -77,10 +77,7 @@
       "WebFetch(domain:www.assutaashdod.co.il)",
       "WebSearch",
       "Bash(dir *)",
-      "Bash(Remove-Item *)",
-      "PowerShell(New-Item *)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\\\\dist\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object Name, Length | Sort-Object Name)",
-      "Bash(git cherry-pick *)"
+      "Bash(Select-String \"dnd|drag|sortable|framer\")"
     ]
   },
   "hooks": {
