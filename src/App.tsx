@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { useSettingsStore } from './store/settingsStore';
@@ -10,39 +9,11 @@ import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
 import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
 
-const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
-
 export default function App() {
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const fontSize = useSettingsStore((s) => s.fontSize);
   const [legalOpen, setLegalOpen] = useState(false);
-  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
-
-  useRegisterSW({
-    onRegistered(r) {
-      if (r) registrationRef.current = r;
-    },
-  });
-
-  // Check for SW update on visibility restore and on a 60-min interval
-  useEffect(() => {
-    const checkUpdate = () => {
-      if (document.visibilityState === 'visible') {
-        registrationRef.current?.update();
-      }
-    };
-
-    document.addEventListener('visibilitychange', checkUpdate);
-    const interval = setInterval(() => {
-      registrationRef.current?.update();
-    }, UPDATE_INTERVAL_MS);
-
-    return () => {
-      document.removeEventListener('visibilitychange', checkUpdate);
-      clearInterval(interval);
-    };
-  }, []);
 
   // Redirect old domain users to new domain
   useEffect(() => {
