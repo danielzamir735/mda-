@@ -209,7 +209,7 @@ export default function CPRTimerOverlay() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-950 text-white flex flex-col select-none overflow-hidden">
+    <div className="fixed inset-0 z-[60] bg-white dark:bg-slate-950 text-gray-900 dark:text-white flex flex-col select-none overflow-hidden">
 
       {/* ── electric flash ── */}
       <div
@@ -223,7 +223,7 @@ export default function CPRTimerOverlay() {
 
       {/* ── top: timer + end button ── */}
       <div className="relative z-20 flex flex-col items-center pt-10 pb-5 px-6 gap-2">
-        <p className="text-slate-500 font-bold tracking-[0.2em] text-xs uppercase">
+        <p className="text-gray-500 dark:text-slate-500 font-bold tracking-[0.2em] text-xs uppercase">
           {t('cprTime')}
         </p>
         <span
@@ -248,7 +248,7 @@ export default function CPRTimerOverlay() {
       </div>
 
       {/* divider */}
-      <div className="h-px bg-slate-800 mx-6 shrink-0" />
+      <div className="h-px bg-gray-200 dark:bg-slate-800 mx-6 shrink-0" />
 
       {/* ── center: shock button + linear shock counters ── */}
       <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-6">
@@ -280,10 +280,10 @@ export default function CPRTimerOverlay() {
         <div className="flex flex-col items-center gap-2 mt-5 w-full px-6">
           {/* current BPM label */}
           <div className="flex items-baseline gap-1.5">
-            <span className="font-mono font-black text-3xl leading-none" style={{ color: '#f5c842' }}>
+            <span className="font-mono font-black text-3xl leading-none text-amber-600 dark:text-[#f5c842]">
               {bpm}
             </span>
-            <span className="text-slate-400 text-sm font-semibold">BPM</span>
+            <span className="text-gray-500 dark:text-slate-400 text-sm font-semibold">BPM</span>
           </div>
 
           {/* preset buttons */}

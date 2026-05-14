@@ -18,7 +18,7 @@ export default function MetronomeCard() {
         'rounded-3xl p-2 h-full w-full',
         'transition-all duration-300',
         isPlaying
-          ? 'bg-[#130F00] border-2 border-emt-yellow'
+          ? 'bg-amber-50 dark:bg-[#130F00] border-2 border-emt-yellow'
           : 'bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border',
       ].join(' ')}
       style={isPlaying ? {
@@ -34,7 +34,7 @@ export default function MetronomeCard() {
       <div className="flex flex-col items-center flex-1 justify-center gap-0">
         <span
           className={`font-mono font-black tabular-nums leading-none transition-colors duration-300 ${
-            isPlaying ? 'text-emt-yellow' : 'text-gray-900 dark:text-emt-light'
+            isPlaying ? 'text-amber-700 dark:text-emt-yellow' : 'text-gray-900 dark:text-emt-light'
           }`}
           style={{ fontSize: 'clamp(2.8rem, 11vw, 5rem)' }}
         >
