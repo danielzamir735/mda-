@@ -75,7 +75,7 @@ export default function SoulDepartureModal({ isOpen, onClose }: Props) {
         {/* Prayer cards */}
         <div className="flex flex-col gap-3">
           <PrayerCard
-            text="שְׁמַע יִשְׂרָאֵל, יְהוָה אֱלֹהֵינוּ, יְהוָה אֶחָד"
+            text="שְׁמַע יִשְׂרָאֵל, ה׳ אֱלֹקֵינוּ, ה׳ אֶחָד"
             count="פעם אחת"
           />
           <PrayerCard
