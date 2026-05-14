@@ -256,7 +256,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               className={`w-10 h-10 rounded-full border flex items-center justify-center active:scale-90 transition-all
                 ${editMode
                   ? 'bg-emt-green/15 border-emt-green/40 text-emt-green'
-                  : 'bg-gray-100 dark:bg-emt-gray border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light'
+                  : 'bg-emt-green/5 dark:bg-emt-green/10 border-emt-green/40 text-emt-green/70 hover:text-emt-green'
                 }`}
               aria-label={editMode ? 'סיום עריכה' : 'סדר מחשבונים'}
             >
