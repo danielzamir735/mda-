@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 import { X, Wind, RefreshCw, Flame, Activity, Timer, Brain, Baby, HeartPulse, Stethoscope, GripVertical, Pencil, Check } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackInteraction } from '../../../utils/analytics';
@@ -167,6 +167,34 @@ function loadOrder(): string[] {
   return DEFAULT_ORDER;
 }
 
+function DraggableCalcRow({ calc }: { calc: CalcDef }) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      key={calc.id}
+      value={calc}
+      dragListener={false}
+      dragControls={controls}
+      className={`flex items-center gap-4 w-full rounded-2xl border ${calc.borderClass} ${calc.bgClass} p-4 select-none`}
+      whileDrag={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 10 }}
+    >
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${calc.iconBgClass} border ${calc.iconBorderClass}`}>
+        <calc.Icon size={22} className={calc.textClass} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`${calc.textClass} font-bold text-base`}>{calc.name}</p>
+        <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{calc.desc}</p>
+      </div>
+      <div
+        onPointerDown={(e) => controls.start(e)}
+        className="p-2 -m-2 cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical size={22} className="text-gray-400 dark:text-emt-muted" />
+      </div>
+    </Reorder.Item>
+  );
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -249,7 +277,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
         {/* Edit mode hint */}
         {editMode && (
           <div className="shrink-0 px-4 py-2 bg-emt-green/5 border-b border-emt-green/20">
-            <p className="text-xs text-emt-green/80 text-center font-medium">גרור כדי לשנות סדר • לחץ ✓ לסיום</p>
+            <p className="text-xs text-emt-green/80 text-center font-medium">החזק את הידית ⠿ וגרור • לחץ ✓ לסיום</p>
           </div>
         )}
 
@@ -262,22 +290,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
               className="flex flex-col gap-3 list-none m-0 p-0"
             >
               {orderedCalcs.map(calc => (
-                <Reorder.Item
-                  key={calc.id}
-                  value={calc}
-                  className={`flex items-center gap-4 w-full rounded-2xl border ${calc.borderClass} ${calc.bgClass} p-4 cursor-grab active:cursor-grabbing select-none`}
-                  style={{ touchAction: 'none' }}
-                  whileDrag={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 10 }}
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${calc.iconBgClass} border ${calc.iconBorderClass}`}>
-                    <calc.Icon size={22} className={calc.textClass} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`${calc.textClass} font-bold text-base`}>{calc.name}</p>
-                    <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{calc.desc}</p>
-                  </div>
-                  <GripVertical size={20} className="text-gray-400 dark:text-emt-muted shrink-0" />
-                </Reorder.Item>
+                <DraggableCalcRow key={calc.id} calc={calc} />
               ))}
             </Reorder.Group>
           ) : (
