@@ -65,6 +65,22 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
+    id: 'campaign',
+    label: 'חובש + עולה לחנויות!',
+    icon: Rocket,
+    color: 'text-sky-300',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+  },
+  {
+    id: 'concepts',
+    label: 'מרכז ידע אישי',
+    icon: Sparkles,
+    color: 'text-purple-300',
+    border: 'border-purple-400/35',
+    bg: 'bg-purple-400/10',
+  },
+  {
     id: 'calculators',
     label: 'מחשבונים',
     icon: Calculator,
@@ -231,9 +247,9 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+const ENABLED = new Set(['campaign', 'concepts', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
 
-const HUB_STORAGE_KEY = 'hub_order_v1';
+const HUB_STORAGE_KEY = 'hub_order_v2';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
 
 function loadHubOrder(): string[] {
@@ -368,6 +384,8 @@ export default function HubModal({
     const tracking = HUB_TRACKING[id];
     if (tracking) trackInteraction(tracking[0], tracking[1]);
 
+    if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
+    if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -449,84 +467,6 @@ https://hovesh-plus.vercel.app/`;
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
 
-        {/* Campaign + Placeholder cards — above feedback button */}
-        <div className="grid grid-cols-2 gap-3">
-
-          {/* Campaign Card — rotating gradient border */}
-          <div className="relative">
-            {/* Outer glow bloom — subtle, synced to gradient rotation */}
-            <motion.div
-              className="pointer-events-none absolute rounded-2xl"
-              style={{ inset: -3 }}
-              animate={{
-                boxShadow: [
-                  '0 0 6px 1px rgba(16,185,129,0.20)',
-                  '0 0 12px 3px rgba(59,130,246,0.25)',
-                  '0 0 8px 2px rgba(124,58,237,0.20)',
-                  '0 0 6px 1px rgba(16,185,129,0.20)',
-                ],
-              }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-            />
-
-            <motion.button
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.1 }}
-              onClick={() => { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); }}
-              className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
-            >
-              {/* Rotating conic-gradient — GPU-accelerated, clipped by overflow-hidden */}
-              <motion.div
-                className="pointer-events-none absolute"
-                style={{
-                  inset: -80,
-                  background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
-              />
-
-              {/* Inner card — covers the interior leaving 2px border strip */}
-              <div
-                className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
-                style={{
-                  background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
-                  backdropFilter: 'blur(14px)',
-                  WebkitBackdropFilter: 'blur(14px)',
-                }}
-              >
-                <Rocket size={28} className="text-sky-300" />
-                <span className="text-sky-200 font-bold text-sm leading-tight">
-                  חובש + עולה לחנויות!
-                </span>
-                <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">
-                  לפרטים ←
-                </span>
-              </div>
-            </motion.button>
-          </div>
-
-          {/* Concepts Card — מושגים שלמדתי */}
-          <motion.button
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.2 }}
-            onClick={() => { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); }}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
-            style={{
-              background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
-              boxShadow: '0 0 18px rgba(168,85,247,0.12)',
-            }}
-          >
-            <Sparkles size={28} className="text-purple-300 relative z-10" />
-            <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
-          </motion.button>
-
-        </div>
-
         {editMode ? (
           <Reorder.Group
             axis="y"
@@ -541,6 +481,71 @@ https://hovesh-plus.vercel.app/`;
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {orderedItems.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
+              if (id === 'campaign') {
+                return (
+                  <div key={id} className="relative">
+                    <motion.div
+                      className="pointer-events-none absolute rounded-2xl"
+                      style={{ inset: -3 }}
+                      animate={{
+                        boxShadow: [
+                          '0 0 6px 1px rgba(16,185,129,0.20)',
+                          '0 0 12px 3px rgba(59,130,246,0.25)',
+                          '0 0 8px 2px rgba(124,58,237,0.20)',
+                          '0 0 6px 1px rgba(16,185,129,0.20)',
+                        ],
+                      }}
+                      transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+                    />
+                    <motion.button
+                      onClick={() => handleItemClick('campaign')}
+                      className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
+                    >
+                      <motion.div
+                        className="pointer-events-none absolute"
+                        style={{
+                          inset: -80,
+                          background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
+                        }}
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
+                      />
+                      <div
+                        className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
+                        style={{
+                          background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
+                          backdropFilter: 'blur(14px)',
+                          WebkitBackdropFilter: 'blur(14px)',
+                        }}
+                      >
+                        <Rocket size={28} className="text-sky-300" />
+                        <span className="text-sky-200 font-bold text-sm leading-tight">חובש + עולה לחנויות!</span>
+                        <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">לפרטים ←</span>
+                      </div>
+                    </motion.button>
+                  </div>
+                );
+              }
+
+              if (id === 'concepts') {
+                return (
+                  <motion.button
+                    key={id}
+                    onClick={() => handleItemClick('concepts')}
+                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
+                    style={{
+                      background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
+                      backdropFilter: 'blur(14px)',
+                      WebkitBackdropFilter: 'blur(14px)',
+                      boxShadow: '0 0 18px rgba(168,85,247,0.12)',
+                    }}
+                  >
+                    <Sparkles size={28} className="text-purple-300 relative z-10" />
+                    <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
+                  </motion.button>
+                );
+              }
+
               const enabled = ENABLED.has(id);
               const sharedClass = [
                 'flex flex-col items-center justify-center gap-2',
