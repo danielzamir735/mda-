@@ -149,10 +149,16 @@ function isCompetitionOptedOut(): boolean {
   return localStorage.getItem(COMPETITION_OPT_OUT_KEY) === 'true';
 }
 
-function getStoredCompetitionProfile(): { name: string; city: string } | null {
-  const raw = localStorage.getItem(COMPETITION_PROFILE_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+function getTodayProfileKey(): string {
+  return `daily_competition_today_${getToday()}`;
+}
+
+function getEffectiveProfile(): { name: string; city: string; isPermanent: boolean } | null {
+  const perm = localStorage.getItem(COMPETITION_PROFILE_KEY);
+  if (perm) { try { return { ...JSON.parse(perm), isPermanent: true }; } catch {} }
+  const today = localStorage.getItem(getTodayProfileKey());
+  if (today) { try { return { ...JSON.parse(today), isPermanent: false }; } catch {} }
+  return null;
 }
 
 async function upsertCompetitionEntry(
@@ -1203,6 +1209,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [showCompetitionJoin, setShowCompetitionJoin] = useState(false);
   const [competitionJoinName, setCompetitionJoinName] = useState('');
   const [competitionJoinCity, setCompetitionJoinCity] = useState('');
+  const [rememberProfile, setRememberProfile] = useState(true);
   const [competitionProfile, setCompetitionProfile] = useState<{ name: string; city: string } | null>(null);
   const [leaderboard, setLeaderboard] = useState<CompetitionEntry[]>([]);
   const perBlockTimeRef = useRef<Partial<Record<BlockId, number>>>({});
@@ -1466,9 +1473,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     // Check competition participation
     if (!isCompetitionOptedOut()) {
-      const profile = getStoredCompetitionProfile();
-      if (profile) {
-        setCompetitionProfile(profile);
+      const effective = getEffectiveProfile();
+      if (effective) {
+        setCompetitionProfile(effective);
+        setRememberProfile(effective.isPermanent);
       } else {
         const t = setTimeout(() => setShowCompetitionJoin(true), 700);
         return () => clearTimeout(t);
@@ -1524,6 +1532,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setShowCompetitionJoin(false);
       setCompetitionJoinName('');
       setCompetitionJoinCity('');
+      setRememberProfile(true);
       setCompetitionProfile(null);
       setLeaderboard([]);
       perBlockTimeRef.current = {};
@@ -1625,10 +1634,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const name = competitionJoinName.trim() || 'אנונימי';
     const city = competitionJoinCity.trim();
     const profile = { name, city };
-    localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
+    if (rememberProfile) {
+      localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
+      localStorage.removeItem(getTodayProfileKey());
+    } else {
+      localStorage.removeItem(COMPETITION_PROFILE_KEY);
+      localStorage.setItem(getTodayProfileKey(), JSON.stringify(profile));
+    }
     setCompetitionProfile(profile);
     setShowCompetitionJoin(false);
-  }, [competitionJoinName, competitionJoinCity]);
+  }, [competitionJoinName, competitionJoinCity, rememberProfile]);
+
+  const openEditProfile = useCallback(() => {
+    const effective = getEffectiveProfile();
+    setCompetitionJoinName(effective?.name ?? '');
+    setCompetitionJoinCity(effective?.city ?? '');
+    setRememberProfile(effective?.isPermanent ?? true);
+    setShowCompetitionJoin(true);
+  }, []);
 
   // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
@@ -2620,6 +2643,27 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               </div>
             </div>
           </div>
+
+          {/* Edit profile link */}
+          <div className="flex justify-center mt-1">
+            {competitionProfile ? (
+              <button
+                onClick={openEditProfile}
+                className="flex items-center gap-1 text-emt-muted/55 text-[10px] hover:text-emt-muted transition-colors py-0.5 px-2"
+              >
+                <span>✏️</span>
+                <span>משתתף: {competitionProfile.name}{competitionProfile.city ? ` · ${competitionProfile.city}` : ''}</span>
+              </button>
+            ) : !isCompetitionOptedOut() ? (
+              <button
+                onClick={() => setShowCompetitionJoin(true)}
+                className="flex items-center gap-1 text-amber-400/50 text-[10px] hover:text-amber-400/80 transition-colors py-0.5 px-2"
+              >
+                <Trophy size={10} />
+                <span>הצטרף לתחרות</span>
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* Streak strip — 7 day dots */}
@@ -2823,13 +2867,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   <Trophy size={30} className="text-amber-400" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-emt-light font-black text-xl leading-tight">תחרות היומית</h3>
-                  <p className="text-emt-light/80 text-base font-semibold mt-2 leading-snug">
-                    התמודד מול שאר המשיבים
-                  </p>
-                  <p className="text-emt-muted text-sm mt-1 leading-relaxed">
-                    מי ענה הכי הרבה תשובות נכונות והכי מהר?
-                  </p>
+                  <h3 className="text-emt-light font-black text-xl leading-tight">
+                    {competitionProfile ? 'עריכת פרטים' : 'תחרות היומית'}
+                  </h3>
+                  {!competitionProfile && (
+                    <>
+                      <p className="text-emt-light/80 text-base font-semibold mt-2 leading-snug">
+                        התמודד מול שאר המשיבים
+                      </p>
+                      <p className="text-emt-muted text-sm mt-1 leading-relaxed">
+                        מי ענה הכי הרבה תשובות נכונות והכי מהר?
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="flex flex-col gap-3 w-full">
                   <input
@@ -2853,6 +2903,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     autoComplete="off"
                     onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
                   />
+
+                  {/* Remember me toggle */}
+                  <div className="flex items-center justify-between bg-white/5 rounded-2xl px-4 py-3 border border-white/8">
+                    <div>
+                      <p className="text-emt-light text-sm font-bold">זכור אותי</p>
+                      <p className="text-emt-muted text-xs mt-0.5">השם ייטען אוטומטית בכל יום</p>
+                    </div>
+                    <button
+                      onClick={() => setRememberProfile(p => !p)}
+                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${rememberProfile ? 'bg-amber-400' : 'bg-white/15'}`}
+                    >
+                      <motion.div
+                        animate={{ x: rememberProfile ? 22 : 2 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow"
+                      />
+                    </button>
+                  </div>
                 </div>
                 <HapticButton
                   onClick={handleJoinCompetition}
@@ -2860,25 +2928,29 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   pressScale={0.96}
                   className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity"
                 >
-                  השתתף בתחרות! 🏆
+                  {competitionProfile ? 'שמור שינויים' : 'השתתף בתחרות! 🏆'}
                 </HapticButton>
                 <div className="flex items-center gap-4 -mt-1">
                   <button
                     onClick={() => setShowCompetitionJoin(false)}
                     className="text-emt-muted text-sm font-semibold hover:text-emt-light transition-colors py-1"
                   >
-                    לא עכשיו
+                    ביטול
                   </button>
-                  <span className="text-emt-border text-xs">|</span>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
-                      setShowCompetitionJoin(false);
-                    }}
-                    className="text-emt-muted/60 text-sm font-semibold hover:text-emt-muted transition-colors py-1"
-                  >
-                    אל תציג שוב
-                  </button>
+                  {!competitionProfile && (
+                    <>
+                      <span className="text-emt-border text-xs">|</span>
+                      <button
+                        onClick={() => {
+                          localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
+                          setShowCompetitionJoin(false);
+                        }}
+                        className="text-emt-muted/60 text-sm font-semibold hover:text-emt-muted transition-colors py-1"
+                      >
+                        אל תציג שוב
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
