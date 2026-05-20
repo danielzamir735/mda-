@@ -2626,61 +2626,67 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         {/* Podium leaderboard */}
         <div className="px-4 pb-2 pt-1">
           <div dir="ltr" className="flex items-end justify-center gap-2">
-            {/* 2nd place */}
-            <div className="flex-1 flex flex-col items-center gap-0.5">
-              {leaderboard[1] ? (
-                <>
-                  <span className="text-xl leading-none">🥈</span>
-                  <span className="text-emt-light font-black text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[1].display_name}</span>
-                  {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[1].city}</span> : <span className="h-3" />}
-                  <span className="text-slate-300 text-[10px] font-bold leading-none mb-1">{leaderboard[1].correct_answers}/6</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xl leading-none opacity-20">🥈</span>
-                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
-                </>
-              )}
+            {/* 2nd place — left */}
+            <div className="flex-1 flex flex-col">
+              <div className="flex flex-col items-center gap-0.5 justify-end min-h-[72px] pb-1">
+                {leaderboard[1] ? (
+                  <>
+                    <span className="text-xl leading-none">🥈</span>
+                    <span className="text-emt-light font-black text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[1].display_name}</span>
+                    {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[1].city}</span> : <span className="h-3" />}
+                    <span className="text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/6</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xl leading-none opacity-20">🥈</span>
+                    <span className="text-emt-border/40 text-[10px]">—</span>
+                  </>
+                )}
+              </div>
               <div className={`w-full h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-500/25 border border-slate-400/30' : 'bg-white/3 border border-white/8'}`}>
                 <span className={`text-lg font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
               </div>
             </div>
 
             {/* 1st place — center, tallest */}
-            <div className="flex-1 flex flex-col items-center gap-0.5">
-              {leaderboard[0] ? (
-                <>
-                  <span className="text-2xl leading-none">🥇</span>
-                  <span className="text-emt-light font-black text-[12px] text-center leading-tight w-full px-1 truncate">{leaderboard[0].display_name}</span>
-                  {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[0].city}</span> : <span className="h-3" />}
-                  <span className="text-amber-400 text-[11px] font-black leading-none mb-1">{leaderboard[0].correct_answers}/6</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-2xl leading-none opacity-20">🥇</span>
-                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
-                </>
-              )}
+            <div className="flex-1 flex flex-col">
+              <div className="flex flex-col items-center gap-0.5 justify-end min-h-[72px] pb-1">
+                {leaderboard[0] ? (
+                  <>
+                    <span className="text-2xl leading-none">🥇</span>
+                    <span className="text-emt-light font-black text-[12px] text-center leading-tight w-full px-1 truncate">{leaderboard[0].display_name}</span>
+                    {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[0].city}</span> : <span className="h-3" />}
+                    <span className="text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/6</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl leading-none opacity-20">🥇</span>
+                    <span className="text-emt-border/40 text-[10px]">—</span>
+                  </>
+                )}
+              </div>
               <div className={`w-full h-16 rounded-t-xl flex items-center justify-center ${leaderboard[0] ? 'bg-amber-400/18 border border-amber-400/35 shadow-[0_0_18px_rgba(251,191,36,0.14)]' : 'bg-white/3 border border-white/8'}`}>
                 <span className={`text-2xl font-black ${leaderboard[0] ? 'text-amber-400' : 'text-white/15'}`}>1</span>
               </div>
             </div>
 
-            {/* 3rd place */}
-            <div className="flex-1 flex flex-col items-center gap-0.5">
-              {leaderboard[2] ? (
-                <>
-                  <span className="text-lg leading-none">🥉</span>
-                  <span className="text-emt-light font-bold text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[2].display_name}</span>
-                  {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[2].city}</span> : <span className="h-3" />}
-                  <span className="text-orange-300 text-[10px] font-bold leading-none mb-1">{leaderboard[2].correct_answers}/6</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-lg leading-none opacity-20">🥉</span>
-                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
-                </>
-              )}
+            {/* 3rd place — right */}
+            <div className="flex-1 flex flex-col">
+              <div className="flex flex-col items-center gap-0.5 justify-end min-h-[72px] pb-1">
+                {leaderboard[2] ? (
+                  <>
+                    <span className="text-lg leading-none">🥉</span>
+                    <span className="text-emt-light font-bold text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[2].display_name}</span>
+                    {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[2].city}</span> : <span className="h-3" />}
+                    <span className="text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/6</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg leading-none opacity-20">🥉</span>
+                    <span className="text-emt-border/40 text-[10px]">—</span>
+                  </>
+                )}
+              </div>
               <div className={`w-full h-7 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
                 <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-400' : 'text-white/15'}`}>3</span>
               </div>

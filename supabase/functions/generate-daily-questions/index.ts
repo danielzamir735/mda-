@@ -247,6 +247,101 @@ ${avoidSection}
 }`
 }
 
+// ─── Improvised helpers ───────────────────────────────────────────────────────
+
+const IMPROVISED_SETTINGS = [
+  'פיקניק בפארק ציבורי', 'קניון קומת מזון (פוד קורט)', 'אוטובוס בין-עירוני בנסיעה',
+  'חדר אוכל של בית ספר תיכון', 'חתונה באולם שמחות', 'חוף הים (קייטנה)',
+  'מסעדה שוקקת', 'שוק הכרמל / שוק מחנה יהודה', 'חדר כושר / ספורטק',
+  'גן ילדים / פעוטון', 'מגרש כדורגל בשכונה', 'בית כנסת', 'סופרמרקט גדול',
+  'מסיבת יום הולדת ביתית', 'פאב / בר', 'טיול שנתי בהר מירון',
+  'קמפינג ביער הכרמל', 'בריכת שחייה ציבורית', 'תחנת רכבת / רציף', 'מוזיאון',
+  'ספרייה עירונית', 'בית אבות', 'גינת שכונה', 'אצטדיון יציעים',
+  'מספרה / סלון יופי', 'רכבת ישראל (קרון נוסעים)', 'שדה תעופה — טרמינל המתנה',
+  'גן לאומי / שמורת טבע', 'פארק מים', 'אולם קולנוע', 'קמפוס אוניברסיטה',
+  'מסדרון בית חולים (כמבקר)', 'מועדון לילה / דיסקוטק', 'אירוע חברה / כנס עסקי',
+  'שוק פשפשים בשטח פתוח', 'גג בניין מגורים', 'מרפאה קהילתית — חדר המתנה',
+  'משרד פתוח / קומת hi-tech', 'קניית מכוניות (מגרש מכוניות)', 'ים המלח / ספא',
+]
+
+function getImprovisedSettingForDate(dateStr: string): string {
+  let hash = 0
+  for (let i = 0; i < dateStr.length; i++) hash = (hash * 31 + dateStr.charCodeAt(i)) >>> 0
+  return IMPROVISED_SETTINGS[hash % IMPROVISED_SETTINGS.length]
+}
+
+function isSplintDay(dateStr: string): boolean {
+  return parseInt(dateStr.slice(8), 10) % 2 === 0
+}
+
+async function getRecentImprovisedTopics(supabase: SupabaseClient): Promise<string[]> {
+  const { data } = await supabase
+    .from('daily_questions')
+    .select('content')
+    .eq('question_type', 'improvised')
+    .order('question_date', { ascending: false })
+    .limit(20)
+  if (!data) return []
+  // deno-lint-ignore no-explicit-any
+  return data.map((r: any) => r.content?.topic_tag as string).filter(Boolean)
+}
+
+function buildImprovisedPrompt(dateStr: string, recentTopics: string[]): string {
+  const setting = getImprovisedSettingForDate(dateStr)
+  const splintDay = isSplintDay(dateStr)
+  const avoidSection = recentTopics.length > 0
+    ? `\nנושאי חירום שנשאלו לאחרונה — בחר סוג חירום שונה לחלוטין: ${recentTopics.join(', ')}.\n`
+    : ''
+
+  if (splintDay) {
+    return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **קביעות מאולתרת** — תרחיש שבר או פגיעה הדורשת קיבוע, ללא תיק רפואי. החובש חייב לאלתר קיבוע מחפצים זמינים.
+
+מיקום היום (חובה להשתמש): ${setting}
+
+כללים מחייבים:
+1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי ואין ציוד קיבוע.
+2. תרחיש (2-3 משפטים): גיל, מין, מנגנון פגיעה (נפילה / פגיעת ספורט / תאונה קטנה), איבר פגוע, ומה זמין במקום (חפצים אופייניים ל${setting}).
+3. שאלה: "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?"
+4. 4 תשובות: חפצים ספציפיים ל${setting} — אחת נכונה (קיבוע יעיל ובטוח), שלוש מסיחות הגיוניות. ערבב מיקום התשובה.
+5. הסבר (2-3 משפטים): למה זהו הפתרון הנכון, איך מבצעים, ומה הסכנה בקיבוע שגוי.
+6. topic_tag: "קביעות מאולתרת"
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, איבר פגוע, מה זמין ב${setting})",
+  "question": "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר (2-3 משפטים) — למה זהו הפתרון הנכון, כיצד מבצעים, ומה הסכנה בקיבוע שגוי",
+  "topic_tag": "קביעות מאולתרת"
+}`
+  }
+
+  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" — תרחיש חירום BLS אמיתי בחיי היומיום, ללא תיק רפואי. החובש צריך לחשוב יצירתית ולהשתמש בחפצים זמינים במקום.
+
+מיקום היום (חובה להשתמש): ${setting}
+
+כללים מחייבים:
+1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי.
+2. תרחיש (2-3 משפטים): תיאור ספציפי — גיל, מין, מנגנון/תסמינים, ומה זמין במקום (חפצים אופייניים למיקום זה).
+3. שאלה: "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?"
+4. 4 תשובות: חפצים ופעולות ספציפיים למיקום זה — אחת נכונה, שלוש מסיחות הגיוניות. ערבב מיקום התשובה.
+5. הסבר (2-3 משפטים): מדוע זהו הפתרון הטוב ביותר, כיצד הוא עוזר בפועל.
+6. topic_tag: סוג החירום בלבד (1-3 מילים, לא המיקום).
+
+סוגי חירום לסבב ביניהם (אסור לבחור שבר/קיבוע — זה נושא יום אחר): חנק, דימום פתוח, כוויה, אובדן הכרה, כאב לב/כאב חזה, אנפילקסיס, מכת חום, עקיצת דבורה/צרעה, טביעה, ילד בבכי ללא תגובה, היפוגליקמיה.
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, מה זמין ב${setting})",
+  "question": "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר (2-3 משפטים) — מדוע זהו הפתרון הטוב ביותר ואיך הוא מסייע בפועל",
+  "topic_tag": "סוג החירום בלבד (1-3 מילים)"
+}`
+}
+
 // ─── Category generators ──────────────────────────────────────────────────────
 
 interface ClinicalQuestion {
@@ -358,6 +453,24 @@ async function generateRadioChallenge(supabase: SupabaseClient): Promise<RadioCh
   return q
 }
 
+interface ImprovisedQ {
+  scenario: string
+  question: string
+  options: string[]
+  correct_index: number
+  explanation: string
+  topic_tag?: string
+}
+
+async function generateImprovised(supabase: SupabaseClient, today: string): Promise<ImprovisedQ> {
+  const recentTopics = await getRecentImprovisedTopics(supabase)
+  const q = await withRetry(() => parseGeminiJSON<ImprovisedQ>(buildImprovisedPrompt(today, recentTopics)))
+  if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.correct_index !== 'number') {
+    throw new Error('Invalid improvised format')
+  }
+  return q
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -381,6 +494,7 @@ Deno.serve(async (req) => {
     { type: 'als', generate: () => generateClinical('ALS', supabase) },
     { type: 'med_v4', generate: () => generateMed(today) },
     { type: 'abbr', generate: () => generateAbbreviation(supabase) },
+    { type: 'improvised', generate: () => generateImprovised(supabase, today) },
     { type: 'red_flag', generate: () => generateRedFlag(supabase) },
     { type: 'spot_error', generate: () => generateSpotError(supabase) },
     { type: 'radio_challenge', generate: () => generateRadioChallenge(supabase) },

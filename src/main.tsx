@@ -20,8 +20,13 @@ posthog.init('phc_NHYgGJLq95b4ImZloo1QT9kE3AqhrLjZzkguFEol1mG', {
 // window.location.reload() NEVER clears localStorage or IndexedDB —
 // all saved data (metrics, CPR sessions, settings) is fully preserved.
 if ('serviceWorker' in navigator) {
+  // Only reload when an existing SW is *replaced* by a new version.
+  // If there was no previous controller (first install / cleared cache),
+  // the page already loaded correctly from the network — no reload needed.
+  const hadController = !!navigator.serviceWorker.controller
   let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return
     if (reloading) return
     reloading = true
     window.location.reload()
