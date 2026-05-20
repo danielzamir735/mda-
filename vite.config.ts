@@ -10,6 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/.well-known\//],
