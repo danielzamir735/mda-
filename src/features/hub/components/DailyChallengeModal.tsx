@@ -1166,6 +1166,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const spotIsAnswered = spotAnsweredIdx !== null;
   const medBagIsAnswered = medBagAnsweredIdx !== null;
   const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
+  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
@@ -1431,15 +1432,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     }
   }, [isOpen]);
 
+  // Mark streak as soon as any question is answered (regardless of score)
+  useEffect(() => {
+    if (anyAnswered) {
+      const s = markDayComplete();
+      setStreak(s.streak);
+      setCompletedDates(s.completedDates ?? []);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anyAnswered]);
+
   // Trigger success screen — only once per day, never on re-open from cache
   useEffect(() => {
     if (allAnswered && !showSuccess && !hasSeenSuccessToday()) {
       const t = setTimeout(() => {
         setShowSuccess(true);
         markSuccessSeenToday();
-        const s = markDayComplete();
-        setStreak(s.streak);
-        setCompletedDates(s.completedDates ?? []);
         trackEvent('daily_challenge_all_blocks_complete', { score });
       }, 700);
       return () => clearTimeout(t);
@@ -2435,7 +2443,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             <div className="px-4 pb-2.5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5" style={{ direction: 'ltr' }}>
                 {days.map(({ date, label, isToday }) => {
-                  const done = completedDates.includes(date) || (isToday && allAnswered);
+                  const done = completedDates.includes(date) || (isToday && anyAnswered);
                   return (
                     <div key={date} className="flex flex-col items-center gap-0.5">
                       <motion.div
