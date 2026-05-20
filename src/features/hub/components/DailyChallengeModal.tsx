@@ -2644,7 +2644,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 )}
               </div>
               <div className={`w-full h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-500/25 border border-slate-400/30' : 'bg-white/3 border border-white/8'}`}>
-                <span className={`text-lg font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
+                <span className={`text-base font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
               </div>
             </div>
 
@@ -2687,7 +2687,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   </>
                 )}
               </div>
-              <div className={`w-full h-7 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
+              <div className={`w-full h-10 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
                 <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-400' : 'text-white/15'}`}>3</span>
               </div>
             </div>
