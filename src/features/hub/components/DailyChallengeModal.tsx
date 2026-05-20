@@ -1631,7 +1631,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // ── Competition join handler ──
   const handleJoinCompetition = useCallback(() => {
-    const name = competitionJoinName.trim() || 'אנונימי';
+    const name = competitionJoinName.trim();
+    if (!name) return;
     const city = competitionJoinCity.trim();
     const profile = { name, city };
     if (rememberProfile) {
@@ -2649,7 +2650,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             {competitionProfile ? (
               <button
                 onClick={openEditProfile}
-                className="flex items-center gap-1 text-emt-muted/55 text-[10px] hover:text-emt-muted transition-colors py-0.5 px-2"
+                className="flex items-center gap-1.5 text-emt-muted/70 text-xs font-semibold hover:text-emt-light transition-colors py-1.5 px-3 rounded-xl hover:bg-white/6 active:scale-95"
               >
                 <span>✏️</span>
                 <span>משתתף: {competitionProfile.name}{competitionProfile.city ? ` · ${competitionProfile.city}` : ''}</span>
@@ -2657,9 +2658,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             ) : !isCompetitionOptedOut() ? (
               <button
                 onClick={() => setShowCompetitionJoin(true)}
-                className="flex items-center gap-1 text-amber-400/50 text-[10px] hover:text-amber-400/80 transition-colors py-0.5 px-2"
+                className="flex items-center gap-1.5 text-amber-400/60 text-xs font-semibold hover:text-amber-400/90 transition-colors py-1.5 px-3 rounded-xl hover:bg-amber-400/8 active:scale-95"
               >
-                <Trophy size={10} />
+                <Trophy size={11} />
                 <span>הצטרף לתחרות</span>
               </button>
             ) : null}
@@ -2884,7 +2885,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <div className="flex flex-col gap-3 w-full">
                   <input
                     type="text"
-                    placeholder="שם (אופציונלי)"
+                    placeholder="שם *"
                     value={competitionJoinName}
                     onChange={e => setCompetitionJoinName(e.target.value)}
                     className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
@@ -2904,29 +2905,26 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
                   />
 
-                  {/* Remember me toggle */}
-                  <div className="flex items-center justify-between bg-white/5 rounded-2xl px-4 py-3 border border-white/8">
-                    <div>
-                      <p className="text-emt-light text-sm font-bold">זכור אותי</p>
+                  {/* Remember me checkbox */}
+                  <button
+                    onClick={() => setRememberProfile(p => !p)}
+                    className="flex items-center gap-3 w-full py-2 text-right"
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${rememberProfile ? 'bg-amber-400 border-amber-400' : 'bg-transparent border-white/30'}`}>
+                      {rememberProfile && <span className="text-black text-xs font-black leading-none">✓</span>}
+                    </div>
+                    <div className="text-right flex-1">
+                      <p className="text-emt-light text-sm font-semibold leading-tight">זכור אותי</p>
                       <p className="text-emt-muted text-xs mt-0.5">השם ייטען אוטומטית בכל יום</p>
                     </div>
-                    <button
-                      onClick={() => setRememberProfile(p => !p)}
-                      className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${rememberProfile ? 'bg-amber-400' : 'bg-white/15'}`}
-                    >
-                      <motion.div
-                        animate={{ x: rememberProfile ? 22 : 2 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow"
-                      />
-                    </button>
-                  </div>
+                  </button>
                 </div>
                 <HapticButton
                   onClick={handleJoinCompetition}
                   hapticPattern={15}
                   pressScale={0.96}
-                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity"
+                  disabled={!competitionJoinName.trim()}
+                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity disabled:opacity-35"
                 >
                   {competitionProfile ? 'שמור שינויים' : 'השתתף בתחרות! 🏆'}
                 </HapticButton>
