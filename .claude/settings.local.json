@@ -79,7 +79,8 @@
       "Bash(dir *)",
       "Bash(Select-String \"dnd|drag|sortable|framer\")",
       "Bash(supabase *)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   },
   "hooks": {
