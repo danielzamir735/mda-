@@ -93,6 +93,7 @@ interface StreakData {
   lastCompletedDate: string;
   streak: number;
   bestStreak: number;
+  completedDates?: string[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -426,10 +427,12 @@ function markDayComplete(): StreakData {
 
   const isConsecutive = data.lastCompletedDate === yesterday;
   const newStreak = isConsecutive ? data.streak + 1 : 1;
+  const completedDates = [...(data.completedDates ?? []).filter(d => d !== today), today].slice(-30);
   const updated: StreakData = {
     lastCompletedDate: today,
     streak: newStreak,
     bestStreak: Math.max(newStreak, data.bestStreak),
+    completedDates,
   };
   localStorage.setItem('daily_challenge_streak_v1', JSON.stringify(updated));
   return updated;
@@ -1117,6 +1120,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // Overall
   const [streak, setStreak] = useState(0);
+  const [completedDates, setCompletedDates] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [blockParticipants, setBlockParticipants] = useState<Partial<Record<BlockId, number>>>({});
 
@@ -1233,7 +1237,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (!isOpen) return;
     getSessionId();
     trackEvent('daily_challenge_modal_opened');
-    setStreak(getStreak().streak);
+    const sd = getStreak();
+    setStreak(sd.streak);
+    setCompletedDates(sd.completedDates ?? []);
 
     const today = getToday();
     const cachedMed = loadCache<MedOfDay>(CACHE_KEYS.med);
@@ -1394,6 +1400,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         markSuccessSeenToday();
         const s = markDayComplete();
         setStreak(s.streak);
+        setCompletedDates(s.completedDates ?? []);
         trackEvent('daily_challenge_all_blocks_complete', { score });
       }, 700);
       return () => clearTimeout(t);
@@ -2348,16 +2355,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            {streak > 0 && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/15 border border-orange-500/30"
-              >
-                <Flame size={13} className="text-orange-400" />
-                <span className="text-orange-300 font-black text-sm">{streak}</span>
-              </motion.div>
-            )}
             <button
               onClick={onClose}
               className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center active:scale-90 transition-transform text-emt-muted hover:text-emt-light"
@@ -2369,7 +2366,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Progress bar */}
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-2">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/6 הושלמו</span>
             <span className="text-amber-400/70 text-[11px] font-semibold">{score} נק׳</span>
@@ -2383,6 +2380,54 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             />
           </div>
         </div>
+
+        {/* Streak strip — 7 day dots */}
+        {(() => {
+          const dayLabels = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+          const days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (6 - i));
+            const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { date, label: dayLabels[d.getDay()], isToday: i === 6 };
+          });
+          const currentStreak = allAnswered ? streak : streak;
+          return (
+            <div className="px-4 pb-2.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5" style={{ direction: 'ltr' }}>
+                {days.map(({ date, label, isToday }) => {
+                  const done = completedDates.includes(date) || (isToday && allAnswered);
+                  return (
+                    <div key={date} className="flex flex-col items-center gap-0.5">
+                      <motion.div
+                        animate={done ? { scale: [1, 1.15, 1] } : {}}
+                        transition={{ duration: 0.3 }}
+                        className={[
+                          'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-colors duration-300',
+                          done
+                            ? 'bg-orange-500 text-white'
+                            : isToday
+                            ? 'border border-orange-400/50 bg-orange-400/10 text-orange-400/60'
+                            : 'bg-white/6 text-transparent',
+                        ].join(' ')}
+                      >
+                        {done ? '✓' : isToday ? '◦' : ''}
+                      </motion.div>
+                      <span className={`text-[8px] font-semibold leading-none ${isToday ? 'text-orange-300/80' : done ? 'text-orange-400/50' : 'text-emt-border'}`}>
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Flame size={13} className={currentStreak > 0 ? 'text-orange-400' : 'text-emt-border'} />
+                <span className={`font-black text-xs ${currentStreak > 0 ? 'text-orange-300' : 'text-emt-border'}`}>
+                  {currentStreak} ימים ברצף
+                </span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Body ── */}
