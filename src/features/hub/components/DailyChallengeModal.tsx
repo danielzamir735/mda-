@@ -2,7 +2,7 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope, Wrench,
+  Search, Stethoscope, Wrench, Info,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,6 +69,7 @@ interface SpotErrorQ {
 interface MedBagQ {
   situation: string;
   medications: string[];
+  med_descriptions: Record<string, string>;
   question: string;
   options: string[];
   correct_index: number;
@@ -430,11 +431,13 @@ function buildMedBagPrompt(recentTopics: string[]): string {
 4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
 5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
 6. topic_tag: נושא קצר בעברית (1-3 מילים) לגיוון.
+7. med_descriptions: עבור כל תרופה ברשימה — משפט אחד קצר בעברית שמסביר למה היא נועדה (מה היא מטפלת). פשוט ובסיסי, לא טכני.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
   "situation": "תיאור הסיטואציה (2 משפטים בעברית מקצועית)",
   "medications": ["שם מסחרי א (גנרי)", "שם מסחרי ב (גנרי)", "שם מסחרי ג (גנרי)"],
+  "med_descriptions": {"שם מסחרי א (גנרי)": "משפט קצר מה התרופה מטפלת", "שם מסחרי ב (גנרי)": "משפט קצר מה התרופה מטפלת"},
   "question": "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
@@ -1196,6 +1199,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [medBagAnsweredIdx, setMedBagAnsweredIdx] = useState<number | null>(null);
   const [showMedBagExpl, setShowMedBagExpl] = useState(false);
   const [medBagStats, setMedBagStats] = useState<GlobalStats | null>(null);
+  const [activeMedPopup, setActiveMedPopup] = useState<string | null>(null);
 
   // Overall
   const [streak, setStreak] = useState(0);
@@ -1527,7 +1531,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setImprovStatus('idle'); setImprovQuestion(null); setImprovAnsweredIdx(null); setShowImprovExpl(false); setImprovStats(null);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
-      setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null);
+      setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null); setActiveMedPopup(null);
       setShowSuccess(false);
       setShowCompetitionJoin(false);
       setCompetitionJoinName('');
@@ -2472,15 +2476,42 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         {/* Medications card */}
         <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
-          <p className="text-white/50 text-[11px] font-black uppercase tracking-widest mb-3">תרופות שנמצאו על השולחן</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white/50 text-[11px] font-black uppercase tracking-widest">תרופות שנמצאו על השולחן</p>
+            <span className="text-indigo-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {medBagQuestion.medications.map((med, i) => (
-              <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 border border-indigo-400/30">
+              <button
+                key={i}
+                onClick={() => setActiveMedPopup(activeMedPopup === med ? null : med)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${activeMedPopup === med ? 'bg-indigo-500/30 border-indigo-400/60' : 'bg-indigo-500/15 border-indigo-400/30'}`}
+              >
                 <Pill size={12} className="text-indigo-300 shrink-0" />
                 <span className="text-indigo-200 text-[13px] font-bold">{med}</span>
-              </div>
+              </button>
             ))}
           </div>
+          <AnimatePresence>
+            {activeMedPopup && medBagQuestion.med_descriptions?.[activeMedPopup] && (
+              <motion.div
+                key={activeMedPopup}
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="rounded-2xl bg-indigo-950/70 border border-indigo-400/25 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Pill size={11} className="text-indigo-300 shrink-0" />
+                    <span className="text-indigo-200 text-[12px] font-black">{activeMedPopup}</span>
+                  </div>
+                  <p className="text-white/70 text-[12px] leading-relaxed">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Question */}
