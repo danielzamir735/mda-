@@ -1489,6 +1489,41 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Real-time participant count updates
+  useEffect(() => {
+    if (!isOpen) return;
+    const refreshParticipants = async () => {
+      const t = getToday();
+      const base = getParticipantBase();
+      try {
+        const { data } = await supabase
+          .from('daily_responses')
+          .select('question_type')
+          .eq('question_date', t)
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag']);
+        if (!data) return;
+        const counts: Record<string, number> = {};
+        data.forEach((r: { question_type: string }) => {
+          counts[r.question_type] = (counts[r.question_type] ?? 0) + 1;
+        });
+        setBlockParticipants({
+          A: ((counts['bls'] ?? 0) + (counts['als'] ?? 0)) + base,
+          B: (counts['med_v3'] ?? 0) + base,
+          C: (counts['improvised'] ?? 0) + base,
+          D: (counts['red_flag'] ?? 0) + base,
+          E: (counts['spot_error'] ?? 0) + base,
+          F: (counts['med_bag'] ?? 0) + base,
+        });
+      } catch { /* noop */ }
+    };
+    const channel = supabase
+      .channel('daily_responses_participants')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'daily_responses' }, refreshParticipants)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   // Track block open time for competition timing
   useEffect(() => {
     if (activeBlock !== null) {
@@ -1742,6 +1777,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
+    setBlockParticipants((prev) => ({ ...prev, B: (prev.B ?? 0) + 1 }));
     trackEvent('daily_challenge_med_answered', { correct: isCorrect });
     perBlockTimeRef.current['B'] = blockReadyTimeRef.current['B']
       ? Math.round((Date.now() - blockReadyTimeRef.current['B']) / 1000) : 0;
@@ -1791,6 +1827,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
+    setBlockParticipants((prev) => ({ ...prev, D: (prev.D ?? 0) + 1 }));
     trackEvent('daily_challenge_redflag_answered', { correct: isCorrect });
     perBlockTimeRef.current['D'] = blockReadyTimeRef.current['D']
       ? Math.round((Date.now() - blockReadyTimeRef.current['D']) / 1000) : 0;
@@ -2103,6 +2140,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           )}
         </div>
 
+        {/* Participant count */}
+        {blockParticipants['B'] !== undefined && blockParticipants['B'] > 0 && (
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['B'] ?? 0).toLocaleString('he-IL')}</span>
+          </div>
+        )}
+
         {/* Result banner */}
         {medIsAnswered && (
           <motion.div
@@ -2283,6 +2329,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
     return (
       <div className="flex flex-col gap-5">
+        {/* Participant count */}
+        {blockParticipants['D'] !== undefined && blockParticipants['D'] > 0 && (
+          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+            <Users size={11} className="text-emt-muted shrink-0" />
+            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['D'] ?? 0).toLocaleString('he-IL')}</span>
+          </div>
+        )}
+
         {/* Scenario card */}
         <div className="rounded-3xl bg-gradient-to-b from-orange-950/50 to-slate-950 border border-orange-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(249,115,22,0.12)' }}>
@@ -2624,7 +2679,33 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Podium leaderboard */}
-        <div className="px-4 pb-2 pt-1">
+        <div className="px-4 pb-2 pt-1 relative overflow-hidden">
+          {/* Spotlight animation — only when there are real entries */}
+          {leaderboard.length > 0 && (
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+              {/* Golden glow pulsing behind 1st place (center) */}
+              <div className="absolute left-1/2 bottom-0 w-28 h-16 rounded-full"
+                style={{
+                  background: 'radial-gradient(ellipse, rgba(251,191,36,0.28) 0%, transparent 70%)',
+                  animation: 'podium-glow-pulse 2.6s ease-in-out infinite',
+                }}
+              />
+              {/* Sweeping light beam */}
+              <div className="absolute inset-y-0 w-12"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
+                  animation: 'podium-beam 4.5s ease-in-out infinite',
+                }}
+              />
+              {/* Subtle top sparkle on 1st place */}
+              <div className="absolute left-1/2 top-0 w-16 h-6 rounded-full"
+                style={{
+                  background: 'radial-gradient(ellipse, rgba(251,191,36,0.18) 0%, transparent 80%)',
+                  animation: 'podium-sparkle 3.2s ease-in-out infinite',
+                }}
+              />
+            </div>
+          )}
           {/* grid-cols-3 guarantees all three columns are exactly 1/3 width */}
           <div dir="ltr" className="grid grid-cols-3 gap-2 items-end w-full">
 
@@ -2634,8 +2715,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[1] ? (
                   <>
                     <span className="text-xl leading-none">🥈</span>
-                    <span className="text-emt-light font-black text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[1].display_name}</span>
-                    {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none truncate w-full text-center">{leaderboard[1].city}</span> : <span className="h-3" />}
+                    <span className="text-emt-light font-black text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[1].display_name}</span>
+                    {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[1].city}</span> : <span className="h-3" />}
                     <span className="text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/6</span>
                   </>
                 ) : (
@@ -2656,8 +2737,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[0] ? (
                   <>
                     <span className="text-2xl leading-none">🥇</span>
-                    <span className="text-emt-light font-black text-[12px] text-center leading-tight w-full px-1 truncate">{leaderboard[0].display_name}</span>
-                    {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none truncate w-full text-center">{leaderboard[0].city}</span> : <span className="h-3" />}
+                    <span className="text-emt-light font-black text-[10px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[0].display_name}</span>
+                    {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[0].city}</span> : <span className="h-3" />}
                     <span className="text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/6</span>
                   </>
                 ) : (
@@ -2678,8 +2759,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[2] ? (
                   <>
                     <span className="text-lg leading-none">🥉</span>
-                    <span className="text-emt-light font-bold text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[2].display_name}</span>
-                    {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none truncate w-full text-center">{leaderboard[2].city}</span> : <span className="h-3" />}
+                    <span className="text-emt-light font-bold text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[2].display_name}</span>
+                    {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[2].city}</span> : <span className="h-3" />}
                     <span className="text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/6</span>
                   </>
                 ) : (
