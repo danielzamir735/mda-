@@ -2800,8 +2800,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 </div>
                 <div className="text-center">
                   <h3 className="text-emt-light font-black text-xl leading-tight">תחרות היומית</h3>
-                  <p className="text-emt-muted text-sm mt-1.5 leading-relaxed">
-                    התמודד מול שאר המדיקים — מי ענה הכי הרבה תשובות נכונות והכי מהר?
+                  <p className="text-emt-light/80 text-base font-semibold mt-2 leading-snug">
+                    התמודד מול שאר המשיבים
+                  </p>
+                  <p className="text-emt-muted text-sm mt-1 leading-relaxed">
+                    מי ענה הכי הרבה תשובות נכונות והכי מהר?
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 w-full">
@@ -2834,21 +2837,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 >
                   השתתף בתחרות! 🏆
                 </HapticButton>
-                <button
-                  onClick={() => setShowCompetitionJoin(false)}
-                  className="text-emt-muted text-xs hover:text-emt-light transition-colors py-1"
-                >
-                  לא עכשיו
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
-                    setShowCompetitionJoin(false);
-                  }}
-                  className="text-emt-muted/40 text-[11px] hover:text-emt-muted/70 transition-colors -mt-2"
-                >
-                  אל תציג שוב
-                </button>
+                <div className="flex items-center gap-4 -mt-1">
+                  <button
+                    onClick={() => setShowCompetitionJoin(false)}
+                    className="text-emt-muted text-sm font-semibold hover:text-emt-light transition-colors py-1"
+                  >
+                    לא עכשיו
+                  </button>
+                  <span className="text-emt-border text-xs">|</span>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
+                      setShowCompetitionJoin(false);
+                    }}
+                    className="text-emt-muted/60 text-sm font-semibold hover:text-emt-muted transition-colors py-1"
+                  >
+                    אל תציג שוב
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
