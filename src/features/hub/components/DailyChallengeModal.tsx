@@ -1622,9 +1622,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   // ── Competition join handler ──
   const handleJoinCompetition = useCallback(() => {
-    const name = competitionJoinName.trim();
+    const name = competitionJoinName.trim() || 'אנונימי';
     const city = competitionJoinCity.trim();
-    if (!name || !city) return;
     const profile = { name, city };
     localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
     setCompetitionProfile(profile);
@@ -2558,19 +2557,68 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="px-4 pb-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/6 הושלמו</span>
-            <span className="text-amber-400/70 text-[11px] font-semibold">{score} נק׳</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"
-              initial={{ width: '0%' }}
-              animate={{ width: `${(blocksCompleted / 6) * 100}%` }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-            />
+        {/* Podium leaderboard */}
+        <div className="px-4 pb-2 pt-1">
+          <div dir="ltr" className="flex items-end justify-center gap-2">
+            {/* 2nd place */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[1] ? (
+                <>
+                  <span className="text-xl leading-none">🥈</span>
+                  <span className="text-emt-light font-black text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[1].display_name}</span>
+                  {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[1].city}</span> : <span className="h-3" />}
+                  <span className="text-slate-300 text-[10px] font-bold leading-none mb-1">{leaderboard[1].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xl leading-none opacity-20">🥈</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-500/25 border border-slate-400/30' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-lg font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
+              </div>
+            </div>
+
+            {/* 1st place — center, tallest */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[0] ? (
+                <>
+                  <span className="text-2xl leading-none">🥇</span>
+                  <span className="text-emt-light font-black text-[12px] text-center leading-tight w-full px-1 truncate">{leaderboard[0].display_name}</span>
+                  {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[0].city}</span> : <span className="h-3" />}
+                  <span className="text-amber-400 text-[11px] font-black leading-none mb-1">{leaderboard[0].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl leading-none opacity-20">🥇</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-16 rounded-t-xl flex items-center justify-center ${leaderboard[0] ? 'bg-amber-400/18 border border-amber-400/35 shadow-[0_0_18px_rgba(251,191,36,0.14)]' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-2xl font-black ${leaderboard[0] ? 'text-amber-400' : 'text-white/15'}`}>1</span>
+              </div>
+            </div>
+
+            {/* 3rd place */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[2] ? (
+                <>
+                  <span className="text-lg leading-none">🥉</span>
+                  <span className="text-emt-light font-bold text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[2].display_name}</span>
+                  {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[2].city}</span> : <span className="h-3" />}
+                  <span className="text-orange-300 text-[10px] font-bold leading-none mb-1">{leaderboard[2].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg leading-none opacity-20">🥉</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-7 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-400' : 'text-white/15'}`}>3</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2622,30 +2670,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           );
         })()}
 
-        {/* Leaderboard strip */}
-        {leaderboard.length > 0 && (
-          <div className="px-3 pb-2.5">
-            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
-                <Trophy size={10} className="text-amber-400/70" />
-                <span className="text-amber-400/70 text-[9px] font-bold tracking-wide uppercase">מובילים היום</span>
-              </div>
-              {leaderboard.map((entry, i) => {
-                const medals = ['🥇', '🥈', '🥉'];
-                const formatTime = (s: number) => s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s}ש׳`;
-                return (
-                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 border-t border-white/5">
-                    <span className="text-sm leading-none w-5 text-center">{medals[i]}</span>
-                    <span className="text-emt-light font-bold text-[11px] flex-1 truncate">{entry.display_name}</span>
-                    <span className="text-emt-muted text-[10px] truncate max-w-[60px]">{entry.city}</span>
-                    <span className="text-amber-400 text-[10px] font-black shrink-0">{entry.correct_answers}/6</span>
-                    <span className="text-emt-muted text-[10px] shrink-0">{formatTime(entry.total_time_seconds)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Body ── */}
@@ -2810,19 +2834,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <div className="flex flex-col gap-3 w-full">
                   <input
                     type="text"
-                    placeholder="שם מלא"
+                    placeholder="שם (אופציונלי)"
                     value={competitionJoinName}
                     onChange={e => setCompetitionJoinName(e.target.value)}
-                    className="w-full bg-white/6 border border-white/12 rounded-2xl px-4 py-3.5 text-emt-light text-sm placeholder:text-emt-muted focus:outline-none focus:border-amber-400/50 transition-colors"
+                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
+                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
                     dir="rtl"
                     autoComplete="off"
                   />
                   <input
                     type="text"
-                    placeholder="עיר"
+                    placeholder="עיר (אופציונלי)"
                     value={competitionJoinCity}
                     onChange={e => setCompetitionJoinCity(e.target.value)}
-                    className="w-full bg-white/6 border border-white/12 rounded-2xl px-4 py-3.5 text-emt-light text-sm placeholder:text-emt-muted focus:outline-none focus:border-amber-400/50 transition-colors"
+                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
+                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
                     dir="rtl"
                     autoComplete="off"
                     onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
@@ -2832,8 +2858,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   onClick={handleJoinCompetition}
                   hapticPattern={15}
                   pressScale={0.96}
-                  disabled={!competitionJoinName.trim() || !competitionJoinCity.trim()}
-                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity"
                 >
                   השתתף בתחרות! 🏆
                 </HapticButton>
