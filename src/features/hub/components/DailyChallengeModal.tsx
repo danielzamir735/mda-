@@ -2,7 +2,7 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope, Wrench,
+  Search, Stethoscope, Wrench, Info,
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,6 +69,7 @@ interface SpotErrorQ {
 interface MedBagQ {
   situation: string;
   medications: string[];
+  med_descriptions: Record<string, string>;
   question: string;
   options: string[];
   correct_index: number;
@@ -87,6 +88,14 @@ interface GlobalStats {
   total: number;
   correct: number;
   answer_counts: number[];
+}
+
+interface CompetitionEntry {
+  display_name: string;
+  city: string;
+  correct_answers: number;
+  total_time_seconds: number;
+  answers_count: number;
 }
 
 interface StreakData {
@@ -130,8 +139,47 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   med_bag: 'daily_stats_medbag_v1',
 };
 
+const COMPETITION_OPT_OUT_KEY = 'daily_competition_opted_out';
+const COMPETITION_PROFILE_KEY = 'daily_competition_profile';
+
 function getParticipantBase(): number {
   return new Date().getDate() % 2 === 0 ? 230 : 430;
+}
+
+function isCompetitionOptedOut(): boolean {
+  return localStorage.getItem(COMPETITION_OPT_OUT_KEY) === 'true';
+}
+
+function getTodayProfileKey(): string {
+  return `daily_competition_today_${getToday()}`;
+}
+
+function getEffectiveProfile(): { name: string; city: string; isPermanent: boolean } | null {
+  const perm = localStorage.getItem(COMPETITION_PROFILE_KEY);
+  if (perm) { try { return { ...JSON.parse(perm), isPermanent: true }; } catch {} }
+  const today = localStorage.getItem(getTodayProfileKey());
+  if (today) { try { return { ...JSON.parse(today), isPermanent: false }; } catch {} }
+  return null;
+}
+
+async function upsertCompetitionEntry(
+  profile: { name: string; city: string },
+  correctAnswers: number,
+  totalTimeSeconds: number,
+  answersCount: number,
+) {
+  try {
+    await supabase.from('daily_competition').upsert({
+      competition_date: getToday(),
+      session_id: getSessionId(),
+      display_name: profile.name,
+      city: profile.city,
+      correct_answers: correctAnswers,
+      total_time_seconds: totalTimeSeconds,
+      answers_count: answersCount,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'session_id,competition_date' });
+  } catch { /* noop */ }
 }
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
@@ -247,12 +295,44 @@ function getTodayImprovisedSetting(): string {
   return IMPROVISED_SETTINGS[hash % IMPROVISED_SETTINGS.length];
 }
 
+function isSplintDay(): boolean {
+  const today = getToday(); // 'YYYY-MM-DD'
+  const day = parseInt(today.slice(8), 10);
+  return day % 2 === 0;
+}
+
 function buildImprovisedPrompt(recentTopics: string[]): string {
   const setting = getTodayImprovisedSetting();
+  const splintDay = isSplintDay();
   const avoidSection = recentTopics.length > 0
     ? `\nנושאי חירום שנשאלו לאחרונה — בחר סוג חירום שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
-  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" — תרחיש חירום אמיתי בחיי היומיום, ללא תיק רפואי. החובש צריך לחשוב יצירתית ולהשתמש בחפצים זמינים במקום.
+
+  if (splintDay) {
+    return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **קביעות מאולתרת** — תרחיש שבר או פגיעה הדורשת קיבוע, ללא תיק רפואי. החובש חייב לאלתר קיבוע מחפצים זמינים.
+
+מיקום היום (חובה להשתמש): ${setting}
+
+כללים מחייבים:
+1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי ואין ציוד קיבוע.
+2. תרחיש (2-3 משפטים): גיל, מין, מנגנון פגיעה (נפילה / פגיעת ספורט / תאונה קטנה), איבר פגוע, ומה זמין במקום (חפצים אופייניים ל${setting}).
+3. שאלה: "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?"
+4. 4 תשובות: חפצים ספציפיים ל${setting} — אחת נכונה (קיבוע יעיל ובטוח), שלוש מסיחות הגיוניות (ציוד לא מתאים, שימוש שגוי, קיבוע במיקום שגוי). ערבב מיקום התשובה.
+5. הסבר (2-3 משפטים): למה זהו הפתרון הנכון, איך מבצעים את הקיבוע, ומה הסכנה בקיבוע שגוי.
+6. topic_tag: "קביעות מאולתרת"
+${avoidSection}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, איבר פגוע, מה זמין ב${setting})",
+  "question": "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר (2-3 משפטים) — למה זהו הפתרון הנכון, כיצד מבצעים, ומה הסכנה בקיבוע שגוי",
+  "topic_tag": "קביעות מאולתרת"
+}`;
+  }
+
+  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" — תרחיש חירום BLS אמיתי בחיי היומיום, ללא תיק רפואי. החובש צריך לחשוב יצירתית ולהשתמש בחפצים זמינים במקום.
 
 מיקום היום (חובה להשתמש): ${setting}
 
@@ -264,7 +344,7 @@ function buildImprovisedPrompt(recentTopics: string[]): string {
 5. הסבר (2-3 משפטים): מדוע זהו הפתרון הטוב ביותר, כיצד הוא עוזר בפועל.
 6. topic_tag: סוג החירום בלבד (1-3 מילים, לא המיקום).
 
-סוגי חירום לסבב ביניהם: חנק, דימום פתוח, כוויה, אובדן הכרה, כאב לב/כאב חזה, נפילה/שבר, אנפילקסיס, מכת חום, עקיצת דבורה/צרעה, טביעה, ילד בבכי ללא תגובה, היפוגליקמיה.
+סוגי חירום לסבב ביניהם (אסור לבחור שבר/קיבוע — זה נושא יום אחר): חנק, דימום פתוח, כוויה, אובדן הכרה, כאב לב/כאב חזה, אנפילקסיס, מכת חום, עקיצת דבורה/צרעה, טביעה, ילד בבכי ללא תגובה, היפוגליקמיה.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
@@ -351,11 +431,13 @@ function buildMedBagPrompt(recentTopics: string[]): string {
 4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
 5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
 6. topic_tag: נושא קצר בעברית (1-3 מילים) לגיוון.
+7. med_descriptions: עבור כל תרופה ברשימה — משפט אחד קצר בעברית שמסביר למה היא נועדה (מה היא מטפלת). פשוט ובסיסי, לא טכני.
 ${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
   "situation": "תיאור הסיטואציה (2 משפטים בעברית מקצועית)",
   "medications": ["שם מסחרי א (גנרי)", "שם מסחרי ב (גנרי)", "שם מסחרי ג (גנרי)"],
+  "med_descriptions": {"שם מסחרי א (גנרי)": "משפט קצר מה התרופה מטפלת", "שם מסחרי ב (גנרי)": "משפט קצר מה התרופה מטפלת"},
   "question": "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
@@ -1117,6 +1199,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [medBagAnsweredIdx, setMedBagAnsweredIdx] = useState<number | null>(null);
   const [showMedBagExpl, setShowMedBagExpl] = useState(false);
   const [medBagStats, setMedBagStats] = useState<GlobalStats | null>(null);
+  const [activeMedPopup, setActiveMedPopup] = useState<string | null>(null);
 
   // Overall
   const [streak, setStreak] = useState(0);
@@ -1126,6 +1209,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   const questionStartRef = useRef<number | null>(null);
 
+  // Competition
+  const [showCompetitionJoin, setShowCompetitionJoin] = useState(false);
+  const [competitionJoinName, setCompetitionJoinName] = useState('');
+  const [competitionJoinCity, setCompetitionJoinCity] = useState('');
+  const [rememberProfile, setRememberProfile] = useState(true);
+  const [competitionProfile, setCompetitionProfile] = useState<{ name: string; city: string } | null>(null);
+  const [leaderboard, setLeaderboard] = useState<CompetitionEntry[]>([]);
+  const perBlockTimeRef = useRef<Partial<Record<BlockId, number>>>({});
+  const blockReadyTimeRef = useRef<Partial<Record<BlockId, number>>>({});
+
   // ── Derived ──
   const clinicalIsAnswered = clinicalAnsweredIdx !== null;
   const medIsAnswered = medAnsweredIdx !== null;
@@ -1134,6 +1227,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const spotIsAnswered = spotAnsweredIdx !== null;
   const medBagIsAnswered = medBagAnsweredIdx !== null;
   const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
+  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
@@ -1270,7 +1364,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setImprovStatus('ready');
       if (cachedImprov.answeredIdx !== null && cachedImprov.answeredIdx !== undefined) {
         const seeded = loadCachedStats('improvised');
-        if (seeded) setImprovStats(seeded);
+        if (seeded) {
+          setImprovStats(seeded);
+        } else {
+          // Fallback: synthesize a local 1-vote entry so percentages always render
+          const localCounts = [0, 0, 0, 0];
+          localCounts[cachedImprov.answeredIdx] = 1;
+          setImprovStats({ total: 1, correct: cachedImprov.answeredIdx === cachedImprov.data.correct_index ? 1 : 0, answer_counts: localCounts });
+        }
         fetchGlobalStats('improvised', cachedImprov.data.correct_index).then(({ stats }) => {
           setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
         });
@@ -1373,6 +1474,49 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       } catch { /* noop */ }
     };
     fetchParticipants();
+
+    // Check competition participation
+    if (!isCompetitionOptedOut()) {
+      const effective = getEffectiveProfile();
+      if (effective) {
+        setCompetitionProfile(effective);
+        setRememberProfile(effective.isPermanent);
+      } else {
+        const t = setTimeout(() => setShowCompetitionJoin(true), 700);
+        return () => clearTimeout(t);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Track block open time for competition timing
+  useEffect(() => {
+    if (activeBlock !== null) {
+      blockReadyTimeRef.current[activeBlock] = Date.now();
+    }
+  }, [activeBlock]);
+
+  // Leaderboard — fetch + realtime subscription
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchLeaderboard = async () => {
+      try {
+        const { data } = await supabase
+          .from('daily_competition')
+          .select('display_name, city, correct_answers, total_time_seconds, answers_count')
+          .eq('competition_date', getToday())
+          .order('correct_answers', { ascending: false })
+          .order('total_time_seconds', { ascending: true })
+          .limit(3);
+        if (data) setLeaderboard(data as CompetitionEntry[]);
+      } catch { /* noop */ }
+    };
+    fetchLeaderboard();
+    const channel = supabase
+      .channel('daily_competition_lb')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_competition' }, fetchLeaderboard)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -1387,10 +1531,28 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setImprovStatus('idle'); setImprovQuestion(null); setImprovAnsweredIdx(null); setShowImprovExpl(false); setImprovStats(null);
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
-      setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null);
+      setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null); setActiveMedPopup(null);
       setShowSuccess(false);
+      setShowCompetitionJoin(false);
+      setCompetitionJoinName('');
+      setCompetitionJoinCity('');
+      setRememberProfile(true);
+      setCompetitionProfile(null);
+      setLeaderboard([]);
+      perBlockTimeRef.current = {};
+      blockReadyTimeRef.current = {};
     }
   }, [isOpen]);
+
+  // Mark streak as soon as any question is answered (regardless of score)
+  useEffect(() => {
+    if (anyAnswered) {
+      const s = markDayComplete();
+      setStreak(s.streak);
+      setCompletedDates(s.completedDates ?? []);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anyAnswered]);
 
   // Trigger success screen — only once per day, never on re-open from cache
   useEffect(() => {
@@ -1398,9 +1560,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       const t = setTimeout(() => {
         setShowSuccess(true);
         markSuccessSeenToday();
-        const s = markDayComplete();
-        setStreak(s.streak);
-        setCompletedDates(s.completedDates ?? []);
         trackEvent('daily_challenge_all_blocks_complete', { score });
       }, 700);
       return () => clearTimeout(t);
@@ -1474,6 +1633,31 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [isOpen, clinicalCategory, clinicalQuestion?.correct_index]);
 
+  // ── Competition join handler ──
+  const handleJoinCompetition = useCallback(() => {
+    const name = competitionJoinName.trim();
+    if (!name) return;
+    const city = competitionJoinCity.trim();
+    const profile = { name, city };
+    if (rememberProfile) {
+      localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
+      localStorage.removeItem(getTodayProfileKey());
+    } else {
+      localStorage.removeItem(COMPETITION_PROFILE_KEY);
+      localStorage.setItem(getTodayProfileKey(), JSON.stringify(profile));
+    }
+    setCompetitionProfile(profile);
+    setShowCompetitionJoin(false);
+  }, [competitionJoinName, competitionJoinCity, rememberProfile]);
+
+  const openEditProfile = useCallback(() => {
+    const effective = getEffectiveProfile();
+    setCompetitionJoinName(effective?.name ?? '');
+    setCompetitionJoinCity(effective?.city ?? '');
+    setRememberProfile(effective?.isPermanent ?? true);
+    setShowCompetitionJoin(true);
+  }, []);
+
   // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
     setClinicalCategory(cat);
@@ -1535,11 +1719,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     });
     setIsStatsOffline(false);
     trackEvent('daily_challenge_complete', { category: clinicalCategory, is_correct: isCorrect, time_taken: elapsed });
+    perBlockTimeRef.current['A'] = elapsed;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse(clinicalCategory, isCorrect, elapsed, idx);
     const { stats, offline } = await fetchGlobalStats(clinicalCategory, clinicalQuestion.correct_index);
     setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
     setIsStatsOffline(offline);
-  }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx]);
+  }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block B handler ──
   const handleMedAnswer = useCallback(async (idx: number) => {
@@ -1554,10 +1743,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_med_answered', { correct: isCorrect });
+    perBlockTimeRef.current['B'] = blockReadyTimeRef.current['B']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['B']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('med_v3', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('med_v3', medData.correct_index);
     setMedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [medData, medAnsweredIdx]);
+  }, [medData, medAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block C handler ──
   const handleImprovAnswer = useCallback(async (idx: number) => {
@@ -1571,11 +1766,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
+    setBlockParticipants((prev) => ({ ...prev, C: (prev.C ?? 0) + 1 }));
     trackEvent('daily_challenge_improvised_answered', { correct: isCorrect });
+    perBlockTimeRef.current['C'] = blockReadyTimeRef.current['C']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['C']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('improvised', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('improvised', improvQuestion.correct_index);
     setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [improvQuestion, improvAnsweredIdx]);
+  }, [improvQuestion, improvAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block D handler ──
   const handleRedAnswer = useCallback(async (idx: number) => {
@@ -1590,10 +1792,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_redflag_answered', { correct: isCorrect });
+    perBlockTimeRef.current['D'] = blockReadyTimeRef.current['D']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['D']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('red_flag', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('red_flag', redQuestion.correct_index);
     setRedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [redQuestion, redAnsweredIdx]);
+  }, [redQuestion, redAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block E handler ──
   const handleSpotAnswer = useCallback(async (idx: number) => {
@@ -1608,10 +1816,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_spot_answered', { correct: isCorrect });
+    perBlockTimeRef.current['E'] = blockReadyTimeRef.current['E']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['E']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('spot_error', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('spot_error', spotQuestion.correct_index);
     setSpotStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [spotQuestion, spotAnsweredIdx]);
+  }, [spotQuestion, spotAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block F handler ──
   const handleMedBagAnswer = useCallback(async (idx: number) => {
@@ -1626,10 +1840,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_medbag_answered', { correct: isCorrect });
+    perBlockTimeRef.current['F'] = blockReadyTimeRef.current['F']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['F']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('med_bag', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('med_bag', medBagQuestion.correct_index);
     setMedBagStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [medBagQuestion, medBagAnsweredIdx]);
+  }, [medBagQuestion, medBagAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   if (!isOpen) return null;
 
@@ -1640,7 +1860,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const isCorrect = blockIsCorrect(blockId);
 
     return (
-      <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
         <HapticButton
           onClick={() => setActiveBlock(null)}
           hapticPattern={8}
@@ -1660,6 +1880,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             ? <CheckCircle size={18} className="text-green-400 shrink-0" />
             : <XCircle size={18} className="text-red-400 shrink-0" />
         )}
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center active:scale-90 transition-transform text-emt-muted hover:text-emt-light shrink-0"
+          aria-label="סגור"
+        >
+          <X size={18} />
+        </button>
       </div>
     );
   };
@@ -2256,15 +2483,46 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         {/* Medications card */}
         <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
-          <p className="text-white/50 text-[11px] font-black uppercase tracking-widest mb-3">תרופות שנמצאו על השולחן</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white/50 text-[11px] font-black uppercase tracking-widest">תרופות שנמצאו על השולחן</p>
+            <span className="text-indigo-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {medBagQuestion.medications.map((med, i) => (
-              <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 border border-indigo-400/30">
+              <button
+                key={i}
+                onClick={() => setActiveMedPopup(activeMedPopup === med ? null : med)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${activeMedPopup === med ? 'bg-indigo-500/30 border-indigo-400/60' : 'bg-indigo-500/15 border-indigo-400/30'}`}
+              >
                 <Pill size={12} className="text-indigo-300 shrink-0" />
                 <span className="text-indigo-200 text-[13px] font-bold">{med}</span>
-              </div>
+              </button>
             ))}
           </div>
+          <AnimatePresence>
+            {activeMedPopup && (
+              <motion.div
+                key={activeMedPopup}
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="rounded-2xl bg-indigo-950/70 border border-indigo-400/25 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Pill size={11} className="text-indigo-300 shrink-0" />
+                    <span className="text-indigo-200 text-[12px] font-black">{activeMedPopup}</span>
+                  </div>
+                  {medBagQuestion.med_descriptions?.[activeMedPopup] ? (
+                    <p className="text-white/70 text-[12px] leading-relaxed">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
+                  ) : (
+                    <p className="text-white/35 text-[11px] leading-relaxed">התיאור יופיע עם השאלה הבאה</p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Question */}
@@ -2340,8 +2598,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl">
 
-      {/* ── Header ── */}
-      <div className="ios-safe-header shrink-0 border-b border-emt-border">
+      {/* ── Header ── only when on grid overview */}
+      {activeBlock === null && <div className="ios-safe-header shrink-0 border-b border-emt-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
@@ -2365,19 +2623,89 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="px-4 pb-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-emt-muted text-[11px] font-semibold">{blocksCompleted}/6 הושלמו</span>
-            <span className="text-amber-400/70 text-[11px] font-semibold">{score} נק׳</span>
+        {/* Podium leaderboard */}
+        <div className="px-4 pb-2 pt-1">
+          <div dir="ltr" className="flex items-end justify-center gap-2">
+            {/* 2nd place */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[1] ? (
+                <>
+                  <span className="text-xl leading-none">🥈</span>
+                  <span className="text-emt-light font-black text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[1].display_name}</span>
+                  {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[1].city}</span> : <span className="h-3" />}
+                  <span className="text-slate-300 text-[10px] font-bold leading-none mb-1">{leaderboard[1].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xl leading-none opacity-20">🥈</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-500/25 border border-slate-400/30' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-lg font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
+              </div>
+            </div>
+
+            {/* 1st place — center, tallest */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[0] ? (
+                <>
+                  <span className="text-2xl leading-none">🥇</span>
+                  <span className="text-emt-light font-black text-[12px] text-center leading-tight w-full px-1 truncate">{leaderboard[0].display_name}</span>
+                  {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[0].city}</span> : <span className="h-3" />}
+                  <span className="text-amber-400 text-[11px] font-black leading-none mb-1">{leaderboard[0].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl leading-none opacity-20">🥇</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-16 rounded-t-xl flex items-center justify-center ${leaderboard[0] ? 'bg-amber-400/18 border border-amber-400/35 shadow-[0_0_18px_rgba(251,191,36,0.14)]' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-2xl font-black ${leaderboard[0] ? 'text-amber-400' : 'text-white/15'}`}>1</span>
+              </div>
+            </div>
+
+            {/* 3rd place */}
+            <div className="flex-1 flex flex-col items-center gap-0.5">
+              {leaderboard[2] ? (
+                <>
+                  <span className="text-lg leading-none">🥉</span>
+                  <span className="text-emt-light font-bold text-[11px] text-center leading-tight w-full px-1 truncate">{leaderboard[2].display_name}</span>
+                  {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none">{leaderboard[2].city}</span> : <span className="h-3" />}
+                  <span className="text-orange-300 text-[10px] font-bold leading-none mb-1">{leaderboard[2].correct_answers}/6</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg leading-none opacity-20">🥉</span>
+                  <span className="text-emt-border/40 text-[10px] mb-1 mt-0.5">—</span>
+                </>
+              )}
+              <div className={`w-full h-7 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
+                <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-400' : 'text-white/15'}`}>3</span>
+              </div>
+            </div>
           </div>
-          <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"
-              initial={{ width: '0%' }}
-              animate={{ width: `${(blocksCompleted / 6) * 100}%` }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-            />
+
+          {/* Edit profile link */}
+          <div className="flex justify-center mt-1">
+            {competitionProfile ? (
+              <button
+                onClick={openEditProfile}
+                className="flex items-center gap-1.5 text-emt-muted/70 text-xs font-semibold hover:text-emt-light transition-colors py-1.5 px-3 rounded-xl hover:bg-white/6 active:scale-95"
+              >
+                <span>✏️</span>
+                <span>משתתף: {competitionProfile.name}{competitionProfile.city ? ` · ${competitionProfile.city}` : ''}</span>
+              </button>
+            ) : !isCompetitionOptedOut() ? (
+              <button
+                onClick={() => setShowCompetitionJoin(true)}
+                className="flex items-center gap-1.5 text-amber-400/60 text-xs font-semibold hover:text-amber-400/90 transition-colors py-1.5 px-3 rounded-xl hover:bg-amber-400/8 active:scale-95"
+              >
+                <Trophy size={11} />
+                <span>הצטרף לתחרות</span>
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -2395,7 +2723,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             <div className="px-4 pb-2.5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5" style={{ direction: 'ltr' }}>
                 {days.map(({ date, label, isToday }) => {
-                  const done = completedDates.includes(date) || (isToday && allAnswered);
+                  const done = completedDates.includes(date) || (isToday && anyAnswered);
                   return (
                     <div key={date} className="flex flex-col items-center gap-0.5">
                       <motion.div
@@ -2428,7 +2756,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             </div>
           );
         })()}
-      </div>
+
+      </div>}
 
       {/* ── Body ── */}
       <div className="flex-1 min-h-0 relative overflow-hidden">
@@ -2559,6 +2888,113 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             streak={streak}
             onClose={() => setShowSuccess(false)}
           />
+        )}
+        {showCompetitionJoin && (
+          <motion.div
+            key="competition-join"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-sm flex items-center justify-center p-6"
+            dir="rtl"
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              className="bg-emt-dark border border-amber-400/25 rounded-3xl p-6 w-full max-w-sm shadow-[0_0_60px_rgba(251,191,36,0.12)]"
+            >
+              <div className="flex flex-col items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center shadow-[0_0_24px_rgba(251,191,36,0.2)]">
+                  <Trophy size={30} className="text-amber-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-emt-light font-black text-xl leading-tight">
+                    {competitionProfile ? 'עריכת פרטים' : 'תחרות היומית'}
+                  </h3>
+                  {!competitionProfile && (
+                    <>
+                      <p className="text-emt-light/80 text-base font-semibold mt-2 leading-snug">
+                        התמודד מול שאר המשיבים
+                      </p>
+                      <p className="text-emt-muted text-sm mt-1 leading-relaxed">
+                        מי ענה הכי הרבה תשובות נכונות והכי מהר?
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="flex flex-col gap-3 w-full">
+                  <input
+                    type="text"
+                    placeholder="שם *"
+                    value={competitionJoinName}
+                    onChange={e => setCompetitionJoinName(e.target.value)}
+                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
+                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
+                    dir="rtl"
+                    autoComplete="off"
+                  />
+                  <input
+                    type="text"
+                    placeholder="עיר (אופציונלי)"
+                    value={competitionJoinCity}
+                    onChange={e => setCompetitionJoinCity(e.target.value)}
+                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
+                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
+                    dir="rtl"
+                    autoComplete="off"
+                    onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
+                  />
+
+                  {/* Remember me checkbox */}
+                  <button
+                    onClick={() => setRememberProfile(p => !p)}
+                    className="flex items-center gap-3 w-full py-2 text-right"
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${rememberProfile ? 'bg-amber-400 border-amber-400' : 'bg-transparent border-white/30'}`}>
+                      {rememberProfile && <span className="text-black text-xs font-black leading-none">✓</span>}
+                    </div>
+                    <div className="text-right flex-1">
+                      <p className="text-emt-light text-sm font-semibold leading-tight">זכור אותי</p>
+                      <p className="text-emt-muted text-xs mt-0.5">השם ייטען אוטומטית בכל יום</p>
+                    </div>
+                  </button>
+                </div>
+                <HapticButton
+                  onClick={handleJoinCompetition}
+                  hapticPattern={15}
+                  pressScale={0.96}
+                  disabled={!competitionJoinName.trim()}
+                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity disabled:opacity-35"
+                >
+                  {competitionProfile ? 'שמור שינויים' : 'השתתף בתחרות! 🏆'}
+                </HapticButton>
+                <div className="flex items-center gap-4 -mt-1">
+                  <button
+                    onClick={() => setShowCompetitionJoin(false)}
+                    className="text-emt-muted text-sm font-semibold hover:text-emt-light transition-colors py-1"
+                  >
+                    ביטול
+                  </button>
+                  {!competitionProfile && (
+                    <>
+                      <span className="text-emt-border text-xs">|</span>
+                      <button
+                        onClick={() => {
+                          localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
+                          setShowCompetitionJoin(false);
+                        }}
+                        className="text-emt-muted/60 text-sm font-semibold hover:text-emt-muted transition-colors py-1"
+                      >
+                        אל תציג שוב
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
