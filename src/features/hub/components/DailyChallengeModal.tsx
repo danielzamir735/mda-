@@ -89,6 +89,14 @@ interface GlobalStats {
   answer_counts: number[];
 }
 
+interface CompetitionEntry {
+  display_name: string;
+  city: string;
+  correct_answers: number;
+  total_time_seconds: number;
+  answers_count: number;
+}
+
 interface StreakData {
   lastCompletedDate: string;
   streak: number;
@@ -130,8 +138,41 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   med_bag: 'daily_stats_medbag_v1',
 };
 
+const COMPETITION_OPT_OUT_KEY = 'daily_competition_opted_out';
+const COMPETITION_PROFILE_KEY = 'daily_competition_profile';
+
 function getParticipantBase(): number {
   return new Date().getDate() % 2 === 0 ? 230 : 430;
+}
+
+function isCompetitionOptedOut(): boolean {
+  return localStorage.getItem(COMPETITION_OPT_OUT_KEY) === 'true';
+}
+
+function getStoredCompetitionProfile(): { name: string; city: string } | null {
+  const raw = localStorage.getItem(COMPETITION_PROFILE_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+async function upsertCompetitionEntry(
+  profile: { name: string; city: string },
+  correctAnswers: number,
+  totalTimeSeconds: number,
+  answersCount: number,
+) {
+  try {
+    await supabase.from('daily_competition').upsert({
+      competition_date: getToday(),
+      session_id: getSessionId(),
+      display_name: profile.name,
+      city: profile.city,
+      correct_answers: correctAnswers,
+      total_time_seconds: totalTimeSeconds,
+      answers_count: answersCount,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'session_id,competition_date' });
+  } catch { /* noop */ }
 }
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
@@ -1158,6 +1199,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
   const questionStartRef = useRef<number | null>(null);
 
+  // Competition
+  const [showCompetitionJoin, setShowCompetitionJoin] = useState(false);
+  const [competitionJoinName, setCompetitionJoinName] = useState('');
+  const [competitionJoinCity, setCompetitionJoinCity] = useState('');
+  const [competitionProfile, setCompetitionProfile] = useState<{ name: string; city: string } | null>(null);
+  const [leaderboard, setLeaderboard] = useState<CompetitionEntry[]>([]);
+  const perBlockTimeRef = useRef<Partial<Record<BlockId, number>>>({});
+  const blockReadyTimeRef = useRef<Partial<Record<BlockId, number>>>({});
+
   // ── Derived ──
   const clinicalIsAnswered = clinicalAnsweredIdx !== null;
   const medIsAnswered = medAnsweredIdx !== null;
@@ -1413,6 +1463,48 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       } catch { /* noop */ }
     };
     fetchParticipants();
+
+    // Check competition participation
+    if (!isCompetitionOptedOut()) {
+      const profile = getStoredCompetitionProfile();
+      if (profile) {
+        setCompetitionProfile(profile);
+      } else {
+        const t = setTimeout(() => setShowCompetitionJoin(true), 700);
+        return () => clearTimeout(t);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Track block open time for competition timing
+  useEffect(() => {
+    if (activeBlock !== null) {
+      blockReadyTimeRef.current[activeBlock] = Date.now();
+    }
+  }, [activeBlock]);
+
+  // Leaderboard — fetch + realtime subscription
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchLeaderboard = async () => {
+      try {
+        const { data } = await supabase
+          .from('daily_competition')
+          .select('display_name, city, correct_answers, total_time_seconds, answers_count')
+          .eq('competition_date', getToday())
+          .order('correct_answers', { ascending: false })
+          .order('total_time_seconds', { ascending: true })
+          .limit(3);
+        if (data) setLeaderboard(data as CompetitionEntry[]);
+      } catch { /* noop */ }
+    };
+    fetchLeaderboard();
+    const channel = supabase
+      .channel('daily_competition_lb')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_competition' }, fetchLeaderboard)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -1429,6 +1521,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
       setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null);
       setShowSuccess(false);
+      setShowCompetitionJoin(false);
+      setCompetitionJoinName('');
+      setCompetitionJoinCity('');
+      setCompetitionProfile(null);
+      setLeaderboard([]);
+      perBlockTimeRef.current = {};
+      blockReadyTimeRef.current = {};
     }
   }, [isOpen]);
 
@@ -1521,6 +1620,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [isOpen, clinicalCategory, clinicalQuestion?.correct_index]);
 
+  // ── Competition join handler ──
+  const handleJoinCompetition = useCallback(() => {
+    const name = competitionJoinName.trim();
+    const city = competitionJoinCity.trim();
+    if (!name || !city) return;
+    const profile = { name, city };
+    localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
+    setCompetitionProfile(profile);
+    setShowCompetitionJoin(false);
+  }, [competitionJoinName, competitionJoinCity]);
+
   // ── Block A handlers ──
   const loadClinicalCategory = useCallback(async (cat: ClinicalCategory) => {
     setClinicalCategory(cat);
@@ -1582,11 +1692,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     });
     setIsStatsOffline(false);
     trackEvent('daily_challenge_complete', { category: clinicalCategory, is_correct: isCorrect, time_taken: elapsed });
+    perBlockTimeRef.current['A'] = elapsed;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse(clinicalCategory, isCorrect, elapsed, idx);
     const { stats, offline } = await fetchGlobalStats(clinicalCategory, clinicalQuestion.correct_index);
     setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
     setIsStatsOffline(offline);
-  }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx]);
+  }, [clinicalQuestion, clinicalCategory, clinicalAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block B handler ──
   const handleMedAnswer = useCallback(async (idx: number) => {
@@ -1601,10 +1716,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_med_answered', { correct: isCorrect });
+    perBlockTimeRef.current['B'] = blockReadyTimeRef.current['B']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['B']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('med_v3', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('med_v3', medData.correct_index);
     setMedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [medData, medAnsweredIdx]);
+  }, [medData, medAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block C handler ──
   const handleImprovAnswer = useCallback(async (idx: number) => {
@@ -1620,10 +1741,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     });
     setBlockParticipants((prev) => ({ ...prev, C: (prev.C ?? 0) + 1 }));
     trackEvent('daily_challenge_improvised_answered', { correct: isCorrect });
+    perBlockTimeRef.current['C'] = blockReadyTimeRef.current['C']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['C']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('improvised', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('improvised', improvQuestion.correct_index);
     setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [improvQuestion, improvAnsweredIdx]);
+  }, [improvQuestion, improvAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block D handler ──
   const handleRedAnswer = useCallback(async (idx: number) => {
@@ -1638,10 +1765,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_redflag_answered', { correct: isCorrect });
+    perBlockTimeRef.current['D'] = blockReadyTimeRef.current['D']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['D']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('red_flag', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('red_flag', redQuestion.correct_index);
     setRedStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [redQuestion, redAnsweredIdx]);
+  }, [redQuestion, redAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block E handler ──
   const handleSpotAnswer = useCallback(async (idx: number) => {
@@ -1656,10 +1789,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_spot_answered', { correct: isCorrect });
+    perBlockTimeRef.current['E'] = blockReadyTimeRef.current['E']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['E']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('spot_error', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('spot_error', spotQuestion.correct_index);
     setSpotStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [spotQuestion, spotAnsweredIdx]);
+  }, [spotQuestion, spotAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   // ── Block F handler ──
   const handleMedBagAnswer = useCallback(async (idx: number) => {
@@ -1674,10 +1813,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
     trackEvent('daily_challenge_medbag_answered', { correct: isCorrect });
+    perBlockTimeRef.current['F'] = blockReadyTimeRef.current['F']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['F']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
     await saveClinicalResponse('med_bag', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('med_bag', medBagQuestion.correct_index);
     setMedBagStats((prev) => (prev && stats.total < prev.total ? prev : stats));
-  }, [medBagQuestion, medBagAnsweredIdx]);
+  }, [medBagQuestion, medBagAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   if (!isOpen) return null;
 
@@ -2476,6 +2621,31 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             </div>
           );
         })()}
+
+        {/* Leaderboard strip */}
+        {leaderboard.length > 0 && (
+          <div className="px-3 pb-2.5">
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 overflow-hidden">
+              <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
+                <Trophy size={10} className="text-amber-400/70" />
+                <span className="text-amber-400/70 text-[9px] font-bold tracking-wide uppercase">מובילים היום</span>
+              </div>
+              {leaderboard.map((entry, i) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const formatTime = (s: number) => s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s}ש׳`;
+                return (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 border-t border-white/5">
+                    <span className="text-sm leading-none w-5 text-center">{medals[i]}</span>
+                    <span className="text-emt-light font-bold text-[11px] flex-1 truncate">{entry.display_name}</span>
+                    <span className="text-emt-muted text-[10px] truncate max-w-[60px]">{entry.city}</span>
+                    <span className="text-amber-400 text-[10px] font-black shrink-0">{entry.correct_answers}/6</span>
+                    <span className="text-emt-muted text-[10px] shrink-0">{formatTime(entry.total_time_seconds)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Body ── */}
@@ -2607,6 +2777,81 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             streak={streak}
             onClose={() => setShowSuccess(false)}
           />
+        )}
+        {showCompetitionJoin && (
+          <motion.div
+            key="competition-join"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-sm flex items-center justify-center p-6"
+            dir="rtl"
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              className="bg-emt-dark border border-amber-400/25 rounded-3xl p-6 w-full max-w-sm shadow-[0_0_60px_rgba(251,191,36,0.12)]"
+            >
+              <div className="flex flex-col items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center shadow-[0_0_24px_rgba(251,191,36,0.2)]">
+                  <Trophy size={30} className="text-amber-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-emt-light font-black text-xl leading-tight">תחרות היומית</h3>
+                  <p className="text-emt-muted text-sm mt-1.5 leading-relaxed">
+                    התמודד מול שאר המדיקים — מי ענה הכי הרבה תשובות נכונות והכי מהר?
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 w-full">
+                  <input
+                    type="text"
+                    placeholder="שם מלא"
+                    value={competitionJoinName}
+                    onChange={e => setCompetitionJoinName(e.target.value)}
+                    className="w-full bg-white/6 border border-white/12 rounded-2xl px-4 py-3.5 text-emt-light text-sm placeholder:text-emt-muted focus:outline-none focus:border-amber-400/50 transition-colors"
+                    dir="rtl"
+                    autoComplete="off"
+                  />
+                  <input
+                    type="text"
+                    placeholder="עיר"
+                    value={competitionJoinCity}
+                    onChange={e => setCompetitionJoinCity(e.target.value)}
+                    className="w-full bg-white/6 border border-white/12 rounded-2xl px-4 py-3.5 text-emt-light text-sm placeholder:text-emt-muted focus:outline-none focus:border-amber-400/50 transition-colors"
+                    dir="rtl"
+                    autoComplete="off"
+                    onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
+                  />
+                </div>
+                <HapticButton
+                  onClick={handleJoinCompetition}
+                  hapticPattern={15}
+                  pressScale={0.96}
+                  disabled={!competitionJoinName.trim() || !competitionJoinCity.trim()}
+                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
+                >
+                  השתתף בתחרות! 🏆
+                </HapticButton>
+                <button
+                  onClick={() => setShowCompetitionJoin(false)}
+                  className="text-emt-muted text-xs hover:text-emt-light transition-colors py-1"
+                >
+                  לא עכשיו
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
+                    setShowCompetitionJoin(false);
+                  }}
+                  className="text-emt-muted/40 text-[11px] hover:text-emt-muted/70 transition-colors -mt-2"
+                >
+                  אל תציג שוב
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
