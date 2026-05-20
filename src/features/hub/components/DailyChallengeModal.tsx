@@ -1860,7 +1860,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const isCorrect = blockIsCorrect(blockId);
 
     return (
-      <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
         <HapticButton
           onClick={() => setActiveBlock(null)}
           hapticPattern={8}
@@ -1880,6 +1880,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             ? <CheckCircle size={18} className="text-green-400 shrink-0" />
             : <XCircle size={18} className="text-red-400 shrink-0" />
         )}
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center active:scale-90 transition-transform text-emt-muted hover:text-emt-light shrink-0"
+          aria-label="סגור"
+        >
+          <X size={18} />
+        </button>
       </div>
     );
   };
@@ -2587,8 +2594,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl">
 
-      {/* ── Header ── */}
-      <div className="ios-safe-header shrink-0 border-b border-emt-border">
+      {/* ── Header ── only when on grid overview */}
+      {activeBlock === null && <div className="ios-safe-header shrink-0 border-b border-emt-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
@@ -2746,7 +2753,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           );
         })()}
 
-      </div>
+      </div>}
 
       {/* ── Body ── */}
       <div className="flex-1 min-h-0 relative overflow-hidden">
