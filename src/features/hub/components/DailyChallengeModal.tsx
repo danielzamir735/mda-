@@ -2500,7 +2500,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             ))}
           </div>
           <AnimatePresence>
-            {activeMedPopup && medBagQuestion.med_descriptions?.[activeMedPopup] && (
+            {activeMedPopup && (
               <motion.div
                 key={activeMedPopup}
                 initial={{ opacity: 0, y: -6, height: 0 }}
@@ -2514,7 +2514,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <Pill size={11} className="text-indigo-300 shrink-0" />
                     <span className="text-indigo-200 text-[12px] font-black">{activeMedPopup}</span>
                   </div>
-                  <p className="text-white/70 text-[12px] leading-relaxed">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
+                  {medBagQuestion.med_descriptions?.[activeMedPopup] ? (
+                    <p className="text-white/70 text-[12px] leading-relaxed">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
+                  ) : (
+                    <p className="text-white/35 text-[11px] leading-relaxed">התיאור יופיע עם השאלה הבאה</p>
+                  )}
                 </div>
               </motion.div>
             )}
