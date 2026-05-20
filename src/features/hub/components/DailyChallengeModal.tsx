@@ -1302,7 +1302,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setImprovStatus('ready');
       if (cachedImprov.answeredIdx !== null && cachedImprov.answeredIdx !== undefined) {
         const seeded = loadCachedStats('improvised');
-        if (seeded) setImprovStats(seeded);
+        if (seeded) {
+          setImprovStats(seeded);
+        } else {
+          // Fallback: synthesize a local 1-vote entry so percentages always render
+          const localCounts = [0, 0, 0, 0];
+          localCounts[cachedImprov.answeredIdx] = 1;
+          setImprovStats({ total: 1, correct: cachedImprov.answeredIdx === cachedImprov.data.correct_index ? 1 : 0, answer_counts: localCounts });
+        }
         fetchGlobalStats('improvised', cachedImprov.data.correct_index).then(({ stats }) => {
           setImprovStats((prev) => (prev && stats.total < prev.total ? prev : stats));
         });
@@ -1603,6 +1610,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       counts[idx] = (counts[idx] ?? 0) + 1;
       return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
     });
+    setBlockParticipants((prev) => ({ ...prev, C: (prev.C ?? 0) + 1 }));
     trackEvent('daily_challenge_improvised_answered', { correct: isCorrect });
     await saveClinicalResponse('improvised', isCorrect, 0, idx);
     const { stats } = await fetchGlobalStats('improvised', improvQuestion.correct_index);
