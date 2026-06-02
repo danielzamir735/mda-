@@ -4,7 +4,6 @@ import {
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
   Search, Stethoscope, Wrench, Info,
 } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
@@ -531,24 +530,22 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1500): 
   throw lastErr;
 }
 
-// ─── Gemini ───────────────────────────────────────────────────────────────────
+// ─── Gemini (server-side proxy) ───────────────────────────────────────────────
 
-function getGeminiModel() {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY missing');
-  return new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: 'gemini-2.5-flash' });
-}
-
-async function parseGeminiJSON<T>(prompt: string): Promise<T> {
-  const model = getGeminiModel();
-  const result = await model.generateContent(prompt);
-  const raw = result.response.text().trim();
-  const clean = raw.replace(/^```(?:json)?/m, '').replace(/```$/m, '').trim();
+async function callGemini<T>(prompt: string): Promise<T> {
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
+  const { text } = await res.json() as { text: string };
+  const clean = text.trim().replace(/^```(?:json)?/m, '').replace(/```$/m, '').trim();
   return JSON.parse(clean) as T;
 }
 
 async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
-  const q = await withRetry(() => parseGeminiJSON<ClinicalQuestion>(CLINICAL_PROMPTS[cat]));
+  const q = await withRetry(() => callGemini<ClinicalQuestion>(CLINICAL_PROMPTS[cat]));
   if (
     typeof q.question !== 'string' || !Array.isArray(q.options) ||
     q.options.length !== 4 || typeof q.correct_index !== 'number' ||
@@ -558,7 +555,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
 }
 
 async function generateMed(): Promise<MedOfDay> {
-  const m = await withRetry(() => parseGeminiJSON<MedOfDay>(buildMedPrompt()));
+  const m = await withRetry(() => callGemini<MedOfDay>(buildMedPrompt()));
   if (!m.name || !m.drug_class || !m.question || !Array.isArray(m.options) || m.options.length !== 4 || typeof m.correct_index !== 'number') {
     throw new Error('Invalid med format');
   }
@@ -567,14 +564,14 @@ async function generateMed(): Promise<MedOfDay> {
 
 async function generateImprovised(): Promise<ImprovisedQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => parseGeminiJSON<ImprovisedQ>(buildImprovisedPrompt(recentTopics)));
+  const q = await withRetry(() => callGemini<ImprovisedQ>(buildImprovisedPrompt(recentTopics)));
   if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) throw new Error('Invalid improvised format');
   return q;
 }
 
 async function generateRedFlag(): Promise<RedFlagQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const r = await withRetry(() => parseGeminiJSON<RedFlagQ>(buildRedFlagPrompt(recentTopics)));
+  const r = await withRetry(() => callGemini<RedFlagQ>(buildRedFlagPrompt(recentTopics)));
   if (!r.scenario || !r.question || !Array.isArray(r.options) || r.options.length !== 4) throw new Error('Invalid red flag format');
   return r;
 }
@@ -594,7 +591,7 @@ async function getRecentTopicsForDiversity(): Promise<string[]> {
 
 async function generateSpotError(): Promise<SpotErrorQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => parseGeminiJSON<SpotErrorQ>(buildSpotErrorPrompt(recentTopics)));
+  const q = await withRetry(() => callGemini<SpotErrorQ>(buildSpotErrorPrompt(recentTopics)));
   if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid spot error format');
   }
@@ -603,7 +600,7 @@ async function generateSpotError(): Promise<SpotErrorQ> {
 
 async function generateMedBag(): Promise<MedBagQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => parseGeminiJSON<MedBagQ>(buildMedBagPrompt(recentTopics)));
+  const q = await withRetry(() => callGemini<MedBagQ>(buildMedBagPrompt(recentTopics)));
   if (!q.situation || !Array.isArray(q.medications) || q.medications.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid med bag format');
   }
@@ -623,13 +620,11 @@ function parseClinicalContent(c: ClinicalQuestion): ClinicalQuestion {
 
 async function fetchOrCreateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
   const today = getToday();
-  const existing = await withRetry(async () => {
-    const { data, error } = await supabase.from('daily_questions').select('*')
-      .eq('question_date', today).eq('question_type', cat).maybeSingle();
-    if (error) throw new Error(error.message);
-    return data;
-  });
-  if (existing?.content) return parseClinicalContent(existing.content as ClinicalQuestion);
+
+  const { data: rows } = await supabase.from('daily_questions').select('*')
+    .eq('question_date', today).eq('question_type', cat)
+    .order('id', { ascending: true }).limit(1);
+  if (rows?.[0]?.content) return parseClinicalContent(rows[0].content as ClinicalQuestion);
 
   const generated = await withRetry(() => generateClinical(cat));
   const { data: inserted, error: insertError } = await supabase.from('daily_questions')
@@ -637,32 +632,37 @@ async function fetchOrCreateClinical(cat: ClinicalCategory): Promise<ClinicalQue
   if (!insertError && inserted?.content) return parseClinicalContent(inserted.content as ClinicalQuestion);
 
   const { data: canonical } = await supabase.from('daily_questions').select('*')
-    .eq('question_date', today).eq('question_type', cat).maybeSingle();
-  if (canonical?.content) return parseClinicalContent(canonical.content as ClinicalQuestion);
+    .eq('question_date', today).eq('question_type', cat)
+    .order('id', { ascending: true }).limit(1);
+  if (canonical?.[0]?.content) return parseClinicalContent(canonical[0].content as ClinicalQuestion);
 
   return generated;
 }
 
 async function fetchOrCreateBlock<T>(questionType: string, generate: () => Promise<T>): Promise<T> {
   const today = getToday();
-  try {
-    const { data, error } = await supabase.from('daily_questions').select('*')
-      .eq('question_date', today).eq('question_type', questionType).maybeSingle();
-    if (!error && data?.content) return data.content as T;
 
-    const generated = await generate();
-    const { data: inserted, error: insertError } = await supabase.from('daily_questions')
-      .insert({ question_date: today, question_type: questionType, content: generated }).select().single();
-    if (!insertError && inserted?.content) return inserted.content as T;
+  // Use limit(1)+order so duplicate rows (from past race conditions) don't break .maybeSingle()
+  const { data: rows } = await supabase.from('daily_questions').select('*')
+    .eq('question_date', today).eq('question_type', questionType)
+    .order('id', { ascending: true }).limit(1);
+  if (rows?.[0]?.content) return rows[0].content as T;
 
-    const { data: canonical } = await supabase.from('daily_questions').select('*')
-      .eq('question_date', today).eq('question_type', questionType).maybeSingle();
-    if (canonical?.content) return canonical.content as T;
+  const generated = await generate();
 
-    return generated;
-  } catch {
-    return generate();
-  }
+  const { data: inserted, error: insertError } = await supabase.from('daily_questions')
+    .insert({ question_date: today, question_type: questionType, content: generated })
+    .select().single();
+  if (!insertError && inserted?.content) return inserted.content as T;
+
+  // Race condition: another user inserted first — return their canonical version
+  const { data: canonical } = await supabase.from('daily_questions').select('*')
+    .eq('question_date', today).eq('question_type', questionType)
+    .order('id', { ascending: true }).limit(1);
+  if (canonical?.[0]?.content) return canonical[0].content as T;
+
+  // Last resort: return what was already generated — never call generate() again
+  return generated;
 }
 
 async function saveClinicalResponse(category: QuizCategory, is_correct: boolean, time_taken: number, answer_index: number) {

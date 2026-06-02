@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
 import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit, Activity } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
 
@@ -176,13 +175,6 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
-  function getModel() {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-    if (!apiKey) throw new Error('VITE_GEMINI_API_KEY is not defined in .env');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-  }
-
   function saveToHistory(query: string, result: string) {
     const item: HistoryItem = {
       id: Date.now().toString(),
@@ -204,11 +196,13 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
     trackEvent('med_scan_text', { query_length: query.length });
 
     try {
-      const model = getModel();
-      const result = await model.generateContent(
-        SYSTEM_PROMPT + '\n\nהתרופה המבוקשת: ' + query
-      );
-      const text = result.response.text();
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: SYSTEM_PROMPT + '\n\nהתרופה המבוקשת: ' + query }),
+      });
+      if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
+      const { text } = await res.json() as { text: string };
       setResultText(text);
       setState('result');
       saveToHistory(query, text);
@@ -230,20 +224,19 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
 
     try {
-      const model = getModel();
-
       const base64 = await fileToBase64(file);
       const mimeType = file.type || 'image/jpeg';
 
-      const imagePart = {
-        inlineData: {
-          mimeType: mimeType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-          data: base64,
-        },
-      };
-
-      const result = await model.generateContent([SYSTEM_PROMPT, imagePart]);
-      const text = result.response.text();
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: SYSTEM_PROMPT,
+          image: { data: base64, mimeType },
+        }),
+      });
+      if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
+      const { text } = await res.json() as { text: string };
       setResultText(text);
       setState('result');
       saveToHistory(extractMedName(text), text);
