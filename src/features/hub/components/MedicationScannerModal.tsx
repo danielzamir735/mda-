@@ -186,7 +186,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   }
 
   const handleTextSearch = async () => {
-    const query = textQuery.trim();
+    // Strip newlines and limit to 200 chars to prevent prompt injection
+    const query = textQuery.trim().replace(/[\r\n]+/g, ' ').slice(0, 200);
     if (!query) return;
 
     setIsImageSearch(false);

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { rateLimit, getIp } from './_rateLimit';
 
 function escapeHtml(str: string): string {
   return str
@@ -12,6 +13,12 @@ function escapeHtml(str: string): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // 3 requests per hour per IP
+  const ip = getIp(req.headers as Record<string, string | string[] | undefined>);
+  if (!rateLimit(ip, 3, 60 * 60_000)) {
+    return res.status(429).json({ error: 'Too many requests — try again later' });
   }
 
   const resendKey = process.env.RESEND_API_KEY;

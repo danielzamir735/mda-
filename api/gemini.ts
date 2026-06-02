@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rateLimit, getIp } from './_rateLimit';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const MAX_PROMPT_LENGTH = 20_000;
@@ -8,6 +9,12 @@ const MAX_IMAGE_B64_LENGTH = 10 * 1024 * 1024; // ~7.5 MB file
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // 20 requests per minute per IP
+  const ip = getIp(req.headers as Record<string, string | string[] | undefined>);
+  if (!rateLimit(ip, 20, 60_000)) {
+    return res.status(429).json({ error: 'Too many requests — try again in a minute' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
