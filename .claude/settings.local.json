@@ -80,7 +80,8 @@
       "Bash(Select-String \"dnd|drag|sortable|framer\")",
       "Bash(supabase *)",
       "Bash(npx supabase *)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Select-Object Name)"
     ]
   },
   "hooks": {
