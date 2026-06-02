@@ -10,7 +10,7 @@ if (gaMeasurementId) {
   ReactGA.initialize(gaMeasurementId)
 }
 
-posthog.init('phc_NHYgGJLq95b4ImZloo1QT9kE3AqhrLjZzkguFEol1mG', {
+posthog.init(import.meta.env.VITE_POSTHOG_KEY as string ?? 'phc_NHYgGJLq95b4ImZloo1QT9kE3AqhrLjZzkguFEol1mG', {
   api_host: 'https://us.i.posthog.com',
   person_profiles: 'identified_only',
 })
