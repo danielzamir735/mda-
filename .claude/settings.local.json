@@ -81,7 +81,8 @@
       "Bash(supabase *)",
       "Bash(npx supabase *)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(npm audit *)"
     ]
   },
   "hooks": {
