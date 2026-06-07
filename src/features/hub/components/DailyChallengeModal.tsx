@@ -119,12 +119,12 @@ function getSessionId(): string {
 }
 
 const CACHE_KEYS = {
-  bls: 'daily_challenge_bls_v7',
-  als: 'daily_challenge_als_v7',
-  med: 'daily_challenge_med_v4',
-  improvised: 'daily_challenge_improvised_v2',
-  red_flag: 'daily_challenge_redflag_v2',
-  spot_error: 'daily_challenge_spoterror_v1',
+  bls: 'daily_challenge_bls_v8',
+  als: 'daily_challenge_als_v8',
+  med: 'daily_challenge_med_v5',
+  improvised: 'daily_challenge_improvised_v3',
+  red_flag: 'daily_challenge_redflag_v3',
+  spot_error: 'daily_challenge_spoterror_v2',
   med_bag: 'daily_challenge_medbag_v1',
 } as const;
 
@@ -212,9 +212,7 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
 
 function buildMedPrompt(): string {
   const today = getToday();
-  // Deterministic seed from date so Gemini varies by day
-  let hash = 0;
-  for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+  const topic = getDailyTopic();
   const drugPool = [
     'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Aspirin', 'Clopidogrel (Plavix)',
     'Warfarin (Coumadin)', 'Bisoprolol', 'Metoprolol', 'Amlodipine', 'Furosemide',
@@ -222,11 +220,12 @@ function buildMedPrompt(): string {
     'Atorvastatin', 'Losartan', 'Ramipril', 'Digoxin', 'Amiodarone', 'Prednisolone',
     'Nitroglycerin', 'Adenosine', 'Atropine', 'Epinephrine', 'Morphine', 'Midazolam',
   ];
-  const todayDrug = drugPool[hash % drugPool.length];
 
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
-חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+תאריך היום: ${today}. נושא היום: ${topic}.
+בחר מהרשימה הבאה את התרופה הרלוונטית ביותר לנושא "${topic}": ${drugPool.join(', ')}.
+אם אין תרופה ישירה לנושא, בחר תרופה שנפגשת לעיתים קרובות בטיפול ב${topic} או שיש לה אינטראקציה חשובה עם נפגעי ${topic}.
+ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
 פלט JSON בלבד, ללא markdown:
@@ -327,16 +326,21 @@ const IMPROVISED_TOPICS = [
   'חום גבוה / ספסיס',
 ];
 
-function getTodayImprovisedTopic(): string {
+function getDailyTopicIndex(): number {
   const today = getToday();
-  let hash = 17;
-  for (let i = 0; i < today.length; i++) hash = (hash * 37 + today.charCodeAt(i)) >>> 0;
-  return IMPROVISED_TOPICS[hash % IMPROVISED_TOPICS.length];
+  const epoch = new Date('2024-01-01').getTime();
+  const todayDate = new Date(today).getTime();
+  const daysSinceEpoch = Math.floor((todayDate - epoch) / (1000 * 60 * 60 * 24));
+  return ((daysSinceEpoch % IMPROVISED_TOPICS.length) + IMPROVISED_TOPICS.length) % IMPROVISED_TOPICS.length;
+}
+
+function getDailyTopic(): string {
+  return IMPROVISED_TOPICS[getDailyTopicIndex()];
 }
 
 function buildImprovisedPrompt(_recentTopics: string[]): string {
   const setting = getTodayImprovisedSetting();
-  const topic = getTodayImprovisedTopic();
+  const topic = getDailyTopic();
 
   return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **${topic}** — הנפגע זקוק לעזרה ראשונה ל${topic}, ללא תיק רפואי. החובש חייב לאלתר פתרון מחפצים זמינים במקום.
 
@@ -362,15 +366,12 @@ function buildImprovisedPrompt(_recentTopics: string[]): string {
 }`;
 }
 
-function buildRedFlagPrompt(recentTopics: string[]): string {
-  const avoidSection = recentTopics.length > 0
-    ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
-    : '';
+function buildRedFlagPrompt(): string {
+  const topic = getDailyTopic();
   return `אתה מדריך פרמדיק בכיר ישראלי. צור מקרה חירום קצר שבו יש לזהות סימן אדום קריטי מסכן חיים.
-סבב בין הנושאים הבאים: טראומה, קרדיולוגיה, נשימה, נוירולוגיה, חירום סביבתי, רעלנות, ילדים, אינטרנה. לא יותר מ-25% מהשאלות יהיו מאותו תחום.
+נושא היום (חובה): ${topic}. כל המקרה חייב להתמקד ב${topic}.
 המקרה: תיאור ספציפי — גיל, מנגנון/תלונה, סימנים חיוניים, תסמינים. 2-3 משפטים.
 ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
-${avoidSection}
 פלט JSON בלבד, ללא markdown:
 {
   "scenario": "תיאור המקרה (2-3 משפטים בעברית מקצועית, עם גיל, מנגנון/תלונה, סימנים חיוניים רלוונטיים)",
@@ -378,26 +379,24 @@ ${avoidSection}
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
   "explanation": "הסבר קליני (2-3 משפטים) — מדוע זהו הסימן הקריטי ומה ההשלכות הפיזיולוגיות",
-  "topic_tag": "נושא קצר בעברית (1-3 מילים)"
+  "topic_tag": "${topic}"
 }`;
 }
 
-function buildSpotErrorPrompt(recentTopics: string[]): string {
-  const avoidSection = recentTopics.length > 0
-    ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
-    : '';
-  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: כתוב תרחיש BLS מפורט ומבלבל המכיל טעות מקצועית אחת — מוסתרת בתוך נרטיב שנראה שלם ומקצועי לחלוטין.
+function buildSpotErrorPrompt(): string {
+  const topic = getDailyTopic();
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: כתוב תרחיש BLS מפורט ומבלבל בנושא ${topic}, המכיל טעות מקצועית אחת — מוסתרת בתוך נרטיב שנראה שלם ומקצועי לחלוטין.
 
-תחום: BLS בלבד — טראומה, נשימה, CPR בסיסי, אנפילקסיס, שבץ, סוכר. ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
+נושא היום (חובה): ${topic}. כל התרחיש חייב להתמקד ב${topic}.
+תחום: BLS בלבד — ללא תרופות ALS, ללא קצבים, ללא נתיב אוויר מתקדם.
 
 כללים מחייבים:
-1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה/מנגנון]" — ללא ניסוח שיגור.
+1. פתח ישירות בתרחיש: "[גבר/אישה] בן/בת [גיל], [תלונה/מנגנון של ${topic}]" — ללא ניסוח שיגור.
 2. תאר את ההתערבות בפירוט (5–8 שורות): כלול סימנים חיוניים ספציפיים, ממצאי בדיקה, פעולות שננקטו בסדר כרונולוגי — כדי שהנרטיב ייראה שלם ומקצועי. הטעות חייבת להיות מוסתרת היטב בתוך ים של פרטים נכונים. כלול לפחות שני פרטים שנראים חשודים אך נכונים לחלוטין (כדי להסיח דעת), ופרט אחד שנראה טבעי — שהוא הטעות האמיתית. דוגמאות לטעויות: ממצא שהוחמץ, סדר עדיפויות שגוי, פרוטוקול מיושן, התוויית נגד שנעלמה, תזמון שגוי, מינון לא נכון.
 3. השאלה: "מה הטעות המקצועית שזוהתה בטיפול?"
 4. 4 תשובות קצרות: אחת היא הטעות האמיתית, השאר — פעולות שלא קרו או שנראות חשודות אך נכונות לחלוטין. עשה את המסיחות משכנעות — לא תשובות ברורות שניתן לפסול בקלות.
 5. הסבר (2 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי הפרוטוקולים בישראל.
 6. שפה: עברית רפואית תקנית בלבד — ללא תעתיקים מאנגלית. "ירידה בהכרה" ולא "סמי הכרה", "בלבול" ולא "קונפוזיה", "ספירת חמצן" ולא "סטורציה".
-${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
   "dispatch_opener": "",
@@ -406,7 +405,7 @@ ${avoidSection}
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
   "explanation": "הסבר קצר (2 משפטים): הטעות, הנזק הפוטנציאלי, והנכון לפי הפרוטוקולים בישראל",
-  "topic_tag": "נושא קצר בעברית (1-3 מילים)"
+  "topic_tag": "${topic}"
 }`;
 }
 
@@ -575,8 +574,7 @@ async function generateImprovised(): Promise<ImprovisedQ> {
 }
 
 async function generateRedFlag(): Promise<RedFlagQ> {
-  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const r = await withRetry(() => callGemini<RedFlagQ>(buildRedFlagPrompt(recentTopics)));
+  const r = await withRetry(() => callGemini<RedFlagQ>(buildRedFlagPrompt()));
   if (!r.scenario || !r.question || !Array.isArray(r.options) || r.options.length !== 4) throw new Error('Invalid red flag format');
   return r;
 }
@@ -595,9 +593,8 @@ async function getRecentTopicsForDiversity(): Promise<string[]> {
 }
 
 async function generateSpotError(): Promise<SpotErrorQ> {
-  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => callGemini<SpotErrorQ>(buildSpotErrorPrompt(recentTopics)));
-  if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+  const q = await withRetry(() => callGemini<SpotErrorQ>(buildSpotErrorPrompt()));
+  if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid spot error format');
   }
   return q;
