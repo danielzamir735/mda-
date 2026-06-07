@@ -122,7 +122,7 @@ const CACHE_KEYS = {
   bls: 'daily_challenge_bls_v7',
   als: 'daily_challenge_als_v7',
   med: 'daily_challenge_med_v4',
-  improvised: 'daily_challenge_improvised_v1',
+  improvised: 'daily_challenge_improvised_v2',
   red_flag: 'daily_challenge_redflag_v2',
   spot_error: 'daily_challenge_spoterror_v1',
   med_bag: 'daily_challenge_medbag_v1',
@@ -294,65 +294,71 @@ function getTodayImprovisedSetting(): string {
   return IMPROVISED_SETTINGS[hash % IMPROVISED_SETTINGS.length];
 }
 
-function isSplintDay(): boolean {
-  const today = getToday(); // 'YYYY-MM-DD'
-  const day = parseInt(today.slice(8), 10);
-  return day % 2 === 0;
+const IMPROVISED_TOPICS = [
+  'שברים ועצמות',
+  'כוויות',
+  'אובדן הכרה',
+  'היפוגליקמיה',
+  'היפרגליקמיה',
+  'עילפון',
+  'חנק ועיכבול נשימתי',
+  'דימום חיצוני',
+  'כאב לב / חשד לאוטם',
+  'אנפילקסיס',
+  'מכת חום',
+  'היפותרמיה',
+  'שבץ מוחי',
+  'פגיעת ראש',
+  'חבלת חזה',
+  'פגיעת עמוד שדרה',
+  'כמעט טביעה',
+  'עקיצות ונשיכות',
+  'הרעלה',
+  'פגיעת עין',
+  'לידה בשטח',
+  'כאב בטן חריף',
+  'פגיעות ספורט',
+  'חירום ילדים',
+  'תאונת דרכים',
+  'פגיעת חשמל',
+  'שאיפת עשן',
+  'התקף חרדה / פאניקה',
+  'פצע חודר',
+  'חום גבוה / ספסיס',
+];
+
+function getTodayImprovisedTopic(): string {
+  const today = getToday();
+  let hash = 17;
+  for (let i = 0; i < today.length; i++) hash = (hash * 37 + today.charCodeAt(i)) >>> 0;
+  return IMPROVISED_TOPICS[hash % IMPROVISED_TOPICS.length];
 }
 
-function buildImprovisedPrompt(recentTopics: string[]): string {
+function buildImprovisedPrompt(_recentTopics: string[]): string {
   const setting = getTodayImprovisedSetting();
-  const splintDay = isSplintDay();
-  const avoidSection = recentTopics.length > 0
-    ? `\nנושאי חירום שנשאלו לאחרונה — בחר סוג חירום שונה לחלוטין: ${recentTopics.join(', ')}.\n`
-    : '';
+  const topic = getTodayImprovisedTopic();
 
-  if (splintDay) {
-    return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **קביעות מאולתרת** — תרחיש שבר או פגיעה הדורשת קיבוע, ללא תיק רפואי. החובש חייב לאלתר קיבוע מחפצים זמינים.
+  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **${topic}** — הנפגע זקוק לעזרה ראשונה ל${topic}, ללא תיק רפואי. החובש חייב לאלתר פתרון מחפצים זמינים במקום.
 
-מיקום היום (חובה להשתמש): ${setting}
+נושא החירום של היום (חובה): ${topic}
+מיקום היום (חובה): ${setting}
 
 כללים מחייבים:
-1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי ואין ציוד קיבוע.
-2. תרחיש (2-3 משפטים): גיל, מין, מנגנון פגיעה (נפילה / פגיעת ספורט / תאונה קטנה), איבר פגוע, ומה זמין במקום (חפצים אופייניים ל${setting}).
-3. שאלה: "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?"
-4. 4 תשובות: חפצים ספציפיים ל${setting} — אחת נכונה (קיבוע יעיל ובטוח), שלוש מסיחות הגיוניות (ציוד לא מתאים, שימוש שגוי, קיבוע במיקום שגוי). ערבב מיקום התשובה.
-5. הסבר (2-3 משפטים): למה זהו הפתרון הנכון, איך מבצעים את הקיבוע, ומה הסכנה בקיבוע שגוי.
-6. topic_tag: "קביעות מאולתרת"
-${avoidSection}
-פלט JSON תקני בלבד, ללא markdown:
-{
-  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, איבר פגוע, מה זמין ב${setting})",
-  "question": "מהו הפתרון המאולתר הטוב ביותר לקיבוע הפגיעה?",
-  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
-  "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים) — למה זהו הפתרון הנכון, כיצד מבצעים, ומה הסכנה בקיבוע שגוי",
-  "topic_tag": "קביעות מאולתרת"
-}`;
-  }
-
-  return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" — תרחיש חירום BLS אמיתי בחיי היומיום, ללא תיק רפואי. החובש צריך לחשוב יצירתית ולהשתמש בחפצים זמינים במקום.
-
-מיקום היום (חובה להשתמש): ${setting}
-
-כללים מחייבים:
-1. המיקום בתרחיש חייב להיות: ${setting}. הדגש שאין תיק רפואי.
-2. תרחיש (2-3 משפטים): תיאור ספציפי — גיל, מין, מנגנון/תסמינים, ומה זמין במקום (חפצים אופייניים למיקום זה).
-3. שאלה: "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?"
-4. 4 תשובות: חפצים ופעולות ספציפיים למיקום זה — אחת נכונה, שלוש מסיחות הגיוניות. ערבב מיקום התשובה.
+1. הנושא חייב להיות: ${topic}. המיקום חייב להיות: ${setting}. שניהם חייבים להופיע בתרחיש.
+2. תרחיש (2-3 משפטים): גיל, מין, מנגנון/תסמינים של ${topic}, ומה זמין במקום (חפצים אופייניים ל${setting}).
+3. שאלה: "מה הפעולה המאולתרת הטובה ביותר שניתן לבצע כאן?"
+4. 4 תשובות: ספציפיות ל${setting} ול${topic} — אחת נכונה (פתרון יעיל ובטוח), שלוש מסיחות הגיוניות. ערבב מיקום התשובה הנכונה.
 5. הסבר (2-3 משפטים): מדוע זהו הפתרון הטוב ביותר, כיצד הוא עוזר בפועל.
-6. topic_tag: סוג החירום בלבד (1-3 מילים, לא המיקום).
+6. topic_tag: "${topic}"
 
-סוגי חירום לסבב ביניהם (אסור לבחור שבר/קיבוע — זה נושא יום אחר): חנק, דימום פתוח, כוויה, אובדן הכרה, כאב לב/כאב חזה, אנפילקסיס, מכת חום, עקיצת דבורה/צרעה, טביעה, ילד בבכי ללא תגובה, היפוגליקמיה.
-${avoidSection}
 פלט JSON תקני בלבד, ללא markdown:
 {
-  "scenario": "תיאור התרחיש (2-3 משפטים — גיל, מין, מנגנון, מה זמין ב${setting})",
-  "question": "מהו הפתרון המאולתר הטוב ביותר שניתן למצוא כאן?",
+  "scenario": "תיאור (2-3 משפטים — גיל, מין, ${topic} ב${setting}, מה זמין)",
+  "question": "מה הפעולה המאולתרת הטובה ביותר שניתן לבצע כאן?",
   "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
   "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים) — מדוע זהו הפתרון הטוב ביותר ואיך הוא מסייע בפועל",
-  "topic_tag": "סוג החירום בלבד (1-3 מילים)"
+  "explanation": "הסבר (2-3 משפטים) — מדוע זהו הפתרון הנכון ואיך הוא עוזר",
+  "topic_tag": "${topic}"
 }`;
 }
 
@@ -563,8 +569,7 @@ async function generateMed(): Promise<MedOfDay> {
 }
 
 async function generateImprovised(): Promise<ImprovisedQ> {
-  const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => callGemini<ImprovisedQ>(buildImprovisedPrompt(recentTopics)));
+  const q = await withRetry(() => callGemini<ImprovisedQ>(buildImprovisedPrompt([])));
   if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) throw new Error('Invalid improvised format');
   return q;
 }
