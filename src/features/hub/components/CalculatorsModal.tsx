@@ -52,7 +52,7 @@ const CALC_DEFS: CalcDef[] = [
   },
   {
     id: 'tube',
-    name: 'גדלי טיובוס ו-LMA',
+    name: 'גדלי טובוס ו-LMA',
     desc: 'ETT + LMA לפי גיל ומשקל — כולל עומק הכנסה',
     Icon: Wind,
     textClass: 'text-sky-400',
@@ -230,7 +230,7 @@ export default function CalculatorsModal({ isOpen, onClose }: Props) {
     switch (id) {
       case 'pediatric':   trackInteraction('מינון תרופות ילדים ALS', 'calculators');    setPediatricOpen(true);   break;
       case 'adult':       trackInteraction('מינון תרופות מבוגרים ALS', 'calculators');  setAdultOpen(true);       break;
-      case 'tube':        trackInteraction('גדלי טיובוס ו-LMA', 'calculators');          setTubeOpen(true);        break;
+      case 'tube':        trackInteraction('גדלי טובוס ו-LMA', 'calculators');          setTubeOpen(true);        break;
       case 'contraction': trackInteraction('מחשבון צירי לידה', 'calculators');          setContractionOpen(true); break;
       case 'burns':       trackInteraction('מחשבון כוויות', 'calculators');             setBurnsOpen(true);       break;
       case 'gcs':         trackInteraction('מחשבון גלזגו (GCS)', 'calculators');        setGcsOpen(true);         break;
