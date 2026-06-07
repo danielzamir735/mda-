@@ -83,7 +83,8 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Select-Object Name)",
       "Bash(npm audit *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(Select-Object -First 30)"
     ]
   },
   "hooks": {
