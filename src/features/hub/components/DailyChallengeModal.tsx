@@ -537,12 +537,17 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1500): 
 
 // ─── Gemini (server-side proxy) ───────────────────────────────────────────────
 
+class RateLimitError extends Error {
+  constructor(public retryAfterMs = 15_000) { super('rate-limit'); }
+}
+
 async function callGemini<T>(prompt: string): Promise<T> {
   const res = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt }),
   });
+  if (res.status === 429) throw new RateLimitError();
   if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
   const { text } = await res.json() as { text: string };
   const clean = text.trim().replace(/^```(?:json)?/m, '').replace(/```$/m, '').trim();
@@ -623,34 +628,56 @@ function parseClinicalContent(c: ClinicalQuestion): ClinicalQuestion {
 async function fetchOrCreateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
   const today = getToday();
 
-  const { data: rows } = await supabase.from('daily_questions').select('*')
-    .eq('question_date', today).eq('question_type', cat)
-    .order('id', { ascending: true }).limit(1);
-  if (rows?.[0]?.content) return parseClinicalContent(rows[0].content as ClinicalQuestion);
+  const existing = await queryDailyQuestion<ClinicalQuestion>(today, cat);
+  if (existing) return parseClinicalContent(existing);
 
-  const generated = await withRetry(() => generateClinical(cat));
+  let generated: ClinicalQuestion;
+  try {
+    generated = await withRetry(() => generateClinical(cat));
+  } catch (err) {
+    if (err instanceof RateLimitError) {
+      await new Promise((r) => setTimeout(r, err.retryAfterMs));
+      const fallback = await queryDailyQuestion<ClinicalQuestion>(today, cat);
+      if (fallback) return parseClinicalContent(fallback);
+    }
+    throw err;
+  }
+
   const { data: inserted, error: insertError } = await supabase.from('daily_questions')
     .insert({ question_date: today, question_type: cat, content: generated }).select().single();
   if (!insertError && inserted?.content) return parseClinicalContent(inserted.content as ClinicalQuestion);
 
-  const { data: canonical } = await supabase.from('daily_questions').select('*')
-    .eq('question_date', today).eq('question_type', cat)
-    .order('id', { ascending: true }).limit(1);
-  if (canonical?.[0]?.content) return parseClinicalContent(canonical[0].content as ClinicalQuestion);
+  const canonical = await queryDailyQuestion<ClinicalQuestion>(today, cat);
+  if (canonical) return parseClinicalContent(canonical);
 
   return generated;
+}
+
+async function queryDailyQuestion<T>(today: string, questionType: string): Promise<T | null> {
+  const { data: rows } = await supabase.from('daily_questions').select('*')
+    .eq('question_date', today).eq('question_type', questionType)
+    .order('id', { ascending: true }).limit(1);
+  return (rows?.[0]?.content as T) ?? null;
 }
 
 async function fetchOrCreateBlock<T>(questionType: string, generate: () => Promise<T>): Promise<T> {
   const today = getToday();
 
-  // Use limit(1)+order so duplicate rows (from past race conditions) don't break .maybeSingle()
-  const { data: rows } = await supabase.from('daily_questions').select('*')
-    .eq('question_date', today).eq('question_type', questionType)
-    .order('id', { ascending: true }).limit(1);
-  if (rows?.[0]?.content) return rows[0].content as T;
+  const existing = await queryDailyQuestion<T>(today, questionType);
+  if (existing) return existing;
 
-  const generated = await generate();
+  let generated: T;
+  try {
+    generated = await generate();
+  } catch (err) {
+    if (err instanceof RateLimitError) {
+      // Quota hit — wait, then check if another user already stored today's question
+      await new Promise((r) => setTimeout(r, err.retryAfterMs));
+      const fallback = await queryDailyQuestion<T>(today, questionType);
+      if (fallback) return fallback;
+    }
+    throw err;
+  }
 
   const { data: inserted, error: insertError } = await supabase.from('daily_questions')
     .insert({ question_date: today, question_type: questionType, content: generated })
@@ -658,12 +685,9 @@ async function fetchOrCreateBlock<T>(questionType: string, generate: () => Promi
   if (!insertError && inserted?.content) return inserted.content as T;
 
   // Race condition: another user inserted first — return their canonical version
-  const { data: canonical } = await supabase.from('daily_questions').select('*')
-    .eq('question_date', today).eq('question_type', questionType)
-    .order('id', { ascending: true }).limit(1);
-  if (canonical?.[0]?.content) return canonical[0].content as T;
+  const canonical = await queryDailyQuestion<T>(today, questionType);
+  if (canonical) return canonical;
 
-  // Last resort: return what was already generated — never call generate() again
   return generated;
 }
 

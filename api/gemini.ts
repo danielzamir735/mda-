@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     let result;
     if (image?.data && image?.mimeType) {
@@ -65,6 +65,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ text });
   } catch (err) {
     console.error('[api/gemini] error:', err);
+    const status = (err as { status?: number })?.status;
+    if (status === 429) {
+      return res.status(429).json({ error: 'Rate limit — retry shortly' });
+    }
     return res.status(500).json({ error: 'Gemini API call failed' });
   }
 }
