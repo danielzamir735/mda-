@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { rateLimit, getIp } from './_rateLimit';
+import { rateLimit, getIp } from './_rateLimit.js';
 
 function escapeHtml(str: string): string {
   return str
