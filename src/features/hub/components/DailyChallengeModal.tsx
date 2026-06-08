@@ -551,8 +551,15 @@ async function callGemini<T>(prompt: string): Promise<T> {
   if (res.status === 429) throw new RateLimitError();
   if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
   const { text } = await res.json() as { text: string };
-  const clean = text.trim().replace(/^```(?:json)?/m, '').replace(/```$/m, '').trim();
-  return JSON.parse(clean) as T;
+  // Strip markdown fences then find the outermost { } — handles any preamble/postamble
+  const stripped = text.trim().replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+  const start = stripped.indexOf('{');
+  const end = stripped.lastIndexOf('}');
+  if (start === -1 || end <= start) {
+    console.error('[callGemini] no JSON found in response:', stripped.slice(0, 300));
+    throw new Error('No JSON in Gemini response');
+  }
+  return JSON.parse(stripped.slice(start, end + 1)) as T;
 }
 
 async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
