@@ -538,7 +538,8 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 1500): 
 // ─── Gemini (server-side proxy) ───────────────────────────────────────────────
 
 class RateLimitError extends Error {
-  constructor(public retryAfterMs = 15_000) { super('rate-limit'); }
+  retryAfterMs: number;
+  constructor(retryAfterMs = 15_000) { super('rate-limit'); this.retryAfterMs = retryAfterMs; }
 }
 
 async function callGemini<T>(prompt: string): Promise<T> {
