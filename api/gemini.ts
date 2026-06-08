@@ -6,11 +6,32 @@ const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'im
 const MAX_PROMPT_LENGTH = 20_000;
 const MAX_IMAGE_B64_LENGTH = 10 * 1024 * 1024; // ~7.5 MB file
 
-// Models tried in order — first success wins
+// Models tried in order — first success wins.
+// gemini-2.0-flash-lite uses a separate quota bucket from gemini-2.0-flash.
 const MODEL_FALLBACK_CHAIN = [
   'gemini-2.0-flash',
-  'gemini-1.5-flash',
+  'gemini-2.0-flash-lite',
 ];
+
+async function callModel(
+  apiKey: string,
+  modelName: string,
+  prompt: string,
+  image?: { data: string; mimeType: string },
+): Promise<string> {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: modelName });
+  let result;
+  if (image) {
+    result = await model.generateContent([
+      prompt,
+      { inlineData: { data: image.data, mimeType: image.mimeType } },
+    ]);
+  } else {
+    result = await model.generateContent(prompt);
+  }
+  return result.response.text();
+}
 
 async function generateWithFallback(
   apiKey: string,
@@ -19,25 +40,23 @@ async function generateWithFallback(
 ): Promise<string> {
   let lastErr: unknown;
   for (const modelName of MODEL_FALLBACK_CHAIN) {
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      let result;
-      if (image) {
-        result = await model.generateContent([
-          prompt,
-          { inlineData: { data: image.data, mimeType: image.mimeType } },
-        ]);
-      } else {
-        result = await model.generateContent(prompt);
+    // Try once, if 429 wait 8s and retry same model (handles RPM limit), then move on
+    for (let attempt = 0; attempt <= 1; attempt++) {
+      try {
+        return await callModel(apiKey, modelName, prompt, image);
+      } catch (err) {
+        const status = (err as { status?: number })?.status;
+        console.error(`[api/gemini] ${modelName} attempt ${attempt + 1} error (status=${status}):`, (err as Error).message);
+        lastErr = err;
+        if (status === 429 && attempt === 0) {
+          // RPM window — wait and retry same model before giving up on it
+          await new Promise((r) => setTimeout(r, 8_000));
+          continue;
+        }
+        // Non-quota error or second 429 attempt — try next model
+        if (status !== 429 && status !== 503) throw err;
+        break;
       }
-      return result.response.text();
-    } catch (err) {
-      const status = (err as { status?: number })?.status;
-      console.error(`[api/gemini] ${modelName} error (status=${status}):`, (err as Error).message);
-      lastErr = err;
-      // Only fall through on quota/rate errors — hard errors (bad key, bad prompt) skip fallback
-      if (status !== 429 && status !== 503) throw err;
     }
   }
   throw lastErr;
