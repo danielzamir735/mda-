@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { rateLimit, getIp } from './_rateLimit.js';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -7,10 +7,24 @@ const MAX_PROMPT_LENGTH = 20_000;
 const MAX_IMAGE_B64_LENGTH = 10 * 1024 * 1024; // ~7.5 MB file
 
 // Models tried in order — first success wins.
-// gemini-2.0-flash-lite uses a separate quota bucket from gemini-2.0-flash.
+// Each uses a separate quota bucket; gemini-2.5-flash is the most capable and is
+// the last resort for prompts the 2.0 models block or fail to format (e.g. the
+// "improvise emergency care" scenarios, which trip 2.0's DANGEROUS_CONTENT filter).
 const MODEL_FALLBACK_CHAIN = [
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
+  'gemini-2.5-flash',
+];
+
+// This proxy only serves app-authored medical-training prompts (clinical scenarios,
+// first-aid improvisation, medication questions) — legitimate content that Gemini's
+// default thresholds flag as DANGEROUS_CONTENT and silently block. Relax all four
+// categories so generation never gets refused for describing injuries or treatment.
+const SAFETY_SETTINGS = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
 async function callModel(
@@ -20,7 +34,7 @@ async function callModel(
   image?: { data: string; mimeType: string },
 ): Promise<string> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName });
+  const model = genAI.getGenerativeModel({ model: modelName, safetySettings: SAFETY_SETTINGS });
   let result;
   if (image) {
     result = await model.generateContent([
@@ -53,8 +67,8 @@ async function generateWithFallback(
           await new Promise((r) => setTimeout(r, 8_000));
           continue;
         }
-        // Non-quota error or second 429 attempt — try next model
-        if (status !== 429 && status !== 503) throw err;
+        // Any failure (quota, safety block, model/server error) — fall through to
+        // the next model in the chain rather than giving up on the whole request.
         break;
       }
     }
