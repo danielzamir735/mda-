@@ -212,7 +212,7 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
 
 function buildMedPrompt(): string {
   const today = getToday();
-  const topic = getDailyTopic();
+  const topic = getDailyTopic('med');
   const drugPool = [
     'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Aspirin', 'Clopidogrel (Plavix)',
     'Warfarin (Coumadin)', 'Bisoprolol', 'Metoprolol', 'Amlodipine', 'Furosemide',
@@ -326,21 +326,17 @@ const IMPROVISED_TOPICS = [
   'חום גבוה / ספסיס',
 ];
 
-function getDailyTopicIndex(): number {
+function getDailyTopic(blockType: string): string {
   const today = getToday();
-  const epoch = new Date('2024-01-01').getTime();
-  const todayDate = new Date(today).getTime();
-  const daysSinceEpoch = Math.floor((todayDate - epoch) / (1000 * 60 * 60 * 24));
-  return ((daysSinceEpoch % IMPROVISED_TOPICS.length) + IMPROVISED_TOPICS.length) % IMPROVISED_TOPICS.length;
-}
-
-function getDailyTopic(): string {
-  return IMPROVISED_TOPICS[getDailyTopicIndex()];
+  const seed = today + '|' + blockType;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return IMPROVISED_TOPICS[hash % IMPROVISED_TOPICS.length];
 }
 
 function buildImprovisedPrompt(_recentTopics: string[]): string {
   const setting = getTodayImprovisedSetting();
-  const topic = getDailyTopic();
+  const topic = getDailyTopic('improvised');
 
   return `אתה מדריך חובשים ישראלי. משימתך: צור שאלת "חובש ללא ציוד" בנושא **${topic}** — הנפגע זקוק לעזרה ראשונה ל${topic}, ללא תיק רפואי. החובש חייב לאלתר פתרון מחפצים זמינים במקום.
 
@@ -367,7 +363,7 @@ function buildImprovisedPrompt(_recentTopics: string[]): string {
 }
 
 function buildRedFlagPrompt(): string {
-  const topic = getDailyTopic();
+  const topic = getDailyTopic('red_flag');
   return `אתה מדריך פרמדיק בכיר ישראלי. צור מקרה חירום קצר שבו יש לזהות סימן אדום קריטי מסכן חיים.
 נושא היום (חובה): ${topic}. כל המקרה חייב להתמקד ב${topic}.
 המקרה: תיאור ספציפי — גיל, מנגנון/תלונה, סימנים חיוניים, תסמינים. 2-3 משפטים.
@@ -384,7 +380,7 @@ function buildRedFlagPrompt(): string {
 }
 
 function buildSpotErrorPrompt(): string {
-  const topic = getDailyTopic();
+  const topic = getDailyTopic('spot_error');
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: כתוב תרחיש BLS מפורט ומבלבל בנושא ${topic}, המכיל טעות מקצועית אחת — מוסתרת בתוך נרטיב שנראה שלם ומקצועי לחלוטין.
 
 נושא היום (חובה): ${topic}. כל התרחיש חייב להתמקד ב${topic}.
