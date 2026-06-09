@@ -64,7 +64,7 @@ async function generateWithFallback(
         lastErr = err;
         if (status === 429 && attempt === 0) {
           // RPM window — wait and retry same model before giving up on it
-          await new Promise((r) => setTimeout(r, 8_000));
+          await new Promise((r) => setTimeout(r, 2_000));
           continue;
         }
         // Any failure (quota, safety block, model/server error) — fall through to

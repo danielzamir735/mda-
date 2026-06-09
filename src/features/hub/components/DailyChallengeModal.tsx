@@ -539,11 +539,19 @@ class RateLimitError extends Error {
 }
 
 async function callGemini<T>(prompt: string): Promise<T> {
-  const res = await fetch('/api/gemini', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+  let res: Response;
+  try {
+    res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (res.status === 429) throw new RateLimitError();
   if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
   const { text } = await res.json() as { text: string };
@@ -2119,6 +2127,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         <div className="flex flex-col items-center gap-3 py-8">
           <XCircle size={28} className="text-red-400" />
           <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton
+            onClick={() => { setMedStatus('loading'); setMedData(null); fetchOrCreateBlock<MedOfDay>('med_v4', generateMed).then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); }).catch(() => setMedStatus('error')); }}
+            hapticPattern={10} pressScale={0.95}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/15 border border-emerald-400/30 text-emerald-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
         </div>
       );
     }
@@ -2352,6 +2366,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         <div className="flex flex-col items-center gap-3 py-8">
           <XCircle size={28} className="text-red-400" />
           <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setRedStatus('loading'); setRedQuestion(null); fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag).then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); }).catch(() => setRedStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-400/15 border border-orange-400/30 text-orange-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
         </div>
       );
     }
