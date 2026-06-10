@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Languages, Volume2, ArrowRight, ExternalLink, Brain } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
-  PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR,
+  PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR, LANG_GT,
   type Lang,
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
@@ -334,20 +334,24 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
           <p dir="rtl" className="text-emt-muted text-lg text-center font-semibold">
             {expandedPhrase.he}
           </p>
-          {/* Record Patient Answer — floating pill */}
+          {/* Patient response — open Google Translate with patient's language pre-selected */}
           <HapticButton
             pressScale={0.93}
             onClick={e => {
               e.stopPropagation();
-              window.open('https://translate.google.com/', '_blank');
+              const gtLang = LANG_GT[activeLang];
+              window.open(
+                `https://translate.google.com/?sl=${gtLang}&tl=he&op=translate`,
+                '_blank',
+              );
             }}
             className="mt-8 flex items-center gap-2 bg-slate-800 border border-slate-600
                        hover:bg-slate-700 text-white px-6 py-4 rounded-full shadow-2xl
                        transition-all text-lg font-medium"
-            aria-label="פתח גוגל טרנסלייט"
+            aria-label="תרגם תשובת מטופל"
           >
             <ExternalLink size={20} />
-            פתח גוגל טרנסלייט (יש לבחור שפה באפליקציה)
+            תרגום תשובת מטופל ← עברית
           </HapticButton>
           {/* Task 3: Enlarged 'click to close' text */}
           <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
