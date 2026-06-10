@@ -92,9 +92,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
 
-  const { prompt, image } = (req.body ?? {}) as {
+  const { prompt, image, model: preferredModel } = (req.body ?? {}) as {
     prompt?: unknown;
     image?: { data?: unknown; mimeType?: unknown };
+    model?: unknown;
   };
 
   if (!prompt || typeof prompt !== 'string') {
@@ -118,8 +119,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     imagePayload = { data: image.data, mimeType: image.mimeType };
   }
 
+  // When the caller specifies a preferred model, skip the fallback chain and use it directly.
+  // This is used for complex prompts (e.g. clinical questions) where weaker models
+  // reliably produce malformed JSON that passes the HTTP layer but fails client validation.
+  const modelOverride = typeof preferredModel === 'string' && MODEL_FALLBACK_CHAIN.includes(preferredModel)
+    ? preferredModel
+    : null;
+
   try {
-    const text = await generateWithFallback(apiKey, prompt, imagePayload);
+    const text = modelOverride
+      ? await callModel(apiKey, modelOverride, prompt, imagePayload)
+      : await generateWithFallback(apiKey, prompt, imagePayload);
     return res.status(200).json({ text });
   } catch (err) {
     const status = (err as { status?: number })?.status;

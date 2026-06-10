@@ -538,15 +538,15 @@ class RateLimitError extends Error {
   constructor(retryAfterMs = 15_000) { super('rate-limit'); this.retryAfterMs = retryAfterMs; }
 }
 
-async function callGemini<T>(prompt: string): Promise<T> {
+async function callGemini<T>(prompt: string, model?: string): Promise<T> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+  const timeoutId = setTimeout(() => controller.abort(), 45_000);
   let res: Response;
   try {
     res = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, ...(model ? { model } : {}) }),
       signal: controller.signal,
     });
   } finally {
@@ -567,13 +567,27 @@ async function callGemini<T>(prompt: string): Promise<T> {
 }
 
 async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
-  const q = await withRetry(() => callGemini<ClinicalQuestion>(CLINICAL_PROMPTS[cat]));
+  // Use gemini-2.5-flash directly — weaker models reliably produce valid HTTP 200
+  // responses but with wrong JSON keys (e.g. "explanation" instead of
+  // "clinical_explanation"), which pass the proxy but fail client validation.
+  // The Supabase cron job uses 2.5-flash and never has this problem.
+  const raw = await withRetry(() =>
+    callGemini<ClinicalQuestion & { explanation?: string; הסבר_קליני?: string }>(
+      CLINICAL_PROMPTS[cat],
+      'gemini-2.5-flash',
+    ),
+  );
+  // Normalise alternate key names that weaker models sometimes emit
+  if (!raw.clinical_explanation) {
+    const alt = raw.explanation ?? (raw as Record<string, unknown>)['הסבר_קליני'] as string | undefined;
+    if (alt) (raw as ClinicalQuestion).clinical_explanation = alt;
+  }
   if (
-    typeof q.question !== 'string' || !Array.isArray(q.options) ||
-    q.options.length !== 4 || typeof q.correct_index !== 'number' ||
-    typeof q.clinical_explanation !== 'string'
+    typeof raw.question !== 'string' || !Array.isArray(raw.options) ||
+    raw.options.length !== 4 || typeof raw.correct_index !== 'number' ||
+    typeof raw.clinical_explanation !== 'string'
   ) throw new Error('Invalid clinical question format');
-  return q;
+  return raw as ClinicalQuestion;
 }
 
 async function generateMed(): Promise<MedOfDay> {
