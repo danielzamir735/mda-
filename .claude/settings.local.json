@@ -88,7 +88,8 @@
       "Bash(curl -s 'https://feoxsagxjtynxrmmzijy.supabase.co/rest/v1/daily_questions?select=question_date,question_type,id&order=question_date.desc&limit=5' -H 'apikey: sb_publishable_k95SEDVxZEKO9svezJIU7Q_07bspodZ' -H 'Authorization: Bearer sb_publishable_k95SEDVxZEKO9svezJIU7Q_07bspodZ')",
       "Bash(ls .env*)",
       "Bash(ls -la .env*)",
-      "Bash(Select-Object Name, PSIsContainer)"
+      "Bash(Select-Object Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'feedback|contact|email' -and $_.FullPath -notmatch 'node_modules' } | Select-Object -ExpandProperty FullName)"
     ]
   },
   "hooks": {
