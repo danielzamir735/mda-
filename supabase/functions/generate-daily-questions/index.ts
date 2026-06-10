@@ -122,17 +122,67 @@ function buildClinicalPrompt(type: 'BLS' | 'ALS', recentTopics: string[]): strin
   )
 }
 
+// Must stay identical to MED_DRUG_POOL in DailyChallengeModal.tsx
+const MED_DRUG_POOL = [
+  // נוגדי קרישה / נוגדי טסיות
+  'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Pradaxa (Dabigatran)',
+  'Warfarin (Coumadin)', 'Aspirin', 'Plavix (Clopidogrel)', 'Brilique (Ticagrelor)',
+  // לב — קצב ולחץ דם
+  'Bisoprolol (Concor)', 'Metoprolol (Betaloc)', 'Atenolol (Tenormin)',
+  'Amlodipine (Norvasc)', 'Losartan (Cozaar)', 'Ramipril (Tritace)',
+  'Perindopril (Prestarium)', 'Valsartan (Diovan)', 'Nebivolol (Nebilet)',
+  'Digoxin', 'Amiodarone',
+  // משתנים
+  'Furosemide (Lasix)', 'Spironolactone (Aldactone)', 'Indapamide (Natrilix)',
+  // ניטרטים
+  'Isosorbide Mononitrate (Isoket)', 'Nitroglycerin (Nitrostat)',
+  // כולסטרול
+  'Atorvastatin (Lipitor)', 'Rosuvastatin (Crestor)', 'Ezetimibe (Ezetrol)',
+  // סוכרת
+  'Metformin (Glucophage)', 'Empagliflozin (Jardiance)', 'Sitagliptin (Januvia)',
+  'Dapagliflozin (Forxiga)', 'Glibenclamide (Daonil)',
+  'Insulin Glargine (Lantus)', 'Insulin Aspart (Novorapid)',
+  // בלוטת תריס
+  'Levothyroxine (Eltroxin)',
+  // נשימה / ריאות
+  'Salbutamol (Ventolin)', 'Budesonide/Formoterol (Symbicort)',
+  'Fluticasone/Salmeterol (Seretide)', 'Tiotropium (Spiriva)',
+  'Montelukast (Singulair)', 'Theophylline (Theolin)',
+  // קיבה / עיכול
+  'Omeprazole (Omepradex)', 'Esomeprazole (Nexium)',
+  'Pantoprazole (Controloc)', 'Ondansetron (Zofran)',
+  // אלרגיה
+  'Cetirizine (Zyrtec)', 'Loratadine (Claritin)',
+  // נוירולוגיה / אפילפסיה
+  'Levetiracetam (Keppra)', 'Lamotrigine (Lamictal)',
+  'Valproic Acid (Depakine)', 'Carbamazepine (Tegretol)', 'Phenytoin (Dilantin)',
+  // פסיכיאטריה / נוגדי דיכאון
+  'Escitalopram (Cipralex)', 'Sertraline (Zoloft)',
+  'Venlafaxine (Efexor)', 'Duloxetine (Cymbalta)',
+  // אנטי-פסיכוטים / מייצבי מצב רוח
+  'Risperidone (Risperdal)', 'Olanzapine (Zyprexa)',
+  'Quetiapine (Seroquel)', 'Lithium',
+  // בנזודיאזפינים / שינה
+  'Alprazolam (Xanax)', 'Clonazepam (Rivotril)', 'Zolpidem (Stilnox)',
+  // כאב / אנטי-דלקתי
+  'Ibuprofen (Advil)', 'Naproxen (Naprosyn)', 'Tramadol (Tramal)',
+  // ראומטולוגיה
+  'Methotrexate (Methotrex)', 'Hydroxychloroquine (Plaquenil)', 'Colchicine',
+  // גאוט / אוסטיאופורוזיס
+  'Allopurinol', 'Alendronate (Fosamax)',
+  // סטרואידים
+  'Prednisolone', 'Dexamethasone',
+  // דמנציה
+  'Donepezil (Aricept)', 'Memantine (Ebixa)',
+  // אנטיביוטיקה (נפוצות בבית)
+  'Amoxicillin-Clavulanate (Augmentin)', 'Azithromycin (Zithromax)',
+  'Ciprofloxacin (Cipro)', 'Trimethoprim-Sulfamethoxazole (Bactrim)',
+]
+
 function buildMedPrompt(today: string): string {
   let hash = 0
   for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0
-  const drugPool = [
-    'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Aspirin', 'Clopidogrel (Plavix)',
-    'Warfarin (Coumadin)', 'Bisoprolol', 'Metoprolol', 'Amlodipine', 'Furosemide',
-    'Metformin', 'Empagliflozin (Jardiance)', 'Levothyroxine', 'Omeprazole',
-    'Atorvastatin', 'Losartan', 'Ramipril', 'Digoxin', 'Amiodarone', 'Prednisolone',
-    'Nitroglycerin', 'Adenosine', 'Atropine', 'Epinephrine', 'Morphine', 'Midazolam',
-  ]
-  const todayDrug = drugPool[hash % drugPool.length]
+  const todayDrug = MED_DRUG_POOL[hash % MED_DRUG_POOL.length]
 
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
 תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
