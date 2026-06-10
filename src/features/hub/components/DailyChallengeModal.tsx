@@ -631,7 +631,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
   );
   // Normalise alternate key names that weaker models sometimes emit
   if (!raw.clinical_explanation) {
-    const alt = raw.explanation ?? (raw as Record<string, unknown>)['הסבר_קליני'] as string | undefined;
+    const alt = raw.explanation ?? (raw as unknown as Record<string, unknown>)['הסבר_קליני'] as string | undefined;
     if (alt) (raw as ClinicalQuestion).clinical_explanation = alt;
   }
   if (
