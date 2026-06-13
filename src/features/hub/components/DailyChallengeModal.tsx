@@ -2,7 +2,7 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope, Wrench, Info,
+  Search, Stethoscope, Wrench, Info, Pencil,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -1778,6 +1778,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (!name) return;
     const city = competitionJoinCity.trim();
     const profile = { name, city };
+    localStorage.removeItem(COMPETITION_OPT_OUT_KEY);
     if (rememberProfile) {
       localStorage.setItem(COMPETITION_PROFILE_KEY, JSON.stringify(profile));
       localStorage.removeItem(getTodayProfileKey());
@@ -2908,7 +2909,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <Trophy size={11} />
                 <span>הצטרף לתחרות</span>
               </button>
-            ) : null}
+            ) : (
+              <button
+                onClick={() => setShowCompetitionJoin(true)}
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-emt-muted/35 hover:text-emt-muted/70 hover:bg-white/6 active:scale-90 transition-all"
+                title="הצטרף לתחרות"
+              >
+                <Pencil size={11} />
+              </button>
+            )}
           </div>
         </div>
 
