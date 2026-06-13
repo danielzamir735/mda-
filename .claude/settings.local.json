@@ -90,7 +90,10 @@
       "Bash(ls -la .env*)",
       "Bash(Select-Object Name, PSIsContainer)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\Desktop\\\\medic-app\" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'feedback|contact|email' -and $_.FullPath -notmatch 'node_modules' } | Select-Object -ExpandProperty FullName)",
-      "Bash(npx vercel *)"
+      "Bash(npx vercel *)",
+      "PowerShell(vercel env *)",
+      "PowerShell(vercel logs *)",
+      "PowerShell(git push *)"
     ]
   },
   "hooks": {
