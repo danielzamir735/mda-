@@ -94,7 +94,9 @@
       "PowerShell(vercel env *)",
       "PowerShell(vercel logs *)",
       "PowerShell(git push *)",
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "PowerShell(git fetch *)",
+      "PowerShell(git *)"
     ]
   },
   "hooks": {
