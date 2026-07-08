@@ -1566,6 +1566,25 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const viewRef = useRef(view);
   viewRef.current = view;
 
+  // ── Language-grid scroll preservation ────────────────────────────────────────
+  // The body scroller is shared by all views; leaving the grid clamps its
+  // scrollTop to 0. Track the grid's position live and restore it on re-mount.
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
+  const langGridScrollRef = useRef(0);
+
+  const handleBodyScroll = useCallback(() => {
+    if (viewRef.current === 'languages' && scrollBodyRef.current) {
+      langGridScrollRef.current = scrollBodyRef.current.scrollTop;
+    }
+  }, []);
+
+  // Callback ref on the grid view — fires when the grid mounts back into the DOM
+  const restoreLangGridScroll = useCallback((node: HTMLDivElement | null) => {
+    if (node && scrollBodyRef.current) {
+      scrollBodyRef.current.scrollTop = langGridScrollRef.current;
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -1599,12 +1618,17 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
+  // Spinner only on first load — realtime refetches update the grid in place,
+  // without unmounting it (which would reset the scroll position)
+  const hasLoadedAllRef = useRef(false);
+
   const fetchAllTranslators = useCallback(() => {
-    setLoadingAll(true);
+    if (!hasLoadedAllRef.current) setLoadingAll(true);
     supabase
       .from('translators')
       .select('id, full_name, phone_number, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
       .then(({ data }) => {
+        hasLoadedAllRef.current = true;
         setAllTranslators((data as Translator[]) ?? []);
         setLoadingAll(false);
       });
@@ -1704,6 +1728,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
         setSelectedLang(null);
         setTranslators([]);
         setLangSearch('');
+        langGridScrollRef.current = 0;
       }, 300);
     }
   }, [isOpen]);
@@ -1714,9 +1739,11 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   const emergencyBackups = translators.filter(t => !isAvailableNow(t) && t.emergency_only_contact);
   const countFor = (code: string) => allTranslators.filter(t => t.languages.includes(code)).length;
 
-  const filteredLangs = allLanguages.filter(l =>
-    l.name.includes(langSearch) || l.code.toLowerCase().includes(langSearch.toLowerCase())
-  );
+  // Staffed languages first, empty ones after — stable sort keeps the curated
+  // order within each group
+  const filteredLangs = allLanguages
+    .filter(l => l.name.includes(langSearch) || l.code.toLowerCase().includes(langSearch.toLowerCase()))
+    .sort((a, b) => (countFor(b.code) > 0 ? 1 : 0) - (countFor(a.code) > 0 ? 1 : 0));
   const noResults = langSearch.trim().length > 0 && filteredLangs.length === 0;
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -1889,7 +1916,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
       </AnimatePresence>
 
       {/* Scrollable body with animated views */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" ref={scrollBodyRef} onScroll={handleBodyScroll}>
         <AnimatePresence mode="wait">
 
           {/* ── Intro ── */}
@@ -1901,7 +1928,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
           {/* ── Language Grid ── */}
           {view === 'languages' && (
-            <motion.div key="languages" {...PAGE}>
+            <motion.div key="languages" {...PAGE} ref={restoreLangGridScroll}>
               <div className="p-4" style={{ paddingBottom: 'max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' }}>
 
                 {/* Assist counter badge */}
