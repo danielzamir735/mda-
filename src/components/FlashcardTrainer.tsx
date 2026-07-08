@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Brain, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import HapticButton from './HapticButton';
+import { updateFlashcardStats } from '../utils/flashcardStats';
 
 export interface FlashcardItem {
   front: string;
@@ -11,6 +12,8 @@ export interface FlashcardItem {
 interface Props {
   data: FlashcardItem[];
   onClose: () => void;
+  /** מפתח localStorage לצבירת סטטיסטיקת הצלחות בין אימונים (אופציונלי) */
+  statsKey?: string;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -36,7 +39,7 @@ function ConfettiParticle({ x, color, delay, size }: { x: number; color: string;
   );
 }
 
-export default function FlashcardTrainer({ data, onClose }: Props) {
+export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
   const totalCards = data.length;
   const [deck, setDeck] = useState<FlashcardItem[]>(() => shuffle([...data]));
   const [isFlipped, setIsFlipped] = useState(false);
@@ -64,6 +67,14 @@ export default function FlashcardTrainer({ data, onClose }: Props) {
         const newDeck = deck.slice(1);
         const newRemembered = remembered + 1;
         setRemembered(newRemembered);
+        if (statsKey) {
+          updateFlashcardStats(
+            statsKey,
+            newDeck.length === 0
+              ? { remembered: 1, sessions: 1, lastCompleted: new Date().toISOString() }
+              : { remembered: 1 },
+          );
+        }
         if (newDeck.length === 0) {
           setCompleted(true);
         } else {
@@ -72,12 +83,13 @@ export default function FlashcardTrainer({ data, onClose }: Props) {
           setCardKey((k) => k + 1);
         }
       } else {
+        if (statsKey) updateFlashcardStats(statsKey, { forgotten: 1 });
         setDeck([...deck.slice(1), deck[0]]);
         setIsFlipped(false);
         setCardKey((k) => k + 1);
       }
     },
-    [deck, remembered],
+    [deck, remembered, statsKey],
   );
 
   const restart = useCallback(() => {

@@ -1,111 +1,76 @@
-import { useState, useEffect } from 'react';
-import { X, Pill, Search, Brain } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  X, Pill, Search, Brain, Volume2,
+  HeartPulse, Droplets, Wind, Syringe, Flame, Tablets, Activity,
+  type LucideIcon,
+} from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
+import { readFlashcardStats } from '../../../utils/flashcardStats';
 import { trackInteraction, trackEvent } from '../../../utils/analytics';
+import { MED_CATEGORIES, TOTAL_MEDS, type CommonMed, type MedCategory } from '../data/commonMedsData';
 
-interface Med {
-  name: string;
-  generic: string;
-  indication: string;
+const STATS_KEY = 'flashcardStats_commonMeds_v1';
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  cardiovascular: HeartPulse,
+  'blood-thinners': Droplets,
+  respiratory: Wind,
+  diabetes: Syringe,
+  'neuro-psych': Brain,
+  gastro: Flame,
+  analgesics: Tablets,
+  thyroid: Activity,
+};
+
+// טקסט להקראה: מסירים הערות בעברית שבסוגריים, ולוכסנים הופכים להפסקות
+function ttsText(en: string): string {
+  return en
+    .replace(/\([^)]*[֐-׿][^)]*\)/g, '')
+    .replace(/\s*\/\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-interface Category {
-  title: string;
-  color: string;
-  border: string;
-  bg: string;
+function buildFlashcards(cat: MedCategory): FlashcardItem[] {
+  return cat.groups.flatMap((g) =>
+    g.meds.map((m) => ({
+      front: m.en,
+      back: `${m.he}\n${g.title ? `${g.title} · ` : ''}${cat.title}`,
+    }))
+  );
+}
+
+const ALL_FLASHCARDS: FlashcardItem[] = MED_CATEGORIES.flatMap(buildFlashcards);
+
+interface MedRowProps {
+  med: CommonMed;
   divider: string;
-  items: Med[];
+  color: string;
+  isSpeaking: boolean;
+  onSpeak: (med: CommonMed) => void;
 }
 
-const CATEGORIES: Category[] = [
-  {
-    title: 'לב ולחץ דם',
-    color: 'text-red-400',
-    border: 'border-red-400/30',
-    bg: 'bg-red-400/5',
-    divider: 'border-b border-red-400/20',
-    items: [
-      { name: 'קרדילוק (Cardiloc)', generic: 'Bisoprolol', indication: 'הורדת לחץ דם, האטת דופק (חוסמי בטא)' },
-      { name: 'אמלודיפין / נורבסק', generic: 'Amlodipine', indication: 'הורדת לחץ דם (חוסמי תעלות סידן)' },
-      { name: 'פוסיד / קלארין', generic: 'Furosemide', indication: 'טיפול בבצקות ואי ספיקת לב, הוצאת נוזלים בשתן' },
-    ],
-  },
-  {
-    title: 'מדללי דם',
-    color: 'text-rose-400',
-    border: 'border-rose-400/30',
-    bg: 'bg-rose-400/5',
-    divider: 'border-b border-rose-400/20',
-    items: [
-      { name: 'קרטיה / מיקרופירין', generic: 'Aspirin', indication: 'מניעת קרישי דם (מונע צימות טסיות)' },
-      { name: 'אליקוויס / קסרלטו', generic: 'Apixaban / Rivaroxaban', indication: 'מדללי דם חדשים (NOAC) למניעת קרישים (לרוב בפרפור עליות)' },
-      { name: 'פלאביקס', generic: 'Clopidogrel', indication: 'מניעת קרישי דם (לרוב לאחר צנתור)' },
-    ],
-  },
-  {
-    title: 'סוכרת ובלוטות',
-    color: 'text-amber-400',
-    border: 'border-amber-400/30',
-    bg: 'bg-amber-400/5',
-    divider: 'border-b border-amber-400/20',
-    items: [
-      { name: "מטפורמין / גלוקופאז'", generic: 'Metformin', indication: 'איזון סוכר בדם (סוכרת סוג 2)' },
-      { name: "ג'ארדיאנס", generic: 'Empagliflozin', indication: 'הפרשת סוכר בשתן, מגן על הלב והכליות' },
-      { name: 'אלטרוקסין / יוטירוקס', generic: 'Levothyroxine', indication: 'הורמון חלופי לתת-פעילות בלוטת התריס' },
-    ],
-  },
-  {
-    title: 'נשימה',
-    color: 'text-sky-400',
-    border: 'border-sky-400/30',
-    bg: 'bg-sky-400/5',
-    divider: 'border-b border-sky-400/20',
-    items: [
-      { name: 'ונטולין / אירובנט', generic: 'Salbutamol / Ipratropium', indication: 'הרחבת סמפונות (אסטמה / COPD)' },
-      { name: 'סימביקורט', generic: 'Budesonide + Formoterol', indication: 'משאף משולב: סטרואידים + מרחיב סמפונות ארוך טווח' },
-    ],
-  },
-  {
-    title: 'שיכוך כאבים',
-    color: 'text-violet-400',
-    border: 'border-violet-400/30',
-    bg: 'bg-violet-400/5',
-    divider: 'border-b border-violet-400/20',
-    items: [
-      { name: 'אופטלגין', generic: 'Metamizole', indication: 'הורדת חום ושיכוך כאב בינוני-חזק' },
-      { name: 'טרמדקס / טרמאל', generic: 'Tramadol', indication: 'משכך כאבים נרקוטי קל-בינוני' },
-    ],
-  },
-  {
-    title: 'שומנים ועיכול',
-    color: 'text-emerald-400',
-    border: 'border-emerald-400/30',
-    bg: 'bg-emerald-400/5',
-    divider: 'border-b border-emerald-400/20',
-    items: [
-      { name: 'ליפיטור / סימבסטטין', generic: 'Atorvastatin / Simvastatin', indication: 'הורדת כולסטרול בדם' },
-      { name: 'אומפרדקס / לוסק', generic: 'Omeprazole', indication: 'הורדת חומציות בקיבה (צרבות, כיבים)' },
-    ],
-  },
-];
-
-const FLASHCARD_DATA: FlashcardItem[] = CATEGORIES.flatMap((cat) =>
-  cat.items.map((m) => ({
-    front: m.name,
-    back: `${m.indication}\n(${m.generic})`,
-  }))
-);
-
-function MedCard({ name, generic, indication, divider = '' }: Med & { divider?: string }) {
+function MedRow({ med, divider, color, isSpeaking, onSpeak }: MedRowProps) {
   return (
-    <div className={`px-4 py-3 ${divider}`}>
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-sm font-bold text-gray-900 dark:text-white leading-snug">{name}</span>
-        <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-emt-muted mt-0.5" dir="ltr">{generic}</span>
+    <div className={`px-4 py-3 flex items-center gap-3 ${divider}`}>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug text-right" dir="ltr">
+          {med.en}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-emt-muted leading-relaxed mt-0.5">{med.he}</p>
       </div>
-      <p className="text-xs text-gray-500 dark:text-emt-muted leading-relaxed">{indication}</p>
+      <button
+        onClick={() => onSpeak(med)}
+        aria-label={`השמע הגייה: ${med.en}`}
+        className={`shrink-0 w-9 h-9 rounded-full border flex items-center justify-center
+                    active:scale-90 transition-all
+                    ${isSpeaking
+                      ? `${color} border-current bg-current/10 animate-pulse`
+                      : 'text-gray-400 dark:text-emt-muted border-gray-200 dark:border-emt-border hover:text-gray-700 dark:hover:text-emt-light'}`}
+      >
+        <Volume2 size={16} />
+      </button>
     </div>
   );
 }
@@ -116,27 +81,73 @@ interface Props {
 }
 
 export default function CommonMedsModal({ isOpen, onClose }: Props) {
-  useModalBackHandler(isOpen, onClose);
   const [query, setQuery] = useState('');
-  const [trainerOpen, setTrainerOpen] = useState(false);
+  const [trainer, setTrainer] = useState<{ data: FlashcardItem[]; label: string } | null>(null);
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+  const [stats, setStats] = useState(() => readFlashcardStats(STATS_KEY));
+
+  const handleClose = useCallback(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setQuery('');
+    onClose();
+  }, [onClose]);
+
+  useModalBackHandler(isOpen, handleClose);
 
   useEffect(() => {
     if (isOpen) trackInteraction('תרופות נפוצות', 'reference');
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const speak = useCallback((med: CommonMed) => {
+    if (!('speechSynthesis' in window)) {
+      alert('מנוע דיבור אינו נתמך במכשיר זה');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(ttsText(med.en));
+    utterance.lang = 'en-US';
+    utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+    utterance.onend = () => setSpeakingKey(null);
+    utterance.onerror = () => setSpeakingKey(null);
+    setSpeakingKey(med.en);
+    window.speechSynthesis.speak(utterance);
+    trackEvent('med_tts_play', { med: med.en });
+  }, []);
+
+  const openTrainer = useCallback((data: FlashcardItem[], label: string) => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setTrainer({ data, label });
+    trackEvent('open_flashcard_trainer', { tool: 'common_meds', deck: label });
+  }, []);
+
+  const closeTrainer = useCallback(() => {
+    setTrainer(null);
+    setStats(readFlashcardStats(STATS_KEY));
+  }, []);
 
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? CATEGORIES.flatMap((c) =>
-        c.items.filter(
-          (m) =>
-            m.name.includes(q) ||
-            m.generic.toLowerCase().includes(q) ||
-            m.indication.includes(q)
-        )
-      )
-    : null;
+  const filteredCategories = useMemo(() => {
+    if (!q) return MED_CATEGORIES;
+    return MED_CATEGORIES
+      .map((cat) => {
+        // התאמה לשם הקטגוריה — מציגים את הקטגוריה כולה
+        if (cat.title.toLowerCase().includes(q) || cat.titleEn.toLowerCase().includes(q)) return cat;
+        const groups = cat.groups
+          .map((g) => {
+            if (g.title?.toLowerCase().includes(q)) return g;
+            return { ...g, meds: g.meds.filter((m) => m.en.toLowerCase().includes(q) || m.he.includes(q)) };
+          })
+          .filter((g) => g.meds.length > 0);
+        return { ...cat, groups };
+      })
+      .filter((cat) => cat.groups.length > 0);
+  }, [q]);
+
+  if (!isOpen) return null;
+
+  const totalAnswers = stats.remembered + stats.forgotten;
+  const successRate = totalAnswers > 0 ? Math.round((stats.remembered / totalAnswers) * 100) : null;
 
   return (
     <>
@@ -148,7 +159,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרופות נפוצות</h2>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                      flex items-center justify-center active:scale-90 transition-transform
                      text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
@@ -164,7 +175,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-emt-muted pointer-events-none" />
           <input
             type="text"
-            placeholder="חפש תרופה, שם גנרי או אינדיקציה..."
+            placeholder="חפש לפי שם תרופה או קטגוריה..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full rounded-xl border border-gray-200 dark:border-emt-border
@@ -176,11 +187,11 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
 
         {/* Flashcard trainer trigger */}
         <button
-          onClick={() => { setTrainerOpen(true); trackEvent('open_flashcard_trainer', { tool: 'common_meds' }); }}
+          onClick={() => openTrainer(ALL_FLASHCARDS, 'all')}
           className="w-full rounded-2xl border border-emerald-400/30 bg-emerald-500/8 dark:bg-emerald-500/10
                      backdrop-blur-sm px-4 py-3.5 flex items-center gap-3
                      active:scale-[0.98] transition-transform"
@@ -189,49 +200,99 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
             <Brain size={20} className="text-emerald-400" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-emerald-200 font-bold text-base leading-tight">התחל אימון שינון</span>
-            <span className="text-emerald-300/50 text-xs mt-0.5">{FLASHCARD_DATA.length} כרטיסיות · תרופות נפוצות</span>
+            <span className="text-emerald-600 dark:text-emerald-200 font-bold text-base leading-tight">התחל אימון שינון</span>
+            <span className="text-emerald-600/60 dark:text-emerald-300/50 text-xs mt-0.5">
+              {TOTAL_MEDS} כרטיסיות
+              {stats.sessions > 0 && ` · ${stats.sessions} אימונים הושלמו`}
+              {successRate !== null && ` · ${successRate}% הצלחה`}
+            </span>
           </div>
           <div className="mr-auto text-emerald-400/40 text-lg">←</div>
         </button>
 
-        {filtered ? (
-          filtered.length === 0 ? (
-            <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
-          ) : (
-            <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
-              {filtered.map((m, i) => (
-                <MedCard
-                  key={m.name}
-                  {...m}
-                  divider={i < filtered.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : ''}
-                />
-              ))}
-            </div>
-          )
+        {filteredCategories.length === 0 ? (
+          <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
         ) : (
-          CATEGORIES.map((cat) => (
-            <div key={cat.title}>
-              <h3 className={`text-xs font-black uppercase tracking-widest ${cat.color} mb-2 pr-1`}>
-                {cat.title}
-              </h3>
-              <div className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
-                {cat.items.map((m, i) => (
-                  <MedCard
-                    key={m.name}
-                    {...m}
-                    divider={i < cat.items.length - 1 ? cat.divider : ''}
+          filteredCategories.map((cat) => {
+            const Icon = CATEGORY_ICONS[cat.id] ?? Pill;
+            const medCount = cat.groups.reduce((s, g) => s + g.meds.length, 0);
+            return (
+              <div key={cat.id}>
+                {/* Category header */}
+                <div className="flex items-start gap-3 mb-2 pr-1">
+                  <div className={`w-10 h-10 rounded-xl border ${cat.border} ${cat.bg} flex items-center justify-center shrink-0`}>
+                    <Icon size={19} className={cat.color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className={`text-sm font-black ${cat.color}`}>{cat.title}</h3>
+                      <span className="text-[10px] font-mono text-gray-400 dark:text-emt-muted" dir="ltr">{cat.titleEn}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-emt-muted leading-relaxed mt-0.5">{cat.description}</p>
+                  </div>
+                  <button
+                    onClick={() => openTrainer(buildFlashcards(cat), cat.id)}
+                    aria-label={`אימון שינון: ${cat.title}`}
+                    className={`shrink-0 w-9 h-9 rounded-xl border ${cat.border} ${cat.bg} flex items-center justify-center
+                               active:scale-90 transition-transform ${cat.color}`}
+                  >
+                    <Brain size={16} />
+                  </button>
+                </div>
+
+                {/* Representative image (optional) */}
+                {cat.image && (
+                  <img
+                    src={cat.image}
+                    alt={cat.title}
+                    loading="lazy"
+                    className="w-full h-28 object-cover rounded-2xl mb-2 border border-gray-200 dark:border-emt-border"
                   />
-                ))}
+                )}
+
+                {/* Groups */}
+                <div className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
+                  {cat.groups.map((group, gi) => (
+                    <div key={group.title ?? gi}>
+                      {group.title && (
+                        <div className={`px-4 pt-3 pb-1.5 ${gi > 0 ? cat.divider.replace('border-b', 'border-t') : ''}`}>
+                          <span className={`text-[11px] font-bold uppercase tracking-wider ${cat.color}`}>
+                            {group.title}
+                          </span>
+                        </div>
+                      )}
+                      {group.image && (
+                        <img
+                          src={group.image}
+                          alt={group.title ?? cat.title}
+                          loading="lazy"
+                          className="w-full h-24 object-cover"
+                        />
+                      )}
+                      {group.meds.map((m, i) => (
+                        <MedRow
+                          key={m.en}
+                          med={m}
+                          color={cat.color}
+                          isSpeaking={speakingKey === m.en}
+                          onSpeak={speak}
+                          divider={gi < cat.groups.length - 1 || i < group.meds.length - 1 ? cat.divider : ''}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-[10px] text-gray-400 dark:text-emt-muted mt-1 pr-1">{medCount} תרופות</p>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
 
-    {trainerOpen && (
-      <FlashcardTrainer data={FLASHCARD_DATA} onClose={() => setTrainerOpen(false)} />
+    {trainer && (
+      <FlashcardTrainer data={trainer.data} statsKey={STATS_KEY} onClose={closeTrainer} />
     )}
     </>
   );
