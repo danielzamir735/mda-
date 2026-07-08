@@ -31,7 +31,7 @@
   </head>
   <body style="background-color:#09090B;margin:0;padding:0;">
     <div id="root">
-      <div style="min-height:100dvh;background-color:#09090B;display:flex;align-items:center;justify-content:center;">
+      <div data-boot-splash style="min-height:100dvh;background-color:#09090B;display:flex;align-items:center;justify-content:center;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
           <img src="/pwa-192x192.png" alt="" width="72" height="72" style="border-radius:20px;opacity:0.9;" />
           <div style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.15);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
@@ -39,6 +39,32 @@
       </div>
     </div>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <!-- Boot watchdog: if React never replaces the splash (stale SW cache / failed
+         asset load on first standalone launch), reload once to recover. -->
+    <script>
+      (function () {
+        var KEY = 'boot-watchdog-reloaded';
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            var root = document.getElementById('root');
+            var stillSplash = root && root.querySelector('[data-boot-splash]');
+            if (!stillSplash) return;
+            try {
+              var last = Number(sessionStorage.getItem(KEY) || 0);
+              if (Date.now() - last < 30000) return; // already retried — avoid a reload loop
+              sessionStorage.setItem(KEY, String(Date.now()));
+            } catch (_) { /* proceed anyway */ }
+            if (window.caches && window.caches.keys) {
+              caches.keys()
+                .then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); })
+                .then(function () { window.location.reload(); }, function () { window.location.reload(); });
+            } else {
+              window.location.reload();
+            }
+          }, 6000);
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -97,7 +97,20 @@ async function getUsedAbbreviations(supabase: SupabaseClient): Promise<string[]>
 
 // ─── Prompts ──────────────────────────────────────────────────────────────────
 
-function buildClinicalPrompt(type: 'BLS' | 'ALS', recentTopics: string[]): string {
+// Shared language + difficulty rules injected into every question prompt
+const HEBREW_RULES =
+  'כללי עברית — מחייבים: עברית תקנית ומדוקדקת בלבד. אסור בהחלט להשתמש בתרגומי שאילה מאנגלית: לעולם לא "המטופל מציג", "מציגה עם", "מדגים" — ביטויים כאלה אינם קיימים בעברית. במקומם: "המטופל סובל מ...", "המטופל מתלונן על...", "בבדיקתך נמצא...", "בהערכתך ניכר...". ללא תעתיקים מאנגלית: "ריווי חמצן" ולא "סטורציה", "בלבול" ולא "קונפוזיה", "ירידה בהכרה" ולא "סמי הכרה". כל משפט חייב להישמע טבעי לדובר עברית יליד — קרא כל משפט ותקן כל ניסוח שנשמע מתורגם.'
+
+const DIFFICULTY_RULES =
+  'רמת קושי — מחייבת: השאלה חייבת להיות קשה, טריקית ומכשילה. הפרט הקליני המכריע מוסתר בין פרטים שגרתיים בתרחיש; כל מסיח נשמע נכון ומקצועי ממבט ראשון ובנוי להכשיל גם משיבים מנוסים. אסור לכתוב שאלה קלה או ישירה שהתשובה עליה מובנת מאליה מקריאת התרחיש.'
+
+function buildTodayTopicsSection(todayTopics: string[]): string {
+  return todayTopics.length > 0
+    ? `\nנושאים שכבר נבחרו היום ברובריקות אחרות — אסור בהחלט לחזור עליהם, חובה לבחור נושא שונה לחלוטין: ${todayTopics.join(', ')}.\n`
+    : ''
+}
+
+function buildClinicalPrompt(type: 'BLS' | 'ALS', recentTopics: string[], todayTopics: string[]): string {
   const focus = type === 'BLS'
     ? 'תחום: BLS בלבד — סבב בין כל התחומים הבאים. כלל גיוון קפדני: לא יותר מ-20% מהשאלות יהיו CPR/דום לב טהור; חובה לסבב בין: (1) טראומה — עצירת דימום (טורניקט, חבישת פצע, דימום צמתים), קיבוע שברים, קבלת החלטות בהגבלת תנועת עמוד שדרה, פגיעת פיצוץ/מחיצה; (2) מצוקה נשימתית — אסתמה/ברונכוספאזם, אנפילקסיס (עיתוי מתן אפינפרין, תנוחת מטופל, מנה חוזרת), חסימת נתיב אוויר בגוף זר, זיהוי קרופ לעומת אפיגלוטיטיס בילדים; (3) חירום סביבתי — מכת חום לעומת התשת חום, ניהול היפותרמיה, טביעה/שקיעה, פגיעת ברק; (4) קורס רפואי — חירומי סוכרת (הבחנה היפוגליקמיה/היפרגליקמיה), ניהול פרכוסים, זיהוי שבץ מוחי (FAST + פרוטוקול שדה), אבחנות מבדלות סינקופה; (5) CPR/AED — מיקום רפידות, עיתוי מעצור היפותרמי, סיכון שוק בחזה רטוב, עומק לחיצה תינוק לעומת ילד, זיהוי ROSC. ללא תרופות ALS, ללא נתיב אוויר מתקדם, ללא פרשנות 12 ערוצים.'
     : 'תחום: ALS בלבד — סבב בין כל התחומים הבאים. כלל גיוון קפדני: לא יותר מ-20% מהשאלות יהיו CPR/דום לב; חובה לסבב בין: (1) הפרעות קצב — טכי-אריתמיות (SVT, Afib RVR, VT עם דופק, AF עם מוליכות עוקפת), ברדי-אריתמיות (חסם AV מלא, תסמונת סינוס חולה, חסם AV דרגה גבוהה, קיצוב טרנסעורי ואימות לכידה), הבחנה יציב לעומת לא יציב; (2) לב מעבר לדום — תסמונת כלילית חריפה (מחקות STEMI, MI אחורי, התוויות נגד ב-RV infarct), אי ספיקת לב חריפה (CPAP, עיתוי חנקנים, הימנעות מאינטובציה), חירום יתר לחץ דם עם פגיעת מטרה; (3) מלכודות פרמקולוגיות — אדנוזין ב-AF מוליך עוקף, בחירת אמיודרון לעומת לידוקאין, סידן לעומת ביקרבונאט בהיפרקלמיה, ניטרוגליצרין ב-MI תחתון עם מעורבות RV, כישלון אטרופין; (4) ניהול פוסט-ROSC — בקרת טמפרטורה, יעדים המודינמיים, החלטות נתיב אוויר, גורמים הפיכים (H&Ts) גישה שיטתית; (5) פרמקולוגיה מורכבת — מינון, מסלול מתן, עיתוי, אינטראקציות, התוויות נגד בתנאי שדה.'
@@ -110,8 +123,10 @@ function buildClinicalPrompt(type: 'BLS' | 'ALS', recentTopics: string[]): strin
     `אתה מדריך פרמדיק בכיר ישראלי. תפקידך לאתגר פרמדיקים וחובשים ישראלים עם שאלות קליניות ברמה גבוהה, בעברית רפואית מקצועית.\n\n` +
     `חשוב ביותר: כל שאלה, תשובה והסבר חייבים להתבסס אך ורק על הפרוטוקולים הישראליים ומשרד הבריאות. אין להתייחס לפרוטוקולי AHA, ERC, PHTLS או כל גוף בינלאומי אחר — במקרה של סתירה, ההנחיות הישראליות גוברות תמיד.\n\n` +
     `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה.\n\n` +
-    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד. (2) פתח עם משפט הקשר שיגור אחד: "הוזנקת לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום/נסיבות קצרות]" — משפט אחד בלבד, ישיר ותמציתי. (3) המשך ישירות לממצאים הקליניים: "בהגיעך למקום מצאת..." / "המטופל/ת מציג/ה..." — 2-3 משפטים קליניים ספציפיים עם תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. (4) שדה question חייב להסתיים בשאלת פעולה ברורה, ללא יוצא דופן. לדוגמה: "מה הפעולה הנכונה?", "מה הצעד המיידי הנכון?", "מה הטיפול המתאים ביותר?", "מה צריך לעשות עכשיו?".\n\n` +
+    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד. (2) פתח עם משפט הקשר שיגור אחד: "הוזנקת לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום/נסיבות קצרות]" — משפט אחד בלבד, ישיר ותמציתי. (3) המשך ישירות לממצאים הקליניים: "בהגיעך למקום מצאת..." / "המטופל מתלונן על..." / "בבדיקתך נמצא..." — 2-3 משפטים קליניים ספציפיים עם תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. (4) שדה question חייב להסתיים בשאלת פעולה ברורה, ללא יוצא דופן. לדוגמה: "מה הפעולה הנכונה?", "מה הצעד המיידי הנכון?", "מה הטיפול המתאים ביותר?", "מה צריך לעשות עכשיו?".\n\n` +
+    `${HEBREW_RULES}\n\n${DIFFICULTY_RULES}\n\n` +
     avoidSection +
+    buildTodayTopicsSection(todayTopics) +
     `${focus}\n\n` +
     'תשובות: בדיוק 4 אפשרויות בעברית רפואית מקצועית. כל אפשרות: משפט פעולה קליני אחד, שלם ומוחלט, 15-25 מילים. פורמט: "[פועל] [פעולה ספציפית / תרופה-מינון-מסלול / הגדרת אנרגיה או מכשיר] [הקשר קליני]". אין אפשרות עמומה או מהססת.\n' +
     'כלל הסחות הדעת: לפחות שתי תשובות שגויות חייבות להיות טעויות שכיחות בשדה או פרוטוקולים מיושנים. תשובה שגויה אחת תישמע כמו תשובת ספר לימוד שמתעלמת מהפרט הקליני העדין בתרחיש. בדיוק תשובה אחת עוקבת אחר הפרוטוקולים הישראליים העדכניים. כל הסחות הדעת סבירות לחובש מתחיל.\n\n' +
@@ -189,6 +204,8 @@ function buildMedPrompt(today: string): string {
 חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
 פלט JSON בלבד, ללא markdown:
 {
   "name": "שם מסחרי ישראלי + גנרי — לדוגמה: אליקוויס (Apixaban)",
@@ -218,6 +235,8 @@ function buildAbbrPrompt(usedAbbreviations: string[]): string {
   return `אתה מדריך פרמדיק בכיר ישראלי. צור שאלת MCQ על קיצור רפואי חשוב בעולם ההצלה הישראלי.
 בחר קיצור מהרשימה הבאה (${unused.length > 0 ? 'קיצורים שעוד לא נשאלו — יש לסקור את כולם לפני חזרה' : 'כל הקיצורים נשאלו — התחל מחזור חדש'}): ${list.join(', ')}.
 ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+${HEBREW_RULES}
+המסיחים: קרובים מאוד למשמעות האמיתית של הקיצור — הבדל של מילה אחת או סדר מילים — כך שהשאלה מכשילה גם מי שמכיר את הקיצור באופן שטחי.
 פלט JSON בלבד, ללא markdown:
 {
   "abbreviation": "הקיצור",
@@ -228,7 +247,7 @@ function buildAbbrPrompt(usedAbbreviations: string[]): string {
 }`
 }
 
-function buildRedFlagPrompt(recentTopics: string[]): string {
+function buildRedFlagPrompt(recentTopics: string[], todayTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : ''
@@ -236,7 +255,9 @@ function buildRedFlagPrompt(recentTopics: string[]): string {
 סבב בין הנושאים הבאים: טראומה, קרדיולוגיה, נשימה, נוירולוגיה, חירום סביבתי, רעלנות, ילדים, אינטרנה. לא יותר מ-25% מהשאלות יהיו מאותו תחום.
 המקרה: תיאור ספציפי — גיל, מנגנון/תלונה, סימנים חיוניים, תסמינים. 2-3 משפטים.
 ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
-${avoidSection}
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
+${avoidSection}${buildTodayTopicsSection(todayTopics)}
 פלט JSON בלבד, ללא markdown:
 {
   "scenario": "תיאור המקרה (2-3 משפטים בעברית מקצועית, עם גיל, מנגנון/תלונה, סימנים חיוניים רלוונטיים)",
@@ -248,19 +269,21 @@ ${avoidSection}
 }`
 }
 
-function buildSpotErrorPrompt(recentTopics: string[]): string {
+function buildSpotErrorPrompt(recentTopics: string[], todayTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : ''
-  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: כתוב תרחיש קליני ריאליסטי המכיל טעות מקצועית אחת ברורה.
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: כתוב תרחיש קליני ריאליסטי המכיל טעות מקצועית אחת — מוסתרת היטב בתוך נרטיב שנראה שלם ומקצועי.
 
 1. פתח עם משפט שיגור: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום]"
-2. תאר ההתערבות (3-4 משפטים) — כולל פעולה אחת שגויה לפי הפרוטוקולים בישראל.
+2. תאר ההתערבות (3-4 משפטים) — כולל פעולה אחת שגויה לפי הפרוטוקולים בישראל, מוסתרת בין פרטים נכונים. כלול לפחות פרט אחד שנראה חשוד אך נכון לחלוטין (הסחת דעת).
 3. שאלה: "מה הטעות המקצועית שזוהתה בטיפול?"
-4. 4 תשובות: אחת היא הטעות האמיתית, השאר — שגיאות שלא קרו או פעולות נכונות.
+4. 4 תשובות: אחת היא הטעות האמיתית, השאר — שגיאות שלא קרו או פעולות שנראות חשודות אך נכונות. המסיחים משכנעים ולא ניתנים לפסילה קלה.
 5. הסבר (2-3 משפטים): הטעות, הנזק, והנכון לפי הפרוטוקולים בישראל.
 6. שפה: עברית רפואית מקצועית גבוהה.
-${avoidSection}
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
+${avoidSection}${buildTodayTopicsSection(todayTopics)}
 פלט JSON בלבד, ללא markdown:
 {
   "dispatch_opener": "משפט שיגור אחד",
@@ -273,7 +296,7 @@ ${avoidSection}
 }`
 }
 
-function buildRadioChallengePrompt(recentTopics: string[]): string {
+function buildRadioChallengePrompt(recentTopics: string[], todayTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : ''
@@ -282,9 +305,11 @@ function buildRadioChallengePrompt(recentTopics: string[]): string {
 1. פתח עם משפט שיגור: "הוזנק לקריאה על [גבר/אישה] כבן/כבת [גיל] ב[מקום]"
 2. תאר תרחיש עם ממצאים מרובים (4-5 משפטים).
 3. שאלה: "מה הסיכום הטוב ביותר בפורמט SBAR לדיווח לרופא המאשר?"
-4. אחת אידיאלית, שלוש עם פגמים (מידע חסר, סדר לא נכון, הערכה שגויה).
+4. אחת אידיאלית, שלוש עם פגמים עדינים וקשים לזיהוי (מידע חסר, סדר לא נכון, הערכה שגויה).
 5. הסבר (2-3 משפטים).
-${avoidSection}
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
+${avoidSection}${buildTodayTopicsSection(todayTopics)}
 פלט JSON בלבד, ללא markdown:
 {
   "dispatch_opener": "משפט שיגור אחד",
@@ -387,6 +412,8 @@ function buildImprovisedPrompt(dateStr: string, _recentTopics: string[]): string
 4. 4 תשובות: ספציפיות ל${setting} ול${topic} — אחת נכונה (פתרון יעיל ובטוח), שלוש מסיחות הגיוניות. ערבב מיקום התשובה הנכונה.
 5. הסבר (2-3 משפטים): מדוע זהו הפתרון הטוב ביותר, כיצד הוא עוזר בפועל.
 6. topic_tag: "${topic}"
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
 
 פלט JSON תקני בלבד, ללא markdown:
 {
@@ -459,9 +486,9 @@ interface RadioChallengeQ {
   topic_tag: string
 }
 
-async function generateClinical(type: 'BLS' | 'ALS', supabase: SupabaseClient): Promise<ClinicalQuestion> {
+async function generateClinical(type: 'BLS' | 'ALS', supabase: SupabaseClient, todayTopics: string[]): Promise<ClinicalQuestion> {
   const recentTopics = await getRecentClinicalTopics(supabase, type.toLowerCase() as 'bls' | 'als', 30)
-  const q = await withRetry(() => parseGeminiJSON<ClinicalQuestion>(buildClinicalPrompt(type, recentTopics)))
+  const q = await withRetry(() => parseGeminiJSON<ClinicalQuestion>(buildClinicalPrompt(type, recentTopics, todayTopics)))
   if (
     typeof q.question !== 'string' || !Array.isArray(q.options) ||
     q.options.length !== 4 || typeof q.correct_index !== 'number' ||
@@ -485,25 +512,25 @@ async function generateAbbreviation(supabase: SupabaseClient): Promise<Abbreviat
   return a
 }
 
-async function generateRedFlag(supabase: SupabaseClient): Promise<RedFlagQ> {
+async function generateRedFlag(supabase: SupabaseClient, todayTopics: string[]): Promise<RedFlagQ> {
   const recentTopics = await getAllRecentTopics(supabase, 15)
-  const r = await withRetry(() => parseGeminiJSON<RedFlagQ>(buildRedFlagPrompt(recentTopics)))
+  const r = await withRetry(() => parseGeminiJSON<RedFlagQ>(buildRedFlagPrompt(recentTopics, todayTopics)))
   if (!r.scenario || !r.question || !Array.isArray(r.options) || r.options.length !== 4) throw new Error('Invalid red flag format')
   return r
 }
 
-async function generateSpotError(supabase: SupabaseClient): Promise<SpotErrorQ> {
+async function generateSpotError(supabase: SupabaseClient, todayTopics: string[]): Promise<SpotErrorQ> {
   const recentTopics = await getAllRecentTopics(supabase, 15)
-  const q = await withRetry(() => parseGeminiJSON<SpotErrorQ>(buildSpotErrorPrompt(recentTopics)))
+  const q = await withRetry(() => parseGeminiJSON<SpotErrorQ>(buildSpotErrorPrompt(recentTopics, todayTopics)))
   if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid spot error format')
   }
   return q
 }
 
-async function generateRadioChallenge(supabase: SupabaseClient): Promise<RadioChallengeQ> {
+async function generateRadioChallenge(supabase: SupabaseClient, todayTopics: string[]): Promise<RadioChallengeQ> {
   const recentTopics = await getAllRecentTopics(supabase, 15)
-  const q = await withRetry(() => parseGeminiJSON<RadioChallengeQ>(buildRadioChallengePrompt(recentTopics)))
+  const q = await withRetry(() => parseGeminiJSON<RadioChallengeQ>(buildRadioChallengePrompt(recentTopics, todayTopics)))
   if (!q.dispatch_opener || !q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid radio challenge format')
   }
@@ -546,33 +573,42 @@ Deno.serve(async (req) => {
 
   const results: Record<string, string> = {}
 
+  // Topics already chosen today across rubrics — each new question must pick a different one
+  const todayTopics: string[] = []
+
   const categories: Array<{ type: string; generate: () => Promise<unknown> }> = [
-    { type: 'bls', generate: () => generateClinical('BLS', supabase) },
-    { type: 'als', generate: () => generateClinical('ALS', supabase) },
+    { type: 'bls', generate: () => generateClinical('BLS', supabase, todayTopics) },
+    { type: 'als', generate: () => generateClinical('ALS', supabase, todayTopics) },
     { type: 'med_v4', generate: () => generateMed(today) },
     { type: 'abbr', generate: () => generateAbbreviation(supabase) },
     { type: 'improvised', generate: () => generateImprovised(supabase, today) },
-    { type: 'red_flag', generate: () => generateRedFlag(supabase) },
-    { type: 'spot_error', generate: () => generateSpotError(supabase) },
-    { type: 'radio_challenge', generate: () => generateRadioChallenge(supabase) },
+    { type: 'red_flag', generate: () => generateRedFlag(supabase, todayTopics) },
+    { type: 'spot_error', generate: () => generateSpotError(supabase, todayTopics) },
+    { type: 'radio_challenge', generate: () => generateRadioChallenge(supabase, todayTopics) },
   ]
 
   for (const { type, generate } of categories) {
     // Check if today's question already exists (idempotency)
     const { data: existing } = await supabase
       .from('daily_questions')
-      .select('id')
+      .select('id, content')
       .eq('question_date', today)
       .eq('question_type', type)
       .maybeSingle()
 
     if (existing) {
+      // deno-lint-ignore no-explicit-any
+      const existingTag = (existing as any).content?.topic_tag as string | undefined
+      if (existingTag) todayTopics.push(existingTag)
       results[type] = 'already_exists'
       continue
     }
 
     try {
       const content = await generate()
+      // deno-lint-ignore no-explicit-any
+      const tag = (content as any)?.topic_tag as string | undefined
+      if (tag) todayTopics.push(tag)
       const { error } = await supabase.from('daily_questions').insert({
         question_date: today,
         question_type: type,

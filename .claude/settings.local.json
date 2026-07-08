@@ -93,7 +93,8 @@
       "Bash(npx vercel *)",
       "PowerShell(vercel env *)",
       "PowerShell(vercel logs *)",
-      "PowerShell(git push *)"
+      "PowerShell(git push *)",
+      "PowerShell(npm run *)"
     ]
   },
   "hooks": {
