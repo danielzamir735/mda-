@@ -97,7 +97,8 @@
       "PowerShell(npm run *)",
       "PowerShell(git fetch *)",
       "PowerShell(git *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "PowerShell(npx eslint src/features/hub/components/MedicalAbbreviationsModal.tsx src/features/hub/components/AbbreviationFlashcards.tsx src/features/hub/data/medicalAbbreviations.ts src/store/abbreviationSrsStore.ts src/utils/tts.ts src/features/hub/HubModal.tsx)"
     ]
   },
   "hooks": {

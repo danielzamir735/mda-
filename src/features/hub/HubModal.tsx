@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -11,6 +11,7 @@ import { usePwaInstall } from '../pwa/PwaInstallContext';
 import { trackInteraction } from '../../utils/analytics';
 import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
+import MedicalAbbreviationsModal from './components/MedicalAbbreviationsModal';
 
 const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
   { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
@@ -104,6 +105,15 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-yellow-400',
     border: 'border-yellow-400/40',
     bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+  },
+  {
+    id: 'medical-terms',
+    label: 'מושגים רפואיים',
+    subtitle: 'קיצורים · הגייה · שינון',
+    icon: GraduationCap,
+    color: 'text-sky-400',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
   },
   {
     id: 'medhistory',
@@ -247,7 +257,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['campaign', 'concepts', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
 
 const HUB_STORAGE_KEY = 'hub_order_v2';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
@@ -328,6 +338,7 @@ export default function HubModal({
   };
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
+  const [showMedicalTerms, setShowMedicalTerms] = useState(false);
   const [showPersonalCard, setShowPersonalCard] = useState(false);
   const [campaignBitCopied, setCampaignBitCopied] = useState(false);
   const [showBitSheet, setShowBitSheet] = useState(false);
@@ -364,6 +375,7 @@ export default function HubModal({
     settings:                     ['הגדרות',                  'utility'],
     clinical:                     ['טבלת מדדים',              'medical_knowledge'],
     medhistory:                   ['מחלות רקע נפוצות',        'medical_knowledge'],
+    'medical-terms':              ['מושגים רפואיים',           'medical_knowledge'],
     hospitals:                    ['מידע בתי חולים',           'emergency_info'],
     updates:                      ['שיתוף האפליקציה',          'utility'],
     'kit-standards':              ['תקנים לתיקי כונן',         'tools'],
@@ -386,6 +398,7 @@ export default function HubModal({
 
     if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
     if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
+    if (id === 'medical-terms') { setShowMedicalTerms(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -1222,6 +1235,9 @@ https://hovesh-plus.vercel.app/`;
 
       {/* Concepts Modal */}
       <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />
+
+      {/* Medical Terms / Abbreviations Modal */}
+      <MedicalAbbreviationsModal isOpen={showMedicalTerms} onClose={() => setShowMedicalTerms(false)} />
     </div>
   );
 }
