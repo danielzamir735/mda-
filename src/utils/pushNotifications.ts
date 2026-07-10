@@ -7,6 +7,7 @@ export interface PushPrefs {
   disease: boolean;
   concept: boolean;
   chosenHour: number;
+  chosenMinute: number;
 }
 
 function getSessionId(): string {
@@ -47,6 +48,7 @@ async function upsertSubscription(sub: PushSubscription, prefs: PushPrefs): Prom
     disease: prefs.disease,
     concept: prefs.concept,
     chosen_hour: prefs.chosenHour,
+    chosen_minute: prefs.chosenMinute,
     enabled: true,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'endpoint' });

@@ -3,7 +3,7 @@ import { X, Bell, Pill, Stethoscope, Brain, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { usePwaInstall } from '../../pwa/PwaInstallContext';
-import { enableDailyPush, disableDailyPush, updatePushPrefs, isPushSupported } from '../../../utils/pushNotifications';
+import { enableDailyPush, disableDailyPush, updatePushPrefs, isPushSupported, requestNotificationPermission } from '../../../utils/pushNotifications';
 
 interface Props {
   isOpen: boolean;
@@ -16,6 +16,7 @@ interface StoredPrefs {
   disease: boolean;
   concept: boolean;
   chosenHour: number;
+  chosenMinute: number;
 }
 
 const PREFS_KEY = 'daily_push_prefs_v1';
@@ -26,6 +27,7 @@ const DEFAULT_PREFS: StoredPrefs = {
   disease: true,
   concept: true,
   chosenHour: 8,
+  chosenMinute: 0,
 };
 
 function loadPrefs(): StoredPrefs {
@@ -82,7 +84,9 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) setPrefs(loadPrefs());
+    if (!isOpen) return;
+    setPrefs(loadPrefs());
+    if (isPushSupported()) requestNotificationPermission().catch(() => {});
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -109,6 +113,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
           disease: prefs.disease,
           concept: prefs.concept,
           chosenHour: prefs.chosenHour,
+          chosenMinute: prefs.chosenMinute,
         });
         persist({ ...prefs, enabled: true });
       } catch {
@@ -132,17 +137,17 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
     persist(next);
     if (next.enabled) {
       try {
-        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: next.chosenHour });
+        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: next.chosenHour, chosenMinute: next.chosenMinute });
       } catch { /* noop — next save/toggle will retry the upsert */ }
     }
   };
 
-  const handleHourChange = async (hour: number) => {
-    const next = { ...prefs, chosenHour: hour };
+  const handleTimeChange = async (hour: number, minute: number) => {
+    const next = { ...prefs, chosenHour: hour, chosenMinute: minute };
     persist(next);
     if (next.enabled) {
       try {
-        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: hour });
+        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: hour, chosenMinute: minute });
       } catch { /* noop */ }
     }
   };
@@ -222,31 +227,24 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
           )}
         </section>
 
-        {/* Hour picker */}
+        {/* Time picker */}
         <section>
           <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide px-1 mb-2">
-            שעת קבלה (שעון ישראל)
+            שעת קבלה מדויקת (שעון ישראל)
           </p>
-          <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-3">
-            <div className="grid grid-cols-6 gap-2">
-              {Array.from({ length: 24 }, (_, hour) => hour).map((hour) => {
-                const active = prefs.chosenHour === hour;
-                return (
-                  <button
-                    key={hour}
-                    onClick={() => handleHourChange(hour)}
-                    className={[
-                      'py-2 rounded-xl border text-xs font-bold transition-all duration-150',
-                      active
-                        ? 'border-gray-400 dark:border-emt-light/60 bg-gray-200 dark:bg-emt-light/10 text-gray-900 dark:text-emt-light'
-                        : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-dark text-gray-400 dark:text-emt-muted',
-                    ].join(' ')}
-                  >
-                    {String(hour).padStart(2, '0')}:00
-                  </button>
-                );
-              })}
-            </div>
+          <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-4 flex items-center justify-center">
+            <input
+              type="time"
+              dir="ltr"
+              value={`${String(prefs.chosenHour).padStart(2, '0')}:${String(prefs.chosenMinute).padStart(2, '0')}`}
+              onChange={(e) => {
+                const [h, m] = e.target.value.split(':').map(Number);
+                if (Number.isNaN(h) || Number.isNaN(m)) return;
+                handleTimeChange(h, m);
+              }}
+              className="bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border rounded-xl px-4 py-2.5
+                         text-gray-900 dark:text-emt-light font-bold text-lg tracking-wide"
+            />
           </div>
         </section>
 

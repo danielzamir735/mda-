@@ -20,13 +20,16 @@ function getIsraelDate(): string {
   }).format(new Date())
 }
 
-function getIsraelHour(): number {
-  const hourStr = new Intl.DateTimeFormat('en-GB', {
+function getIsraelHourMinute(): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Jerusalem',
     hour: '2-digit',
+    minute: '2-digit',
     hourCycle: 'h23',
-  }).format(new Date())
-  return parseInt(hourStr, 10)
+  }).formatToParts(new Date())
+  const hour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10)
+  const minute = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0', 10)
+  return { hour, minute }
 }
 
 function hashStr(s: string, mult: number): number {
@@ -420,7 +423,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   const today = getIsraelDate()
-  const hour = getIsraelHour()
+  const { hour, minute } = getIsraelHourMinute()
 
   const todayMed = getTodayMed(today)
   const todayDisease = getTodayDiagnosis(today)
@@ -431,6 +434,7 @@ Deno.serve(async (req) => {
     .select('id, endpoint, p256dh, auth, medication, disease, concept')
     .eq('enabled', true)
     .eq('chosen_hour', hour)
+    .eq('chosen_minute', minute)
     .or(`last_sent_date.is.null,last_sent_date.neq.${today}`)
 
   if (fetchError) {
@@ -481,9 +485,10 @@ Deno.serve(async (req) => {
     }
   }
 
-  console.log(`[send-daily-push] ${today} ${hour}:00:`, results)
+  const hhmm = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+  console.log(`[send-daily-push] ${today} ${hhmm}:`, results)
 
-  return new Response(JSON.stringify({ date: today, hour, ...results }), {
+  return new Response(JSON.stringify({ date: today, time: hhmm, ...results }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })

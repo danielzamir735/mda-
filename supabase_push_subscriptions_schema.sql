@@ -13,14 +13,18 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   disease        boolean     NOT NULL DEFAULT true,
   concept        boolean     NOT NULL DEFAULT true,
   chosen_hour    integer     NOT NULL DEFAULT 8 CHECK (chosen_hour BETWEEN 0 AND 23),
+  chosen_minute  integer     NOT NULL DEFAULT 0 CHECK (chosen_minute BETWEEN 0 AND 59),
   enabled        boolean     NOT NULL DEFAULT true,
   last_sent_date date,
   created_at     timestamptz DEFAULT now(),
   updated_at     timestamptz DEFAULT now()
 );
 
+-- Migration safety — add the column if a deployment pre-dates minute precision.
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS chosen_minute integer NOT NULL DEFAULT 0 CHECK (chosen_minute BETWEEN 0 AND 59);
+
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_hour_enabled
-  ON push_subscriptions (chosen_hour) WHERE enabled = true;
+  ON push_subscriptions (chosen_hour, chosen_minute) WHERE enabled = true;
 
 -- RLS: no real auth — anonymous clients manage their own subscription row
 -- keyed by endpoint (unique per browser install), same permissive style as
