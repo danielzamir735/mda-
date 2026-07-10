@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -51,6 +51,7 @@ interface Props {
   onMedicationScannerOpen: () => void;
   onDailyChallengeOpen: () => void;
   onSoulDepartureOpen: () => void;
+  onDailyPushOpen: () => void;
 }
 
 type HubItem = {
@@ -255,9 +256,18 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
   },
+  {
+    id: 'daily-push',
+    label: 'פוש יומי',
+    subtitle: 'תזכורת יומית מותאמת אישית',
+    icon: Bell,
+    color: 'text-pink-400',
+    border: 'border-pink-400/30',
+    bg: 'bg-pink-400/10',
+  },
 ];
 
-const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community']);
+const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push']);
 
 const HUB_STORAGE_KEY = 'hub_order_v2';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
@@ -322,6 +332,7 @@ export default function HubModal({
   onMedicationScannerOpen,
   onDailyChallengeOpen,
   onSoulDepartureOpen,
+  onDailyPushOpen,
 }: Props) {
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
@@ -390,6 +401,7 @@ export default function HubModal({
     'soul-departure':             ['תפילה ליציאת נשמה',        'tools'],
     'install-app':                ['התקנת האפליקציה',          'utility'],
     'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
+    'daily-push':                 ['פוש יומי',                'utility'],
   };
 
   const handleItemClick = (id: string) => {
@@ -435,6 +447,7 @@ https://hovesh-plus.vercel.app/`;
     if (id === 'medication-scanner') onMedicationScannerOpen();
     if (id === 'daily-challenge') onDailyChallengeOpen();
     if (id === 'soul-departure') onSoulDepartureOpen();
+    if (id === 'daily-push') onDailyPushOpen();
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'whatsapp-community') setShowWhatsAppCommunity(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }

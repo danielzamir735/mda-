@@ -37,6 +37,7 @@ import FeedbackModal from '../../components/FeedbackModal';
 import SupportModal from '../../pages/SupportPage';
 import LanguageBridgeModal from '../translators/LanguageBridgeModal';
 import SoulDepartureModal from '../hub/components/SoulDepartureModal';
+import DailyPushModal from '../hub/components/DailyPushModal';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -82,6 +83,7 @@ export default function VitalsFeature() {
   const [supportOpen, setSupportOpen] = useState(false);
   const [languageBridgeOpen, setLanguageBridgeOpen] = useState(false);
   const [soulDepartureOpen, setSoulDepartureOpen] = useState(false);
+  const [dailyPushOpen, setDailyPushOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
@@ -233,6 +235,7 @@ export default function VitalsFeature() {
         onMedicationScannerOpen={() => setMedicationScannerOpen(true)}
         onDailyChallengeOpen={() => setDailyChallengeOpen(true)}
         onSoulDepartureOpen={() => setSoulDepartureOpen(true)}
+        onDailyPushOpen={() => setDailyPushOpen(true)}
       />
 
       <AmbulanceChecklistModal
@@ -280,6 +283,7 @@ export default function VitalsFeature() {
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
       <LanguageBridgeModal isOpen={languageBridgeOpen} onClose={() => setLanguageBridgeOpen(false)} />
       <SoulDepartureModal isOpen={soulDepartureOpen} onClose={() => { setSoulDepartureOpen(false); setHubOpen(true); }} />
+      <DailyPushModal isOpen={dailyPushOpen} onClose={() => { setDailyPushOpen(false); setHubOpen(true); }} />
     </div>
   );
 }
