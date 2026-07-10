@@ -81,6 +81,7 @@ interface MedBagQ {
 
 interface ActiveDxQ {
   diagnoses: string[];
+  diagnosis_meanings: Record<string, string>;
   question: string;
   options: string[];
   correct_index: number;
@@ -276,7 +277,7 @@ function buildClinicalPrompt(type: 'BLS' | 'ALS'): string {
     `אתה מדריך פרמדיק בכיר ישראלי. תפקידך לאתגר פרמדיקים וחובשים ישראלים עם שאלות קליניות ברמה גבוהה, בעברית רפואית מקצועית.\n\n` +
     `חשוב ביותר: כל שאלה, תשובה והסבר חייבים להתבסס אך ורק על הפרוטוקולים הישראליים ומשרד הבריאות. אין להתייחס לפרוטוקולי AHA, ERC, PHTLS או כל גוף בינלאומי אחר — במקרה של סתירה, ההנחיות הישראליות גוברות תמיד.\n\n` +
     `משימה: כתוב תרחיש קליני מאתגר עבור ${type} בעברית רפואית מקצועית גבוהה. התרחיש יכול להיות מקרה שגרתי עם סיבוך עדין, מקרה קצה, או מצב שבו ההחלטה הנכונה דורשת שיפוט שדה מנוסה.\n\n` +
-    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד — ללא קידומות שיגור, ללא מספרי קריאה, ללא "קריאה דחופה", ללא "דיווח מקבלה", ללא כל סגנון רדיו/משגר. (2) התחל ישירות בהערכת המטופל: "בהגיעך למקום מצאת..." / "מטופל בן X שנים..." / "אישה כבת X המתלוננת על..." — ישירות לעובדות הקליניות. (3) כלול: גיל/מין, תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. 2-4 משפטים ספציפיים, קליניים.\n\n` +
+    `כתיבת התרחיש — כללים מחייבים: (1) שפה ניטרלית מקצועית בלבד — ללא קידומות שיגור, ללא מספרי קריאה, ללא "קריאה דחופה", ללא "דיווח מקבלה", ללא כל סגנון רדיו/משגר. (2) פתח במשפט הקשר קצר אחד שמציג את המטופל, לפני כל תיאור של המקום או הממצאים — לדוגמה: "הוזעקת לטיפול בגבר בן X..." / "מטופל בן X שנים..." / "אישה כבת X המתלוננת על..." — אסור בהחלט להתחיל את התרחיש במילים "בהגיעך למקום" ללא משפט פתיחה שמציג קודם מי המטופל; ניתן להשתמש בביטוי "בהגיעך למקום מצאת..." רק כהמשך למשפט הפתיחה, לעולם לא כמשפט הראשון בתרחיש. (3) כלול: גיל/מין, תלונה עיקרית, סימנים חיוניים רלוונטיים, ממצאים פיזיקליים. 2-4 משפטים ספציפיים, קליניים.\n\n` +
     `${HEBREW_RULES}\n\n${DIFFICULTY_RULES}\n\n` +
     `${focus}\n\n` +
     'תשובות: בדיוק 4 אפשרויות בעברית רפואית מקצועית. כל אפשרות: משפט פעולה קליני אחד, שלם ומוחלט, 15-25 מילים. פורמט: "[פועל] [פעולה ספציפית / תרופה-מינון-מסלול / הגדרת אנרגיה או מכשיר] [הקשר קליני]". אין אפשרות עמומה או מהססת.\n' +
@@ -645,9 +646,13 @@ function buildActiveDxQuestion(): ActiveDxQ {
     shown.map((e) => `${e.abbr} = ${e.he}`).join(' | ') +
     `. שימו לב במיוחד ל-${todayEntry.abbr} (${todayEntry.en}) — ${todayEntry.he}.`;
 
+  const diagnosisMeanings: Record<string, string> = {};
+  shown.forEach((e) => { diagnosisMeanings[e.abbr] = e.he; });
+
   return {
     diagnoses: shown.map((e) => e.abbr),
-    question: 'לפי הסדר שבו האבחנות הפעילות רשומות למעלה, מהי הרשימה הנכונה של משמעותן?',
+    diagnosis_meanings: diagnosisMeanings,
+    question: 'אילו אבחנות פעילות רשומות למעלה — ומה משמעותן, לפי הסדר?',
     options,
     correct_index: correctIndex,
     explanation,
@@ -1481,6 +1486,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [activeDxAnsweredIdx, setActiveDxAnsweredIdx] = useState<number | null>(null);
   const [showActiveDxExpl, setShowActiveDxExpl] = useState(false);
   const [activeDxStats, setActiveDxStats] = useState<GlobalStats | null>(null);
+  const [activeDxPopup, setActiveDxPopup] = useState<string | null>(null);
 
   // Block H — Concept of the Day (מושגים)
   const [conceptStatus, setConceptStatus] = useState<LoadStatus>('idle');
@@ -1938,7 +1944,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
       setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null); setActiveMedPopup(null);
-      setActiveDxStatus('idle'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null); setShowActiveDxExpl(false); setActiveDxStats(null);
+      setActiveDxStatus('idle'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null); setShowActiveDxExpl(false); setActiveDxStats(null); setActiveDxPopup(null);
       setConceptStatus('idle'); setConceptQuestion(null); setConceptAnsweredIdx(null); setShowConceptExpl(false); setConceptStats(null);
       setShowSuccess(false);
       setShowCompetitionJoin(false);
@@ -3120,15 +3126,39 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           </motion.span>
         </div>
 
-        {/* Active diagnoses list — plain, like a real medical record printout */}
+        {/* Active diagnoses list — plain, like a real medical record printout.
+            Tap a term to see its meaning (helps you read/decode the abbreviations). */}
         <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(34,211,238,0.12)' }}>
-          <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest mb-3">הבחנות פעילות</p>
-          <ul className="flex flex-col gap-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest">הבחנות פעילות</p>
+            <span className="text-cyan-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+          </div>
+          <ul className="flex flex-col gap-1.5">
             {activeDxQuestion.diagnoses.map((dx, i) => (
-              <li key={i} className="flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                <span className="text-white/90 text-[15px] font-bold tracking-wide" dir="ltr">{dx}</span>
+              <li key={i}>
+                <button
+                  onClick={() => setActiveDxPopup(activeDxPopup === dx ? null : dx)}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition-all active:scale-[0.99] ${activeDxPopup === dx ? 'bg-cyan-500/20 border-cyan-400/50' : 'border-transparent hover:bg-white/5'}`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                  <span className="text-white/90 text-[15px] font-bold tracking-wide" dir="ltr">{dx}</span>
+                </button>
+                <AnimatePresence>
+                  {activeDxPopup === dx && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: 'auto' }}
+                      exit={{ opacity: 0, y: -4, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-cyan-200/90 text-[13px] leading-relaxed px-4 pt-1 pb-2">
+                        {activeDxQuestion.diagnosis_meanings?.[dx] ?? ''}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </li>
             ))}
           </ul>
