@@ -2,20 +2,22 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope, Wrench, Info, Pencil,
+  Search, Stethoscope, Wrench, Info, Pencil, ClipboardList,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
 import HapticButton from '../../../components/HapticButton';
 import { supabase } from '../../../lib/supabase';
+import { MED_CATEGORIES } from '../data/commonMedsData';
+import { DIAGNOSIS_POOL } from '../data/activeDiagnosesPool';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
-type QuizCategory = ClinicalCategory | 'med_v3' | 'improvised' | 'red_flag' | 'spot_error' | 'med_bag';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'improvised' | 'red_flag' | 'spot_error' | 'med_bag' | 'active_dx';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
-type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
 interface ClinicalQuestion {
   question: string;
@@ -76,6 +78,17 @@ interface MedBagQ {
   topic_tag: string;
 }
 
+interface ActiveDxQ {
+  scenario: string;
+  diagnoses: string[];
+  diagnosis_descriptions: Record<string, string>;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+  topic_tag: string;
+}
+
 interface DayCache<T> {
   date: string;
   data: T;
@@ -126,6 +139,7 @@ const CACHE_KEYS = {
   red_flag: 'daily_challenge_redflag_v3',
   spot_error: 'daily_challenge_spoterror_v2',
   med_bag: 'daily_challenge_medbag_v1',
+  active_dx: 'daily_challenge_activedx_v1',
 } as const;
 
 const STATS_CACHE_KEY: Record<QuizCategory, string> = {
@@ -136,6 +150,7 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   red_flag: 'daily_stats_redflag_v1',
   spot_error: 'daily_stats_spoterror_v1',
   med_bag: 'daily_stats_medbag_v1',
+  active_dx: 'daily_stats_activedx_v1',
 };
 
 const COMPETITION_OPT_OUT_KEY = 'daily_competition_opted_out';
@@ -268,70 +283,21 @@ const CLINICAL_PROMPTS: Record<ClinicalCategory, string> = {
   als: buildClinicalPrompt('ALS'),
 };
 
-// Shared drug pool — must stay identical to the server-side list in
-// generate-daily-questions/index.ts so both select the same drug for any given date.
-const MED_DRUG_POOL = [
-  // נוגדי קרישה / נוגדי טסיות
-  'Eliquis (Apixaban)', 'Xarelto (Rivaroxaban)', 'Pradaxa (Dabigatran)',
-  'Warfarin (Coumadin)', 'Aspirin', 'Plavix (Clopidogrel)', 'Brilique (Ticagrelor)',
-  // לב — קצב ולחץ דם
-  'Bisoprolol (Concor)', 'Metoprolol (Betaloc)', 'Atenolol (Tenormin)',
-  'Amlodipine (Norvasc)', 'Losartan (Cozaar)', 'Ramipril (Tritace)',
-  'Perindopril (Prestarium)', 'Valsartan (Diovan)', 'Nebivolol (Nebilet)',
-  'Digoxin', 'Amiodarone',
-  // משתנים
-  'Furosemide (Lasix)', 'Spironolactone (Aldactone)', 'Indapamide (Natrilix)',
-  // ניטרטים
-  'Isosorbide Mononitrate (Isoket)', 'Nitroglycerin (Nitrostat)',
-  // כולסטרול
-  'Atorvastatin (Lipitor)', 'Rosuvastatin (Crestor)', 'Ezetimibe (Ezetrol)',
-  // סוכרת
-  'Metformin (Glucophage)', 'Empagliflozin (Jardiance)', 'Sitagliptin (Januvia)',
-  'Dapagliflozin (Forxiga)', 'Glibenclamide (Daonil)',
-  'Insulin Glargine (Lantus)', 'Insulin Aspart (Novorapid)',
-  // בלוטת תריס
-  'Levothyroxine (Eltroxin)',
-  // נשימה / ריאות
-  'Salbutamol (Ventolin)', 'Budesonide/Formoterol (Symbicort)',
-  'Fluticasone/Salmeterol (Seretide)', 'Tiotropium (Spiriva)',
-  'Montelukast (Singulair)', 'Theophylline (Theolin)',
-  // קיבה / עיכול
-  'Omeprazole (Omepradex)', 'Esomeprazole (Nexium)',
-  'Pantoprazole (Controloc)', 'Ondansetron (Zofran)',
-  // אלרגיה
-  'Cetirizine (Zyrtec)', 'Loratadine (Claritin)',
-  // נוירולוגיה / אפילפסיה
-  'Levetiracetam (Keppra)', 'Lamotrigine (Lamictal)',
-  'Valproic Acid (Depakine)', 'Carbamazepine (Tegretol)', 'Phenytoin (Dilantin)',
-  // פסיכיאטריה / נוגדי דיכאון
-  'Escitalopram (Cipralex)', 'Sertraline (Zoloft)',
-  'Venlafaxine (Efexor)', 'Duloxetine (Cymbalta)',
-  // אנטי-פסיכוטים / מייצבי מצב רוח
-  'Risperidone (Risperdal)', 'Olanzapine (Zyprexa)',
-  'Quetiapine (Seroquel)', 'Lithium',
-  // בנזודיאזפינים / שינה
-  'Alprazolam (Xanax)', 'Clonazepam (Rivotril)', 'Zolpidem (Stilnox)',
-  // כאב / אנטי-דלקתי
-  'Ibuprofen (Advil)', 'Naproxen (Naprosyn)', 'Tramadol (Tramal)',
-  // ראומטולוגיה
-  'Methotrexate (Methotrex)', 'Hydroxychloroquine (Plaquenil)', 'Colchicine',
-  // גאוט / אוסטיאופורוזיס
-  'Allopurinol', 'Alendronate (Fosamax)',
-  // סטרואידים
-  'Prednisolone', 'Dexamethasone',
-  // דמנציה
-  'Donepezil (Aricept)', 'Memantine (Ebixa)',
-  // אנטיביוטיקה (נפוצות בבית)
-  'Amoxicillin-Clavulanate (Augmentin)', 'Azithromycin (Zithromax)',
-  'Ciprofloxacin (Cipro)', 'Trimethoprim-Sulfamethoxazole (Bactrim)',
-];
+// Single source of truth for "common medicines" — derived from the reference glossary
+// (commonMedsData.ts / MED_CATEGORIES, the same list shown in the "תרופות נפוצות" modal)
+// so that both "תרופת היום" and "תיק התרופות" only ever surface drugs from that list.
+// The Edge Function copy (generate-daily-questions/index.ts) must be updated by hand
+// when MED_CATEGORIES changes, since Deno can't import from src/.
+const COMMON_MED_POOL: string[] = MED_CATEGORIES.flatMap((cat) =>
+  cat.groups.flatMap((g) => g.meds.map((m) => `${m.he} (${m.en})`)),
+);
 
 function buildMedPrompt(): string {
   const today = getToday();
   // Deterministic hash — identical algorithm to server-side so both pick the same drug
   let hash = 0;
   for (let i = 0; i < today.length; i++) hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
-  const todayDrug = MED_DRUG_POOL[hash % MED_DRUG_POOL.length];
+  const todayDrug = COMMON_MED_POOL[hash % COMMON_MED_POOL.length];
 
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
 תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
@@ -528,28 +494,37 @@ ${DIFFICULTY_RULES}
 }`;
 }
 
+// Situational themes for "תיק התרופות" — expanded pool + deterministic per-day
+// rotation (same hash-of-date technique as getTodayImprovisedSetting), so the
+// opening scenario varies day to day instead of always defaulting to "elderly
+// patient found on the floor". Independent pool — no offset needed since it
+// isn't shared with any other block.
+const MED_BAG_SCENARIOS = [
+  'ערפול הכרה', 'קוצר נשימה', 'כאב חזה', 'נפילה בבית',
+  'חולשה כללית פתאומית', 'סחרחורת', 'בחילות והקאות ממושכות', 'כאבי בטן חדים',
+  'בלבול פתאומי / שינוי התנהגות', 'חום גבוה', 'כאבי גב פתאומיים', 'פרכוס',
+  'אי-שקט וחרדה קשה', 'קוצר נשימה במאמץ קל', 'ירידה חדה בתפקוד היומיומי',
+  'פגיעה קלה בבית (חבלה/שריטה) עם ממצא נלווה חשוד', 'עייפות קיצונית ואדישות',
+  'דופק לא סדיר מורגש',
+];
+
+function getTodayMedBagScenario(): string {
+  const today = getToday();
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 37 + today.charCodeAt(i)) >>> 0;
+  return MED_BAG_SCENARIOS[hash % MED_BAG_SCENARIOS.length];
+}
+
 function buildMedBagPrompt(recentTopics: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
+  const scenarioTheme = getTodayMedBagScenario();
   return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "תיק התרופות" — חובש מגיע לביתו של מטופל ומוצא את תרופותיו הכרוניות על השולחן. מהתרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית לטיפול.
 
 כללים מחייבים:
-1. סיטואציה (2 משפטים): תרחיש ביתי מציאותי — מטופל עם ערפול הכרה / קוצר נשימה / כאב / נפילה, גיל ומין ספציפיים. המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
-2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים:
-   נוגדי קרישה: אליקוויס (Apixaban), קסרלטו (Rivaroxaban), פרדקסה (Dabigatran), סינטרום (Acenocoumarol), קומדין (Warfarin)
-   לב/קצב: קרדילוק (Bisoprolol), ביטלוק (Metoprolol), קונקור (Bisoprolol), טנורמין (Atenolol), דיגוקסין (Digoxin)
-   יתר לחץ דם: אמלודיפין/נורבסק (Amlodipine), לוסרטן/ואזר (Losartan), ליסינופריל/זסטריל (Lisinopril), רמיפריל/טריטייס (Ramipril), פרינדופריל (Perindopril)
-   משתנים: פורוסמיד/לסיקס (Furosemide), אלדקטון (Spironolactone)
-   סוכרת: גלוקופאג' (Metformin), ג'ארדיאנס (Empagliflozin), ג'אנוביה (Sitagliptin), נובורפיד/הומולוג (Insulin)
-   בלוטת התריס: אויטירוקס/אלטרוקסין (Levothyroxine)
-   כולסטרול: ליפיטור/טורבסטט (Atorvastatin), קרסטור (Rosuvastatin), זוקור (Simvastatin)
-   ניטרטים: איזוקט (Isosorbide), ניטרודרם (Nitroglycerin patch)
-   נוגדי טסיות: אספירין, פלביקס (Clopidogrel), בריליק (Ticagrelor)
-   COPD/אסתמה: ונטולין (Salbutamol), סימביקורט (Budesonide/Formoterol), ספיריבה (Tiotropium)
-   אפילפסיה: לאמיקטל (Lamotrigine), טגרטול (Carbamazepine), קפרה (Levetiracetam), דפאקין (Valproate)
-   נפשי/נוירו: ריספרדל (Risperidone), זיפרקסה (Olanzapine), ציפרלקס (Escitalopram), ליתיום (Lithium)
-   סטרואידים: פרדניזון (Prednisone), מדרול (Methylprednisolone)
+1. סיטואציה (2 משפטים): תרחיש ביתי מציאותי סביב הנושא **${scenarioTheme}** (חובה להשתמש בנושא הזה). גוון בכל יום מחדש: גיל ספציפי בטווח רחב — מבוגר צעיר (25-40), גיל ביניים (41-64) או קשיש (65+), לא תמיד קשיש; מין (גבר/אישה); וסוג מגורים (דירה בעיר, בית פרטי, דיור מוגן, קיבוץ, יישוב כפרי). המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
+2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים (רשימת "תרופות נפוצות" הרשמית של האפליקציה, יש לבחור מתוכה בלבד): ${COMMON_MED_POOL.join(', ')}
 3. שאלה: "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?"
 4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
 5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
@@ -568,6 +543,45 @@ ${avoidSection}
   "correct_index": X,
   "explanation": "הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, הסכנה הקריטית, ומה לדווח לצוות המקבל",
   "topic_tag": "נושא קצר בעברית (1-3 מילים)"
+}`;
+}
+
+// Deterministic "diagnosis of the day" — identical hash technique to buildMedPrompt,
+// over the independent DIAGNOSIS_POOL (must match the Edge Function's copy).
+function getTodayDiagnosis(): string {
+  const today = getToday();
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 41 + today.charCodeAt(i)) >>> 0;
+  const entry = DIAGNOSIS_POOL[hash % DIAGNOSIS_POOL.length];
+  return `${entry.abbr} — ${entry.he} (${entry.en})`;
+}
+
+function buildActiveDxPrompt(): string {
+  const todayDx = getTodayDiagnosis();
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "אבחנות פעילות" — חובש מגיע למטופל (בביתו או דרך תיק רפואי שהתקבל), ובסעיף "הבחנות פעילות" (רקע רפואי כרוני) רשומות מספר אבחנות. יש לנתח את הרקע ולזהות את המשמעות הקלינית החשובה ביותר.
+
+אבחנת החובה של היום: ${todayDx}. חובה שהיא תופיע ברשימת ה-diagnoses.
+
+כללים מחייבים:
+1. תרחיש (1-2 משפטים): "הגעת ל..." / "קיבלת מסמך רפואי של מטופל..." — גיל ומין ספציפיים, גוון מיום ליום (טווח גילאים רחב, לא תמיד קשיש).
+2. diagnoses: רשימה של 3-5 אבחנות פעילות בעברית, בפורמט מקצועי כפי שמופיע בתיק רפואי אמיתי (אפשר לשלב קיצור/מונח לועזי + הסבר קצר בעברית, לדוגמה "HTN — יתר לחץ דם"). האבחנה ${todayDx} חייבת להופיע בדיוק כפי שהיא. שאר האבחנות (2-4) הן קומורבידיות ריאליסטיות שסביר שיופיעו יחד איתה אצל מטופל אמיתי.
+3. שאלה: MCQ אחת שבודקת ידע קליני שקשור **ספציפית** לאבחנה ${todayDx} — כגון הסיבוך המרכזי לחשוש ממנו, שיקול טיפולי-שדה חשוב, או דגל אדום קשור. לא שאלת טריוויה כללית.
+4. 4 תשובות MCQ: אחת נכונה, שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
+5. הסבר (2-3 משפטים): מדוע התשובה נכונה, מה המשמעות הקלינית של האבחנה ${todayDx}, ומה יש לשים לב אליו בשטח.
+6. topic_tag: "${todayDx}"
+7. diagnosis_descriptions: עבור כל אבחנה ברשימת diagnoses — משפט אחד קצר בעברית שמסביר מה היא (בשפה פשוטה, לא טכנית).
+${HEBREW_RULES}
+${DIFFICULTY_RULES}
+פלט JSON תקני בלבד, ללא markdown:
+{
+  "scenario": "תיאור הסיטואציה (1-2 משפטים בעברית מקצועית)",
+  "diagnoses": ["אבחנה א", "אבחנה ב", "אבחנה ג"],
+  "diagnosis_descriptions": {"אבחנה א": "משפט קצר מה זה", "אבחנה ב": "משפט קצר מה זה"},
+  "question": "שאלה קלינית שקשורה ספציפית ל${todayDx}",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר (2-3 משפטים)",
+  "topic_tag": "${todayDx}"
 }`;
 }
 
@@ -765,6 +779,14 @@ async function generateMedBag(): Promise<MedBagQ> {
   return q;
 }
 
+async function generateActiveDx(): Promise<ActiveDxQ> {
+  const q = await withRetry(() => callGemini<ActiveDxQ>(buildActiveDxPrompt()));
+  if (!q.scenario || !Array.isArray(q.diagnoses) || q.diagnoses.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
+    throw new Error('Invalid active dx format');
+  }
+  return q;
+}
+
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
 function parseClinicalContent(c: ClinicalQuestion): ClinicalQuestion {
@@ -882,7 +904,7 @@ async function fetchGlobalStats(category: QuizCategory, correctIndex: number | n
 }
 
 async function shareChallengeResult(score: number): Promise<void> {
-  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/6! 🏆`;
+  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/7! 🏆`;
   const url = typeof window !== 'undefined' ? window.location.origin : '';
   const shareData: ShareData = { title: 'חובש +', text, url };
   try {
@@ -1154,9 +1176,9 @@ function SuccessScreen({ score, streak, onClose }: {
           className="text-center"
         >
           <p className="text-emt-light font-black text-2xl leading-tight">
-            {score === 6 ? '🏆 מושלם! כל הכבוד!' : score >= 5 ? '⭐ כמעט מושלם!' : score >= 4 ? '💪 מצוין!' : score >= 3 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
+            {score === 7 ? '🏆 מושלם! כל הכבוד!' : score >= 6 ? '⭐ כמעט מושלם!' : score >= 5 ? '💪 מצוין!' : score >= 3 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
           </p>
-          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/6</p>
+          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/7</p>
         </motion.div>
 
         {streak > 0 && (
@@ -1378,6 +1400,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [medBagStats, setMedBagStats] = useState<GlobalStats | null>(null);
   const [activeMedPopup, setActiveMedPopup] = useState<string | null>(null);
 
+  // Block G — Active Diagnoses (אבחנות פעילות)
+  const [activeDxStatus, setActiveDxStatus] = useState<LoadStatus>('idle');
+  const [activeDxQuestion, setActiveDxQuestion] = useState<ActiveDxQ | null>(null);
+  const [activeDxAnsweredIdx, setActiveDxAnsweredIdx] = useState<number | null>(null);
+  const [showActiveDxExpl, setShowActiveDxExpl] = useState(false);
+  const [activeDxStats, setActiveDxStats] = useState<GlobalStats | null>(null);
+  const [activeDxPopup, setActiveDxPopup] = useState<string | null>(null);
+
   // Overall
   const [streak, setStreak] = useState(0);
   const [completedDates, setCompletedDates] = useState<string[]>([]);
@@ -1404,8 +1434,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const redIsAnswered = redAnsweredIdx !== null;
   const spotIsAnswered = spotAnsweredIdx !== null;
   const medBagIsAnswered = medBagAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered;
-  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered;
+  const activeDxIsAnswered = activeDxAnsweredIdx !== null;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered && activeDxIsAnswered;
+  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered || activeDxIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
@@ -1414,9 +1445,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     redIsAnswered && redAnsweredIdx === redQuestion?.correct_index,
     spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index,
     medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index,
+    activeDxIsAnswered && activeDxAnsweredIdx === activeDxQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, improvIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, improvIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered, activeDxIsAnswered].filter(Boolean).length;
 
   const clinicalParticipantCount = (globalStats?.total ?? 0) + getParticipantBase();
 
@@ -1501,6 +1533,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       iconBorder: 'border-indigo-400/35',
       blockTitle: 'תיק התרופות',
       emoji: '🩺',
+    },
+    G: {
+      neonBorder: 'border-cyan-500/55',
+      glowColor: '0 0 30px rgba(34,211,238,0.22)',
+      cardBg: 'bg-gradient-to-b from-cyan-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(34,211,238,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(34,211,238,0.4)',
+      labelColor: 'text-cyan-400',
+      icon: <ClipboardList size={20} className="text-cyan-400" />,
+      iconBg: 'bg-cyan-400/20',
+      iconBorder: 'border-cyan-400/35',
+      blockTitle: 'אבחנות פעילות',
+      emoji: '📋',
     },
   };
 
@@ -1626,6 +1671,27 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       }).catch(() => setMedBagStatus('error'));
     }
 
+    const cachedActiveDx = loadCache<ActiveDxQ>(CACHE_KEYS.active_dx);
+    if (cachedActiveDx) {
+      setActiveDxQuestion(cachedActiveDx.data);
+      setActiveDxAnsweredIdx(cachedActiveDx.answeredIdx ?? null);
+      setActiveDxStatus('ready');
+      if (cachedActiveDx.answeredIdx !== null && cachedActiveDx.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('active_dx');
+        if (seeded) setActiveDxStats(seeded);
+        fetchGlobalStats('active_dx', cachedActiveDx.data.correct_index).then(({ stats }) => {
+          setActiveDxStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
+    } else {
+      setActiveDxStatus('loading');
+      fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx).then((q) => {
+        setActiveDxQuestion(q);
+        saveCache(CACHE_KEYS.active_dx, q);
+        setActiveDxStatus('ready');
+      }).catch(() => setActiveDxStatus('error'));
+    }
+
     // Fetch all participant counts for grid tiles
     const fetchParticipants = async () => {
       const t = getToday();
@@ -1635,7 +1701,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
@@ -1648,6 +1714,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           D: (counts['red_flag'] ?? 0) + base,
           E: (counts['spot_error'] ?? 0) + base,
           F: (counts['med_bag'] ?? 0) + base,
+          G: (counts['active_dx'] ?? 0) + base,
         });
       } catch { /* noop */ }
     };
@@ -1678,7 +1745,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
@@ -1691,6 +1758,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           D: (counts['red_flag'] ?? 0) + base,
           E: (counts['spot_error'] ?? 0) + base,
           F: (counts['med_bag'] ?? 0) + base,
+          G: (counts['active_dx'] ?? 0) + base,
         });
       } catch { /* noop */ }
     };
@@ -1751,6 +1819,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
       setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null); setActiveMedPopup(null);
+      setActiveDxStatus('idle'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null); setShowActiveDxExpl(false); setActiveDxStats(null); setActiveDxPopup(null);
       setShowSuccess(false);
       setShowCompetitionJoin(false);
       setCompetitionJoinName('');
@@ -1824,6 +1893,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag)
           .then(q => { setMedBagQuestion(q); saveCache(CACHE_KEYS.med_bag, q); setMedBagStatus('ready'); })
           .catch(() => setMedBagStatus('error'));
+      }
+    } else if (activeBlock === 'G' && activeDxStatus !== 'loading') {
+      if (!loadCache<ActiveDxQ>(CACHE_KEYS.active_dx)) {
+        setActiveDxStatus('loading'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null);
+        fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx)
+          .then(q => { setActiveDxQuestion(q); saveCache(CACHE_KEYS.active_dx, q); setActiveDxStatus('ready'); })
+          .catch(() => setActiveDxStatus('error'));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2082,6 +2158,29 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const { stats } = await fetchGlobalStats('med_bag', medBagQuestion.correct_index);
     setMedBagStats((prev) => (prev && stats.total < prev.total ? prev : stats));
   }, [medBagQuestion, medBagAnsweredIdx, competitionProfile, score, blocksCompleted]);
+
+  const handleActiveDxAnswer = useCallback(async (idx: number) => {
+    if (!activeDxQuestion || activeDxAnsweredIdx !== null) return;
+    const isCorrect = idx === activeDxQuestion.correct_index;
+    setActiveDxAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.active_dx, activeDxQuestion, idx);
+    setActiveDxStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_activedx_answered', { correct: isCorrect });
+    perBlockTimeRef.current['G'] = blockReadyTimeRef.current['G']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['G']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
+    await saveClinicalResponse('active_dx', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('active_dx', activeDxQuestion.correct_index);
+    setActiveDxStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [activeDxQuestion, activeDxAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   if (!isOpen) return null;
 
@@ -2824,6 +2923,144 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     );
   };
 
+  // ── Block G content ──
+  const renderBlockG = () => {
+    if (activeDxStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-cyan-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">מייצר תיק רפואי...</p>
+        </div>
+      );
+    }
+    if (activeDxStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setActiveDxStatus('loading'); fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx).then(q => { setActiveDxQuestion(q); saveCache(CACHE_KEYS.active_dx, q); setActiveDxStatus('ready'); }).catch(() => setActiveDxStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
+        </div>
+      );
+    }
+    if (!activeDxQuestion) return null;
+
+    const activeDxCorrect = activeDxAnsweredIdx === activeDxQuestion.correct_index;
+
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Game explanation */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
+          <ClipboardList size={14} className="text-cyan-400 shrink-0" />
+          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את התרחיש ואת האבחנות הפעילות של המטופל — ואז ענה על השאלה הקלינית.</p>
+        </div>
+
+        {/* Participant count — always show at least PARTICIPANT_BASE */}
+        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+          <Users size={11} className="text-emt-muted shrink-0" />
+          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+          <motion.span
+            key={blockParticipants['G'] ?? getParticipantBase()}
+            initial={{ scale: 0.9, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-[11px] font-black text-emt-light tabular-nums"
+          >
+            {(blockParticipants['G'] ?? getParticipantBase()).toLocaleString('he-IL')}
+          </motion.span>
+        </div>
+
+        {/* Scenario card */}
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(34,211,238,0.12)' }}>
+          <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest mb-2">התרחיש</p>
+          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{activeDxQuestion.scenario}</p>
+        </div>
+
+        {/* Active diagnoses card */}
+        <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white/50 text-[11px] font-black uppercase tracking-widest">הבחנות פעילות</p>
+            <span className="text-cyan-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {activeDxQuestion.diagnoses.map((dx, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveDxPopup(activeDxPopup === dx ? null : dx)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${activeDxPopup === dx ? 'bg-cyan-500/30 border-cyan-400/60' : 'bg-cyan-500/15 border-cyan-400/30'}`}
+              >
+                <ClipboardList size={12} className="text-cyan-300 shrink-0" />
+                <span className="text-cyan-200 text-[13px] font-bold">{dx}</span>
+              </button>
+            ))}
+          </div>
+          <AnimatePresence>
+            {activeDxPopup && (
+              <motion.div
+                key={activeDxPopup}
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="rounded-2xl bg-cyan-950/70 border border-cyan-400/25 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <ClipboardList size={11} className="text-cyan-300 shrink-0" />
+                    <span className="text-cyan-200 text-[12px] font-black">{activeDxPopup}</span>
+                  </div>
+                  {activeDxQuestion.diagnosis_descriptions?.[activeDxPopup] ? (
+                    <p className="text-white/70 text-[12px] leading-relaxed">{activeDxQuestion.diagnosis_descriptions[activeDxPopup]}</p>
+                  ) : (
+                    <p className="text-white/35 text-[11px] leading-relaxed">התיאור יופיע עם השאלה הבאה</p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/40 to-slate-950/60 border border-cyan-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{activeDxQuestion.question}</p>
+        </div>
+
+        {/* Result banner */}
+        {activeDxIsAnswered && (
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${activeDxCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {activeDxCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${activeDxCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {activeDxCorrect ? 'תשובה נכונה!' : 'לא בדיוק — ראה הסבר'}
+            </span>
+          </motion.div>
+        )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+
+        <MCQOptions
+          options={activeDxQuestion.options}
+          correctIndex={activeDxQuestion.correct_index}
+          answeredIdx={activeDxAnsweredIdx}
+          onAnswer={handleActiveDxAnswer}
+          stats={activeDxStats}
+          accentCorrect="border-cyan-400/55 bg-cyan-500/12 text-cyan-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {activeDxIsAnswered && !showActiveDxExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowActiveDxExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 border border-cyan-400/35 py-3.5 text-cyan-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
   // ── Block status helpers (for grid cards) ──
   const blockStatus = (id: BlockId): LoadStatus => {
     if (id === 'A') return clinicalStatus === 'idle' ? 'ready' : clinicalStatus;
@@ -2831,7 +3068,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return improvStatus;
     if (id === 'D') return redStatus;
     if (id === 'E') return spotStatus;
-    return medBagStatus;
+    if (id === 'F') return medBagStatus;
+    return activeDxStatus;
   };
 
   const blockIsAnswered = (id: BlockId): boolean => {
@@ -2840,7 +3078,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return improvIsAnswered;
     if (id === 'D') return redIsAnswered;
     if (id === 'E') return spotIsAnswered;
-    return medBagIsAnswered;
+    if (id === 'F') return medBagIsAnswered;
+    return activeDxIsAnswered;
   };
 
   const blockIsCorrect = (id: BlockId): boolean => {
@@ -2849,7 +3088,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'C') return improvIsAnswered && improvAnsweredIdx === improvQuestion?.correct_index;
     if (id === 'D') return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
     if (id === 'E') return spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index;
-    return medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index;
+    if (id === 'F') return medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index;
+    return activeDxIsAnswered && activeDxAnsweredIdx === activeDxQuestion?.correct_index;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3074,7 +3314,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               exit="exit"
               className="absolute inset-0 p-4"
             >
-              <div className="grid grid-cols-2 grid-rows-3 gap-3 h-full">
+              <div className="grid grid-cols-2 grid-rows-4 gap-3 h-full">
                 {(['A', 'B', 'C', 'D', 'E', 'F'] as BlockId[]).map((id) => (
                   <GridCard
                     key={id}
@@ -3086,6 +3326,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     onClick={() => setActiveBlock(id)}
                   />
                 ))}
+                <div className="col-span-2">
+                  <GridCard
+                    config={BLOCK_CONFIGS.G}
+                    status={blockStatus('G')}
+                    isAnswered={blockIsAnswered('G')}
+                    isCorrect={blockIsCorrect('G')}
+                    participantCount={blockParticipants.G}
+                    onClick={() => setActiveBlock('G')}
+                  />
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -3107,6 +3357,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   {activeBlock === 'D' && renderBlockD()}
                   {activeBlock === 'E' && renderBlockE()}
                   {activeBlock === 'F' && renderBlockF()}
+                  {activeBlock === 'G' && renderBlockG()}
                 </div>
               </div>
 
@@ -3182,6 +3433,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             isCorrect={medBagAnsweredIdx === medBagQuestion.correct_index}
             accentColor="purple"
             onClose={() => setShowMedBagExpl(false)}
+          />
+        )}
+        {showActiveDxExpl && activeDxQuestion && activeDxAnsweredIdx !== null && (
+          <SimpleExplanationModal
+            explanation={activeDxQuestion.explanation}
+            isCorrect={activeDxAnsweredIdx === activeDxQuestion.correct_index}
+            accentColor="purple"
+            onClose={() => setShowActiveDxExpl(false)}
           />
         )}
         {showSuccess && (
