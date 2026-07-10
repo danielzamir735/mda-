@@ -2,7 +2,7 @@
 import {
   X, Trophy, Brain, CheckCircle, XCircle, RefreshCw, Users, Clock,
   Share2, Pill, AlertTriangle, OctagonAlert, Zap, Flame, Star, ChevronLeft, Volume2,
-  Search, Stethoscope, Wrench, Info, Pencil, ClipboardList,
+  Search, Stethoscope, Wrench, Info, Pencil, ClipboardList, BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -11,13 +11,14 @@ import HapticButton from '../../../components/HapticButton';
 import { supabase } from '../../../lib/supabase';
 import { MED_CATEGORIES } from '../data/commonMedsData';
 import { DIAGNOSIS_POOL } from '../data/activeDiagnosesPool';
+import { CONCEPT_POOL } from '../data/medicalConceptsPool';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ClinicalCategory = 'bls' | 'als';
-type QuizCategory = ClinicalCategory | 'med_v3' | 'improvised' | 'red_flag' | 'spot_error' | 'med_bag' | 'active_dx';
+type QuizCategory = ClinicalCategory | 'med_v3' | 'improvised' | 'red_flag' | 'spot_error' | 'med_bag' | 'active_dx' | 'concept';
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
-type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+type BlockId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
 
 interface ClinicalQuestion {
   question: string;
@@ -79,14 +80,20 @@ interface MedBagQ {
 }
 
 interface ActiveDxQ {
-  scenario: string;
   diagnoses: string[];
-  diagnosis_descriptions: Record<string, string>;
   question: string;
   options: string[];
   correct_index: number;
   explanation: string;
   topic_tag: string;
+}
+
+interface ConceptQ {
+  topic: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
 }
 
 interface DayCache<T> {
@@ -140,6 +147,7 @@ const CACHE_KEYS = {
   spot_error: 'daily_challenge_spoterror_v2',
   med_bag: 'daily_challenge_medbag_v1',
   active_dx: 'daily_challenge_activedx_v1',
+  concept: 'daily_challenge_concept_v1',
 } as const;
 
 const STATS_CACHE_KEY: Record<QuizCategory, string> = {
@@ -151,6 +159,7 @@ const STATS_CACHE_KEY: Record<QuizCategory, string> = {
   spot_error: 'daily_stats_spoterror_v1',
   med_bag: 'daily_stats_medbag_v1',
   active_dx: 'daily_stats_activedx_v1',
+  concept: 'daily_stats_concept_v1',
 };
 
 const COMPETITION_OPT_OUT_KEY = 'daily_competition_opted_out';
@@ -318,6 +327,33 @@ ${DIFFICULTY_RULES}
   "correct_index": X,
   "clinical_pearl": "דגש קליני חשוב למדיק (1-2 משפטים)",
   "emergency_note": "אזהרת חירום ספציפית (1-2 משפטים)"
+}`;
+}
+
+// Deterministic "concept of the day" — identical hash technique to buildMedPrompt,
+// over the independent CONCEPT_POOL (must match the Edge Function's copy). The
+// ground-truth "fact" is fed into the prompt so the AI's correct answer is always
+// factually accurate — it only handles phrasing and distractors.
+function buildConceptPrompt(): string {
+  const today = getToday();
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) hash = (hash * 71 + today.charCodeAt(i)) >>> 0;
+  const entry = CONCEPT_POOL[hash % CONCEPT_POOL.length];
+
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "מושג היום" — טריוויה באנטומיה ובמינוח רפואי לחובשים ולפרמדיקים ישראלים.
+נושא היום: ${entry.topic}.
+העובדה הנכונה (חובה להתבסס עליה בדיוק, ללא סטייה): ${entry.fact}
+חובה לבנות שאלת MCQ אחת סביב הנושא הזה בלבד, שהתשובה הנכונה שלה תואמת בדיוק את העובדה שסופקה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+3 המסיחות חייבות להיות שגויות אך סבירות (לדוגמה: סדר הפוך, מספר שגוי, מבנה דומה אך שגוי) — לא אבסורדיות.
+שפה: עברית רפואית מקצועית, תמציתית וברורה.
+${HEBREW_RULES}
+פלט JSON בלבד, ללא markdown:
+{
+  "topic": "${entry.topic}",
+  "question": "שאלת MCQ ברורה על ${entry.topic}",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר קצר (1-2 משפטים) המבוסס על העובדה שסופקה"
 }`;
 }
 
@@ -546,43 +582,77 @@ ${avoidSection}
 }`;
 }
 
-// Deterministic "diagnosis of the day" — identical hash technique to buildMedPrompt,
-// over the independent DIAGNOSIS_POOL (must match the Edge Function's copy).
-function getTodayDiagnosis(): string {
-  const today = getToday();
+// Deterministic "active diagnoses" question — no story, no AI call. Real medical
+// records (per reference chart) list diagnoses as a plain abbreviated list; the user
+// must match them, in order, to their meanings — exactly like a real "active
+// diagnoses" section. Since correctness must be exact, this is generated entirely
+// in code from DIAGNOSIS_POOL (must match the Edge Function's copy) rather than by
+// Gemini, guaranteeing the "correct" option is always actually correct.
+function hashStr(s: string, mult: number): number {
   let hash = 0;
-  for (let i = 0; i < today.length; i++) hash = (hash * 41 + today.charCodeAt(i)) >>> 0;
-  const entry = DIAGNOSIS_POOL[hash % DIAGNOSIS_POOL.length];
-  return `${entry.abbr} — ${entry.he} (${entry.en})`;
+  for (let i = 0; i < s.length; i++) hash = (hash * mult + s.charCodeAt(i)) >>> 0;
+  return hash;
 }
 
-function buildActiveDxPrompt(): string {
-  const todayDx = getTodayDiagnosis();
-  return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "אבחנות פעילות" — חובש מגיע למטופל (בביתו או דרך תיק רפואי שהתקבל), ובסעיף "הבחנות פעילות" (רקע רפואי כרוני) רשומות מספר אבחנות. יש לנתח את הרקע ולזהות את המשמעות הקלינית החשובה ביותר.
+// All 24 permutations of [0,1,2,3]. Index 0 is the identity — reserved for "shown
+// order = correct order"; indices 1-23 are used to scramble wrong-answer options.
+const PERMUTATIONS_4 = [
+  [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1],
+  [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0], [1, 3, 0, 2], [1, 3, 2, 0],
+  [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3], [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0],
+  [3, 0, 1, 2], [3, 0, 2, 1], [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0],
+] as const;
 
-אבחנת החובה של היום: ${todayDx}. חובה שהיא תופיע ברשימת ה-diagnoses.
+function buildActiveDxQuestion(): ActiveDxQ {
+  const today = getToday();
+  const poolSize = DIAGNOSIS_POOL.length;
 
-כללים מחייבים:
-1. תרחיש (1-2 משפטים): "הגעת ל..." / "קיבלת מסמך רפואי של מטופל..." — גיל ומין ספציפיים, גוון מיום ליום (טווח גילאים רחב, לא תמיד קשיש).
-2. diagnoses: רשימה של 3-5 אבחנות פעילות בעברית, בפורמט מקצועי כפי שמופיע בתיק רפואי אמיתי (אפשר לשלב קיצור/מונח לועזי + הסבר קצר בעברית, לדוגמה "HTN — יתר לחץ דם"). האבחנה ${todayDx} חייבת להופיע בדיוק כפי שהיא. שאר האבחנות (2-4) הן קומורבידיות ריאליסטיות שסביר שיופיעו יחד איתה אצל מטופל אמיתי.
-3. שאלה: MCQ אחת שבודקת ידע קליני שקשור **ספציפית** לאבחנה ${todayDx} — כגון הסיבוך המרכזי לחשוש ממנו, שיקול טיפולי-שדה חשוב, או דגל אדום קשור. לא שאלת טריוויה כללית.
-4. 4 תשובות MCQ: אחת נכונה, שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
-5. הסבר (2-3 משפטים): מדוע התשובה נכונה, מה המשמעות הקלינית של האבחנה ${todayDx}, ומה יש לשים לב אליו בשטח.
-6. topic_tag: "${todayDx}"
-7. diagnosis_descriptions: עבור כל אבחנה ברשימת diagnoses — משפט אחד קצר בעברית שמסביר מה היא (בשפה פשוטה, לא טכנית).
-${HEBREW_RULES}
-${DIFFICULTY_RULES}
-פלט JSON תקני בלבד, ללא markdown:
-{
-  "scenario": "תיאור הסיטואציה (1-2 משפטים בעברית מקצועית)",
-  "diagnoses": ["אבחנה א", "אבחנה ב", "אבחנה ג"],
-  "diagnosis_descriptions": {"אבחנה א": "משפט קצר מה זה", "אבחנה ב": "משפט קצר מה זה"},
-  "question": "שאלה קלינית שקשורה ספציפית ל${todayDx}",
-  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
-  "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים)",
-  "topic_tag": "${todayDx}"
-}`;
+  // Pick 4 distinct entries — index 0 is always today's mandatory diagnosis, so
+  // it's guaranteed to appear (identical hash algorithm to buildMedPrompt).
+  const baseIdx = hashStr(today, 41) % poolSize;
+  const indices = [baseIdx];
+  for (let salt = 0; indices.length < 4; salt++) {
+    const idx = hashStr(`${today}_pick_${salt}`, 43) % poolSize;
+    if (!indices.includes(idx)) indices.push(idx);
+  }
+  const entries = indices.map((i) => DIAGNOSIS_POOL[i]);
+  const todayEntry = entries[0];
+
+  // Deterministic display order for the 4 diagnoses (so it isn't always shown first).
+  const dispPerm = PERMUTATIONS_4[hashStr(`${today}_disp`, 47) % 24];
+  const shown = dispPerm.map((i) => entries[i]);
+  const correctAnswer = shown.map((e) => e.he).join(', ');
+
+  // 3 distinct non-identity permutations of the SAME 4 meanings as wrong answers —
+  // i.e. plausible mis-matches, not unrelated terms.
+  const decoyPermIdxs: number[] = [];
+  for (let salt = 0; decoyPermIdxs.length < 3; salt++) {
+    const idx = hashStr(`${today}_decoy_${salt}`, 53) % 24;
+    if (idx !== 0 && !decoyPermIdxs.includes(idx)) decoyPermIdxs.push(idx);
+  }
+  const wrongAnswers = decoyPermIdxs.map((pIdx) =>
+    PERMUTATIONS_4[pIdx].map((i) => shown[i].he).join(', '),
+  );
+
+  const correctIndex = hashStr(`${today}_pos`, 67) % 4;
+  const options = ['', '', '', ''];
+  let wrongCursor = 0;
+  for (let i = 0; i < 4; i++) {
+    options[i] = i === correctIndex ? correctAnswer : wrongAnswers[wrongCursor++];
+  }
+
+  const explanation =
+    shown.map((e) => `${e.abbr} = ${e.he}`).join(' | ') +
+    `. שימו לב במיוחד ל-${todayEntry.abbr} (${todayEntry.en}) — ${todayEntry.he}.`;
+
+  return {
+    diagnoses: shown.map((e) => e.abbr),
+    question: 'לפי הסדר שבו האבחנות הפעילות רשומות למעלה, מהי הרשימה הנכונה של משמעותן?',
+    options,
+    correct_index: correctIndex,
+    explanation,
+    topic_tag: todayEntry.abbr,
+  };
 }
 
 // ─── Cache helpers ────────────────────────────────────────────────────────────
@@ -737,6 +807,14 @@ async function generateMed(): Promise<MedOfDay> {
   return m;
 }
 
+async function generateConcept(): Promise<ConceptQ> {
+  const c = await withRetry(() => callGemini<ConceptQ>(buildConceptPrompt()));
+  if (!c.topic || !c.question || !Array.isArray(c.options) || c.options.length !== 4 || typeof c.correct_index !== 'number') {
+    throw new Error('Invalid concept format');
+  }
+  return c;
+}
+
 async function generateImprovised(): Promise<ImprovisedQ> {
   const q = await withRetry(() => callGemini<ImprovisedQ>(buildImprovisedPrompt([])));
   if (!q.scenario || !q.question || !Array.isArray(q.options) || q.options.length !== 4) throw new Error('Invalid improvised format');
@@ -780,11 +858,8 @@ async function generateMedBag(): Promise<MedBagQ> {
 }
 
 async function generateActiveDx(): Promise<ActiveDxQ> {
-  const q = await withRetry(() => callGemini<ActiveDxQ>(buildActiveDxPrompt()));
-  if (!q.scenario || !Array.isArray(q.diagnoses) || q.diagnoses.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
-    throw new Error('Invalid active dx format');
-  }
-  return q;
+  // Deterministic — no Gemini call, see buildActiveDxQuestion() above.
+  return buildActiveDxQuestion();
 }
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
@@ -904,7 +979,7 @@ async function fetchGlobalStats(category: QuizCategory, correctIndex: number | n
 }
 
 async function shareChallengeResult(score: number): Promise<void> {
-  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/7! 🏆`;
+  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/8! 🏆`;
   const url = typeof window !== 'undefined' ? window.location.origin : '';
   const shareData: ShareData = { title: 'חובש +', text, url };
   try {
@@ -1176,9 +1251,9 @@ function SuccessScreen({ score, streak, onClose }: {
           className="text-center"
         >
           <p className="text-emt-light font-black text-2xl leading-tight">
-            {score === 7 ? '🏆 מושלם! כל הכבוד!' : score >= 6 ? '⭐ כמעט מושלם!' : score >= 5 ? '💪 מצוין!' : score >= 3 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
+            {score === 8 ? '🏆 מושלם! כל הכבוד!' : score >= 6 ? '⭐ כמעט מושלם!' : score >= 4 ? '💪 מצוין!' : score >= 2 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
           </p>
-          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/7</p>
+          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/8</p>
         </motion.div>
 
         {streak > 0 && (
@@ -1406,7 +1481,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const [activeDxAnsweredIdx, setActiveDxAnsweredIdx] = useState<number | null>(null);
   const [showActiveDxExpl, setShowActiveDxExpl] = useState(false);
   const [activeDxStats, setActiveDxStats] = useState<GlobalStats | null>(null);
-  const [activeDxPopup, setActiveDxPopup] = useState<string | null>(null);
+
+  // Block H — Concept of the Day (מושגים)
+  const [conceptStatus, setConceptStatus] = useState<LoadStatus>('idle');
+  const [conceptQuestion, setConceptQuestion] = useState<ConceptQ | null>(null);
+  const [conceptAnsweredIdx, setConceptAnsweredIdx] = useState<number | null>(null);
+  const [showConceptExpl, setShowConceptExpl] = useState(false);
+  const [conceptStats, setConceptStats] = useState<GlobalStats | null>(null);
 
   // Overall
   const [streak, setStreak] = useState(0);
@@ -1435,8 +1516,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   const spotIsAnswered = spotAnsweredIdx !== null;
   const medBagIsAnswered = medBagAnsweredIdx !== null;
   const activeDxIsAnswered = activeDxAnsweredIdx !== null;
-  const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered && activeDxIsAnswered;
-  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered || activeDxIsAnswered;
+  const conceptIsAnswered = conceptAnsweredIdx !== null;
+  const allAnswered = clinicalIsAnswered && medIsAnswered && improvIsAnswered && redIsAnswered && spotIsAnswered && medBagIsAnswered && activeDxIsAnswered && conceptIsAnswered;
+  const anyAnswered = clinicalIsAnswered || medIsAnswered || improvIsAnswered || redIsAnswered || spotIsAnswered || medBagIsAnswered || activeDxIsAnswered || conceptIsAnswered;
 
   const score = [
     clinicalIsAnswered && clinicalAnsweredIdx === clinicalQuestion?.correct_index,
@@ -1446,9 +1528,10 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index,
     medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index,
     activeDxIsAnswered && activeDxAnsweredIdx === activeDxQuestion?.correct_index,
+    conceptIsAnswered && conceptAnsweredIdx === conceptQuestion?.correct_index,
   ].filter(Boolean).length;
 
-  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, improvIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered, activeDxIsAnswered].filter(Boolean).length;
+  const blocksCompleted = [clinicalIsAnswered, medIsAnswered, improvIsAnswered, redIsAnswered, spotIsAnswered, medBagIsAnswered, activeDxIsAnswered, conceptIsAnswered].filter(Boolean).length;
 
   const clinicalParticipantCount = (globalStats?.total ?? 0) + getParticipantBase();
 
@@ -1546,6 +1629,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       iconBorder: 'border-cyan-400/35',
       blockTitle: 'אבחנות פעילות',
       emoji: '📋',
+    },
+    H: {
+      neonBorder: 'border-violet-500/55',
+      glowColor: '0 0 30px rgba(167,139,250,0.22)',
+      cardBg: 'bg-gradient-to-b from-violet-950/50 to-slate-950',
+      topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.7) 0%, transparent 70%)',
+      iconGlow: '0 0 22px rgba(167,139,250,0.4)',
+      labelColor: 'text-violet-400',
+      icon: <BookOpen size={20} className="text-violet-400" />,
+      iconBg: 'bg-violet-400/20',
+      iconBorder: 'border-violet-400/35',
+      blockTitle: 'מושגים',
+      emoji: '🧠',
     },
   };
 
@@ -1692,6 +1788,27 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       }).catch(() => setActiveDxStatus('error'));
     }
 
+    const cachedConcept = loadCache<ConceptQ>(CACHE_KEYS.concept);
+    if (cachedConcept) {
+      setConceptQuestion(cachedConcept.data);
+      setConceptAnsweredIdx(cachedConcept.answeredIdx ?? null);
+      setConceptStatus('ready');
+      if (cachedConcept.answeredIdx !== null && cachedConcept.answeredIdx !== undefined) {
+        const seeded = loadCachedStats('concept');
+        if (seeded) setConceptStats(seeded);
+        fetchGlobalStats('concept', cachedConcept.data.correct_index).then(({ stats }) => {
+          setConceptStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+        });
+      }
+    } else {
+      setConceptStatus('loading');
+      fetchOrCreateBlock<ConceptQ>('concept', generateConcept).then((q) => {
+        setConceptQuestion(q);
+        saveCache(CACHE_KEYS.concept, q);
+        setConceptStatus('ready');
+      }).catch(() => setConceptStatus('error'));
+    }
+
     // Fetch all participant counts for grid tiles
     const fetchParticipants = async () => {
       const t = getToday();
@@ -1701,7 +1818,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx', 'concept']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
@@ -1715,6 +1832,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           E: (counts['spot_error'] ?? 0) + base,
           F: (counts['med_bag'] ?? 0) + base,
           G: (counts['active_dx'] ?? 0) + base,
+          H: (counts['concept'] ?? 0) + base,
         });
       } catch { /* noop */ }
     };
@@ -1745,7 +1863,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           .from('daily_responses')
           .select('question_type')
           .eq('question_date', t)
-          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx']);
+          .in('question_type', ['bls', 'als', 'med_v3', 'improvised', 'red_flag', 'spot_error', 'med_bag', 'active_dx', 'concept']);
         if (!data) return;
         const counts: Record<string, number> = {};
         data.forEach((r: { question_type: string }) => {
@@ -1759,6 +1877,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           E: (counts['spot_error'] ?? 0) + base,
           F: (counts['med_bag'] ?? 0) + base,
           G: (counts['active_dx'] ?? 0) + base,
+          H: (counts['concept'] ?? 0) + base,
         });
       } catch { /* noop */ }
     };
@@ -1819,7 +1938,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       setRedStatus('idle'); setRedQuestion(null); setRedAnsweredIdx(null); setShowRedExpl(false); setRedStats(null);
       setSpotStatus('idle'); setSpotQuestion(null); setSpotAnsweredIdx(null); setShowSpotExpl(false); setSpotStats(null);
       setMedBagStatus('idle'); setMedBagQuestion(null); setMedBagAnsweredIdx(null); setShowMedBagExpl(false); setMedBagStats(null); setActiveMedPopup(null);
-      setActiveDxStatus('idle'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null); setShowActiveDxExpl(false); setActiveDxStats(null); setActiveDxPopup(null);
+      setActiveDxStatus('idle'); setActiveDxQuestion(null); setActiveDxAnsweredIdx(null); setShowActiveDxExpl(false); setActiveDxStats(null);
+      setConceptStatus('idle'); setConceptQuestion(null); setConceptAnsweredIdx(null); setShowConceptExpl(false); setConceptStats(null);
       setShowSuccess(false);
       setShowCompetitionJoin(false);
       setCompetitionJoinName('');
@@ -1900,6 +2020,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx)
           .then(q => { setActiveDxQuestion(q); saveCache(CACHE_KEYS.active_dx, q); setActiveDxStatus('ready'); })
           .catch(() => setActiveDxStatus('error'));
+      }
+    } else if (activeBlock === 'H' && conceptStatus !== 'loading') {
+      if (!loadCache<ConceptQ>(CACHE_KEYS.concept)) {
+        setConceptStatus('loading'); setConceptQuestion(null); setConceptAnsweredIdx(null);
+        fetchOrCreateBlock<ConceptQ>('concept', generateConcept)
+          .then(q => { setConceptQuestion(q); saveCache(CACHE_KEYS.concept, q); setConceptStatus('ready'); })
+          .catch(() => setConceptStatus('error'));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2181,6 +2308,29 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const { stats } = await fetchGlobalStats('active_dx', activeDxQuestion.correct_index);
     setActiveDxStats((prev) => (prev && stats.total < prev.total ? prev : stats));
   }, [activeDxQuestion, activeDxAnsweredIdx, competitionProfile, score, blocksCompleted]);
+
+  const handleConceptAnswer = useCallback(async (idx: number) => {
+    if (!conceptQuestion || conceptAnsweredIdx !== null) return;
+    const isCorrect = idx === conceptQuestion.correct_index;
+    setConceptAnsweredIdx(idx);
+    saveCache(CACHE_KEYS.concept, conceptQuestion, idx);
+    setConceptStats((prev) => {
+      const base = prev ?? { total: 0, correct: 0, answer_counts: [0, 0, 0, 0] };
+      const counts = [...base.answer_counts];
+      counts[idx] = (counts[idx] ?? 0) + 1;
+      return { total: base.total + 1, correct: base.correct + (isCorrect ? 1 : 0), answer_counts: counts };
+    });
+    trackEvent('daily_challenge_concept_answered', { correct: isCorrect });
+    perBlockTimeRef.current['H'] = blockReadyTimeRef.current['H']
+      ? Math.round((Date.now() - blockReadyTimeRef.current['H']) / 1000) : 0;
+    if (competitionProfile) {
+      const totalTime = (Object.values(perBlockTimeRef.current) as number[]).reduce((a, b) => a + (b ?? 0), 0);
+      upsertCompetitionEntry(competitionProfile, score + (isCorrect ? 1 : 0), totalTime, blocksCompleted + 1);
+    }
+    await saveClinicalResponse('concept', isCorrect, 0, idx);
+    const { stats } = await fetchGlobalStats('concept', conceptQuestion.correct_index);
+    setConceptStats((prev) => (prev && stats.total < prev.total ? prev : stats));
+  }, [conceptQuestion, conceptAnsweredIdx, competitionProfile, score, blocksCompleted]);
 
   if (!isOpen) return null;
 
@@ -2929,7 +3079,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
           <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-cyan-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תיק רפואי...</p>
+          <p className="text-emt-muted text-xs font-semibold">טוען אבחנות...</p>
         </div>
       );
     }
@@ -2953,7 +3103,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
           <ClipboardList size={14} className="text-cyan-400 shrink-0" />
-          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">קרא את התרחיש ואת האבחנות הפעילות של המטופל — ואז ענה על השאלה הקלינית.</p>
+          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">בתיק הרפואי של המטופל רשומות ההבחנות הפעילות הבאות — התאם אותן, לפי הסדר, למשמעותן הנכונה.</p>
         </div>
 
         {/* Participant count — always show at least PARTICIPANT_BASE */}
@@ -2970,55 +3120,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           </motion.span>
         </div>
 
-        {/* Scenario card */}
+        {/* Active diagnoses list — plain, like a real medical record printout */}
         <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(34,211,238,0.12)' }}>
-          <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest mb-2">התרחיש</p>
-          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{activeDxQuestion.scenario}</p>
-        </div>
-
-        {/* Active diagnoses card */}
-        <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-white/50 text-[11px] font-black uppercase tracking-widest">הבחנות פעילות</p>
-            <span className="text-cyan-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest mb-3">הבחנות פעילות</p>
+          <ul className="flex flex-col gap-2">
             {activeDxQuestion.diagnoses.map((dx, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveDxPopup(activeDxPopup === dx ? null : dx)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${activeDxPopup === dx ? 'bg-cyan-500/30 border-cyan-400/60' : 'bg-cyan-500/15 border-cyan-400/30'}`}
-              >
-                <ClipboardList size={12} className="text-cyan-300 shrink-0" />
-                <span className="text-cyan-200 text-[13px] font-bold">{dx}</span>
-              </button>
+              <li key={i} className="flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                <span className="text-white/90 text-[15px] font-bold tracking-wide" dir="ltr">{dx}</span>
+              </li>
             ))}
-          </div>
-          <AnimatePresence>
-            {activeDxPopup && (
-              <motion.div
-                key={activeDxPopup}
-                initial={{ opacity: 0, y: -6, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: -6, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="mt-3 overflow-hidden"
-              >
-                <div className="rounded-2xl bg-cyan-950/70 border border-cyan-400/25 px-4 py-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <ClipboardList size={11} className="text-cyan-300 shrink-0" />
-                    <span className="text-cyan-200 text-[12px] font-black">{activeDxPopup}</span>
-                  </div>
-                  {activeDxQuestion.diagnosis_descriptions?.[activeDxPopup] ? (
-                    <p className="text-white/70 text-[12px] leading-relaxed">{activeDxQuestion.diagnosis_descriptions[activeDxPopup]}</p>
-                  ) : (
-                    <p className="text-white/35 text-[11px] leading-relaxed">התיאור יופיע עם השאלה הבאה</p>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </ul>
         </div>
 
         {/* Question */}
@@ -3061,6 +3174,100 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     );
   };
 
+  // ── Block H content ──
+  const renderBlockH = () => {
+    if (conceptStatus === 'loading') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-violet-400/60 animate-spin" />
+          <p className="text-emt-muted text-xs font-semibold">טוען מושג...</p>
+        </div>
+      );
+    }
+    if (conceptStatus === 'error') {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <XCircle size={28} className="text-red-400" />
+          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <HapticButton onClick={() => { setConceptStatus('loading'); fetchOrCreateBlock<ConceptQ>('concept', generateConcept).then(q => { setConceptQuestion(q); saveCache(CACHE_KEYS.concept, q); setConceptStatus('ready'); }).catch(() => setConceptStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-violet-400/15 border border-violet-400/30 text-violet-300 font-bold text-xs">
+            <RefreshCw size={13} />נסה שוב
+          </HapticButton>
+        </div>
+      );
+    }
+    if (!conceptQuestion) return null;
+
+    const conceptCorrect = conceptAnsweredIdx === conceptQuestion.correct_index;
+
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Game explanation */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-violet-500/8 border border-violet-400/20">
+          <BookOpen size={14} className="text-violet-400 shrink-0" />
+          <p className="text-violet-300/80 text-[13px] font-semibold leading-snug">טריוויה יומית באנטומיה ובמינוח רפואי — בדוק את הידע הבסיסי שלך.</p>
+        </div>
+
+        {/* Participant count */}
+        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
+          <Users size={11} className="text-emt-muted shrink-0" />
+          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+          <motion.span
+            key={blockParticipants['H'] ?? getParticipantBase()}
+            initial={{ scale: 0.9, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-[11px] font-black text-emt-light tabular-nums"
+          >
+            {(blockParticipants['H'] ?? getParticipantBase()).toLocaleString('he-IL')}
+          </motion.span>
+        </div>
+
+        {/* Topic card */}
+        <div className="rounded-3xl bg-gradient-to-b from-violet-950/50 to-slate-950 border border-violet-500/30 p-5"
+          style={{ boxShadow: '0 0 26px rgba(167,139,250,0.12)' }}>
+          <p className="text-violet-200/70 text-[11px] font-black uppercase tracking-widest mb-2">מושג היום</p>
+          <p className="text-white/90 text-[16px] leading-[1.5] font-black text-center">{conceptQuestion.topic}</p>
+        </div>
+
+        {/* Question */}
+        <div className="rounded-3xl bg-gradient-to-b from-violet-950/40 to-slate-950/60 border border-violet-400/30 p-5">
+          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{conceptQuestion.question}</p>
+        </div>
+
+        {/* Result banner */}
+        {conceptIsAnswered && (
+          <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${conceptCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
+            {conceptCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${conceptCorrect ? 'text-green-300' : 'text-red-300'}`}>
+              {conceptCorrect ? 'תשובה נכונה!' : 'לא בדיוק — ראה הסבר'}
+            </span>
+          </motion.div>
+        )}
+
+        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+
+        <MCQOptions
+          options={conceptQuestion.options}
+          correctIndex={conceptQuestion.correct_index}
+          answeredIdx={conceptAnsweredIdx}
+          onAnswer={handleConceptAnswer}
+          stats={conceptStats}
+          accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+        />
+
+        {conceptIsAnswered && !showConceptExpl && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <HapticButton onClick={() => setShowConceptExpl(true)} hapticPattern={10} pressScale={0.96}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-violet-400/15 border border-violet-400/35 py-3.5 text-violet-300 font-bold text-sm">
+              <Brain size={14} />הצג הסבר
+            </HapticButton>
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
   // ── Block status helpers (for grid cards) ──
   const blockStatus = (id: BlockId): LoadStatus => {
     if (id === 'A') return clinicalStatus === 'idle' ? 'ready' : clinicalStatus;
@@ -3069,7 +3276,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'D') return redStatus;
     if (id === 'E') return spotStatus;
     if (id === 'F') return medBagStatus;
-    return activeDxStatus;
+    if (id === 'G') return activeDxStatus;
+    return conceptStatus;
   };
 
   const blockIsAnswered = (id: BlockId): boolean => {
@@ -3079,7 +3287,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'D') return redIsAnswered;
     if (id === 'E') return spotIsAnswered;
     if (id === 'F') return medBagIsAnswered;
-    return activeDxIsAnswered;
+    if (id === 'G') return activeDxIsAnswered;
+    return conceptIsAnswered;
   };
 
   const blockIsCorrect = (id: BlockId): boolean => {
@@ -3089,7 +3298,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (id === 'D') return redIsAnswered && redAnsweredIdx === redQuestion?.correct_index;
     if (id === 'E') return spotIsAnswered && spotAnsweredIdx === spotQuestion?.correct_index;
     if (id === 'F') return medBagIsAnswered && medBagAnsweredIdx === medBagQuestion?.correct_index;
-    return activeDxIsAnswered && activeDxAnsweredIdx === activeDxQuestion?.correct_index;
+    if (id === 'G') return activeDxIsAnswered && activeDxAnsweredIdx === activeDxQuestion?.correct_index;
+    return conceptIsAnswered && conceptAnsweredIdx === conceptQuestion?.correct_index;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3315,7 +3525,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               className="absolute inset-0 p-4"
             >
               <div className="grid grid-cols-2 grid-rows-4 gap-3 h-full">
-                {(['A', 'B', 'C', 'D', 'E', 'F'] as BlockId[]).map((id) => (
+                {(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as BlockId[]).map((id) => (
                   <GridCard
                     key={id}
                     config={BLOCK_CONFIGS[id]}
@@ -3326,16 +3536,6 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     onClick={() => setActiveBlock(id)}
                   />
                 ))}
-                <div className="col-span-2">
-                  <GridCard
-                    config={BLOCK_CONFIGS.G}
-                    status={blockStatus('G')}
-                    isAnswered={blockIsAnswered('G')}
-                    isCorrect={blockIsCorrect('G')}
-                    participantCount={blockParticipants.G}
-                    onClick={() => setActiveBlock('G')}
-                  />
-                </div>
               </div>
             </motion.div>
           ) : (
@@ -3358,6 +3558,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   {activeBlock === 'E' && renderBlockE()}
                   {activeBlock === 'F' && renderBlockF()}
                   {activeBlock === 'G' && renderBlockG()}
+                  {activeBlock === 'H' && renderBlockH()}
                 </div>
               </div>
 
@@ -3441,6 +3642,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             isCorrect={activeDxAnsweredIdx === activeDxQuestion.correct_index}
             accentColor="purple"
             onClose={() => setShowActiveDxExpl(false)}
+          />
+        )}
+        {showConceptExpl && conceptQuestion && conceptAnsweredIdx !== null && (
+          <SimpleExplanationModal
+            explanation={conceptQuestion.explanation}
+            isCorrect={conceptAnsweredIdx === conceptQuestion.correct_index}
+            accentColor="purple"
+            onClose={() => setShowConceptExpl(false)}
           />
         )}
         {showSuccess && (

@@ -223,6 +223,118 @@ ${DIFFICULTY_RULES}
 }`
 }
 
+// "מושגים" pool — must stay identical to CONCEPT_POOL in
+// src/features/hub/data/medicalConceptsPool.ts. Deno can't import from src/, so
+// this is a hand-maintained literal copy.
+interface ConceptEntry { topic: string; fact: string }
+
+const CONCEPT_POOL: ConceptEntry[] = [
+  { topic: 'שכבות הלב', fact: 'מבפנים כלפי חוץ: אנדוקרדיום (Endocardium) ← מיוקרדיום (Myocardium) ← אפיקרדיום (Epicardium).' },
+  { topic: 'שכבות קרומי המוח (מנינגים)', fact: 'מבחוץ כלפי פנים: דורה מאטר (Dura Mater) ← ארכנואיד (Arachnoid Mater) ← פיה מאטר (Pia Mater).' },
+  { topic: 'שכבות העור', fact: 'מבחוץ כלפי פנים: אפידרמיס (Epidermis) ← דרמיס (Dermis) ← היפודרמיס/רקמת תת-עורית (Hypodermis).' },
+  { topic: 'שכבות דופן העורק', fact: 'מבפנים כלפי חוץ: טוניקה אינטימה (Tunica Intima) ← טוניקה מדיה (Tunica Media) ← טוניקה אדוונטיציה (Tunica Adventitia).' },
+  { topic: 'שכבות דופן מערכת העיכול', fact: 'מבפנים כלפי חוץ: רירית (Mucosa) ← תת-רירית (Submucosa) ← שכבת שריר (Muscularis) ← סרוזה (Serosa).' },
+  { topic: 'שכבות הקרנית בעין', fact: 'מבחוץ כלפי פנים: אפיתל ← ממברנת באומן ← סטרומה ← ממברנת דסמט ← אנדותל.' },
+  { topic: 'חלוקת האוזן', fact: 'שלושה חלקים: אוזן חיצונית, אוזן תיכונה, אוזן פנימית.' },
+  { topic: 'שכבות הרחם', fact: 'מבפנים כלפי חוץ: אנדומטריום (Endometrium) ← מיומטריום (Myometrium) ← פרימטריום (Perimetrium).' },
+  { topic: 'שכבות דופן הריאה (פלאורה)', fact: 'שני עלים: פלאורה ויסצרלית (צמודה לריאה) ופלאורה פריאטלית (צמודה לדופן החזה), עם חלל פלאורלי ביניהם.' },
+  { topic: 'שכבות עצם ארוכה', fact: 'מבחוץ כלפי פנים: פריאוסטאום (קרום העצם) ← עצם קורטיקלית (קומפקטית) ← עצם ספוגית (טרבקולרית) ← חלל מח העצם.' },
+  { topic: 'עצם החזה', fact: 'שלושה חלקים: מנוברייום (Manubrium) למעלה, גוף עצם החזה (Body) באמצע, ותהליך החרבי (Xiphoid Process) בקצה התחתון.' },
+  { topic: 'מספר צלעות באדם', fact: '12 זוגות צלעות (24 צלעות בסך הכול) — 7 זוגות אמיתיות, 3 זוגות כוזבות, 2 זוגות צפות.' },
+  { topic: 'חוליות עמוד השדרה', fact: '7 חוליות צוואריות (Cervical), 12 חוליות גביות (Thoracic), 5 חוליות מותניות (Lumbar), 5 חוליות עצה מאוחות (Sacral), 4 חוליות זנב מאוחות (Coccygeal).' },
+  { topic: 'עצם הבריח', fact: 'קלוויקולה (Clavicle) — העצם המחברת את עצם החזה ללוח השכמה, מעל בית החזה.' },
+  { topic: 'לוח השכמה', fact: 'סקפולה (Scapula) — עצם שטוחה משולשת בגב העליון, חלק מחגורת הכתפיים.' },
+  { topic: 'עצמות הזרוע התחתונה', fact: 'שתי עצמות: רדיוס (Radius, בצד האגודל) ואולנה (Ulna, בצד הזרת).' },
+  { topic: 'עצמות השוק', fact: 'שתי עצמות: טיביה (Tibia, עצם השוק הגדולה, פנימית) ופיבולה (Fibula, עצם השוק הקטנה, חיצונית).' },
+  { topic: 'עצם הירך', fact: 'פמור (Femur) — העצם הארוכה והחזקה ביותר בגוף.' },
+  { topic: 'עצם הפיקה', fact: 'פטלה (Patella) — עצם ססמואידית מעל מפרק הברך.' },
+  { topic: 'עצם הלסת התחתונה', fact: 'מנדיבולה (Mandible) — העצם הנעה היחידה בגולגולת.' },
+  { topic: 'עצמות הגולגולת החזיתיות', fact: 'עצם המצח (Frontal), שתי עצמות הרקה (Temporal), שתי עצמות הלחי (Zygomatic), עצם הלסת העליונה (Maxilla).' },
+  { topic: 'מספר שיניים במבוגר', fact: '32 שיניים קבועות במבוגר.' },
+  { topic: 'מבנה חגורת האגן', fact: 'שלוש עצמות מאוחות: איליום (Ilium), איסכיום (Ischium), ופוביס (Pubis).' },
+  { topic: 'תהליך החרבי', fact: 'Xiphoid Process — קצה סחוסי-עצמי בתחתית עצם החזה; משמש נקודת ציון למיקום הלחיצות ב-CPR.' },
+  { topic: 'זווית לואי', fact: 'Angle of Louis (Sternal Angle) — נקודת החיבור בין המנוברייום לגוף עצם החזה, בגובה הצלע השנייה; נקודת ציון לספירת צלעות.' },
+  { topic: 'פרוקסימלי לעומת דיסטלי', fact: 'פרוקסימלי (Proximal) = קרוב יותר לגו/למרכז הגוף; דיסטלי (Distal) = רחוק יותר ממנו.' },
+  { topic: 'אנטריורי לעומת פוסטריורי', fact: 'אנטריורי (Anterior) = צד הקדמי של הגוף; פוסטריורי (Posterior) = הצד האחורי.' },
+  { topic: 'סופריורי לעומת אינפריורי', fact: 'סופריורי (Superior) = כלפי מעלה/ראש; אינפריורי (Inferior) = כלפי מטה/רגליים.' },
+  { topic: 'מדיאלי לעומת לטראלי', fact: 'מדיאלי (Medial) = קרוב יותר לקו האמצע של הגוף; לטראלי (Lateral) = רחוק יותר ממנו, לצדדים.' },
+  { topic: 'סופרפיציאלי לעומת עמוק', fact: 'סופרפיציאלי (Superficial) = קרוב יותר לפני השטח של העור; עמוק (Deep) = רחוק יותר מפני השטח, פנימה.' },
+  { topic: 'תנוחת שכיבה — סופיין לעומת פרון', fact: 'סופיין (Supine) = שכיבה על הגב; פרון (Prone) = שכיבה על הבטן.' },
+  { topic: 'פלקציה לעומת אקסטנציה', fact: 'פלקציה (Flexion) = כיפוף המפרק, מקטין את הזווית; אקסטנציה (Extension) = יישור המפרק, מגדיל את הזווית.' },
+  { topic: 'מישור סגיטלי', fact: 'מישור אורכי המחלק את הגוף לצד ימין וצד שמאל.' },
+  { topic: 'מישור קורונלי', fact: 'מישור המחלק את הגוף לחלק קדמי (אנטריורי) וחלק אחורי (פוסטריורי).' },
+  { topic: 'מישור טרנסברסלי', fact: 'מישור אופקי המחלק את הגוף לחלק עליון וחלק תחתון.' },
+  { topic: 'קו אמצע הבריח', fact: 'Midclavicular Line — קו אנכי דמיוני העובר במרכז עצם הבריח; משמש נקודת ציון למיקום הלחיצות ב-CPR ולנקז חזה.' },
+  { topic: 'קידומת Cardio-', fact: 'מתייחסת ללב — לדוגמה Cardiomyopathy = מחלת שריר הלב.' },
+  { topic: 'קידומת Neuro-', fact: 'מתייחסת למערכת העצבים — לדוגמה Neuropathy = מחלה/פגיעה בעצבים.' },
+  { topic: 'קידומת Hepato-', fact: 'מתייחסת לכבד — לדוגמה Hepatitis = דלקת כבד.' },
+  { topic: 'קידומת Nephro-', fact: 'מתייחסת לכליה — לדוגמה Nephrolithiasis = אבנים בכליות.' },
+  { topic: 'קידומת Gastro-', fact: 'מתייחסת לקיבה/מערכת העיכול — לדוגמה Gastritis = דלקת קיבה.' },
+  { topic: 'קידומת Dermato-', fact: 'מתייחסת לעור — לדוגמה Dermatitis = דלקת עור.' },
+  { topic: 'קידומת Osteo-', fact: 'מתייחסת לעצם — לדוגמה Osteoporosis = בריחת סידן מהעצם.' },
+  { topic: 'קידומת Brady-', fact: 'מציינת קצב איטי — לדוגמה Bradycardia = דופק לב איטי מהתקין.' },
+  { topic: 'קידומת Tachy-', fact: 'מציינת קצב מהיר — לדוגמה Tachycardia = דופק לב מהיר מהתקין.' },
+  { topic: 'קידומת Hyper-', fact: 'מציינת עודף/יתר — לדוגמה Hypertension = יתר לחץ דם.' },
+  { topic: 'קידומת Hypo-', fact: 'מציינת חוסר/תת — לדוגמה Hypoglycemia = רמת סוכר נמוכה מהתקין בדם.' },
+  { topic: 'סיומת -itis', fact: 'מציינת דלקת — לדוגמה Appendicitis = דלקת התוספתן.' },
+  { topic: 'סיומת -osis', fact: 'מציינת מצב/תהליך כרוני, לרוב לא דלקתי — לדוגמה Cirrhosis = שחמת הכבד.' },
+  { topic: 'סיומת -ectomy', fact: 'מציינת כריתה ניתוחית של איבר — לדוגמה Appendectomy = כריתת התוספתן.' },
+  { topic: 'סיומת -otomy', fact: 'מציינת חתך/פתיחה ניתוחית — לדוגמה Tracheotomy = חתך בקנה הנשימה.' },
+  { topic: 'סיומת -ostomy', fact: 'מציינת יצירת פתח קבוע (סטומה) — לדוגמה Colostomy = פתח קבוע מהמעי הגס לדופן הבטן.' },
+  { topic: 'סיומת -algia', fact: 'מציינת כאב — לדוגמה Neuralgia = כאב עצבי.' },
+  { topic: 'סיומת -emia', fact: 'מציינת מצב הקשור בדם — לדוגמה Anemia = מיעוט תאי דם אדומים/המוגלובין.' },
+  { topic: 'קידומת Dys-', fact: 'מציינת קושי/הפרעה בתפקוד — לדוגמה Dyspnea = קושי בנשימה.' },
+  { topic: 'קידומת A- / An-', fact: 'מציינת היעדר/חוסר — לדוגמה Apnea = היעדר נשימה.' },
+  { topic: 'קידומת Poly-', fact: 'מציינת ריבוי — לדוגמה Polyuria = הטלת שתן מרובה.' },
+  { topic: 'הקרינה (Carina)', fact: 'נקודת ההתפצלות של קנה הנשימה לשתי הסמפונות הראשיות (ברונכוסים), בגובה הצלע הרביעית בערך.' },
+  { topic: 'סחוס הקריקואיד', fact: 'Cricoid Cartilage — הטבעת הסחוסית התחתונה ביותר בגרון; נקודת ציון לחסימת הוושט (תמרון סליק) ולקוניקוטומיה.' },
+  { topic: 'סחוס התירואיד ופיקת הגרגרת', fact: 'Thyroid Cartilage — הסחוס הבולט בקדמת הגרון ("תפוח אדם"), מעל סחוס הקריקואיד.' },
+  { topic: 'הממברנה הקריקותירואידית', fact: 'הרקמה הרכה בין סחוס התירואיד לסחוס הקריקואיד; נקודת הכניסה בקוניקוטומיה.' },
+  { topic: 'תהליך המסטואיד', fact: 'Mastoid Process — הבליטה העצמית מאחורי האוזן; שטף דם מקומי (Battle Sign) מעיד על שבר בבסיס הגולגולת.' },
+  { topic: 'נקודת מקברני', fact: "McBurney's Point — נקודה בין הטבור לעצם האגן הימנית, רגישה במיוחד בדלקת התוספתן." },
+  { topic: 'הקשת הקוסטלית', fact: 'Costal Margin — הגבול התחתון של בית החזה, נוצר מהחיבור של הצלעות הכוזבות.' },
+  { topic: 'מספר אונות הריאות', fact: 'הריאה הימנית מחולקת ל-3 אונות; הריאה השמאלית מחולקת ל-2 אונות (מקום ללב).' },
+  { topic: 'מספר חדרי הלב', fact: '4 חדרים: עלייה ימנית, חדר ימני, עלייה שמאלית, חדר שמאלי.' },
+  { topic: 'מספר הכליות ומיקומן', fact: '2 כליות, ממוקמות רטרופריטונאלית (מאחורי חלל הצפק), משני צדי עמוד השדרה.' },
+  { topic: 'מספר עצבי הגולגולת', fact: '12 זוגות עצבי גולגולת (Cranial Nerves), היוצאים ישירות מהמוח.' },
+  { topic: 'החלוקה של חוט השדרה', fact: 'ארבעה אזורים: צווארי (Cervical), גבי (Thoracic), מותני (Lumbar), עצה (Sacral).' },
+  { topic: 'שקית המים העוברית', fact: 'Amniotic Sac — השק המכיל את הנוזל השפיר המקיף את העובר.' },
+  { topic: 'המחיצה הבין-חדרית', fact: 'Interventricular Septum — הדופן השרירית המפרידה בין החדר הימני לחדר השמאלי בלב.' },
+  { topic: 'מספר עצמות בגוף המבוגר', fact: '206 עצמות בשלד המבוגר.' },
+  { topic: 'המערכת הלימפטית', fact: 'רשת כלים ובלוטות (Lymph Nodes) שתפקידה ניקוז נוזלים והשתתפות בתגובה החיסונית.' },
+  { topic: 'הצומת הסינוסי (SA Node)', fact: 'קוצב הלב הטבעי, ממוקם בעלייה הימנית; יוזם את הדחף החשמלי לכל פעימת לב.' },
+  { topic: 'הצומת האטריו-חדרי (AV Node)', fact: 'מעביר את הדחף החשמלי מהעליות לחדרים, ומעכב אותו מעט כדי לאפשר מילוי חדרים לפני התכווצות.' },
+  { topic: 'הסרעפת', fact: 'Diaphragm — השריר העיקרי בנשימה, מפריד בין בית החזה לחלל הבטן.' },
+  { topic: 'האפיגלוטיס', fact: 'Epiglottis — מכסה סחוסי בבסיס הלשון החוסם את הקנה בזמן בליעה, ומונע שאיפת מזון לריאות.' },
+  { topic: 'בלוטת התריס', fact: 'Thyroid Gland — בלוטה בצוואר האחראית על ייצור הורמוני מטבוליזם (T3, T4).' },
+  { topic: 'בלוטת יותרת הכליה', fact: 'Adrenal Gland — ממוקמת מעל כל כליה, מייצרת אדרנלין וקורטיזול.' },
+  { topic: 'הלבלב', fact: 'Pancreas — איבר בבטן העליונה בעל תפקיד כפול: הפרשת אנזימי עיכול ואינסולין/גלוקגון לוויסות סוכר.' },
+  { topic: 'הטחול', fact: 'Spleen — איבר בבטן שמאלית עליונה, מסנן דם ומאחסן תאי דם; רגיש לקרע בטראומה בוטה.' },
+  { topic: 'המרה וכיס המרה', fact: 'כיס המרה (Gallbladder) מאחסן מרה המיוצרת בכבד, ומשחרר אותה לעיכול שומנים.' },
+]
+
+function buildConceptPrompt(today: string): string {
+  let hash = 0
+  for (let i = 0; i < today.length; i++) hash = (hash * 71 + today.charCodeAt(i)) >>> 0
+  const entry = CONCEPT_POOL[hash % CONCEPT_POOL.length]
+
+  return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "מושג היום" — טריוויה באנטומיה ובמינוח רפואי לחובשים ולפרמדיקים ישראלים.
+נושא היום: ${entry.topic}.
+העובדה הנכונה (חובה להתבסס עליה בדיוק, ללא סטייה): ${entry.fact}
+חובה לבנות שאלת MCQ אחת סביב הנושא הזה בלבד, שהתשובה הנכונה שלה תואמת בדיוק את העובדה שסופקה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+3 המסיחות חייבות להיות שגויות אך סבירות (לדוגמה: סדר הפוך, מספר שגוי, מבנה דומה אך שגוי) — לא אבסורדיות.
+שפה: עברית רפואית מקצועית, תמציתית וברורה.
+${HEBREW_RULES}
+פלט JSON בלבד, ללא markdown:
+{
+  "topic": "${entry.topic}",
+  "question": "שאלת MCQ ברורה על ${entry.topic}",
+  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
+  "correct_index": X,
+  "explanation": "הסבר קצר (1-2 משפטים) המבוסס על העובדה שסופקה"
+}`
+}
+
 const ALL_ABBREVIATIONS = [
   'GCS', 'AVPU', 'FAST', 'OPQRST', 'SAMPLE', 'MIST', 'AED', 'BVM', 'CPAP', 'PEEP',
   'MAP', 'SpO2', 'EtCO2', 'IM', 'IV', 'IO', 'ROSC', 'PEA', 'VF', 'VT', 'SVT', 'CVA',
@@ -653,40 +765,66 @@ const DIAGNOSIS_POOL: DiagnosisEntry[] = [
   { abbr: 's/p Organ Transplant', en: 'Organ Transplant', he: 'השתלת איבר (בעבר)' },
 ]
 
-function getTodayDiagnosis(dateStr: string): string {
+// Deterministic "active diagnoses" question — no story, no AI call, so the "correct"
+// option is always guaranteed correct. Must stay identical to buildActiveDxQuestion()
+// in DailyChallengeModal.tsx.
+function hashStr(s: string, mult: number): number {
   let hash = 0
-  for (let i = 0; i < dateStr.length; i++) hash = (hash * 41 + dateStr.charCodeAt(i)) >>> 0
-  const entry = DIAGNOSIS_POOL[hash % DIAGNOSIS_POOL.length]
-  return `${entry.abbr} — ${entry.he} (${entry.en})`
+  for (let i = 0; i < s.length; i++) hash = (hash * mult + s.charCodeAt(i)) >>> 0
+  return hash
 }
 
-function buildActiveDxPrompt(dateStr: string): string {
-  const todayDx = getTodayDiagnosis(dateStr)
-  return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "אבחנות פעילות" — חובש מגיע למטופל (בביתו או דרך תיק רפואי שהתקבל), ובסעיף "הבחנות פעילות" (רקע רפואי כרוני) רשומות מספר אבחנות. יש לנתח את הרקע ולזהות את המשמעות הקלינית החשובה ביותר.
+const PERMUTATIONS_4 = [
+  [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1],
+  [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0], [1, 3, 0, 2], [1, 3, 2, 0],
+  [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3], [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0],
+  [3, 0, 1, 2], [3, 0, 2, 1], [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0],
+]
 
-אבחנת החובה של היום: ${todayDx}. חובה שהיא תופיע ברשימת ה-diagnoses.
+function buildActiveDxQuestion(dateStr: string): ActiveDxQ {
+  const poolSize = DIAGNOSIS_POOL.length
 
-כללים מחייבים:
-1. תרחיש (1-2 משפטים): "הגעת ל..." / "קיבלת מסמך רפואי של מטופל..." — גיל ומין ספציפיים, גוון מיום ליום (טווח גילאים רחב, לא תמיד קשיש).
-2. diagnoses: רשימה של 3-5 אבחנות פעילות בעברית, בפורמט מקצועי כפי שמופיע בתיק רפואי אמיתי (אפשר לשלב קיצור/מונח לועזי + הסבר קצר בעברית, לדוגמה "HTN — יתר לחץ דם"). האבחנה ${todayDx} חייבת להופיע בדיוק כפי שהיא. שאר האבחנות (2-4) הן קומורבידיות ריאליסטיות שסביר שיופיעו יחד איתה אצל מטופל אמיתי.
-3. שאלה: MCQ אחת שבודקת ידע קליני שקשור **ספציפית** לאבחנה ${todayDx} — כגון הסיבוך המרכזי לחשוש ממנו, שיקול טיפולי-שדה חשוב, או דגל אדום קשור. לא שאלת טריוויה כללית.
-4. 4 תשובות MCQ: אחת נכונה, שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
-5. הסבר (2-3 משפטים): מדוע התשובה נכונה, מה המשמעות הקלינית של האבחנה ${todayDx}, ומה יש לשים לב אליו בשטח.
-6. topic_tag: "${todayDx}"
-7. diagnosis_descriptions: עבור כל אבחנה ברשימת diagnoses — משפט אחד קצר בעברית שמסביר מה היא (בשפה פשוטה, לא טכנית).
-${HEBREW_RULES}
-${DIFFICULTY_RULES}
-פלט JSON תקני בלבד, ללא markdown:
-{
-  "scenario": "תיאור הסיטואציה (1-2 משפטים בעברית מקצועית)",
-  "diagnoses": ["אבחנה א", "אבחנה ב", "אבחנה ג"],
-  "diagnosis_descriptions": {"אבחנה א": "משפט קצר מה זה", "אבחנה ב": "משפט קצר מה זה"},
-  "question": "שאלה קלינית שקשורה ספציפית ל${todayDx}",
-  "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
-  "correct_index": X,
-  "explanation": "הסבר (2-3 משפטים)",
-  "topic_tag": "${todayDx}"
-}`
+  const baseIdx = hashStr(dateStr, 41) % poolSize
+  const indices = [baseIdx]
+  for (let salt = 0; indices.length < 4; salt++) {
+    const idx = hashStr(`${dateStr}_pick_${salt}`, 43) % poolSize
+    if (!indices.includes(idx)) indices.push(idx)
+  }
+  const entries = indices.map((i) => DIAGNOSIS_POOL[i])
+  const todayEntry = entries[0]
+
+  const dispPerm = PERMUTATIONS_4[hashStr(`${dateStr}_disp`, 47) % 24]
+  const shown = dispPerm.map((i) => entries[i])
+  const correctAnswer = shown.map((e) => e.he).join(', ')
+
+  const decoyPermIdxs: number[] = []
+  for (let salt = 0; decoyPermIdxs.length < 3; salt++) {
+    const idx = hashStr(`${dateStr}_decoy_${salt}`, 53) % 24
+    if (idx !== 0 && !decoyPermIdxs.includes(idx)) decoyPermIdxs.push(idx)
+  }
+  const wrongAnswers = decoyPermIdxs.map((pIdx) =>
+    PERMUTATIONS_4[pIdx].map((i) => shown[i].he).join(', '),
+  )
+
+  const correctIndex = hashStr(`${dateStr}_pos`, 67) % 4
+  const options = ['', '', '', '']
+  let wrongCursor = 0
+  for (let i = 0; i < 4; i++) {
+    options[i] = i === correctIndex ? correctAnswer : wrongAnswers[wrongCursor++]
+  }
+
+  const explanation =
+    shown.map((e) => `${e.abbr} = ${e.he}`).join(' | ') +
+    `. שימו לב במיוחד ל-${todayEntry.abbr} (${todayEntry.en}) — ${todayEntry.he}.`
+
+  return {
+    diagnoses: shown.map((e) => e.abbr),
+    question: 'לפי הסדר שבו האבחנות הפעילות רשומות למעלה, מהי הרשימה הנכונה של משמעותן?',
+    options,
+    correct_index: correctIndex,
+    explanation,
+    topic_tag: todayEntry.abbr,
+  }
 }
 
 // ─── Category generators ──────────────────────────────────────────────────────
@@ -768,6 +906,22 @@ async function generateMed(today: string): Promise<MedOfDay> {
   return m
 }
 
+interface ConceptQ {
+  topic: string
+  question: string
+  options: string[]
+  correct_index: number
+  explanation: string
+}
+
+async function generateConcept(today: string): Promise<ConceptQ> {
+  const c = await withRetry(() => parseGeminiJSON<ConceptQ>(buildConceptPrompt(today)))
+  if (!c.topic || !c.question || !Array.isArray(c.options) || c.options.length !== 4 || typeof c.correct_index !== 'number') {
+    throw new Error('Invalid concept format')
+  }
+  return c
+}
+
 async function generateAbbreviation(supabase: SupabaseClient): Promise<AbbreviationQ> {
   const used = await getUsedAbbreviations(supabase)
   const a = await withRetry(() => parseGeminiJSON<AbbreviationQ>(buildAbbrPrompt(used)))
@@ -839,9 +993,7 @@ async function generateMedBag(supabase: SupabaseClient, today: string): Promise<
 }
 
 interface ActiveDxQ {
-  scenario: string
   diagnoses: string[]
-  diagnosis_descriptions: Record<string, string>
   question: string
   options: string[]
   correct_index: number
@@ -849,12 +1001,10 @@ interface ActiveDxQ {
   topic_tag: string
 }
 
+// deno-lint-ignore require-await
 async function generateActiveDx(today: string): Promise<ActiveDxQ> {
-  const q = await withRetry(() => parseGeminiJSON<ActiveDxQ>(buildActiveDxPrompt(today)))
-  if (!q.scenario || !Array.isArray(q.diagnoses) || q.diagnoses.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
-    throw new Error('Invalid active dx format')
-  }
-  return q
+  // Deterministic — no Gemini call, see buildActiveDxQuestion() above.
+  return buildActiveDxQuestion(today)
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
@@ -889,6 +1039,7 @@ Deno.serve(async (req) => {
     { type: 'radio_challenge', generate: () => generateRadioChallenge(supabase, todayTopics) },
     { type: 'med_bag', generate: () => generateMedBag(supabase, today) },
     { type: 'active_dx', generate: () => generateActiveDx(today) },
+    { type: 'concept', generate: () => generateConcept(today) },
   ]
 
   for (const { type, generate } of categories) {
