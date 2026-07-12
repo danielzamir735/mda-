@@ -101,7 +101,13 @@
       "PowerShell(npx eslint src/features/hub/components/MedicalAbbreviationsModal.tsx src/features/hub/components/AbbreviationFlashcards.tsx src/features/hub/data/medicalAbbreviations.ts src/store/abbreviationSrsStore.ts src/utils/tts.ts src/features/hub/HubModal.tsx)",
       "Bash(grep -o \"topic: '[^']*'\" src/features/hub/data/medicalConceptsPool.ts)",
       "Bash(grep -o \"topic: '[^']*'\" supabase/functions/generate-daily-questions/index.ts)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(curl -s https://medic-app-orcin.vercel.app/)",
+      "Bash(curl -sL https://medic-app-orcin.vercel.app/ -o /tmp/idx.html)",
+      "Bash(vercel env *)",
+      "Bash(vercel project *)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://medic-app-orcin.vercel.app/\" -UseBasicParsing -TimeoutSec 20; $r.Content.Substring\\(0,[Math]::Min\\(1500,$r.Content.Length\\)\\) } catch { \"ERROR: $_\" })",
+      "Bash(vercel --prod --yes)"
     ]
   },
   "hooks": {
