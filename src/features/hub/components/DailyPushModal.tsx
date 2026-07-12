@@ -116,8 +116,20 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
           chosenMinute: prefs.chosenMinute,
         });
         persist({ ...prefs, enabled: true });
-      } catch {
-        setError('לא הצלחנו להפעיל התראות — ודא שאישרת הרשאת התראות בדפדפן');
+      } catch (err) {
+        console.error('[DailyPushModal] enableDailyPush failed:', err);
+        const msg = err instanceof Error ? err.message : '';
+        if (msg === 'permission-denied') {
+          setError('ההתראות חסומות עבור האתר הזה בדפדפן — יש לאפשר אותן דרך הגדרות האתר בדפדפן (לא רק בהגדרות המערכת), ואז לנסות שוב');
+        } else if (msg === 'permission-default') {
+          setError('לא אושרה בקשת ההרשאה — נסה שוב ואשר את בקשת ההתראות שתופיע');
+        } else if (msg === 'vapid-key-missing' || msg === 'push-unsupported') {
+          setError('התראות פוש אינן זמינות כרגע באפליקציה הזו — נסה שוב מאוחר יותר');
+        } else if (msg.startsWith('db-upsert-failed')) {
+          setError('ההרשאה אושרה אך שמירת ההרשמה נכשלה — בדוק חיבור לאינטרנט ונסה שוב');
+        } else {
+          setError('לא הצלחנו להפעיל התראות — נסה שוב');
+        }
       } finally {
         setBusy(false);
       }

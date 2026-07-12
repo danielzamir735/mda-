@@ -202,8 +202,8 @@ function buildMedPrompt(today: string): string {
   const todayDrug = COMMON_MED_POOL[hash % COMMON_MED_POOL.length]
 
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
-חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+תרופת היום המוקצית: ${todayDrug}.
+חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. אסור בהחלט להזכיר תאריך כלשהו בשאלה, בתשובות או בהסבר — התוכן חייב לעסוק אך ורק בתרופה עצמה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת להיות מעשית — על סכנה קלינית, אינדיקציה, או זהירות בשטח — לא שאלת טריוויה.
 שפה: עברית רפואית מקצועית.
 ${HEBREW_RULES}
@@ -232,13 +232,8 @@ const CONCEPT_POOL: ConceptEntry[] = [
   { topic: 'שכבות הלב', fact: 'מבפנים כלפי חוץ: אנדוקרדיום (Endocardium) ← מיוקרדיום (Myocardium) ← אפיקרדיום (Epicardium).' },
   { topic: 'שכבות קרומי המוח (מנינגים)', fact: 'מבחוץ כלפי פנים: דורה מאטר (Dura Mater) ← ארכנואיד (Arachnoid Mater) ← פיה מאטר (Pia Mater).' },
   { topic: 'שכבות העור', fact: 'מבחוץ כלפי פנים: אפידרמיס (Epidermis) ← דרמיס (Dermis) ← היפודרמיס/רקמת תת-עורית (Hypodermis).' },
-  { topic: 'שכבות דופן העורק', fact: 'מבפנים כלפי חוץ: טוניקה אינטימה (Tunica Intima) ← טוניקה מדיה (Tunica Media) ← טוניקה אדוונטיציה (Tunica Adventitia).' },
-  { topic: 'שכבות דופן מערכת העיכול', fact: 'מבפנים כלפי חוץ: רירית (Mucosa) ← תת-רירית (Submucosa) ← שכבת שריר (Muscularis) ← סרוזה (Serosa).' },
-  { topic: 'שכבות הקרנית בעין', fact: 'מבחוץ כלפי פנים: אפיתל ← ממברנת באומן ← סטרומה ← ממברנת דסמט ← אנדותל.' },
   { topic: 'חלוקת האוזן', fact: 'שלושה חלקים: אוזן חיצונית, אוזן תיכונה, אוזן פנימית.' },
-  { topic: 'שכבות הרחם', fact: 'מבפנים כלפי חוץ: אנדומטריום (Endometrium) ← מיומטריום (Myometrium) ← פרימטריום (Perimetrium).' },
   { topic: 'שכבות דופן הריאה (פלאורה)', fact: 'שני עלים: פלאורה ויסצרלית (צמודה לריאה) ופלאורה פריאטלית (צמודה לדופן החזה), עם חלל פלאורלי ביניהם.' },
-  { topic: 'שכבות עצם ארוכה', fact: 'מבחוץ כלפי פנים: פריאוסטאום (קרום העצם) ← עצם קורטיקלית (קומפקטית) ← עצם ספוגית (טרבקולרית) ← חלל מח העצם.' },
   { topic: 'עצם החזה', fact: 'שלושה חלקים: מנוברייום (Manubrium) למעלה, גוף עצם החזה (Body) באמצע, ותהליך החרבי (Xiphoid Process) בקצה התחתון.' },
   { topic: 'מספר צלעות באדם', fact: '12 זוגות צלעות (24 צלעות בסך הכול) — 7 זוגות אמיתיות, 3 זוגות כוזבות, 2 זוגות צפות.' },
   { topic: 'חוליות עמוד השדרה', fact: '7 חוליות צוואריות (Cervical), 12 חוליות גביות (Thoracic), 5 חוליות מותניות (Lumbar), 5 חוליות עצה מאוחות (Sacral), 4 חוליות זנב מאוחות (Coccygeal).' },
@@ -253,7 +248,6 @@ const CONCEPT_POOL: ConceptEntry[] = [
   { topic: 'מספר שיניים במבוגר', fact: '32 שיניים קבועות במבוגר.' },
   { topic: 'מבנה חגורת האגן', fact: 'שלוש עצמות מאוחות: איליום (Ilium), איסכיום (Ischium), ופוביס (Pubis).' },
   { topic: 'תהליך החרבי', fact: 'Xiphoid Process — קצה סחוסי-עצמי בתחתית עצם החזה; משמש נקודת ציון למיקום הלחיצות ב-CPR.' },
-  { topic: 'זווית לואי', fact: 'Angle of Louis (Sternal Angle) — נקודת החיבור בין המנוברייום לגוף עצם החזה, בגובה הצלע השנייה; נקודת ציון לספירת צלעות.' },
   { topic: 'פרוקסימלי לעומת דיסטלי', fact: 'פרוקסימלי (Proximal) = קרוב יותר לגו/למרכז הגוף; דיסטלי (Distal) = רחוק יותר ממנו.' },
   { topic: 'אנטריורי לעומת פוסטריורי', fact: 'אנטריורי (Anterior) = צד הקדמי של הגוף; פוסטריורי (Posterior) = הצד האחורי.' },
   { topic: 'סופריורי לעומת אינפריורי', fact: 'סופריורי (Superior) = כלפי מעלה/ראש; אינפריורי (Inferior) = כלפי מטה/רגליים.' },
@@ -286,13 +280,7 @@ const CONCEPT_POOL: ConceptEntry[] = [
   { topic: 'קידומת Dys-', fact: 'מציינת קושי/הפרעה בתפקוד — לדוגמה Dyspnea = קושי בנשימה.' },
   { topic: 'קידומת A- / An-', fact: 'מציינת היעדר/חוסר — לדוגמה Apnea = היעדר נשימה.' },
   { topic: 'קידומת Poly-', fact: 'מציינת ריבוי — לדוגמה Polyuria = הטלת שתן מרובה.' },
-  { topic: 'הקרינה (Carina)', fact: 'נקודת ההתפצלות של קנה הנשימה לשתי הסמפונות הראשיות (ברונכוסים), בגובה הצלע הרביעית בערך.' },
-  { topic: 'סחוס הקריקואיד', fact: 'Cricoid Cartilage — הטבעת הסחוסית התחתונה ביותר בגרון; נקודת ציון לחסימת הוושט (תמרון סליק) ולקוניקוטומיה.' },
-  { topic: 'סחוס התירואיד ופיקת הגרגרת', fact: 'Thyroid Cartilage — הסחוס הבולט בקדמת הגרון ("תפוח אדם"), מעל סחוס הקריקואיד.' },
-  { topic: 'הממברנה הקריקותירואידית', fact: 'הרקמה הרכה בין סחוס התירואיד לסחוס הקריקואיד; נקודת הכניסה בקוניקוטומיה.' },
-  { topic: 'תהליך המסטואיד', fact: 'Mastoid Process — הבליטה העצמית מאחורי האוזן; שטף דם מקומי (Battle Sign) מעיד על שבר בבסיס הגולגולת.' },
-  { topic: 'נקודת מקברני', fact: "McBurney's Point — נקודה בין הטבור לעצם האגן הימנית, רגישה במיוחד בדלקת התוספתן." },
-  { topic: 'הקשת הקוסטלית', fact: 'Costal Margin — הגבול התחתון של בית החזה, נוצר מהחיבור של הצלעות הכוזבות.' },
+  { topic: 'סחוס התירואיד ופיקת הגרגרת', fact: 'Thyroid Cartilage — הסחוס הבולט בקדמת הגרון ("תפוח אדם").' },
   { topic: 'מספר אונות הריאות', fact: 'הריאה הימנית מחולקת ל-3 אונות; הריאה השמאלית מחולקת ל-2 אונות (מקום ללב).' },
   { topic: 'מספר חדרי הלב', fact: '4 חדרים: עלייה ימנית, חדר ימני, עלייה שמאלית, חדר שמאלי.' },
   { topic: 'מספר הכליות ומיקומן', fact: '2 כליות, ממוקמות רטרופריטונאלית (מאחורי חלל הצפק), משני צדי עמוד השדרה.' },
@@ -590,6 +578,17 @@ function getTodayMedBagScenario(dateStr: string): string {
   return MED_BAG_SCENARIOS[hash % MED_BAG_SCENARIOS.length]
 }
 
+// Deterministic "mandatory drug of the day" for the med bag list — same hash
+// technique as buildMedPrompt's todayDrug, salted differently so the two
+// blocks don't always land on the same medication. Without this, Gemini tends
+// to gravitate to the same handful of well-known drugs every day.
+function getTodayMedBagDrug(dateStr: string): string {
+  let hash = 0
+  const salted = `${dateStr}_medbag`
+  for (let i = 0; i < salted.length; i++) hash = (hash * 31 + salted.charCodeAt(i)) >>> 0
+  return COMMON_MED_POOL[hash % COMMON_MED_POOL.length]
+}
+
 async function getRecentMedBagTopics(supabase: SupabaseClient): Promise<string[]> {
   const { data } = await supabase
     .from('daily_questions')
@@ -602,16 +601,33 @@ async function getRecentMedBagTopics(supabase: SupabaseClient): Promise<string[]
   return data.map((r: any) => r.content?.topic_tag as string).filter(Boolean)
 }
 
-function buildMedBagPrompt(dateStr: string, recentTopics: string[]): string {
+async function getRecentMedBagMedications(supabase: SupabaseClient): Promise<string[]> {
+  const { data } = await supabase
+    .from('daily_questions')
+    .select('content')
+    .eq('question_type', 'med_bag')
+    .order('question_date', { ascending: false })
+    .limit(14)
+  if (!data) return []
+  // deno-lint-ignore no-explicit-any
+  const meds = data.flatMap((r: any) => (r.content?.medications as string[]) ?? [])
+  return Array.from(new Set(meds))
+}
+
+function buildMedBagPrompt(dateStr: string, recentTopics: string[], recentMedications: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : ''
+  const avoidMedsSection = recentMedications.length > 0
+    ? `\nתרופות שנבחרו לאחרונה בימים האחרונים — הימנע ככל האפשר מלחזור על אותו שילוב תרופות: ${recentMedications.join(', ')}.\n`
+    : ''
   const scenarioTheme = getTodayMedBagScenario(dateStr)
+  const mandatoryDrug = getTodayMedBagDrug(dateStr)
   return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "תיק התרופות" — חובש מגיע לביתו של מטופל ומוצא את תרופותיו הכרוניות על השולחן. מהתרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית לטיפול.
 
 כללים מחייבים:
 1. סיטואציה (2 משפטים): תרחיש ביתי מציאותי סביב הנושא **${scenarioTheme}** (חובה להשתמש בנושא הזה). גוון בכל יום מחדש: גיל ספציפי בטווח רחב — מבוגר צעיר (25-40), גיל ביניים (41-64) או קשיש (65+), לא תמיד קשיש; מין (גבר/אישה); וסוג מגורים (דירה בעיר, בית פרטי, דיור מוגן, קיבוץ, יישוב כפרי). המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
-2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים (רשימת "תרופות נפוצות" הרשמית של האפליקציה, יש לבחור מתוכה בלבד): ${COMMON_MED_POOL.join(', ')}
+2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים (רשימת "תרופות נפוצות" הרשמית של האפליקציה, יש לבחור מתוכה בלבד): ${COMMON_MED_POOL.join(', ')}. חובה לכלול ברשימה את התרופה ${mandatoryDrug}, ולבחור את שאר התרופות כך שהשילוב יהיה שונה מהימים האחרונים.${avoidMedsSection}
 3. שאלה: "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?"
 4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
 5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
@@ -829,14 +845,44 @@ function buildActiveDxQuestion(dateStr: string): ActiveDxQ {
   const shown = dispPerm.map((i) => entries[i])
   const correctAnswer = shown.map((e) => e.he).join(', ')
 
-  const decoyPermIdxs: number[] = []
-  for (let salt = 0; decoyPermIdxs.length < 3; salt++) {
-    const idx = hashStr(`${dateStr}_decoy_${salt}`, 53) % 24
-    if (idx !== 0 && !decoyPermIdxs.includes(idx)) decoyPermIdxs.push(idx)
+  // Wrong answers mix two kinds of distractors: one reorder of the SAME 4
+  // meanings (classic mis-match trap), and two "unrelated disease" swaps where
+  // one of the 4 meanings is replaced by a completely different diagnosis
+  // pulled from elsewhere in the pool — not just the same four meanings reshuffled.
+  const usedIndices = new Set(indices)
+  function pickUnrelatedMeaning(seed: string): string {
+    for (let s = 0; ; s++) {
+      const idx = hashStr(`${dateStr}_unrelated_${seed}_${s}`, 59) % poolSize
+      if (!usedIndices.has(idx)) return DIAGNOSIS_POOL[idx].he
+    }
   }
-  const wrongAnswers = decoyPermIdxs.map((pIdx) =>
-    PERMUTATIONS_4[pIdx].map((i) => shown[i].he).join(', '),
-  )
+  function buildSubstitutionWrong(seed: string): string {
+    const swapPos = hashStr(`${dateStr}_swap_${seed}`, 61) % 4
+    const meanings = shown.map((e) => e.he)
+    meanings[swapPos] = pickUnrelatedMeaning(seed)
+    return meanings.join(', ')
+  }
+  function buildReorderWrong(seed: string): string {
+    let idx = hashStr(`${dateStr}_decoy_${seed}`, 53) % 24
+    if (idx === 0) idx = 1
+    return PERMUTATIONS_4[idx].map((i) => shown[i].he).join(', ')
+  }
+
+  const wrongAnswers: string[] = []
+  const seenAnswers = new Set([correctAnswer])
+  const candidateBuilders = [buildReorderWrong, buildSubstitutionWrong, buildSubstitutionWrong]
+  for (let i = 0; wrongAnswers.length < 3; i++) {
+    const build = candidateBuilders[i % candidateBuilders.length]
+    let candidate = ''
+    for (let attempt = 0; attempt < 8; attempt++) {
+      candidate = build(`${i}_${attempt}`)
+      if (!seenAnswers.has(candidate)) break
+    }
+    if (!seenAnswers.has(candidate)) {
+      wrongAnswers.push(candidate)
+      seenAnswers.add(candidate)
+    }
+  }
 
   const correctIndex = hashStr(`${dateStr}_pos`, 67) % 4
   const options = ['', '', '', '']
@@ -1021,7 +1067,8 @@ interface MedBagQ {
 
 async function generateMedBag(supabase: SupabaseClient, today: string): Promise<MedBagQ> {
   const recentTopics = await getRecentMedBagTopics(supabase)
-  const q = await withRetry(() => parseGeminiJSON<MedBagQ>(buildMedBagPrompt(today, recentTopics)))
+  const recentMedications = await getRecentMedBagMedications(supabase)
+  const q = await withRetry(() => parseGeminiJSON<MedBagQ>(buildMedBagPrompt(today, recentTopics, recentMedications)))
   if (!q.situation || !Array.isArray(q.medications) || q.medications.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid med bag format')
   }

@@ -310,8 +310,8 @@ function buildMedPrompt(): string {
   const todayDrug = COMMON_MED_POOL[hash % COMMON_MED_POOL.length];
 
   return `אתה מדריך פרמדיק בכיר ישראלי. משימתך: צור שאלת MCQ אינטראקטיבית על "תרופת היום" לחובשים ולפרמדיקים ישראלים.
-תאריך היום: ${today}. תרופת היום המוקצית: ${todayDrug}.
-חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
+תרופת היום המוקצית: ${todayDrug}.
+חובה להשתמש בתרופה ${todayDrug} כנושא השאלה. אסור בהחלט להזכיר תאריך כלשהו בשאלה, בתשובות או בהסבר — התוכן חייב לעסוק אך ורק בתרופה עצמה. ערבב את מיקום התשובה הנכונה — correct_index לא תמיד 0.
 השאלה חייבת לבדוק שהמשתמש הבין למה התרופה נועדה — מהי האינדיקציה הקלינית שלה. ניסח שאלה שמחייבת הבנה אמיתית של מטרת התרופה, כגון: "לאיזו בעיה קלינית עיקרית נרשמת תרופה זו?" / "מטופל עם [מצב רפואי], באיזה מצב מוצדק לרשום לו ${todayDrug}?" — לא שאלת סכנה, לא שאלת מינון, לא שאלת זהירות.
 שפה: עברית רפואית מקצועית.
 ${HEBREW_RULES}
@@ -552,16 +552,32 @@ function getTodayMedBagScenario(): string {
   return MED_BAG_SCENARIOS[hash % MED_BAG_SCENARIOS.length];
 }
 
-function buildMedBagPrompt(recentTopics: string[]): string {
+// Deterministic "mandatory drug of the day" for the med bag list — same hash
+// technique as buildMedPrompt's todayDrug, salted differently so the two
+// blocks don't always land on the same medication. Without this, Gemini tends
+// to gravitate to the same handful of well-known drugs every day.
+function getTodayMedBagDrug(): string {
+  const today = getToday();
+  const salted = `${today}_medbag`;
+  let hash = 0;
+  for (let i = 0; i < salted.length; i++) hash = (hash * 31 + salted.charCodeAt(i)) >>> 0;
+  return COMMON_MED_POOL[hash % COMMON_MED_POOL.length];
+}
+
+function buildMedBagPrompt(recentTopics: string[], recentMedications: string[]): string {
   const avoidSection = recentTopics.length > 0
     ? `\nנושאים שנשאלו לאחרונה — חובה לבחור נושא שונה לחלוטין: ${recentTopics.join(', ')}.\n`
     : '';
+  const avoidMedsSection = recentMedications.length > 0
+    ? `\nתרופות שנבחרו לאחרונה בימים האחרונים — הימנע ככל האפשר מלחזור על אותו שילוב תרופות: ${recentMedications.join(', ')}.\n`
+    : '';
   const scenarioTheme = getTodayMedBagScenario();
+  const mandatoryDrug = getTodayMedBagDrug();
   return `אתה מדריך פרמדיק בכיר ישראלי. משימה: צור אתגר "תיק התרופות" — חובש מגיע לביתו של מטופל ומוצא את תרופותיו הכרוניות על השולחן. מהתרופות בלבד יש לנתח את הרקע הרפואי ולזהות את הסכנה הקריטית לטיפול.
 
 כללים מחייבים:
 1. סיטואציה (2 משפטים): תרחיש ביתי מציאותי סביב הנושא **${scenarioTheme}** (חובה להשתמש בנושא הזה). גוון בכל יום מחדש: גיל ספציפי בטווח רחב — מבוגר צעיר (25-40), גיל ביניים (41-64) או קשיש (65+), לא תמיד קשיש; מין (גבר/אישה); וסוג מגורים (דירה בעיר, בית פרטי, דיור מוגן, קיבוץ, יישוב כפרי). המשפחה/הסביבה אינם יודעים לדווח על רקע רפואי.
-2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים (רשימת "תרופות נפוצות" הרשמית של האפליקציה, יש לבחור מתוכה בלבד): ${COMMON_MED_POOL.join(', ')}
+2. תרופות: רשימה של 3-4 תרופות כרוניות ביתיות בלבד (לא תרופות חירום ולא עירויים). בחר אך ורק מהרשימה הבאה — תרופות ישראליות נפוצות בבתי מטופלים (רשימת "תרופות נפוצות" הרשמית של האפליקציה, יש לבחור מתוכה בלבד): ${COMMON_MED_POOL.join(', ')}. חובה לכלול ברשימה את התרופה ${mandatoryDrug}, ולבחור את שאר התרופות כך שהשילוב יהיה שונה מהימים האחרונים.${avoidMedsSection}
 3. שאלה: "לפי תיק התרופות, מאיזה רקע רפואי עליך לחשוש במיוחד בטיפול בו?"
 4. 4 תשובות MCQ: אחת נכונה (הסכנה הקריטית המרכזית הנובעת מהשילוב), שלוש מסיחות סבירות לחובש מתחיל. ערבב מיקום התשובה — correct_index לא תמיד 0.
 5. הסבר (2-3 משפטים): אילו תרופות מצביעות על מה, מהי הסכנה הקריטית הספציפית, ומה יש לדווח לצוות המקבל.
@@ -624,16 +640,44 @@ function buildActiveDxQuestion(): ActiveDxQ {
   const shown = dispPerm.map((i) => entries[i]);
   const correctAnswer = shown.map((e) => e.he).join(', ');
 
-  // 3 distinct non-identity permutations of the SAME 4 meanings as wrong answers —
-  // i.e. plausible mis-matches, not unrelated terms.
-  const decoyPermIdxs: number[] = [];
-  for (let salt = 0; decoyPermIdxs.length < 3; salt++) {
-    const idx = hashStr(`${today}_decoy_${salt}`, 53) % 24;
-    if (idx !== 0 && !decoyPermIdxs.includes(idx)) decoyPermIdxs.push(idx);
+  // Wrong answers mix two kinds of distractors: one reorder of the SAME 4
+  // meanings (classic mis-match trap), and two "unrelated disease" swaps where
+  // one of the 4 meanings is replaced by a completely different diagnosis
+  // pulled from elsewhere in the pool — not just the same four meanings reshuffled.
+  const usedIndices = new Set(indices);
+  function pickUnrelatedMeaning(seed: string): string {
+    for (let s = 0; ; s++) {
+      const idx = hashStr(`${today}_unrelated_${seed}_${s}`, 59) % poolSize;
+      if (!usedIndices.has(idx)) return DIAGNOSIS_POOL[idx].he;
+    }
   }
-  const wrongAnswers = decoyPermIdxs.map((pIdx) =>
-    PERMUTATIONS_4[pIdx].map((i) => shown[i].he).join(', '),
-  );
+  function buildSubstitutionWrong(seed: string): string {
+    const swapPos = hashStr(`${today}_swap_${seed}`, 61) % 4;
+    const meanings = shown.map((e) => e.he);
+    meanings[swapPos] = pickUnrelatedMeaning(seed);
+    return meanings.join(', ');
+  }
+  function buildReorderWrong(seed: string): string {
+    let idx = hashStr(`${today}_decoy_${seed}`, 53) % 24;
+    if (idx === 0) idx = 1;
+    return PERMUTATIONS_4[idx].map((i) => shown[i].he).join(', ');
+  }
+
+  const wrongAnswers: string[] = [];
+  const seenAnswers = new Set([correctAnswer]);
+  const candidateBuilders = [buildReorderWrong, buildSubstitutionWrong, buildSubstitutionWrong];
+  for (let i = 0; wrongAnswers.length < 3; i++) {
+    const build = candidateBuilders[i % candidateBuilders.length];
+    let candidate = '';
+    for (let attempt = 0; attempt < 8; attempt++) {
+      candidate = build(`${i}_${attempt}`);
+      if (!seenAnswers.has(candidate)) break;
+    }
+    if (!seenAnswers.has(candidate)) {
+      wrongAnswers.push(candidate);
+      seenAnswers.add(candidate);
+    }
+  }
 
   const correctIndex = hashStr(`${today}_pos`, 67) % 4;
   const options = ['', '', '', ''];
@@ -781,16 +825,18 @@ async function callGemini<T>(prompt: string, model?: string): Promise<T> {
 }
 
 async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion> {
-  // Use gemini-2.5-flash directly — weaker models reliably produce valid HTTP 200
+  // Prefer gemini-2.5-flash — weaker models reliably produce valid HTTP 200
   // responses but with wrong JSON keys (e.g. "explanation" instead of
-  // "clinical_explanation"), which pass the proxy but fail client validation.
-  // The Supabase cron job uses 2.5-flash and never has this problem.
-  const raw = await withRetry(() =>
-    callGemini<ClinicalQuestion & { explanation?: string; הסבר_קליני?: string }>(
-      CLINICAL_PROMPTS[cat],
-      'gemini-2.5-flash',
-    ),
-  );
+  // "clinical_explanation"), normalised below. But if 2.5-flash alone is out
+  // of quota (its RPD limit is far lower than 2.0-flash's), don't hard-fail
+  // this block — fall back to the full model chain like every other block.
+  type RawClinical = ClinicalQuestion & { explanation?: string; הסבר_קליני?: string };
+  let raw: RawClinical;
+  try {
+    raw = await callGemini<RawClinical>(CLINICAL_PROMPTS[cat], 'gemini-2.5-flash');
+  } catch {
+    raw = await withRetry(() => callGemini<RawClinical>(CLINICAL_PROMPTS[cat]));
+  }
   // Normalise alternate key names that weaker models sometimes emit
   if (!raw.clinical_explanation) {
     const alt = raw.explanation ?? (raw as unknown as Record<string, unknown>)['הסבר_קליני'] as string | undefined;
@@ -853,9 +899,22 @@ async function generateSpotError(): Promise<SpotErrorQ> {
   return q;
 }
 
+async function getRecentMedBagMedications(): Promise<string[]> {
+  const { data } = await supabase
+    .from('daily_questions')
+    .select('content')
+    .eq('question_type', 'med_bag')
+    .order('question_date', { ascending: false })
+    .limit(14);
+  if (!data) return [];
+  const meds = data.flatMap((r: { content?: { medications?: string[] } }) => r.content?.medications ?? []);
+  return Array.from(new Set(meds));
+}
+
 async function generateMedBag(): Promise<MedBagQ> {
   const recentTopics = await getRecentTopicsForDiversity().catch(() => [] as string[]);
-  const q = await withRetry(() => callGemini<MedBagQ>(buildMedBagPrompt(recentTopics)));
+  const recentMedications = await getRecentMedBagMedications().catch(() => [] as string[]);
+  const q = await withRetry(() => callGemini<MedBagQ>(buildMedBagPrompt(recentTopics, recentMedications)));
   if (!q.situation || !Array.isArray(q.medications) || q.medications.length < 2 || !q.question || !Array.isArray(q.options) || q.options.length !== 4) {
     throw new Error('Invalid med bag format');
   }
@@ -2138,7 +2197,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         setGlobalStats((prev) => (prev && stats.total < prev.total ? prev : stats));
         setIsStatsOffline(offline);
       });
-    } catch {
+    } catch (err) {
+      console.error('[DailyChallengeModal] clinical question generation failed:', err);
       setClinicalStatus('error');
     }
   }, []);

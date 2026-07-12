@@ -71,21 +71,38 @@ function extractMedName(result: string): string {
   return match?.[1]?.trim().replace(/\*\*/g, '') || 'תרופה זוהתה';
 }
 
-function fileToBase64(file: File): Promise<string> {
+function loadImageElement(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const base64 = dataUrl.split(',')[1];
-      if (!base64) {
-        reject(new Error('Failed to convert file to base64 — dataUrl was malformed'));
-        return;
-      }
-      resolve(base64);
-    };
-    reader.onerror = () => reject(new Error('FileReader error: ' + reader.error?.message));
-    reader.readAsDataURL(file);
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => resolve(img);
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')); };
+    img.src = url;
   });
+}
+
+// Full-resolution phone camera/gallery photos (often 5-15 MB) exceed the
+// /api/gemini upload cap and silently fail — downscale + re-encode as JPEG
+// client-side before sending. This also normalises HEIC/unusual formats to a
+// mime type the API always accepts.
+async function compressImageFile(file: File, maxDim = 1600, quality = 0.85): Promise<{ base64: string; mimeType: string }> {
+  const img = await loadImageElement(file);
+  const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+  const width = Math.max(1, Math.round(img.naturalWidth * scale));
+  const height = Math.max(1, Math.round(img.naturalHeight * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  URL.revokeObjectURL(img.src);
+  if (!ctx) throw new Error('Canvas not supported');
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const dataUrl = canvas.toDataURL('image/jpeg', quality);
+  const base64 = dataUrl.split(',')[1];
+  if (!base64) throw new Error('Failed to encode image');
+  return { base64, mimeType: 'image/jpeg' };
 }
 
 /** Minimal markdown → readable text: bold (**text**), bullets, newlines */
@@ -225,8 +242,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
 
     try {
-      const base64 = await fileToBase64(file);
-      const mimeType = file.type || 'image/jpeg';
+      const { base64, mimeType } = await compressImageFile(file);
 
       const res = await fetch('/api/gemini', {
         method: 'POST',

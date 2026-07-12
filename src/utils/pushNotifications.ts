@@ -52,22 +52,34 @@ async function upsertSubscription(sub: PushSubscription, prefs: PushPrefs): Prom
     enabled: true,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'endpoint' });
-  if (error) throw error;
+  if (error) {
+    console.error('[pushNotifications] upsertSubscription failed:', error.message);
+    throw new Error(`db-upsert-failed: ${error.message}`);
+  }
 }
 
 export async function enableDailyPush(prefs: PushPrefs): Promise<PushSubscription> {
-  if (!isPushSupported()) throw new Error('Push not supported on this browser');
-  if (!VAPID_PUBLIC_KEY) throw new Error('Missing VITE_VAPID_PUBLIC_KEY');
+  if (!isPushSupported()) throw new Error('push-unsupported');
+  if (!VAPID_PUBLIC_KEY) {
+    console.error('[pushNotifications] VITE_VAPID_PUBLIC_KEY is not set');
+    throw new Error('vapid-key-missing');
+  }
 
   const permission = await requestNotificationPermission();
-  if (permission !== 'granted') throw new Error('Notification permission denied');
+  if (permission !== 'granted') throw new Error(`permission-${permission}`);
 
   const registration = await navigator.serviceWorker.ready;
   const existing = await registration.pushManager.getSubscription();
-  const subscription = existing ?? await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+  let subscription: PushSubscription;
+  try {
+    subscription = existing ?? await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  } catch (err) {
+    console.error('[pushNotifications] pushManager.subscribe failed:', err);
+    throw new Error('subscribe-failed');
+  }
 
   await upsertSubscription(subscription, prefs);
   return subscription;

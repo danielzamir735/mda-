@@ -98,7 +98,10 @@
       "PowerShell(git fetch *)",
       "PowerShell(git *)",
       "Bash(npx eslint *)",
-      "PowerShell(npx eslint src/features/hub/components/MedicalAbbreviationsModal.tsx src/features/hub/components/AbbreviationFlashcards.tsx src/features/hub/data/medicalAbbreviations.ts src/store/abbreviationSrsStore.ts src/utils/tts.ts src/features/hub/HubModal.tsx)"
+      "PowerShell(npx eslint src/features/hub/components/MedicalAbbreviationsModal.tsx src/features/hub/components/AbbreviationFlashcards.tsx src/features/hub/data/medicalAbbreviations.ts src/store/abbreviationSrsStore.ts src/utils/tts.ts src/features/hub/HubModal.tsx)",
+      "Bash(grep -o \"topic: '[^']*'\" src/features/hub/data/medicalConceptsPool.ts)",
+      "Bash(grep -o \"topic: '[^']*'\" supabase/functions/generate-daily-questions/index.ts)",
+      "Read(//tmp/**)"
     ]
   },
   "hooks": {

@@ -24,12 +24,29 @@ if ('serviceWorker' in navigator) {
   // If there was no previous controller (first install / cleared cache),
   // the page already loaded correctly from the network — no reload needed.
   const hadController = !!navigator.serviceWorker.controller
+  const bootTime = Date.now()
   let reloading = false
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hadController) return
+  const doReload = () => {
     if (reloading) return
     reloading = true
     window.location.reload()
+  }
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return
+    // A controllerchange firing within the first seconds after launch means the
+    // new SW activated mid cold-start — reloading right now (before the app has
+    // even painted) is what produces the black-screen-until-manual-refresh bug
+    // on installed/home-screen launches. Defer: reload silently the next time
+    // the app is backgrounded instead of interrupting the launch in progress.
+    if (Date.now() - bootTime > 15_000) {
+      doReload()
+      return
+    }
+    document.addEventListener('visibilitychange', function onHide() {
+      if (document.visibilityState !== 'hidden') return
+      document.removeEventListener('visibilitychange', onHide)
+      doReload()
+    })
   })
 }
 
