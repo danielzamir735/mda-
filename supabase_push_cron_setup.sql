@@ -2,10 +2,12 @@
 -- Schedule send-daily-push to run every minute.
 --
 -- Users pick an exact hour AND minute, so the job must run EVERY minute —
--- the edge function itself computes the current Israel-local hour+minute
--- (Asia/Jerusalem, DST-aware) and only sends to subscriptions whose
--- chosen_hour/chosen_minute match exactly, so each user gets their push at
--- the precise minute they picked (±the cron tick, which fires on the minute).
+-- the edge function itself computes the current Israel-local time (Asia/Jerusalem,
+-- DST-aware) and sends to every subscription whose chosen time-of-day has already
+-- arrived today and that hasn't been sent yet today (guarded by last_sent_date,
+-- so it's one push per day). This is self-healing: if a given minute's tick is
+-- delayed, dropped, or the http_post lands a second late, the next minute's run
+-- still delivers — the user is not silently skipped for the whole day.
 --
 -- BEFORE running: replace the two placeholders below with real values:
 --   YOUR_PROJECT_REF  → found in Supabase Dashboard → Settings → General
