@@ -120,7 +120,8 @@
       "Bash(rm -f smoke_tmp.cjs debug_tmp.cjs debug2_tmp.cjs debug_out.txt debug_*.png 0*.png)",
       "Bash(pkill -f \"vite\")",
       "Bash(pkill -f \"vite preview\")",
-      "Bash(pkill -f \"vite$\")"
+      "Bash(pkill -f \"vite$\")",
+      "Bash(git cherry-pick *)"
     ]
   },
   "hooks": {
