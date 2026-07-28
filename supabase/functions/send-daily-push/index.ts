@@ -403,6 +403,8 @@ interface PushSubscriptionRow {
   medication: boolean
   disease: boolean
   concept: boolean
+  chosen_hour: number
+  chosen_minute: number
 }
 
 Deno.serve(async (req) => {
@@ -424,17 +426,34 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   const today = getIsraelDate()
   const { hour, minute } = getIsraelHourMinute()
+  const nowMinutes = hour * 60 + minute
 
   const todayMed = getTodayMed(today)
   const todayDisease = getTodayDiagnosis(today)
   const todayConcept = getTodayConcept(today)
 
+  // Self-healing delivery window.
+  //
+  // The cron ticks every minute, but requiring an EXACT chosen_hour+chosen_minute
+  // match gives each user a single 60-second window per day. Any jitter in the
+  // pg_cron → pg_net → edge-function chain (queued http_post delivery, cold start,
+  // a skipped/delayed tick, or reading the clock a second past the minute
+  // boundary) makes chosen_minute never equal the computed minute again that day,
+  // so the user silently receives nothing.
+  //
+  // Instead, send to anyone whose chosen time-of-day has already arrived today
+  // and who hasn't been sent yet today. last_sent_date keeps it to one push per
+  // day, so a minute missed by cron is simply picked up by the next minute's run.
+  // CATCHUP_WINDOW_MINUTES bounds how late a recovered push may arrive, so a user
+  // enabling at 20:00 with an 08:00 slot doesn't get a same-day push at an
+  // unrelated time — they start the next morning.
+  const CATCHUP_WINDOW_MINUTES = 120
+
   const { data: subs, error: fetchError } = await supabase
     .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth, medication, disease, concept')
+    .select('id, endpoint, p256dh, auth, medication, disease, concept, chosen_hour, chosen_minute')
     .eq('enabled', true)
-    .eq('chosen_hour', hour)
-    .eq('chosen_minute', minute)
+    .lte('chosen_hour', hour) // cheap narrowing via the (chosen_hour, chosen_minute) index; JS filter below is authoritative
     .or(`last_sent_date.is.null,last_sent_date.neq.${today}`)
 
   if (fetchError) {
@@ -444,9 +463,15 @@ Deno.serve(async (req) => {
     })
   }
 
+  const dueSubs = ((subs ?? []) as PushSubscriptionRow[]).filter((sub) => {
+    const chosenMinutes = sub.chosen_hour * 60 + sub.chosen_minute
+    const elapsed = nowMinutes - chosenMinutes
+    return elapsed >= 0 && elapsed <= CATCHUP_WINDOW_MINUTES
+  })
+
   const results = { sent: 0, skipped: 0, removed: 0, failed: 0 }
 
-  for (const sub of (subs ?? []) as PushSubscriptionRow[]) {
+  for (const sub of dueSubs) {
     const lines: string[] = []
     if (sub.medication) lines.push(`תרופה: ${todayMed}`)
     if (sub.disease) lines.push(`מחלה: ${todayDisease}`)
@@ -486,9 +511,9 @@ Deno.serve(async (req) => {
   }
 
   const hhmm = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-  console.log(`[send-daily-push] ${today} ${hhmm}:`, results)
+  console.log(`[send-daily-push] ${today} ${hhmm} (${dueSubs.length} due):`, results)
 
-  return new Response(JSON.stringify({ date: today, time: hhmm, ...results }), {
+  return new Response(JSON.stringify({ date: today, time: hhmm, due: dueSubs.length, ...results }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })
