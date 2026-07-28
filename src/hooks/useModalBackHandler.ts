@@ -15,7 +15,13 @@ import { useEffect, useRef } from 'react';
  *                the deepest layer (myDepth === modalDepth), so a
  *                parent modal's listener is silently skipped while a
  *                child is open and automatically re-activates the
- *                moment the child closes.
+ *                moment the child closes. This check must run before
+ *                the suppressCount check below: a single popstate event
+ *                is delivered to every mounted listener (not just the
+ *                intended one), so if a shallower listener consulted
+ *                suppressCount first it could steal the token meant for
+ *                the real parent, leaving that parent to misread the
+ *                event as a genuine back-gesture and close itself too.
  * suppressCount – guards the one remaining edge case: when a modal
  *                closes normally (X button) it calls history.back()
  *                to clean up its dummy history entry. That navigation
@@ -46,13 +52,14 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void): void 
     window.history.pushState({ modal: true }, '');
 
     const handlePopState = () => {
+      // Only the deepest open modal should react to the back gesture.
+      if (myDepthRef.current !== modalDepth) return;
+
       // Skip events produced by a child modal's normal-close cleanup.
       if (suppressCount > 0) {
         suppressCount--;
         return;
       }
-      // Only the deepest open modal should react to the back gesture.
-      if (myDepthRef.current !== modalDepth) return;
 
       closedByBackButton = true;
       onCloseRef.current();

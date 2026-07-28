@@ -3461,7 +3461,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <span className="text-xl leading-none">🥈</span>
                     <span className="text-emt-light font-black text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[1].display_name}</span>
                     {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[1].city}</span> : <span className="h-3" />}
-                    <span className="text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/6</span>
+                    <span className="text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/{leaderboard[1].answers_count}</span>
                   </>
                 ) : (
                   <>
@@ -3483,7 +3483,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <span className="text-2xl leading-none">🥇</span>
                     <span className="text-emt-light font-black text-[10px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[0].display_name}</span>
                     {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[0].city}</span> : <span className="h-3" />}
-                    <span className="text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/6</span>
+                    <span className="text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/{leaderboard[0].answers_count}</span>
                   </>
                 ) : (
                   <>
@@ -3505,7 +3505,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     <span className="text-lg leading-none">🥉</span>
                     <span className="text-emt-light font-bold text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[2].display_name}</span>
                     {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[2].city}</span> : <span className="h-3" />}
-                    <span className="text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/6</span>
+                    <span className="text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/{leaderboard[2].answers_count}</span>
                   </>
                 ) : (
                   <>
