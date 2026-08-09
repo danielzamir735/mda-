@@ -107,7 +107,21 @@
       "Bash(vercel env *)",
       "Bash(vercel project *)",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://medic-app-orcin.vercel.app/\" -UseBasicParsing -TimeoutSec 20; $r.Content.Substring\\(0,[Math]::Min\\(1500,$r.Content.Length\\)\\) } catch { \"ERROR: $_\" })",
-      "Bash(vercel --prod --yes)"
+      "Bash(vercel --prod --yes)",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)",
+      "Bash(git branch *)",
+      "Skill(run)",
+      "Bash(chromium-cli --help)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(timeout 180 npx playwright install chromium --with-deps)",
+      "Bash(timeout 30 bash -c 'until curl -sf http://localhost:5173 >/dev/null 2>&1 || curl -sf http://localhost:5174 >/dev/null 2>&1; do sleep 1; done')",
+      "Bash(timeout 180 npx playwright install chromium)",
+      "Bash(rm -f smoke_tmp.cjs debug_tmp.cjs debug2_tmp.cjs debug_out.txt debug_*.png 0*.png)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"vite preview\")",
+      "Bash(pkill -f \"vite$\")",
+      "Bash(git cherry-pick *)"
     ]
   },
   "hooks": {
