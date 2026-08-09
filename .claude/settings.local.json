@@ -121,7 +121,8 @@
       "Bash(pkill -f \"vite\")",
       "Bash(pkill -f \"vite preview\")",
       "Bash(pkill -f \"vite$\")",
-      "Bash(git cherry-pick *)"
+      "Bash(git cherry-pick *)",
+      "Bash(git config *)"
     ]
   },
   "hooks": {
