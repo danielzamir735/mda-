@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -52,6 +52,7 @@ interface Props {
   onDailyChallengeOpen: () => void;
   onSoulDepartureOpen: () => void;
   onDailyPushOpen: () => void;
+  onHospitalLoadOpen: () => void;
 }
 
 type HubItem = {
@@ -67,12 +68,12 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
-    id: 'campaign',
-    label: 'חובש + עולה לחנויות!',
-    icon: Rocket,
-    color: 'text-sky-300',
-    border: 'border-sky-400/30',
-    bg: 'bg-sky-400/10',
+    id: 'hospital-load',
+    label: 'עומסים בבתי חולים',
+    icon: Gauge,
+    color: 'text-cyan-300',
+    border: 'border-cyan-400/30',
+    bg: 'bg-cyan-400/10',
   },
   {
     id: 'concepts',
@@ -265,11 +266,22 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-pink-400/30',
     bg: 'bg-pink-400/10',
   },
+  {
+    id: 'campaign',
+    label: 'חובש + עולה לחנויות!',
+    icon: Rocket,
+    color: 'text-sky-300',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+  },
 ];
 
-const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push']);
+const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
 
-const HUB_STORAGE_KEY = 'hub_order_v2';
+// v3: bumped so the new hospital-load tile lands in its intended top-right
+// slot for existing users too — loadHubOrder() otherwise appends any id
+// missing from a saved order to the end, not the front.
+const HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
 
 function loadHubOrder(): string[] {
@@ -333,6 +345,7 @@ export default function HubModal({
   onDailyChallengeOpen,
   onSoulDepartureOpen,
   onDailyPushOpen,
+  onHospitalLoadOpen,
 }: Props) {
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
@@ -402,6 +415,7 @@ export default function HubModal({
     'install-app':                ['התקנת האפליקציה',          'utility'],
     'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
     'daily-push':                 ['פוש יומי',                'utility'],
+    'hospital-load':              ['עומסים בבתי חולים',        'emergency_info'],
   };
 
   const handleItemClick = (id: string) => {
@@ -448,6 +462,7 @@ https://hovesh-plus.vercel.app/`;
     if (id === 'daily-challenge') onDailyChallengeOpen();
     if (id === 'soul-departure') onSoulDepartureOpen();
     if (id === 'daily-push') onDailyPushOpen();
+    if (id === 'hospital-load') onHospitalLoadOpen();
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'whatsapp-community') setShowWhatsAppCommunity(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }
@@ -507,7 +522,7 @@ https://hovesh-plus.vercel.app/`;
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {orderedItems.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
-              if (id === 'campaign') {
+              if (id === 'hospital-load') {
                 return (
                   <div key={id} className="relative">
                     <motion.div
@@ -515,23 +530,23 @@ https://hovesh-plus.vercel.app/`;
                       style={{ inset: -3 }}
                       animate={{
                         boxShadow: [
-                          '0 0 6px 1px rgba(16,185,129,0.20)',
-                          '0 0 12px 3px rgba(59,130,246,0.25)',
-                          '0 0 8px 2px rgba(124,58,237,0.20)',
-                          '0 0 6px 1px rgba(16,185,129,0.20)',
+                          '0 0 6px 1px rgba(6,182,212,0.20)',
+                          '0 0 12px 3px rgba(56,189,248,0.25)',
+                          '0 0 8px 2px rgba(14,165,233,0.20)',
+                          '0 0 6px 1px rgba(6,182,212,0.20)',
                         ],
                       }}
                       transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
                     />
                     <motion.button
-                      onClick={() => handleItemClick('campaign')}
+                      onClick={() => handleItemClick('hospital-load')}
                       className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
                     >
                       <motion.div
                         className="pointer-events-none absolute"
                         style={{
                           inset: -80,
-                          background: 'conic-gradient(from 0deg, rgba(16,185,129,0.55) 0%, rgba(59,130,246,0.55) 33%, rgba(124,58,237,0.55) 66%, rgba(16,185,129,0.55) 100%)',
+                          background: 'conic-gradient(from 0deg, rgba(6,182,212,0.55) 0%, rgba(56,189,248,0.55) 33%, rgba(14,165,233,0.55) 66%, rgba(6,182,212,0.55) 100%)',
                         }}
                         animate={{ rotate: 360 }}
                         transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
@@ -544,9 +559,8 @@ https://hovesh-plus.vercel.app/`;
                           WebkitBackdropFilter: 'blur(14px)',
                         }}
                       >
-                        <Rocket size={28} className="text-sky-300" />
-                        <span className="text-sky-200 font-bold text-sm leading-tight">חובש + עולה לחנויות!</span>
-                        <span className="mt-1 text-xs font-bold bg-sky-500/25 border border-sky-400/50 text-sky-200 px-3 py-1 rounded-full">לפרטים ←</span>
+                        <Gauge size={28} className="text-cyan-300" />
+                        <span className="text-cyan-200 font-bold text-sm leading-tight">עומסים בבתי חולים</span>
                       </div>
                     </motion.button>
                   </div>
