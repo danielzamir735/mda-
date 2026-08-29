@@ -82,6 +82,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
   const [prefs, setPrefs] = useState<StoredPrefs>(() => loadPrefs());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -116,6 +117,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
           chosenMinute: prefs.chosenMinute,
         });
         persist({ ...prefs, enabled: true });
+        setSyncStatus('saved');
       } catch (err) {
         console.error('[DailyPushModal] enableDailyPush failed:', err);
         const msg = err instanceof Error ? err.message : '';
@@ -139,29 +141,34 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
         await disableDailyPush();
       } finally {
         persist({ ...prefs, enabled: false });
+        setSyncStatus('idle');
         setBusy(false);
       }
+    }
+  };
+
+  const syncToServer = async (next: StoredPrefs) => {
+    if (!next.enabled) { setSyncStatus('idle'); return; }
+    setSyncStatus('saving');
+    try {
+      await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: next.chosenHour, chosenMinute: next.chosenMinute });
+      setSyncStatus('saved');
+    } catch (err) {
+      console.error('[DailyPushModal] updatePushPrefs failed:', err);
+      setSyncStatus('error');
     }
   };
 
   const handleCategoryToggle = async (key: 'medication' | 'disease' | 'concept') => {
     const next = { ...prefs, [key]: !prefs[key] };
     persist(next);
-    if (next.enabled) {
-      try {
-        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: next.chosenHour, chosenMinute: next.chosenMinute });
-      } catch { /* noop — next save/toggle will retry the upsert */ }
-    }
+    await syncToServer(next);
   };
 
   const handleTimeChange = async (hour: number, minute: number) => {
     const next = { ...prefs, chosenHour: hour, chosenMinute: minute };
     persist(next);
-    if (next.enabled) {
-      try {
-        await updatePushPrefs({ medication: next.medication, disease: next.disease, concept: next.concept, chosenHour: hour, chosenMinute: minute });
-      } catch { /* noop */ }
-    }
+    await syncToServer(next);
   };
 
   return (
@@ -257,6 +264,24 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
               className="bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border rounded-xl px-4 py-2.5
                          text-gray-900 dark:text-emt-light font-bold text-lg tracking-wide"
             />
+          </div>
+
+          {/* Explicit save-state feedback — without this, the toggles/time picker
+              look identical whether the change actually reached the server or not,
+              which is exactly what made a "successfully configured" push silently
+              never arrive. */}
+          <div className="px-1 mt-2 min-h-[1rem]">
+            {!prefs.enabled ? (
+              <p className="text-gray-500 dark:text-emt-muted text-xs leading-relaxed">
+                ההגדרות האלה יישמרו בשרת רק אחרי שתדליק את "קבלת פוש יומי" למעלה ותאשר הרשאה.
+              </p>
+            ) : syncStatus === 'saving' ? (
+              <p className="text-gray-500 dark:text-emt-muted text-xs">שומר בשרת…</p>
+            ) : syncStatus === 'saved' ? (
+              <p className="text-emt-green text-xs font-medium">✓ נשמר בשרת</p>
+            ) : syncStatus === 'error' ? (
+              <p className="text-emt-red text-xs">השמירה בשרת נכשלה — בדוק חיבור לאינטרנט ונסה לשנות שוב</p>
+            ) : null}
           </div>
         </section>
 
