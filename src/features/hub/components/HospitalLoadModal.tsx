@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { X, Gauge, Pencil, Check, Clock, AlertCircle } from 'lucide-react';
+import { X, Gauge, Building2, Pencil, Check, Clock, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { supabase } from '../../../lib/supabase';
@@ -71,6 +72,11 @@ function timeAgo(iso: string): string {
   if (mins < 60) return `לפני ${mins} דק׳`;
   const hours = Math.floor(mins / 60);
   return `לפני ${hours} ${hours === 1 ? 'שעה' : 'שעות'}`;
+}
+
+function formatHHMM(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 export default function HospitalLoadModal({ isOpen, onClose }: Props) {
@@ -240,40 +246,45 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
             favorites.map(hospital => (
               <div
                 key={hospital}
-                className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl overflow-hidden"
+                className="shrink-0 bg-white dark:bg-emt-gray border border-cyan-400/20 rounded-2xl overflow-hidden shadow-sm"
               >
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-emt-border">
-                  <p className="text-gray-900 dark:text-emt-light font-bold text-sm">{hospital}</p>
+                {/* Emphasized hospital header */}
+                <div className="flex items-center gap-3 px-4 py-3.5 bg-cyan-500/8 dark:bg-cyan-500/10 border-b border-cyan-400/15">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shrink-0">
+                    <Building2 size={18} className="text-cyan-500 dark:text-cyan-400" />
+                  </div>
+                  <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{hospital}</p>
                 </div>
+
                 <div className="divide-y divide-gray-100 dark:divide-emt-border">
                   {ER_DEPARTMENTS.map(({ key, label }) => {
                     const report = reports[reportKey(hospital, key)];
                     const levelInfo = report ? ER_LOAD_LEVELS.find(l => l.level === report.load_level) : undefined;
                     return (
-                      <div key={key} className="flex items-center justify-between px-4 py-3">
+                      <div key={key} className="flex flex-col gap-2 px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          {levelInfo ? (
-                            <span className={`w-2.5 h-2.5 rounded-full ${levelInfo.dot}`} />
-                          ) : (
-                            <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-emt-border" />
+                          <span className="text-gray-800 dark:text-emt-light text-sm font-bold">{label}</span>
+                          {levelInfo && (
+                            <span className={`flex items-center gap-1 text-xs font-bold ${levelInfo.color} ${levelInfo.bg} border ${levelInfo.border} rounded-full px-2 py-0.5`}>
+                              <span>{levelInfo.emoji}</span>
+                              {levelInfo.label}
+                            </span>
                           )}
-                          <span className="text-gray-800 dark:text-emt-light text-sm font-medium">{label}</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {report ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className={`text-xs font-bold ${levelInfo?.color}`}>{levelInfo?.label}</span>
-                              <span className="flex items-center gap-1 text-gray-400 dark:text-emt-muted text-[11px]">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-1 text-gray-400 dark:text-emt-muted text-[11px]">
+                            {report ? (
+                              <>
                                 <Clock size={11} />
-                                {timeAgo(report.created_at)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 dark:text-emt-muted text-xs">אין דיווח עדכני</span>
-                          )}
+                                עדכון אחרון: {timeAgo(report.created_at)} ({formatHHMM(report.created_at)})
+                              </>
+                            ) : (
+                              'אין דיווח עדכני'
+                            )}
+                          </span>
                           <button
                             onClick={() => { setReportSheet({ hospital, department: key }); setSubmitState('idle'); }}
-                            className="text-xs font-bold text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
+                            className="shrink-0 text-xs font-bold text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
                           >
                             דווח
                           </button>
@@ -305,52 +316,69 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
         </div>
       ) : null}
 
-      {/* Report sheet */}
-      {reportSheet && (
-        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4">
-          <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm shadow-2xl p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-base">
-                {reportSheet.hospital} · {ER_DEPARTMENTS.find(d => d.key === reportSheet.department)?.label}
-              </p>
+      {/* Report sheet — full-screen, centered, "experience" style */}
+      <AnimatePresence>
+        {reportSheet && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex flex-col bg-black/80 backdrop-blur-md"
+          >
+            <div className="ios-safe-header shrink-0 flex justify-end px-4 py-3">
               <button
                 onClick={() => setReportSheet(null)}
-                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-emt-dark flex items-center justify-center text-gray-500 dark:text-emt-muted"
+                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/80 active:scale-90 transition-all"
                 aria-label="סגור"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
-            <p className="text-gray-500 dark:text-emt-muted text-xs mb-4">מה רמת העומס כרגע?</p>
 
-            <div className="grid grid-cols-3 gap-2">
-              {ER_LOAD_LEVELS.map(({ level, label, color, dot }) => (
-                <button
-                  key={level}
-                  onClick={() => submitReport(level)}
-                  disabled={submitState === 'saving'}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-emt-border p-3 active:scale-95 transition-all disabled:opacity-50"
-                >
-                  <span className={`w-3.5 h-3.5 rounded-full ${dot}`} />
-                  <span className={`text-sm font-bold ${color}`}>{label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="min-h-[1.25rem] mt-3 text-center">
-              {submitState === 'saving' && <p className="text-gray-500 dark:text-emt-muted text-xs">שולח…</p>}
-              {submitState === 'saved' && <p className="text-emt-green text-xs font-medium">✓ הדיווח נשמר</p>}
-              {submitState === 'error' && <p className="text-emt-red text-xs">השליחה נכשלה — בדוק חיבור ונסה שוב</p>}
-              {submitState === 'rate-limited' && (
-                <p className="flex items-center justify-center gap-1.5 text-amber-500 text-xs">
-                  <AlertCircle size={13} />
-                  כבר דיווחת כאן לאחרונה — נסה שוב בעוד קצת
+            <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 -mt-10">
+              <div className="text-center">
+                <p className="text-white/50 text-sm font-medium mb-1">
+                  {ER_DEPARTMENTS.find(d => d.key === reportSheet.department)?.label}
                 </p>
-              )}
+                <p className="text-white font-black text-2xl">{reportSheet.hospital}</p>
+                <p className="text-white/60 text-sm mt-3">מה רמת העומס כרגע?</p>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 sm:gap-6">
+                {ER_LOAD_LEVELS.map(({ level, label, emoji, color, bg, border }, i) => (
+                  <motion.button
+                    key={level}
+                    initial={{ opacity: 0, y: 16, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: i * 0.07, type: 'spring', stiffness: 300, damping: 20 }}
+                    whileTap={{ scale: 0.88 }}
+                    onClick={() => submitReport(level)}
+                    disabled={submitState === 'saving'}
+                    className="flex flex-col items-center gap-3 disabled:opacity-50"
+                  >
+                    <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 ${bg} ${border} flex items-center justify-center text-5xl shadow-lg`}>
+                      {emoji}
+                    </div>
+                    <span className={`text-base font-bold ${color}`}>{label}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="min-h-[1.5rem] text-center">
+                {submitState === 'saving' && <p className="text-white/60 text-sm">שולח…</p>}
+                {submitState === 'saved' && <p className="text-emt-green text-sm font-bold">✓ הדיווח נשמר</p>}
+                {submitState === 'error' && <p className="text-emt-red text-sm">השליחה נכשלה — בדוק חיבור ונסה שוב</p>}
+                {submitState === 'rate-limited' && (
+                  <p className="flex items-center justify-center gap-1.5 text-amber-400 text-sm">
+                    <AlertCircle size={14} />
+                    כבר דיווחת כאן לאחרונה — נסה שוב בעוד קצת
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

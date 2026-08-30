@@ -28,8 +28,16 @@ export const ER_DEPARTMENTS: { key: ErDepartment; label: string }[] = [
 
 export type ErLoadLevel = 1 | 2 | 3;
 
-export const ER_LOAD_LEVELS: { level: ErLoadLevel; label: string; color: string; dot: string }[] = [
-  { level: 1, label: 'קל', color: 'text-emt-green', dot: 'bg-emt-green' },
-  { level: 2, label: 'בינוני', color: 'text-amber-400', dot: 'bg-amber-400' },
-  { level: 3, label: 'כבד', color: 'text-emt-red', dot: 'bg-emt-red' },
+export const ER_LOAD_LEVELS: {
+  level: ErLoadLevel;
+  label: string;
+  emoji: string;
+  color: string;
+  dot: string;
+  bg: string;
+  border: string;
+}[] = [
+  { level: 1, label: 'קל',     emoji: '🙂', color: 'text-emt-green',  dot: 'bg-emt-green',  bg: 'bg-emt-green/10',  border: 'border-emt-green/40' },
+  { level: 2, label: 'בינוני', emoji: '😐', color: 'text-amber-400',  dot: 'bg-amber-400',  bg: 'bg-amber-400/10',  border: 'border-amber-400/40' },
+  { level: 3, label: 'כבד',    emoji: '😫', color: 'text-emt-red',    dot: 'bg-emt-red',    bg: 'bg-emt-red/10',    border: 'border-emt-red/40' },
 ];
