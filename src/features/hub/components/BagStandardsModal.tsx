@@ -175,7 +175,8 @@ const BAGS: Bag[] = [
   },
 ];
 
-const HATZALAH_CATEGORIES: MDACategory[] = [
+// ── איחוד הצלה — מפרט ציוד מתכלה לכונן BLS (עודכן ספטמבר 2026) ────────────────
+const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'trauma',
     title: 'חבישה וטראומה',
@@ -183,71 +184,331 @@ const HATZALAH_CATEGORIES: MDACategory[] = [
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
-      { name: 'חסם עורקים', qty: '1' },
+      { name: 'חסם עורקים גומי', qty: '2' },
+      { name: 'חסם עורקים CAT', qty: '1' },
       { name: 'פלסטרים', qty: '10' },
-      { name: 'אגד חבישה - גלילים', qty: '5' },
-      { name: 'פדי גזה סטרילי 10×10', qty: '20' },
-      { name: 'שמיכת מילוט', qty: '1' },
-      { name: 'סביעור/אלכוקסידין 100 מ"ל', qty: '1' },
-      { name: 'טרנספר - לויקופלסט', qty: '1' },
-      { name: 'תחבושת אלסטית', qty: '1' },
+      { name: 'גליל אגד 5 ס"מ', qty: '5' },
+      { name: 'פד גזה סטרילי 10×10', qty: '20' },
+      { name: 'פד גזה סטרילי 5×5', qty: '20' },
+      { name: 'לויקופלסט / דבק', qty: '1' },
+      { name: 'תחבושת אלסטית', qty: '2' },
+      { name: 'תחבושת בינונית', qty: '1' },
       { name: 'תחבושת אישית', qty: '3' },
-      { name: 'משולש', qty: '4' },
-      { name: 'מלע"כ מקצועי', qty: '1' },
+      { name: 'תחבושת טקטית / ישראלית', qty: '1' },
+      { name: 'תחבושת אשרמן', qty: '1' },
+      { name: 'תחבושת המוסטטית', qty: '1' },
+      { name: 'משולש לקיבוע', qty: '4' },
+      { name: 'מלע"כ (מספריים)', qty: '1' },
+      { name: 'שמיכת מילוט', qty: '1' },
+      { name: 'פולידין תמיסה 20 מ"ל', qty: '1' },
     ],
   },
   {
     id: 'airway',
-    title: 'הנשמה וחמצן',
+    title: 'החייאה, הנשמה וחמצן',
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
-      { name: 'בלון חמצן 2.4 ליטר', qty: '1' },
-      { name: 'ווסת', qty: '1' },
-      { name: 'סקשן ידני + 2 מחברים', qty: '1' },
-      { name: 'מפוח הנשמה סיליקון מבוגר + מסכה 5', qty: '1' },
-      { name: 'מפוח הנשמה סיליקון ילד + מסכה 2', qty: '1' },
-      { name: "מסכת הנשמה סיליקון מס' 0", qty: '2' },
-      { name: "סט מנתבי אוויר 00-4", qty: '1' },
-      { name: 'מסנן ויראלי מבוגר', qty: '1' },
+      { name: 'סוללה 9V לדפיברילטור', qty: '1' },
+      { name: 'מדבקה לדפיברילטור (Life Line)', qty: '1' },
+      { name: 'מדבקה לדפי G3', qty: '1' },
+      { name: 'ווסת לבלון חמצן', qty: '1' },
+      { name: 'סקשן ידני', qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 5", qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 2", qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 0", qty: '1' },
+      { name: "מפוח הנשמה מבוגר (כולל מסכה מס' 5)", qty: '1' },
+      { name: "מפוח הנשמה ילד (כולל מסכה מס' 2)", qty: '1' },
+      { name: 'מסכת חמצן מבוגר', qty: '2' },
+      { name: 'מסכת חמצן ילד', qty: '2' },
+      { name: 'קטטר לסקשן אדום', qty: '2' },
+      { name: 'קטטר לסקשן כחול', qty: '2' },
+      { name: 'מנתב אוויר 00', qty: '1' },
+      { name: 'מנתב אוויר 0', qty: '1' },
+      { name: 'מנתב אוויר 1', qty: '1' },
+      { name: 'מנתב אוויר 2', qty: '1' },
+      { name: 'מנתב אוויר 3', qty: '2' },
+      { name: 'מנתב אוויר 4', qty: '1' },
+      { name: 'מסנן ויראלי מבוגר', qty: '2' },
       { name: 'מסנן ויראלי ילד', qty: '1' },
-      { name: 'מסיכת חמצן מבוגר + שקית', qty: '3' },
-      { name: 'מסיכת חמצן ילד + שקית', qty: '2' },
     ],
   },
   {
     id: 'meds',
-    title: 'אבחון, עירוי ותרופות',
+    title: 'עירוי, סוכר ותרופות',
     color: 'text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: 'אספירין 300 מ"ג', qty: '10' },
-      { name: "גלוקוג'ל", qty: '2' },
+      { name: 'ערכה לפתיחת וריד', qty: '1' },
       { name: 'סליין 0.5 ליטר', qty: '1' },
-      { name: 'סט שטיפה לעירוי', qty: '1' },
-      { name: 'וונפלונים (כחול 2, ירוק 2, ורוד 2)', qty: '6' },
-      { name: 'מדל"ד + סטטוסקופ מבוגר', qty: '1' },
-      { name: 'מדל"ד + סטטוסקופ ילד', qty: '1' },
-      { name: 'קטטר לסקשן אדום 18', qty: '2' },
-      { name: 'קטטר לסקשן כחול 8', qty: '2' },
+      { name: 'פח מחטים (0.5 ליטר)', qty: '1' },
+      { name: 'ערכת הזרקת אדרנלין (אפיפן)', qty: '1' },
+      { name: 'דוקרנים למד סוכר', qty: '10' },
+      { name: 'סטיקים למד סוכר – פרסטיל', qty: '10' },
+      { name: 'סטיקים למד סוכר – דגם חדש (שור)', qty: '10' },
+      { name: 'סוללה למד סוכר 3V', qty: '2' },
+      { name: "ספונג'טה לחיטוי", qty: '10' },
+      { name: "גלוקוג'ל", qty: '2' },
+      { name: 'אספירין', qty: '10' },
+    ],
+  },
+  {
+    id: 'immob',
+    title: 'קיבוע ולידה',
+    color: 'text-indigo-400',
+    border: 'border-indigo-400/30',
+    bg: 'bg-indigo-400/10',
+    items: [
+      { name: 'סד קשיח לקיבוע', qty: '1' },
+      { name: 'צווארון מתכוונן', qty: '1' },
+      { name: 'ערכת לידה', qty: '1' },
     ],
   },
   {
     id: 'general',
-    title: 'כללי',
+    title: 'כללי וציוד עזר',
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
-      { name: 'כפפות L', qty: '30' },
-      { name: "ספונג'טה לחיטוי", qty: '10' },
-      { name: 'מסכת הגנה לפנים', qty: '1' },
-      { name: 'חומר לחיטוי ידיים', qty: '1' },
-      { name: 'פחי מחטים 0.6 ליטר', qty: '1' },
-      { name: 'צווארון מתכוונן מבוגר', qty: '1' },
+      { name: 'כפפות מידה S', qty: '100' },
+      { name: 'כפפות מידה M', qty: '100' },
+      { name: 'כפפות מידה L', qty: '100' },
+      { name: 'כפפות מידה XL', qty: '100' },
+      { name: "ג'ל לחיטוי ידיים", qty: '1' },
+      { name: 'מסכת הגנה N-95', qty: '3' },
+      { name: 'מסכה כירורגית', qty: '10' },
+      { name: 'מגבון אישי לחיטוי', qty: '5' },
+      { name: 'מדל"ד מבוגר (כולל סטטוסקופ)', qty: '1' },
+      { name: 'סטטוסקופ', qty: '1' },
+      { name: 'סוללה AAA למד סטורציה', qty: '2' },
+      { name: 'סכין גילוח', qty: '1' },
+      { name: 'אלונקת בד', qty: '1' },
+      { name: 'סט תגי אר"ן (מארז של 5)', qty: '1' },
+      { name: 'טוש לא מחיק', qty: '1' },
+      { name: 'גומיה לאיטום ווסת חמצן', qty: '1' },
+      { name: 'קליפס לראגר', qty: '1' },
+    ],
+  },
+];
+
+// ── איחוד הצלה — מפרט ציוד מתכלה לכונן ALS "רגיל" (עודכן ספטמבר 2026) ──────────
+const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
+  {
+    id: 'intubation',
+    title: 'נתיב אוויר ואינטובציה',
+    color: 'text-blue-400',
+    border: 'border-blue-400/30',
+    bg: 'bg-blue-400/10',
+    items: [
+      { name: 'מחט לעירוי תוך-גרמי Sam IO 25 מ"מ', qty: '1' },
+      { name: 'מכוון טובוס למבוגר (14 ס"מ)', qty: '2' },
+      { name: 'מכוון טובוס לילד (10 ס"מ)', qty: '1' },
+      { name: 'מכוון אנדוטרכיאלי (בוזי) לטובוס', qty: '1' },
+      { name: 'ידית לרינגוסקופ (בסיס)', qty: '1' },
+      { name: "להב לרינגוסקופ מקינטוש מס' 1", qty: '1' },
+      { name: "להב לרינגוסקופ מקינטוש מס' 2", qty: '1' },
+      { name: "להב לרינגוסקופ מקינטוש מס' 3", qty: '1' },
+      { name: "להב לרינגוסקופ מקינטוש מס' 4", qty: '1' },
+      { name: 'מלקחיים מגיל למבוגר', qty: '1' },
+      { name: 'שרוך לבן לקיבוע', qty: '3' },
+      { name: 'מסכת פנים לאינטובציה (כולל שקף)', qty: '4' },
+      { name: 'משקף מגן קשיח לאינטובציה', qty: '1' },
+      { name: 'מזרק 20 סמ"ק ללא מחט', qty: '2' },
+      { name: "טובוס מס' 3", qty: '1' },
+      { name: "טובוס מס' 3.5", qty: '1' },
+      { name: "טובוס מס' 4", qty: '1' },
+      { name: "טובוס מס' 4.5", qty: '1' },
+      { name: "טובוס מס' 5", qty: '1' },
+      { name: "טובוס מס' 5.5", qty: '1' },
+      { name: "טובוס מס' 6", qty: '1' },
+      { name: "טובוס מס' 6.5", qty: '1' },
+      { name: "טובוס מס' 7", qty: '2' },
+      { name: "טובוס מס' 7.5", qty: '2' },
+      { name: "טובוס מס' 8", qty: '2' },
+      { name: "ג'ל לובריקציה 2.7 גרם (שקיק)", qty: '5' },
+      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 2", qty: '1' },
+      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 3", qty: '1' },
+      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 4", qty: '1' },
+      { name: "להב וידאו-לרינגוסקופ McGRATH מס' X3", qty: '1' },
+    ],
+  },
+  {
+    id: 'airway',
+    title: 'הנשמה, חמצן ונשימתי',
+    color: 'text-sky-400',
+    border: 'border-sky-400/30',
+    bg: 'bg-sky-400/10',
+    items: [
+      { name: 'סוללה 9V לדפיברילטור', qty: '1' },
+      { name: 'מדבקה לדפיברילטור (Life Line)', qty: '1' },
+      { name: 'ווסת לבלון חמצן', qty: '1' },
+      { name: 'סקשן ידני', qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 5", qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 2", qty: '1' },
+      { name: "מסכת הנשמה (אמבו) מס' 0", qty: '1' },
+      { name: "מפוח הנשמה מבוגר (כולל מסכה מס' 5)", qty: '1' },
+      { name: "מפוח הנשמה ילד (כולל מסכה מס' 2)", qty: '1' },
+      { name: 'מסכת חמצן מבוגר', qty: '2' },
+      { name: 'מסכת חמצן ילד', qty: '1' },
+      { name: 'מסכת אינהלציה מבוגר', qty: '2' },
+      { name: 'מסכת אינהלציה ילד', qty: '2' },
+      { name: 'קטטר לסקשן אדום', qty: '1' },
+      { name: 'קטטר לסקשן כחול', qty: '2' },
+      { name: 'מנתב אוויר 00', qty: '1' },
+      { name: 'מנתב אוויר 0', qty: '1' },
+      { name: 'מנתב אוויר 1', qty: '1' },
+      { name: 'מנתב אוויר 2', qty: '1' },
+      { name: 'מנתב אוויר 3', qty: '2' },
+      { name: 'מנתב אוויר 4', qty: '1' },
+      { name: 'מסנן ויראלי מבוגר', qty: '2' },
+      { name: 'מסנן ויראלי ילד', qty: '1' },
+      { name: 'קטטר לזונדה 16', qty: '1' },
+      { name: 'קטטר לזונדה 18', qty: '1' },
+    ],
+  },
+  {
+    id: 'trauma',
+    title: 'חבישה, טראומה וניקור חזה',
+    color: 'text-amber-400',
+    border: 'border-amber-400/30',
+    bg: 'bg-amber-400/10',
+    items: [
+      { name: 'חסם עורקים גומי', qty: '1' },
+      { name: 'חסם עורקים CAT', qty: '1' },
+      { name: 'פלסטרים', qty: '20' },
+      { name: 'גליל אגד 5 ס"מ', qty: '5' },
+      { name: 'פד גזה סטרילי 10×10', qty: '10' },
+      { name: 'פד גזה סטרילי 5×5', qty: '20' },
+      { name: 'שמיכת מילוט', qty: '1' },
+      { name: 'לויקופלסט / דבק', qty: '1' },
+      { name: 'תחבושת אלסטית', qty: '2' },
+      { name: 'תחבושת בינונית', qty: '1' },
+      { name: 'תחבושת אישית', qty: '2' },
+      { name: 'משולש לקיבוע', qty: '4' },
+      { name: 'מלע"כ (מספריים)', qty: '1' },
+      { name: 'תחבושת טקטית / ישראלית', qty: '1' },
+      { name: 'תחבושת אשרמן', qty: '1' },
+      { name: 'תחבושת המוסטטית', qty: '1' },
+      { name: 'פולידין תמיסה 20 מ"ל', qty: '1' },
+      { name: 'ערכת ניקור חזה', qty: '1' },
+      { name: 'מחט ניקוז חזה T-PAK 14 מ"מ', qty: '1' },
+      { name: 'צינורית לעירוי', qty: '3' },
+    ],
+  },
+  {
+    id: 'iv',
+    title: 'עירוי, הזרקה וסוכר',
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+    items: [
+      { name: 'ערכה לפתיחת וריד', qty: '1' },
+      { name: 'סליין 0.5 ליטר', qty: '1' },
+      { name: 'פח מחטים (0.5 ליטר)', qty: '1' },
+      { name: 'מחט סטרילית G18 1½" (ורוד)', qty: '6' },
+      { name: 'מחט סטרילית G21 1½" (ירוק)', qty: '6' },
+      { name: 'מזרק נזאלי (קונוס להחדרת תרופות)', qty: '2' },
+      { name: 'סטופקוק / ברז תלת-כיווני עם אקסטנשן', qty: '2' },
+      { name: 'מזרק 1 מ"ל', qty: '3' },
+      { name: 'מזרק 10 סמ"ק ללא מחט', qty: '6' },
+      { name: 'מזרק 2.5/3 סמ"ק ללא מחט', qty: '6' },
+      { name: 'מזרק 5 סמ"ק ללא מחט', qty: '6' },
+      { name: 'מזרק 60×50 – זונדה (סופגניה)', qty: '1' },
+      { name: 'ונפלון כחול G22', qty: '2' },
+      { name: 'ונפלון ירוק G18', qty: '2' },
+      { name: 'ונפלון ורוד G20', qty: '2' },
+      { name: 'ונפלון צהוב G24', qty: '1' },
+      { name: 'מזרק תוך-גרמי לילדים BIG', qty: '1' },
+      { name: 'מזרק תוך-גרמי למבוגר BIG', qty: '1' },
+      { name: 'דוקרנים למד סוכר', qty: '10' },
+      { name: 'סטיקים למד סוכר – פרסטיל', qty: '10' },
+      { name: 'סטיקים למד סוכר – דגם חדש (שור)', qty: '10' },
+      { name: 'סוללה למד סוכר 3V', qty: '2' },
+      { name: "ספונג'טה לחיטוי", qty: '5' },
+    ],
+  },
+  {
+    id: 'meds',
+    title: 'תרופות ואמפולות',
+    color: 'text-rose-400',
+    border: 'border-rose-400/30',
+    bg: 'bg-rose-400/10',
+    items: [
+      { name: "גלוקוג'ל", qty: '1' },
+      { name: 'אספירין', qty: '10' },
+      { name: 'סליין 100 סמ"ק (NaCl 0.9%)', qty: '2' },
+      { name: 'סליין 0.9% 10 מ"ל', qty: '6' },
+      { name: 'ארוונט 0.25mg/1cc', qty: '1' },
+      { name: 'ונטולין תמיסה 20 מ"ל', qty: '1' },
+      { name: 'איזוקט ספריי (Nitrolingual)', qty: '1' },
+      { name: "אדרנלין אמפ' 1 מ\"ג/1 מ\"ל", qty: '10' },
+      { name: 'אטרופין 1 מ"ג/1 מ"ל', qty: '3' },
+      { name: "איקקור (אמיודרון) אמפ'", qty: '2' },
+      { name: 'מגנזיום סולפט 5 גרם', qty: '1' },
+      { name: 'הפרין / פרגמין 5000 יב"ל', qty: '1' },
+      { name: 'אדנוזין 6 מ"ג/2 מ"ל', qty: '5' },
+      { name: 'לידוקאין 2% (עזרקאין)', qty: '2' },
+      { name: 'פוסיד (פורוסמיד) 20 מ"ג/2 מ"ל', qty: '10' },
+      { name: 'דורמיקום (מידזולם) 5 מ"ג', qty: '5' },
+      { name: 'סולומדרול 125 מ"ג/2 מ"ל', qty: '2' },
+      { name: 'נרקן (נלוקסון) 0.4 מ"ג/1 מ"ל', qty: '5' },
+      { name: 'גלוקוז 50% (Dextrose)', qty: '3' },
+      { name: 'אקמול / דקסמול טבליות', qty: '10' },
+      { name: 'אקמול נוזלי לווריד', qty: '1' },
+      { name: 'פראמין 10 מ"ג/2 מ"ל', qty: '2' },
+      { name: "אופטלגין אמפ'", qty: '2' },
+      { name: 'טרמדול (טרמל) 100 מ"ג/2 מ"ל', qty: '1' },
+      { name: 'אטומידאט-ליפורו 20 מ"ג/10 מ"ל', qty: '2' },
+    ],
+  },
+  {
+    id: 'monitor',
+    title: 'מוניטור / קורפולס',
+    color: 'text-emerald-400',
+    border: 'border-emerald-400/30',
+    bg: 'bg-emerald-400/10',
+    items: [
+      { name: 'מדבקות ECG (F50, מארז 30/50)', qty: '1' },
+      { name: 'נייר הדפסה לקורפולס', qty: '1' },
+      { name: 'קפנו נושם (נזאלי) – קורפולס', qty: '1' },
+      { name: 'קפנו מונשם – קורפולס', qty: '1' },
+      { name: 'קפנוגרף כימי – פילטר', qty: '1' },
+      { name: 'כיסוי גומי למדחום – קורפולס (מארז 10)', qty: '1' },
+      { name: 'מדבקת דפיברילציה מבוגר – קורפולס', qty: '1' },
+      { name: 'מדבקת דפיברילציה תינוק/ילד – קורפולס', qty: '1' },
+    ],
+  },
+  {
+    id: 'general',
+    title: 'קיבוע, לידה וכללי',
+    color: 'text-violet-400',
+    border: 'border-violet-400/30',
+    bg: 'bg-violet-400/10',
+    items: [
+      { name: 'סד קשיח לקיבוע', qty: '1' },
+      { name: 'צווארון מתכוונן', qty: '1' },
       { name: 'ערכת לידה', qty: '1' },
+      { name: 'שקית שתן', qty: '1' },
+      { name: 'כפפות מידה S', qty: '100' },
+      { name: 'כפפות מידה M', qty: '30' },
+      { name: 'כפפות מידה L', qty: '30' },
+      { name: 'כפפות מידה XL', qty: '30' },
+      { name: "ג'ל לחיטוי ידיים", qty: '1' },
+      { name: 'מסכת הגנה N-95', qty: '3' },
+      { name: 'מסכה כירורגית', qty: '10' },
+      { name: 'מגבון אישי לחיטוי', qty: '5' },
+      { name: 'מדל"ד מבוגר (כולל סטטוסקופ)', qty: '1' },
+      { name: 'סטטוסקופ', qty: '1' },
+      { name: 'סוללה AAA למד סטורציה', qty: '2' },
+      { name: 'אלונקת בד', qty: '1' },
+      { name: 'סט תגי אר"ן (מארז של 5)', qty: '1' },
+      { name: 'טוש לא מחיק', qty: '1' },
+      { name: 'גומיה לאיטום ווסת חמצן', qty: '1' },
+      { name: 'קליפס לראגר', qty: '1' },
+      { name: "בנדולרה כתומה (יח' נשלפת)", qty: '1' },
     ],
   },
 ];
@@ -389,7 +650,8 @@ function checkExpiryNotifications() {
 
   const keys = [
     'mda-kit-checklist',
-    'hatzalah-kit-checklist',
+    'hatzalah-bls-kit-checklist',
+    'hatzalah-als-kit-checklist',
     ...BAGS.map(b => `bag-checklist-${b.id}`),
   ];
 
@@ -560,8 +822,15 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   const [selectedBag, setSelectedBag] = useState<Bag | null>(null);
   const [mohInventory, setMohInventory] = useState<BagInventory>({});
   const [mdaInventory, setMdaInventory] = useState<BagInventory>({});
-  const [hatzalahInventory, setHatzalahInventory] = useState<BagInventory>({});
+  const [hatzBlsInventory, setHatzBlsInventory] = useState<BagInventory>({});
+  const [hatzAlsInventory, setHatzAlsInventory] = useState<BagInventory>({});
+  const [hatzVariant, setHatzVariant] = useState<'bls' | 'als'>('bls');
   const [activeStandard, setActiveStandard] = useState<Standard>('moh');
+
+  const hatzKey = hatzVariant === 'bls' ? 'hatzalah-bls-kit-checklist' : 'hatzalah-als-kit-checklist';
+  const hatzInventory = hatzVariant === 'bls' ? hatzBlsInventory : hatzAlsInventory;
+  const setHatzInventory = hatzVariant === 'bls' ? setHatzBlsInventory : setHatzAlsInventory;
+  const hatzCategories = hatzVariant === 'bls' ? HATZALAH_BLS_CATEGORIES : HATZALAH_ALS_CATEGORIES;
 
   // Check expiry notifications once on mount
   useEffect(() => { checkExpiryNotifications(); }, []);
@@ -575,7 +844,8 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   // Load MDA & Hatzalah inventories on mount
   useEffect(() => {
     setMdaInventory(loadInventory('mda-kit-checklist'));
-    setHatzalahInventory(loadInventory('hatzalah-kit-checklist'));
+    setHatzBlsInventory(loadInventory('hatzalah-bls-kit-checklist'));
+    setHatzAlsInventory(loadInventory('hatzalah-als-kit-checklist'));
   }, []);
 
   // ── MOH bag handlers ───────────────────────────────────────────────────────
@@ -630,30 +900,30 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     setMdaInventory(cleared);
   };
 
-  // ── Hatzalah handlers ──────────────────────────────────────────────────────
+  // ── Hatzalah handlers (operate on the active BLS/ALS variant) ───────────────
 
   const toggleHatzalahItem = (key: string) => {
-    setHatzalahInventory(prev => {
+    setHatzInventory(prev => {
       const cur = prev[key] ?? { status: null };
       const next = { ...prev, [key]: { ...cur, status: cycleStatus(cur.status) } };
-      saveInventory('hatzalah-kit-checklist', next);
+      saveInventory(hatzKey, next);
       return next;
     });
   };
 
   const setHatzalahExpiry = (key: string, date: string | undefined) => {
-    setHatzalahInventory(prev => {
+    setHatzInventory(prev => {
       const cur = prev[key] ?? { status: null };
       const next = { ...prev, [key]: { ...cur, expiryDate: date } };
-      saveInventory('hatzalah-kit-checklist', next);
+      saveInventory(hatzKey, next);
       return next;
     });
   };
 
   const clearHatzalahChecklist = () => {
-    const cleared = clearStatusOnly(hatzalahInventory);
-    saveInventory('hatzalah-kit-checklist', cleared);
-    setHatzalahInventory(cleared);
+    const cleared = clearStatusOnly(hatzInventory);
+    saveInventory(hatzKey, cleared);
+    setHatzInventory(cleared);
   };
 
   useModalBackHandler(isOpen, selectedBag ? () => setSelectedBag(null) : onClose);
@@ -905,8 +1175,28 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           MDA_CATEGORIES, mdaInventory, toggleMdaItem, setMdaExpiry,
         )}
 
-        {activeStandard === 'hatzalah' && renderCategoryChecklist(
-          HATZALAH_CATEGORIES, hatzalahInventory, toggleHatzalahItem, setHatzalahExpiry,
+        {activeStandard === 'hatzalah' && (
+          <>
+            <div className="flex rounded-2xl p-1 gap-1 mb-4" style={{ background: 'rgba(120,120,128,0.12)' }} dir="rtl">
+              {([
+                { id: 'bls', label: 'כונן BLS' },
+                { id: 'als', label: 'כונן ALS' },
+              ] as const).map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => { setHatzVariant(id); trackEvent('bag_standards_hatzalah_variant', { variant: id }); }}
+                  className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
+                    hatzVariant === id
+                      ? 'bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light shadow-sm'
+                      : 'text-gray-500 dark:text-emt-muted'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {renderCategoryChecklist(hatzCategories, hatzInventory, toggleHatzalahItem, setHatzalahExpiry)}
+          </>
         )}
       </div>
     </div>
