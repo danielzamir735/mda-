@@ -1,0 +1,140 @@
+<template data-composition-id="01-hook">
+  <style>
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      direction: rtl;
+    }
+
+    @font-face {
+      font-family: 'Barlow';
+      src: local('Arial');
+      font-weight: 100 900;
+      font-style: normal;
+    }
+
+    #root .hook-bg {
+      position: absolute;
+      inset: 0;
+      background: #111114;
+    }
+
+    #root .hook-stage {
+      position: absolute;
+      inset: 0;
+    }
+
+    #root .hook-line1 {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 880px;
+      width: 100%;
+      text-align: center;
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 150px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      color: #E5E7E6;
+      opacity: 0;
+      padding: 0 60px;
+      box-sizing: border-box;
+    }
+
+    #root .hook-line2 {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 566px;
+      width: 100%;
+      text-align: center;
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 90px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: #E5E7E6;
+      opacity: 0;
+      padding: 0 60px;
+      box-sizing: border-box;
+    }
+
+    #root .hook-line3 {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 706px;
+      width: 100%;
+      text-align: center;
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 900;
+      font-size: 112px;
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+      color: #22C55E;
+      opacity: 0;
+      padding: 0 60px;
+      box-sizing: border-box;
+    }
+  </style>
+
+  <div id="root">
+    <div class="clip hook-bg" data-start="0" data-duration="4" data-track-index="0"></div>
+
+    <div class="clip hook-stage" data-start="0" data-duration="4" data-track-index="1">
+      <div class="hook-line1">מצב חירום.</div>
+      <div class="hook-line2">כל שנייה —</div>
+      <div class="hook-line3">קובעת.</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var tl = gsap.timeline({ paused: true });
+
+      var line1 = '#root .hook-line1';
+      var line2 = '#root .hook-line2';
+      var line3 = '#root .hook-line3';
+
+      // Scene 1 (0.0-2.0s): "מצב חירום." slams in dead-center, oversized, hard cut with heavy power3 ease.
+      tl.fromTo(line1,
+        { opacity: 0, scale: 1.16, transformOrigin: '50% 50%' },
+        { opacity: 1, scale: 1, duration: 0.36, ease: 'power3.out' },
+        0.0
+      );
+      // brief centered hold before the shrink
+      tl.to(line1, { duration: 1.24 }, 0.36);
+
+      // Scene 2 (2.0-4.0s): line1 shrinks and rises to the upper third; holds there.
+      tl.to(line1, {
+        top: 420,
+        fontSize: 64,
+        duration: 0.55,
+        ease: 'power3.inOut'
+      }, 2.0);
+
+      // "כל שנייה —" drops in beneath the settled headline, on the voiceover cue.
+      tl.fromTo(line2,
+        { opacity: 0, y: -40 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' },
+        2.35
+      );
+
+      // "קובעת" isolated on its own beat, fire-orange, slightly larger — the payoff word.
+      tl.fromTo(line3,
+        { opacity: 0, y: -40, scale: 1.08, transformOrigin: '50% 50%' },
+        { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: 'power3.out' },
+        2.62
+      );
+
+      // Holds still on landing (no drift) through the remainder of the shot.
+      tl.to({}, { duration: 4.0 - 3.04 }, 3.04);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['01-hook'] = tl;
+    })();
+  </script>
+</template>

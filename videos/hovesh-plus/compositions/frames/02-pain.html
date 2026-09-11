@@ -1,0 +1,153 @@
+<template>
+<div id="root" data-composition-id="02-pain">
+  <style>
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      container-type: size;
+      background: #71717A;
+      font-family: "P2Barlow", "Barlow", Arial, sans-serif;
+      direction: rtl;
+    }
+
+    @font-face {
+      font-family: "P2Barlow";
+      src: local("Arial");
+      font-weight: 400 900;
+    }
+    @font-face {
+      font-family: "P2Mono";
+      src: local("Consolas"), local("Courier New");
+      font-weight: 400 700;
+    }
+
+    .p2-clip {
+      position: absolute;
+      inset: 0;
+    }
+
+    .p2-ground {
+      background: #71717A;
+    }
+
+    /* safe area = top 83% of 1920 => 0..1594px; stage centers within it */
+    .p2-stage {
+      position: absolute;
+      left: 5.5cqw;
+      right: 5.5cqw;
+      top: 0;
+      height: 1594px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transform-origin: 50% 50%;
+    }
+
+    .p2-word {
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      color: #111114;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .p2-w1 {
+      font-size: 22cqw;
+    }
+
+    .p2-w2 {
+      font-size: 17cqw;
+    }
+
+    .p2-w3 {
+      font-size: 8.6cqw;
+      line-height: 1.25;
+      max-width: 78cqw;
+      margin: 0 auto;
+    }
+
+    .p2-accent {
+      color: #22C55E;
+    }
+  </style>
+
+  <div class="p2-clip p2-ground clip" data-start="0" data-duration="4" data-track-index="0"></div>
+
+  <div class="p2-clip clip" data-start="0" data-duration="4" data-track-index="1">
+    <div class="p2-stage" id="p2-stage">
+      <div class="p2-word p2-w1" id="p2-w1">לחץ.</div>
+      <div class="p2-word p2-w2" id="p2-w2">בלבול.</div>
+      <div class="p2-word p2-w3" id="p2-w3" dir="rtl">
+        <span class="p2-accent">אין זמן</span> לחפש פרוטוקול.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var tl = gsap.timeline({ paused: true });
+
+      var stage = document.getElementById("p2-stage");
+      var w1 = document.getElementById("p2-w1");
+      var w2 = document.getElementById("p2-w2");
+      var w3 = document.getElementById("p2-w3");
+
+      // slow continuous ground push-in underneath the whole sequence
+      tl.fromTo(
+        stage,
+        { scale: 1.0 },
+        { scale: 1.035, duration: 4.0, ease: "none" },
+        0
+      );
+
+      // Scene 1 (0.0-1.3s): "לחץ." lands solo, centered, then clears
+      tl.fromTo(
+        w1,
+        { opacity: 0, scale: 0.7, y: 0 },
+        { opacity: 1, scale: 1, duration: 0.32, ease: "back.out(2)" },
+        0.0
+      );
+      tl.to(w1, { opacity: 1, scale: 1, duration: 0.68 }, 0.32);
+      tl.to(
+        w1,
+        { opacity: 0, scale: 0.9, y: -26, duration: 0.3, ease: "power2.in" },
+        1.0
+      );
+
+      // Scene 2 (1.3-2.6s): "בלבול." replaces it in the same spot, same weight, then clears
+      tl.fromTo(
+        w2,
+        { opacity: 0, scale: 0.7, y: 0 },
+        { opacity: 1, scale: 1, duration: 0.32, ease: "back.out(2)" },
+        1.3
+      );
+      tl.to(w2, { opacity: 1, scale: 1, duration: 0.68 }, 1.62);
+      tl.to(
+        w2,
+        { opacity: 0, scale: 0.9, y: -26, duration: 0.3, ease: "power2.in" },
+        2.3
+      );
+
+      // Scene 3 (2.6-4.0s): "אין זמן לחפש פרוטוקול." lands and holds to the end
+      tl.fromTo(
+        w3,
+        { opacity: 0, scale: 1.25, y: 0 },
+        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
+        2.6
+      );
+      tl.to(w3, { opacity: 1, scale: 1, duration: 1.0 }, 3.0);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["02-pain"] = tl;
+    })();
+  </script>
+</div>
+</template>

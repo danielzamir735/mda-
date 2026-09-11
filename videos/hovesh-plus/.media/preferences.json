@@ -35,6 +35,13 @@
         "hovesh-plus"
       ],
       "updated_at": "2026-09-11T10:56:13.707Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "broadside",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T11:05:17.468Z"
     }
   },
   "sightings": {}
