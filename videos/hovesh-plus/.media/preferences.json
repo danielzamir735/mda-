@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "instagram-reels",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T10:56:13.241Z"
+    },
+    "aspect": {
+      "value": "1080x1920",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T10:56:13.342Z"
+    },
+    "language": {
+      "value": "he",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T10:56:13.461Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T10:56:13.580Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "hovesh-plus"
+      ],
+      "updated_at": "2026-09-11T10:56:13.707Z"
+    }
+  },
+  "sightings": {}
+}
