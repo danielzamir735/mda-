@@ -135,12 +135,7 @@
 
   <script>
     (function () {
-      var root = document.currentScript.closest("template") || document.currentScript.parentNode;
-      var scope = (document.currentScript.getRootNode && document.currentScript.getRootNode()) || document;
-
-      var captionEl = scope.getElementById
-        ? scope.getElementById("hf03-caption")
-        : document.getElementById("hf03-caption");
+      var captionEl = document.getElementById("hf03-caption");
 
       // Build the typewriter character spans synchronously from the source text.
       var fullText = captionEl.textContent;
@@ -154,15 +149,9 @@
         charSpans.push(span);
       }
 
-      var wordHovesh = scope.getElementById
-        ? scope.getElementById("hf03-word-hovesh")
-        : document.getElementById("hf03-word-hovesh");
-      var wordPlus = scope.getElementById
-        ? scope.getElementById("hf03-word-plus")
-        : document.getElementById("hf03-word-plus");
-      var deviceGroup = scope.getElementById
-        ? scope.getElementById("hf03-device-group")
-        : document.getElementById("hf03-device-group");
+      var wordHovesh = document.getElementById("hf03-word-hovesh");
+      var wordPlus = document.getElementById("hf03-word-plus");
+      var deviceGroup = document.getElementById("hf03-device-group");
 
       gsap.set(wordHovesh, { opacity: 0, scale: 1.35, y: 26 });
       gsap.set(wordPlus, { opacity: 0, scale: 1.35, x: -24 });
@@ -174,8 +163,8 @@
       // Scene 1 (0.0-1.5s): "חובש" slams in, upper-third, bold, dark register.
       tl.to(
         wordHovesh,
-        { opacity: 1, scale: 1, y: 0, duration: 0.46, ease: "back.out(2.4)" },
-        0.05
+        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(2.4)" },
+        0.02
       );
 
       // Scene 2 (1.5-3.2s): "פלוס" lands in fire-orange, completing the wordmark;
@@ -194,7 +183,7 @@
       // Scene 3 (3.2-5.0s): caption types on, held read to the end of the shot.
       tl.to(
         charSpans,
-        { opacity: 1, duration: 0.05, stagger: 0.045, ease: "none" },
+        { opacity: 1, duration: 0.05, stagger: 0.032, ease: "none" },
         3.2
       );
 

@@ -1,0 +1,176 @@
+<template data-composition-id="05-feature-tools">
+  <style>
+    #root {
+      width: 1080px;
+      height: 1920px;
+      position: relative;
+      overflow: hidden;
+      font-family: 'Barlow', Arial, sans-serif;
+    }
+
+    @font-face {
+      font-family: 'Barlow';
+      src: local('Arial');
+      font-weight: 100 900;
+    }
+
+    #root .ftools-bg {
+      position: absolute;
+      inset: 0;
+      background: #71717A;
+    }
+
+    /* faint flat texture in the empty right column — no gradients, per frame.md */
+    #root .ftools-hair {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 1px;
+      height: 100%;
+      background: rgba(17, 17, 20, 0.14);
+    }
+
+    #root .ftools-rule {
+      position: absolute;
+      left: 90px;
+      top: 232px;
+      width: 64px;
+      height: 4px;
+      background: #22C55E;
+      opacity: 0;
+    }
+
+    #root .ftools-list {
+      position: absolute;
+      left: 90px;
+      top: 300px;
+      width: 640px;
+    }
+
+    #root .ftools-item {
+      position: relative;
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      gap: 22px;
+      height: 172px;
+      opacity: 0;
+    }
+
+    #root .ftools-marker {
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 900;
+      font-size: 58px;
+      line-height: 1;
+      color: #22C55E;
+      transform: scale(0);
+      transform-origin: center;
+      flex: none;
+    }
+
+    #root .ftools-label-mask {
+      overflow: hidden;
+      clip-path: inset(0% 0% 0% 100%);
+      display: inline-block;
+    }
+
+    #root .ftools-label {
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 700;
+      font-size: 62px;
+      line-height: 1.15;
+      color: #111114;
+      white-space: nowrap;
+      direction: rtl;
+    }
+
+    #root .ftools-close {
+      position: absolute;
+      left: 90px;
+      top: 1120px;
+      width: 780px;
+      direction: rtl;
+      opacity: 0;
+    }
+
+    #root .ftools-close-text {
+      font-family: 'Barlow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 68px;
+      line-height: 1.2;
+      color: #22C55E;
+      letter-spacing: -0.01em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="05-feature-tools">
+    <div class="clip ftools-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+    <div class="clip ftools-hair" data-start="0" data-duration="5" data-track-index="0" style="width:1px;left:1079px;"></div>
+
+    <div class="clip ftools-rule" data-start="0" data-duration="5" data-track-index="1" data-ftools-rule></div>
+
+    <div class="clip ftools-list" data-start="0" data-duration="5" data-track-index="1">
+      <div class="ftools-item" data-ftools-item="1" dir="rtl">
+        <span class="ftools-marker">/</span>
+        <span class="ftools-label-mask"><span class="ftools-label">מחשבונים רפואיים</span></span>
+      </div>
+      <div class="ftools-item" data-ftools-item="2" dir="rtl">
+        <span class="ftools-marker">/</span>
+        <span class="ftools-label-mask"><span class="ftools-label">היסטוריית מדדים</span></span>
+      </div>
+      <div class="ftools-item" data-ftools-item="3" dir="rtl">
+        <span class="ftools-marker">/</span>
+        <span class="ftools-label-mask"><span class="ftools-label">סיוע בתרגום</span></span>
+      </div>
+    </div>
+
+    <div class="clip ftools-close" data-start="0" data-duration="5" data-track-index="1">
+      <div class="ftools-close-text">הכל, תוך שניות.</div>
+    </div>
+  </div>
+
+  <script>
+    (function buildFtoolsTimeline() {
+      // This script executes once per template instantiation (cloned by the HyperFrames runtime).
+      var scope = document.querySelector('#root[data-composition-id="05-feature-tools"]');
+      if (!scope) return;
+
+      var rule = scope.querySelector('[data-ftools-rule]');
+      var items = scope.querySelectorAll('[data-ftools-item]');
+      var closeLine = scope.querySelector('.ftools-close');
+      var closeText = scope.querySelector('.ftools-close-text');
+
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      window.__timelines['05-feature-tools'] = tl;
+
+      // accent rule stub settles in first, grounding the list — visible well before 0.5s
+      tl.fromTo(rule, { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: 'power2.out', transformOrigin: 'right center' }, 0.0);
+
+      function revealItem(el, startTime, dur) {
+        var marker = el.querySelector('.ftools-marker');
+        var mask = el.querySelector('.ftools-label-mask');
+        var row = el;
+
+        tl.fromTo(row, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: dur, ease: 'power2.out' }, startTime);
+        tl.fromTo(marker, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.42, ease: 'back.out(2.4)' }, startTime + 0.05);
+        tl.fromTo(mask, { clipPath: 'inset(0% 0% 0% 100%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: dur, ease: 'power2.out' }, startTime + 0.08);
+      }
+
+      // Scene 1 (0.0–1.5s): item 1 pops into slot 1, top of frame
+      revealItem(items[0], 0.08, 0.55);
+
+      // Scene 2 (1.5–3.0s): item 2 pops into slot 2 beneath it
+      revealItem(items[1], 1.55, 0.55);
+
+      // Scene 3 (3.0–4.3s): item 3 pops into slot 3, completing the list
+      revealItem(items[2], 3.05, 0.5);
+
+      // Scene 4 (4.3–5.0s): closing line lands below the completed list, held read
+      tl.fromTo(closeLine, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power1.out' }, 4.35);
+      tl.fromTo(closeText, { y: 14, scale: 0.98 }, { y: 0, scale: 1, duration: 0.4, ease: 'power2.out' }, 4.35);
+
+      tl.to({}, { duration: 0.01 }, 5.0);
+    })();
+  </script>
+</template>
