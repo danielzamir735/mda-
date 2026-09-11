@@ -1,0 +1,232 @@
+{
+  "typography": [
+    {
+      "role": "code",
+      "fontFamily": "ui-monospace",
+      "fontSize": "80px",
+      "fontWeight": "900",
+      "lineHeight": "80px",
+      "letterSpacing": "normal",
+      "color": "#F4F4F5",
+      "sampleText": "110"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "24px",
+      "fontWeight": "900",
+      "lineHeight": "33px",
+      "letterSpacing": "normal",
+      "color": "#F4F4F5",
+      "sampleText": "ברוכים הבאים לאפליקציית חובש+"
+    },
+    {
+      "role": "body",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "24px",
+      "fontWeight": "700",
+      "lineHeight": "32px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "15 שניות"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "20px",
+      "fontWeight": "900",
+      "lineHeight": "27.5px",
+      "letterSpacing": "normal",
+      "color": "#F4F4F5",
+      "sampleText": "הצהרה חשובה לפני השימוש באפליקציה"
+    },
+    {
+      "role": "link",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "lineHeight": "26px",
+      "letterSpacing": "normal",
+      "color": "#EF233C",
+      "sampleText": "ydbyd4723@gmail.com"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      4,
+      6,
+      8,
+      12,
+      14,
+      16,
+      20,
+      24,
+      32
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "12px",
+    "16px",
+    "50%",
+    "9999px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0.08) 0px 2px 8px 0px",
+      "count": 4
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.25) 0px 25px 50px -12px",
+      "count": 2
+    },
+    {
+      "value": "rgba(59, 130, 246, 0.4) 0px 0px 0px 3px, rgba(0, 0, 0, 0.5) 0px 2px 8px 0px",
+      "count": 1
+    },
+    {
+      "value": "rgba(34, 197, 94, 0.35) 0px 4px 16px 0px",
+      "count": 1
+    },
+    {
+      "value": "rgba(59, 130, 246, 0.5) 0px 0px 8px 0px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "button",
+      "background": "#3F3F46",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#71717A",
+      "padding": "0px",
+      "borderRadius": "9999px",
+      "border": "1px solid rgb(63, 63, 70)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "40px"
+    },
+    {
+      "label": "button",
+      "background": "#64748B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#000000",
+      "padding": "0px",
+      "borderRadius": "50%",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "10px"
+    },
+    {
+      "label": "button",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#000000",
+      "padding": "0px",
+      "borderRadius": "50%",
+      "border": "0px none rgb(0, 0, 0)",
+      "boxShadow": "rgba(59, 130, 246, 0.4) 0px 0px 0px 3px, rgba(0, 0, 0, 0.5) 0px 2px 8px 0px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "22px"
+    },
+    {
+      "label": "button",
+      "background": "#22C55E",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#000000",
+      "padding": "0px",
+      "borderRadius": "9999px",
+      "border": "0px solid rgb(229, 231, 235)",
+      "boxShadow": "rgba(34, 197, 94, 0.35) 0px 4px 16px 0px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "56px"
+    },
+    {
+      "label": "מצלמה",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#000000",
+      "padding": "8px 12px",
+      "borderRadius": "16px",
+      "border": "0px solid rgb(229, 231, 235)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "52px"
+    },
+    {
+      "label": "© כל הזכויות שמורות ל Daniel Zamir - Web",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#60A5FA",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(229, 231, 235)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "700",
+      "height": "15px"
+    }
+  ],
+  "cards": [],
+  "nav": {
+    "label": "navigation",
+    "background": "#0D0D10",
+    "backgroundImage": "",
+    "backdropFilter": "",
+    "color": "#000000",
+    "padding": "0px 8px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "64px"
+  },
+  "chips": [
+    {
+      "label": "גרסת בטא",
+      "background": "#EF233C",
+      "color": "#EF233C",
+      "padding": "4px 12px",
+      "borderRadius": "9999px",
+      "border": "0px solid rgb(229, 231, 235)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "700",
+      "height": "28px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [],
+  "backgrounds": [],
+  "glass": [
+    {
+      "backdropFilter": "blur(4px)",
+      "background": "rgba(0, 0, 0, 0.7)",
+      "border": "0px solid rgb(229, 231, 235)",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 2073600
+    },
+    {
+      "backdropFilter": "blur(4px)",
+      "background": "rgba(0, 0, 0, 0.8)",
+      "border": "0px solid rgb(229, 231, 235)",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 2073600
+    }
+  ]
+}
