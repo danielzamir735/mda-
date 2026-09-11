@@ -1,4 +1,4 @@
-<template data-composition-id="01-hook">
+<template data-composition-id="01-hook" data-duration="4.5">
   <style>
     #root {
       position: relative;
@@ -30,18 +30,19 @@
       position: absolute;
       left: 0;
       right: 0;
-      top: 880px;
+      top: 420px;
       width: 100%;
       text-align: center;
       font-family: 'Barlow', Arial, sans-serif;
       font-weight: 800;
-      font-size: 150px;
+      font-size: 64px;
       line-height: 1.02;
       letter-spacing: -0.03em;
       color: #E5E7E6;
       opacity: 0;
       padding: 0 60px;
       box-sizing: border-box;
+      transform-origin: 50% 50%;
     }
 
     #root .hook-line2 {
@@ -81,10 +82,10 @@
     }
   </style>
 
-  <div id="root">
-    <div class="clip hook-bg" data-start="0" data-duration="4" data-track-index="0"></div>
+  <div id="root" data-composition-id="01-hook" data-width="1080" data-height="1920">
+    <div class="clip hook-bg" data-start="0" data-duration="4.5" data-track-index="0"></div>
 
-    <div class="clip hook-stage" data-start="0" data-duration="4" data-track-index="1">
+    <div class="clip hook-stage" data-start="0" data-duration="4.5" data-track-index="1">
       <div class="hook-line1">מצב חירום.</div>
       <div class="hook-line2">כל שנייה —</div>
       <div class="hook-line3">קובעת.</div>
@@ -100,9 +101,13 @@
       var line3 = '#root .hook-line3';
 
       // Scene 1 (0.0-2.0s): "מצב חירום." slams in dead-center, oversized, hard cut with heavy power3 ease.
+      // line1's resting CSS is already the final (small, upper-third) state; the "oversized centered"
+      // entrance is expressed purely as a transform offset (y + scale), never top/fontSize.
+      var BIG_SCALE = 150 / 64;      // visual size ratio: oversized entrance vs. resting size
+      var CENTER_Y_OFFSET = 880 - 420; // px to translate down so it reads as vertically centered
       tl.fromTo(line1,
-        { opacity: 0, scale: 1.16, transformOrigin: '50% 50%' },
-        { opacity: 1, scale: 1, duration: 0.36, ease: 'power3.out' },
+        { opacity: 0, y: CENTER_Y_OFFSET, scale: BIG_SCALE * 1.16, transformOrigin: '50% 50%' },
+        { opacity: 1, y: CENTER_Y_OFFSET, scale: BIG_SCALE, duration: 0.36, ease: 'power3.out' },
         0.0
       );
       // brief centered hold before the shrink
@@ -110,8 +115,8 @@
 
       // Scene 2 (2.0-4.0s): line1 shrinks and rises to the upper third; holds there.
       tl.to(line1, {
-        top: 420,
-        fontSize: 64,
+        y: 0,
+        scale: 1,
         duration: 0.55,
         ease: 'power3.inOut'
       }, 2.0);

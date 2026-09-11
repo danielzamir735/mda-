@@ -1,6 +1,6 @@
 ---
 format: 1080x1920
-duration: 40s
+duration: 32s
 message: "עזרה ראשונה בכל מצב חירום"
 arc: PAS — hook → pain → product intro → feature showcase → benefit → CTA
 audience: "אנשי רפואה, מתנדבי חירום ואנשים שרוצים להיות מוכנים למצב חירום"
@@ -21,7 +21,7 @@ music: none
 - voiceover: "מצב חירום. כל שנייה — קובעת."
 - duration: 4s
 - transition_in: cut
-- status: outline
+- status: animated
 - src: compositions/frames/01-hook.html
 - type: hook
 - persuasion: Pain validation
@@ -42,7 +42,7 @@ keyMessage: כל שנייה חשובה כשמשהו קורה.
 - voiceover: "לחץ. בלבול. אין זמן לחפש פרוטוקול."
 - duration: 4s
 - transition_in: crossfade
-- status: outline
+- status: animated
 - src: compositions/frames/02-pain.html
 - type: pain_point
 - persuasion: Pain agitation
@@ -64,7 +64,7 @@ keyMessage: בזמן חירום אין זמן לחפש מידע.
 - voiceover: "חובש פלוס. כל כלי העזרה הראשונה שלך — במקום אחד."
 - duration: 5s
 - transition_in: zoom-through
-- status: outline
+- status: animated
 - src: compositions/frames/03-product-intro.html
 - type: product_intro
 - persuasion: Friction reduction
@@ -89,7 +89,7 @@ keyMessage: חובש+ הוא כלי אחד מרוכז לכל מה שצריך ב�
 - voiceover: "מטרונום החייאה. דופק. נשימות. מד BPM — הקצב הנכון, בלחיצה אחת."
 - duration: 5s
 - transition_in: push-slide UP
-- status: outline
+- status: animated
 - src: compositions/frames/04-feature-rhythm.html
 - type: feature_showcase
 - persuasion: Show-don't-tell proof
@@ -112,7 +112,7 @@ keyMessage: הקצב הנכון תמיד זמין, בלי לחשוב פעמיי�
 - voiceover: "מחשבונים רפואיים. היסטוריית מדדים. סיוע בתרגום. הכל, תוך שניות."
 - duration: 5s
 - transition_in: push-slide UP
-- status: outline
+- status: animated
 - src: compositions/frames/05-feature-tools.html
 - type: feature_showcase
 - persuasion: Value stacking
@@ -135,7 +135,7 @@ keyMessage: חובש+ מכיל את כל הכלים הנדרשים, לא רק א
 - voiceover: "עובד גם בלי אינטרנט — כי בשטח, אין זמן לחכות לרשת."
 - duration: 4s
 - transition_in: crossfade
-- status: outline
+- status: animated
 - src: compositions/frames/06-benefit-offline.html
 - type: benefit_highlight
 - persuasion: Risk reversal
@@ -156,7 +156,7 @@ keyMessage: האפליקציה אמינה גם באזורים ללא כיסוי 
 - voiceover: "חובש פלוס. הוסיפו למסך הבית — ותהיו מוכנים לכל מצב."
 - duration: 5s
 - transition_in: crossfade
-- status: outline
+- status: animated
 - src: compositions/frames/07-cta.html
 - type: cta
 - persuasion: Scarcity/urgency

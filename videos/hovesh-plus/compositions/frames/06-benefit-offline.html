@@ -96,10 +96,10 @@
   }
 </style>
 
-<div id="root" data-composition-id="06-benefit-offline">
-  <div class="clip fo-bg" data-start="0" data-duration="4" data-track-index="0"></div>
+<div id="root" data-composition-id="06-benefit-offline" data-width="1080" data-height="1920" data-duration="4.5">
+  <div class="clip fo-bg" data-start="0" data-duration="4.5" data-track-index="0"></div>
 
-  <div class="clip fo-stage" data-start="0" data-duration="4" data-track-index="1">
+  <div class="clip fo-stage" data-start="0" data-duration="4.5" data-track-index="1">
     <div class="fo-icon-wrap" data-fo-el="icon">
       <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 46C40 26 80 26 100 46" stroke="#71717A" stroke-width="7" stroke-linecap="round"/>
@@ -119,7 +119,7 @@
   var frameId = "06-benefit-offline";
   var tl = gsap.timeline({ paused: true });
 
-  var scope = document.querySelector('#root[data-composition-id="' + frameId + '"]');
+  var scope = document.currentScript.previousElementSibling;
   var icon = scope.querySelector('[data-fo-el="icon"]');
   var headline = scope.querySelector('[data-fo-el="headline"]');
   var qualifier = scope.querySelector('[data-fo-el="qualifier"]');

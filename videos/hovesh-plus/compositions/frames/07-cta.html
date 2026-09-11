@@ -21,7 +21,7 @@
         height: 1920px;
         position: relative;
         overflow: hidden;
-        font-family: "Barlow", "Arial Hebrew", Arial, sans-serif;
+        font-family: "Barlow", Arial, sans-serif;
         --cta07-ground: #71717a;
         --cta07-ink: #111114;
         --cta07-accent: #22c55e;
@@ -74,8 +74,6 @@
         width: 36px;
         height: 2px;
         background: var(--cta07-accent);
-        opacity: 0;
-        transform: scaleX(0);
         transform-origin: 50% 50%;
       }
 
@@ -139,7 +137,7 @@
 
     <script>
       (function () {
-        const root = document.currentScript.closest("#root");
+        const root = document.currentScript.previousElementSibling;
 
         function splitChars(el) {
           const text = el.textContent;
