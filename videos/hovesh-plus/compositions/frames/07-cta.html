@@ -1,0 +1,248 @@
+<template>
+  <div
+    id="root"
+    data-composition-id="07-cta"
+    data-start="0"
+    data-duration="5"
+    data-width="1080"
+    data-height="1920"
+  >
+    <style>
+      @font-face {
+        font-family: "Barlow";
+        src: local("Arial Hebrew"), local("Arial");
+        font-weight: 100 900;
+        font-style: normal;
+      }
+
+      #root {
+        container-type: size;
+        width: 1080px;
+        height: 1920px;
+        position: relative;
+        overflow: hidden;
+        font-family: "Barlow", "Arial Hebrew", Arial, sans-serif;
+        --cta07-ground: #71717a;
+        --cta07-ink: #111114;
+        --cta07-accent: #22c55e;
+        --cta07-hint: #afb7b2;
+      }
+
+      #root .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      #cta07-bg {
+        background: var(--cta07-ground);
+      }
+
+      #cta07-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 30cqh;
+      }
+
+      #cta07-wordmark {
+        display: flex;
+        flex-direction: row;
+        direction: rtl;
+        align-items: baseline;
+        gap: 1.4cqw;
+        font-weight: 900;
+        font-size: 13cqw;
+        line-height: 0.88;
+        letter-spacing: -0.04em;
+        text-transform: lowercase;
+        color: var(--cta07-ink);
+        will-change: transform, opacity;
+      }
+
+      #cta07-word-right,
+      #cta07-word-left {
+        display: inline-block;
+        opacity: 0;
+      }
+
+      #cta07-word-left {
+        color: var(--cta07-accent);
+      }
+
+      #cta07-rule {
+        margin-top: 2.2cqh;
+        width: 36px;
+        height: 2px;
+        background: var(--cta07-accent);
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: 50% 50%;
+      }
+
+      #cta07-line1 {
+        margin-top: 3.6cqh;
+        font-weight: 800;
+        font-size: 7.5cqw;
+        line-height: 0.98;
+        letter-spacing: -0.03em;
+        text-transform: lowercase;
+        color: var(--cta07-ink);
+        direction: rtl;
+        text-align: center;
+      }
+
+      #cta07-line2 {
+        margin-top: 2cqh;
+        font-weight: 600;
+        font-size: 2.8cqw;
+        line-height: 1.3;
+        color: var(--cta07-ink);
+        opacity: 0.86;
+        direction: rtl;
+        text-align: center;
+      }
+
+      .cta07-char {
+        display: inline-block;
+        opacity: 0;
+      }
+
+      .cta07-word {
+        display: inline-block;
+        opacity: 0;
+      }
+    </style>
+
+    <div
+      id="cta07-bg"
+      class="clip"
+      data-start="0"
+      data-duration="5"
+      data-track-index="0"
+    ></div>
+
+    <div
+      id="cta07-content"
+      class="clip"
+      data-start="0"
+      data-duration="5"
+      data-track-index="1"
+    >
+      <div id="cta07-wordmark">
+        <span id="cta07-word-right">חובש</span>
+        <span id="cta07-word-left">פלוס</span>
+      </div>
+      <div id="cta07-rule"></div>
+      <div id="cta07-line1">הוסיפו למסך הבית</div>
+      <div id="cta07-line2">ותהיו מוכנים לכל מצב.</div>
+    </div>
+
+    <script>
+      (function () {
+        const root = document.currentScript.closest("#root");
+
+        function splitChars(el) {
+          const text = el.textContent;
+          el.textContent = "";
+          const frag = document.createDocumentFragment();
+          const spans = [];
+          Array.from(text).forEach((ch) => {
+            const span = document.createElement("span");
+            span.className = "cta07-char";
+            span.textContent = ch === " " ? " " : ch;
+            frag.appendChild(span);
+            spans.push(span);
+          });
+          el.appendChild(frag);
+          return spans;
+        }
+
+        function splitWords(el) {
+          const text = el.textContent;
+          const words = text.split(" ");
+          el.textContent = "";
+          const frag = document.createDocumentFragment();
+          const spans = [];
+          words.forEach((w, i) => {
+            const span = document.createElement("span");
+            span.className = "cta07-word";
+            span.textContent = w;
+            frag.appendChild(span);
+            spans.push(span);
+            if (i < words.length - 1) {
+              frag.appendChild(document.createTextNode(" "));
+            }
+          });
+          el.appendChild(frag);
+          return spans;
+        }
+
+        const line1Chars = splitChars(root.querySelector("#cta07-line1"));
+        const line2Words = splitWords(root.querySelector("#cta07-line2"));
+
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        // Scene 1 (0.0-1.8s): "חובש" and "פלוס" assemble from opposite
+        // sides and lock together dead-center as the wordmark.
+        tl.fromTo(
+          root.querySelector("#cta07-word-right"),
+          { x: 480, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+          0.0
+        );
+        tl.fromTo(
+          root.querySelector("#cta07-word-left"),
+          { x: -480, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+          0.05
+        );
+        // lock beat: a quiet settle pulse + the accent rule draws on
+        tl.fromTo(
+          root.querySelector("#cta07-wordmark"),
+          { scale: 1.03 },
+          { scale: 1, duration: 0.3, ease: "power3.out" },
+          0.82
+        );
+        tl.fromTo(
+          root.querySelector("#cta07-rule"),
+          { opacity: 0, scaleX: 0 },
+          { opacity: 1, scaleX: 1, duration: 0.4, ease: "power3.out" },
+          0.95
+        );
+
+        // Scene 2 (1.8-3.5s): "הוסיפו למסך הבית" types on beneath the
+        // completed wordmark, revealing right-to-left with the Hebrew line.
+        tl.fromTo(
+          line1Chars,
+          { opacity: 0, y: 10 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.32,
+            ease: "power3.out",
+            stagger: 0.045,
+          },
+          1.85
+        );
+
+        // Scene 3 (3.5-5.0s): "ותהיו מוכנים לכל מצב." lands as the final
+        // line beneath it; everything then holds fully still to the end.
+        tl.fromTo(
+          line2Words,
+          { opacity: 0, y: 14 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.42,
+            ease: "power3.out",
+            stagger: 0.12,
+          },
+          3.55
+        );
+
+        window.__timelines["07-cta"] = tl;
+      })();
+    </script>
+  </div>
+</template>
