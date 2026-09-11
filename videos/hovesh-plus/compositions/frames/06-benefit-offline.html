@@ -1,0 +1,152 @@
+<template>
+<style>
+  #root[data-composition-id="06-benefit-offline"] {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    container-type: size;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  #root[data-composition-id="06-benefit-offline"] * {
+    box-sizing: border-box;
+  }
+
+  @font-face {
+    font-family: "fo-Barlow";
+    src: local("Barlow"), local("Barlow-ExtraBold"), local("Arial Black"), local("Arial");
+    font-weight: 400 900;
+  }
+
+  @font-face {
+    font-family: "fo-IBM-Plex-Mono";
+    src: local("IBM Plex Mono"), local("Consolas"), local("Courier New");
+    font-weight: 400 600;
+  }
+
+  /* Hebrew visible copy needs real script coverage; no shipped webfont covers Hebrew,
+     so this points at system Hebrew-capable faces only, per role fallback rule. */
+  @font-face {
+    font-family: "fo-Hebrew";
+    src: local("Arial Hebrew"), local("Arial"), local("Tahoma"), local("Segoe UI");
+    font-weight: 400 800;
+  }
+
+  .fo-bg {
+    position: absolute;
+    inset: 0;
+    background: #22C55E; /* fire-orange token, orange register ground */
+  }
+
+  .fo-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 30cqh;
+  }
+
+  .fo-icon-wrap {
+    width: 30cqw;
+    max-width: 30cqw;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+  }
+
+  .fo-icon-wrap svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+
+  .fo-headline {
+    margin-top: 6.5cqh;
+    width: 84cqw;
+    text-align: center;
+    font-family: "fo-Hebrew", "fo-Barlow", sans-serif;
+    font-weight: 800;
+    font-size: 8.4cqw;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: #71717A; /* ink-black token, orange-register text */
+    direction: rtl;
+    unicode-bidi: isolate;
+    opacity: 0;
+  }
+
+  .fo-qualifier {
+    margin-top: 3.4cqh;
+    width: 72cqw;
+    text-align: center;
+    font-family: "fo-Hebrew", "fo-Barlow", sans-serif;
+    font-weight: 500;
+    font-size: 3.6cqw;
+    line-height: 1.45;
+    color: rgba(17,17,17,0.65);
+    direction: rtl;
+    unicode-bidi: isolate;
+    opacity: 0;
+  }
+</style>
+
+<div id="root" data-composition-id="06-benefit-offline">
+  <div class="clip fo-bg" data-start="0" data-duration="4" data-track-index="0"></div>
+
+  <div class="clip fo-stage" data-start="0" data-duration="4" data-track-index="1">
+    <div class="fo-icon-wrap" data-fo-el="icon">
+      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 46C40 26 80 26 100 46" stroke="#71717A" stroke-width="7" stroke-linecap="round"/>
+        <path d="M34 62C48 48 72 48 86 62" stroke="#71717A" stroke-width="7" stroke-linecap="round"/>
+        <path d="M48 78C54 72 66 72 72 78" stroke="#71717A" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="60" cy="94" r="6" fill="#71717A"/>
+        <line x1="14" y1="20" x2="106" y2="102" stroke="#71717A" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="fo-headline" data-fo-el="headline">עובד גם בלי אינטרנט</div>
+    <div class="fo-qualifier" data-fo-el="qualifier">כי בשטח, אין זמן לחכות לרשת.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var frameId = "06-benefit-offline";
+  var tl = gsap.timeline({ paused: true });
+
+  var scope = document.querySelector('#root[data-composition-id="' + frameId + '"]');
+  var icon = scope.querySelector('[data-fo-el="icon"]');
+  var headline = scope.querySelector('[data-fo-el="headline"]');
+  var qualifier = scope.querySelector('[data-fo-el="qualifier"]');
+
+  // Scene 1 (0.0-1.5s): Wi-Fi-with-strike icon slides up and fades in, centered.
+  tl.fromTo(icon,
+    { yPercent: 30, opacity: 0 },
+    { yPercent: 0, opacity: 1, duration: 0.65, ease: "power2.out" },
+    0.2
+  );
+
+  // Scene 2 (1.5-4.0s): headline slides up beneath icon and settles.
+  tl.fromTo(headline,
+    { yPercent: 35, opacity: 0 },
+    { yPercent: 0, opacity: 1, duration: 0.6, ease: "power2.out" },
+    1.5
+  );
+
+  // A beat later, the qualifier fades in as a smaller second line, then the frame holds still.
+  tl.fromTo(qualifier,
+    { yPercent: 20, opacity: 0 },
+    { yPercent: 0, opacity: 1, duration: 0.55, ease: "power2.out" },
+    2.35
+  );
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines[frameId] = tl;
+})();
+</script>
+</template>

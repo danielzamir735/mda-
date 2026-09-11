@@ -1,0 +1,205 @@
+<template>
+  <style>
+    #root[data-composition-id="03-product-intro"] {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      container-type: size;
+      font-family: "hf03-body", Arial, sans-serif;
+    }
+
+    @font-face {
+      font-family: "hf03-display";
+      src: local("Arial Black"), local("Arial-Black"), local("Arial Bold"), local("Arial");
+      font-weight: 900;
+    }
+    @font-face {
+      font-family: "hf03-body";
+      src: local("Arial");
+      font-weight: 400 700;
+    }
+
+    #root[data-composition-id="03-product-intro"] .clip {
+      position: absolute;
+      left: 0;
+      width: 100%;
+    }
+
+    #root[data-composition-id="03-product-intro"] .hf03-bg {
+      inset: 0;
+      background: #71717A;
+    }
+
+    #root[data-composition-id="03-product-intro"] .hf03-wordmark-row {
+      top: 128px;
+      height: 236px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-wordmark-inner {
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      direction: rtl;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-word {
+      font-family: "hf03-display", Arial, sans-serif;
+      font-weight: 900;
+      font-size: 156px;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: #111114;
+      will-change: transform, opacity;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-word--accent {
+      color: #22C55E;
+    }
+
+    #root[data-composition-id="03-product-intro"] .hf03-caption-row {
+      top: 398px;
+      height: 168px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 80px;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-caption {
+      font-family: "hf03-body", Arial, sans-serif;
+      font-weight: 500;
+      font-size: 47px;
+      line-height: 1.35;
+      letter-spacing: 0;
+      color: #111114;
+      text-align: center;
+      direction: rtl;
+      max-width: 900px;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-caption span {
+      opacity: 0;
+      display: inline-block;
+    }
+
+    #root[data-composition-id="03-product-intro"] .hf03-device-row {
+      top: 596px;
+      height: 964px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-device-group {
+      width: 428px;
+      height: 928px;
+      will-change: transform, opacity;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-device-bezel {
+      width: 100%;
+      height: 100%;
+      border-radius: 44px;
+      overflow: hidden;
+      border: 8px solid #111114;
+      background: #111114;
+    }
+    #root[data-composition-id="03-product-intro"] .hf03-device-screen {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+  </style>
+
+  <div id="root" data-composition-id="03-product-intro">
+    <div class="clip hf03-bg" data-start="0" data-duration="5" data-track-index="0"></div>
+
+    <div class="clip hf03-wordmark-row" data-start="0" data-duration="5" data-track-index="1">
+      <div class="hf03-wordmark-inner">
+        <span id="hf03-word-hovesh" class="hf03-word">חובש</span>
+        <span id="hf03-word-plus" class="hf03-word hf03-word--accent">פלוס</span>
+      </div>
+    </div>
+
+    <div class="clip hf03-caption-row" data-start="0" data-duration="5" data-track-index="2">
+      <p id="hf03-caption" class="hf03-caption">כל כלי העזרה הראשונה שלך — במקום אחד.</p>
+    </div>
+
+    <div class="clip hf03-device-row" data-start="0" data-duration="5" data-track-index="3">
+      <div id="hf03-device-group" class="hf03-device-group">
+        <div class="hf03-device-bezel">
+          <img class="hf03-device-screen" src="assets/full-page.png" alt="" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.currentScript.closest("template") || document.currentScript.parentNode;
+      var scope = (document.currentScript.getRootNode && document.currentScript.getRootNode()) || document;
+
+      var captionEl = scope.getElementById
+        ? scope.getElementById("hf03-caption")
+        : document.getElementById("hf03-caption");
+
+      // Build the typewriter character spans synchronously from the source text.
+      var fullText = captionEl.textContent;
+      captionEl.textContent = "";
+      var charSpans = [];
+      for (var i = 0; i < fullText.length; i++) {
+        var ch = fullText.charAt(i);
+        var span = document.createElement("span");
+        span.textContent = ch === " " ? " " : ch;
+        captionEl.appendChild(span);
+        charSpans.push(span);
+      }
+
+      var wordHovesh = scope.getElementById
+        ? scope.getElementById("hf03-word-hovesh")
+        : document.getElementById("hf03-word-hovesh");
+      var wordPlus = scope.getElementById
+        ? scope.getElementById("hf03-word-plus")
+        : document.getElementById("hf03-word-plus");
+      var deviceGroup = scope.getElementById
+        ? scope.getElementById("hf03-device-group")
+        : document.getElementById("hf03-device-group");
+
+      gsap.set(wordHovesh, { opacity: 0, scale: 1.35, y: 26 });
+      gsap.set(wordPlus, { opacity: 0, scale: 1.35, x: -24 });
+      gsap.set(deviceGroup, { opacity: 0, y: 420 });
+      gsap.set(charSpans, { opacity: 0 });
+
+      var tl = gsap.timeline({ paused: true });
+
+      // Scene 1 (0.0-1.5s): "חובש" slams in, upper-third, bold, dark register.
+      tl.to(
+        wordHovesh,
+        { opacity: 1, scale: 1, y: 0, duration: 0.46, ease: "back.out(2.4)" },
+        0.05
+      );
+
+      // Scene 2 (1.5-3.2s): "פלוס" lands in fire-orange, completing the wordmark;
+      // simultaneously the real captured app screen rises from below into a phone mask.
+      tl.to(
+        wordPlus,
+        { opacity: 1, scale: 1, x: 0, duration: 0.46, ease: "back.out(2.4)" },
+        1.5
+      );
+      tl.to(
+        deviceGroup,
+        { opacity: 1, y: 0, duration: 0.95, ease: "power3.out" },
+        1.55
+      );
+
+      // Scene 3 (3.2-5.0s): caption types on, held read to the end of the shot.
+      tl.to(
+        charSpans,
+        { opacity: 1, duration: 0.05, stagger: 0.045, ease: "none" },
+        3.2
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["03-product-intro"] = tl;
+    })();
+  </script>
+</template>
