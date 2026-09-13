@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import LoginPage from './pages/LoginPage';
@@ -8,15 +8,49 @@ import LegalDisclaimerModal from './components/LegalDisclaimerModal';
 import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
 import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
-import { SentryErrorBoundary } from './lib/sentry';
+import HapticButton from './components/HapticButton';
+import { isSentryEnabled, reportError } from './lib/sentry';
 
 function CrashFallback() {
+  // Independent of AppInner's tree, so this still reflects the user's real
+  // language/direction even though AppInner (which threw) never rendered.
+  const language = useSettingsStore((s) => s.language);
+  const isEnglish = language === 'en';
+  const knownAboutIt = isSentryEnabled();
+
+  const message = isEnglish
+    ? `Oops, something went wrong.${knownAboutIt ? " We already know about it." : ''}`
+    : `אופס, משהו השתבש.${knownAboutIt ? ' אנחנו כבר יודעים על זה.' : ''}`;
+  const buttonLabel = isEnglish ? 'Reload the page' : 'רענן את הדף';
+
   return (
-    <div style={{ padding: 24, textAlign: 'center', direction: 'rtl' }}>
-      <p>אופס, משהו השתבש. אנחנו כבר יודעים על זה.</p>
-      <button onClick={() => window.location.reload()}>רענן את הדף</button>
+    <div dir={isEnglish ? 'ltr' : 'rtl'} className="p-6 text-center">
+      <p className="mb-4">{message}</p>
+      <HapticButton
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 rounded-xl font-bold text-white bg-rose-600"
+      >
+        {buttonLabel}
+      </HapticButton>
     </div>
   );
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown, info: { componentStack: string | null }) {
+    reportError(error, info);
+  }
+
+  render() {
+    if (this.state.hasError) return <CrashFallback />;
+    return this.props.children;
+  }
 }
 
 function AppInner() {
@@ -79,8 +113,8 @@ function AppInner() {
 
 export default function App() {
   return (
-    <SentryErrorBoundary fallback={<CrashFallback />}>
+    <AppErrorBoundary>
       <AppInner />
-    </SentryErrorBoundary>
+    </AppErrorBoundary>
   );
 }

@@ -119,7 +119,17 @@ export const useMetronomeStore = create<MetronomeStore>()(
     }),
     {
       name: 'metronome-store',
-      partialize: (state) => ({ lastCPRTime: state.lastCPRTime, lastCPRShocks: state.lastCPRShocks }),
+      // Persist the in-progress session too (not just the last-completed
+      // summary) — a crash + reload, or the browser reclaiming the tab,
+      // must not silently discard a live CPR timer/shock log.
+      partialize: (state) => ({
+        lastCPRTime: state.lastCPRTime,
+        lastCPRShocks: state.lastCPRShocks,
+        isPlaying: state.isPlaying,
+        cprStartTime: state.cprStartTime,
+        lastShockTimestamp: state.lastShockTimestamp,
+        shockLogs: state.shockLogs,
+      }),
     },
   ),
 );
