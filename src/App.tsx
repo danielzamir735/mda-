@@ -8,8 +8,18 @@ import LegalDisclaimerModal from './components/LegalDisclaimerModal';
 import { PwaInstallProvider } from './features/pwa/PwaInstallContext';
 import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
+import { SentryErrorBoundary } from './lib/sentry';
 
-export default function App() {
+function CrashFallback() {
+  return (
+    <div style={{ padding: 24, textAlign: 'center', direction: 'rtl' }}>
+      <p>אופס, משהו השתבש. אנחנו כבר יודעים על זה.</p>
+      <button onClick={() => window.location.reload()}>רענן את הדף</button>
+    </div>
+  );
+}
+
+function AppInner() {
   const theme = useSettingsStore((s) => s.theme);
   const language = useSettingsStore((s) => s.language);
   const fontSize = useSettingsStore((s) => s.fontSize);
@@ -64,5 +74,13 @@ export default function App() {
         <MigrationBanner />
       </BrowserRouter>
     </PwaInstallProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <SentryErrorBoundary fallback={<CrashFallback />}>
+      <AppInner />
+    </SentryErrorBoundary>
   );
 }

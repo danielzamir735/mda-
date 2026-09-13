@@ -4,6 +4,9 @@ import posthog from 'posthog-js'
 import ReactGA from 'react-ga4'
 import './index.css'
 import App from './App.tsx'
+import { initSentry } from './lib/sentry'
+
+initSentry()
 
 const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined
 if (gaMeasurementId) {
