@@ -41,6 +41,21 @@ export function initSentry() {
         // Small sample of transactions to keep volume/cost low. (Sentry is
         // disabled outside prod entirely, so there's no separate dev rate.)
         tracesSampleRate: 0.1,
+        // Known-benign noise we can't catch in app code:
+        // - "Script .../sw.js load failed" is Chrome's background SW
+        //   update-check re-fetching the script and hitting a flaky network —
+        //   it's thrown deep inside the browser's own SW machinery, not
+        //   through any promise we control, so there's no .catch() for it.
+        // - "Failed to register a ServiceWorker ..." / "A bad HTTP response
+        //   code (…) was received when fetching the script" cover the same
+        //   family of transient SW registration/update failures.
+        // None of these indicate the app is broken — the page still works,
+        // just without offline support for that session.
+        ignoreErrors: [
+          /Script .*sw\.js load failed/i,
+          /Failed to register a ServiceWorker/i,
+          /A bad HTTP response code \(\d+\) was received when fetching the script/i,
+        ],
       })
 
       for (const { error, info } of pendingErrors) {
