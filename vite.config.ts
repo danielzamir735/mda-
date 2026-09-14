@@ -11,6 +11,11 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
+      // We register the SW ourselves in main.tsx (instead of the
+      // auto-injected registerSW.js) so a failed registration — private
+      // browsing, flaky network mid-install, battery saver — can be caught
+      // and logged instead of surfacing as an unhandled promise rejection.
+      injectRegister: false,
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },

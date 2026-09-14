@@ -23,6 +23,17 @@ posthog.init(import.meta.env.VITE_POSTHOG_KEY as string ?? 'phc_NHYgGJLq95b4ImZl
 // window.location.reload() NEVER clears localStorage or IndexedDB —
 // all saved data (metrics, CPR sessions, settings) is fully preserved.
 if ('serviceWorker' in navigator) {
+  // We register manually (injectRegister: false in vite.config.ts) instead
+  // of relying on the auto-injected registerSW.js, so a failed registration
+  // — private browsing, flaky network mid-install, battery saver — is
+  // logged and dropped here instead of reaching Sentry as an unhandled
+  // promise rejection. It's a soft degrade (no offline support), not a crash.
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/', type: 'module' }).catch((err) => {
+      console.warn('Service worker registration failed (app still works without it):', err)
+    })
+  })
+
   // Only reload when an existing SW is *replaced* by a new version.
   // If there was no previous controller (first install / cleared cache),
   // the page already loaded correctly from the network — no reload needed.
