@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Search, Navigation, Loader2 } from 'lucide-react';
+import { X, Search, Navigation, Loader2, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useTranslation } from '../../../hooks/useTranslation';
 import HospitalAccordionItem, { type Hospital } from './HospitalAccordionItem';
@@ -54,14 +54,25 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 
 type NearbyHospital = Hospital & { lat: number; lng: number; distKm: number; level: 'A' | 'B' };
 
+type ErrorReason = 'denied' | 'unavailable' | 'timeout' | 'unsupported';
+
+const ERROR_MESSAGES: Record<ErrorReason, string> = {
+  denied: 'הגישה למיקום נחסמה. אשר/י הרשאת מיקום להגדרות הדפדפן/מכשיר עבור האפליקציה ונסה/י שוב.',
+  unavailable: 'לא ניתן לאתר מיקום כרגע. ודא/י שה-GPS פעיל ונסה/י שוב.',
+  timeout: 'איתור המיקום לקח יותר מדי זמן. נסה/י שוב, רצוי במקום עם קליטת GPS טובה יותר.',
+  unsupported: 'הדפדפן הזה לא תומך באיתור מיקום.',
+};
+
 function NearestERButton() {
-  const [phase, setPhase] = useState<'idle' | 'loading' | 'list'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'loading' | 'list' | 'error'>('idle');
   const [nearby, setNearby] = useState<NearbyHospital[]>([]);
+  const [errorReason, setErrorReason] = useState<ErrorReason>('unavailable');
 
   function findNearby() {
     if (!navigator.geolocation) {
-      trackEvent('hospital_nav_nearest_er_fallback');
-      window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
+      trackEvent('hospital_nav_nearest_er_error', { reason: 'unsupported' });
+      setErrorReason('unsupported');
+      setPhase('error');
       return;
     }
 
@@ -82,13 +93,22 @@ function NearestERButton() {
         setPhase('list');
         trackEvent('hospital_nav_nearby_list');
       },
-      () => {
-        trackEvent('hospital_nav_nearest_er_fallback');
-        window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
-        setPhase('idle');
+      (err) => {
+        const reason: ErrorReason =
+          err.code === err.PERMISSION_DENIED ? 'denied'
+          : err.code === err.TIMEOUT ? 'timeout'
+          : 'unavailable';
+        trackEvent('hospital_nav_nearest_er_error', { reason });
+        setErrorReason(reason);
+        setPhase('error');
       },
-      { timeout: 8000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
+  }
+
+  function openGenericWaze() {
+    trackEvent('hospital_nav_nearest_er_fallback');
+    window.open('https://waze.com/ul?q=%D7%91%D7%99%D7%AA%20%D7%97%D7%95%D7%9C%D7%99%D7%9D%20%D7%9E%D7%99%D7%95%D7%9F', '_blank');
   }
 
   function navigateTo(h: NearbyHospital) {
@@ -134,6 +154,34 @@ function NearestERButton() {
             <Navigation size={20} className="text-emt-red shrink-0" />
           </button>
         ))}
+      </div>
+    );
+  }
+
+  if (phase === 'error') {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6 mb-1 px-4 text-center">
+        <AlertTriangle size={28} className="text-amber-500" />
+        <p className="text-gray-700 dark:text-emt-light text-sm font-medium max-w-xs">
+          {ERROR_MESSAGES[errorReason]}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onClick={findNearby}
+            className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 bg-emt-red text-white font-bold text-sm
+                       active:scale-95 transition-transform"
+          >
+            <RotateCcw size={16} />
+            נסה שוב
+          </button>
+          <button
+            onClick={openGenericWaze}
+            className="rounded-xl px-4 py-2.5 bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                       text-gray-700 dark:text-emt-light font-bold text-sm active:scale-95 transition-transform"
+          >
+            חיפוש כללי ב-Waze
+          </button>
+        </div>
       </div>
     );
   }
