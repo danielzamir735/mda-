@@ -51,7 +51,11 @@ export function initSentry() {
         //   family of transient SW registration/update failures.
         // None of these indicate the app is broken — the page still works,
         // just without offline support for that session.
+        // - A bare "Rejected" has no origin in our code (nothing here rejects
+        //   with that message); it comes from browser extensions / in-app
+        //   webviews injecting scripts into the page.
         ignoreErrors: [
+          /^(Error: )?Rejected$/,
           /Script .*sw\.js load failed/i,
           /Failed to register a ServiceWorker/i,
           /A bad HTTP response code \(\d+\) was received when fetching the script/i,
