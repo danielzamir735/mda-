@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Heebo";
+        src: url("assets/Heebo.ttf") format("truetype");
+        font-weight: 100 900;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #09090b;
+      }
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #09090b;
+        font-family: "Heebo", Arial, sans-serif;
+        color: #f4f4f5;
+        direction: rtl;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* background glow + grid */
+      #bg-glow {
+        background: radial-gradient(circle at 50% 42%, rgba(239, 35, 60, 0.22), rgba(9, 9, 11, 0) 58%);
+      }
+      #bg-grid {
+        background-image:
+          linear-gradient(rgba(244, 244, 245, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(244, 244, 245, 0.045) 1px, transparent 1px);
+        background-size: 90px 90px;
+      }
+
+      /* ECG line */
+      #ecg svg {
+        position: absolute;
+        left: 0;
+        top: 760px;
+        width: 1080px;
+        height: 400px;
+      }
+      #ecg-path {
+        fill: none;
+        stroke: #ef233c;
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 18px rgba(239, 35, 60, 0.8));
+      }
+
+      /* scene 1 wordmark */
+      .wordmark {
+        font-weight: 900;
+        font-size: 230px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .wordmark .plus {
+        color: #ef233c;
+      }
+
+      /* scene 2 */
+      #s2-line1 {
+        font-weight: 800;
+        font-size: 104px;
+        line-height: 1.1;
+        text-align: center;
+      }
+      #s2-line2 {
+        margin-top: 24px;
+        font-weight: 900;
+        font-size: 150px;
+        line-height: 1;
+        color: #22c55e;
+      }
+      #phone {
+        margin-top: 90px;
+        width: 380px;
+        height: 700px;
+        border-radius: 60px;
+        border: 10px solid #3f3f46;
+        background: #111114;
+        position: relative;
+        overflow: hidden;
+      }
+      #phone .notch {
+        position: absolute;
+        top: 22px;
+        left: 50%;
+        width: 120px;
+        height: 30px;
+        margin-left: -60px;
+        border-radius: 20px;
+        background: #09090b;
+      }
+      #phone .ph-ecg {
+        position: absolute;
+        left: 30px;
+        right: 30px;
+        top: 300px;
+      }
+
+      /* scene 3 feature tiles */
+      #s3-kicker {
+        position: absolute;
+        top: 250px;
+        width: 100%;
+        text-align: center;
+        font-weight: 700;
+        font-size: 46px;
+        letter-spacing: 0.02em;
+        color: #a1a1aa;
+      }
+      .tiles {
+        position: absolute;
+        top: 400px;
+        left: 90px;
+        right: 90px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+      .tile {
+        height: 520px;
+        border-radius: 44px;
+        background: #18181b;
+        border: 2px solid #27272a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+      }
+      .tile .ico {
+        width: 190px;
+        height: 190px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tile svg {
+        width: 120px;
+        height: 120px;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .tile .lbl {
+        font-weight: 800;
+        font-size: 62px;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .t-red .ico { background: rgba(239, 35, 60, 0.16); }
+      .t-red svg { stroke: #ef233c; }
+      .t-green .ico { background: rgba(34, 197, 94, 0.16); }
+      .t-green svg { stroke: #22c55e; }
+      .t-amber .ico { background: rgba(245, 158, 11, 0.16); }
+      .t-amber svg { stroke: #f59e0b; }
+      .t-blue .ico { background: rgba(96, 165, 250, 0.16); }
+      .t-blue svg { stroke: #60a5fa; }
+
+      /* scene 4 free */
+      #s4-bg {
+        background: #22c55e;
+      }
+      #s4-free {
+        font-weight: 900;
+        font-size: 330px;
+        line-height: 0.95;
+        color: #09090b;
+      }
+      #s4-always {
+        margin-top: 20px;
+        font-weight: 800;
+        font-size: 150px;
+        line-height: 1;
+        color: #09090b;
+      }
+
+      /* scene 5 end card */
+      #s5-icon {
+        width: 300px;
+        height: 300px;
+        filter: drop-shadow(0 30px 60px rgba(239, 35, 60, 0.35));
+      }
+      #s5-word {
+        margin-top: 60px;
+        font-size: 200px;
+      }
+      #s5-tag {
+        margin-top: 40px;
+        font-weight: 700;
+        font-size: 76px;
+        color: #d4d4d8;
+      }
+      #s5-tag b {
+        color: #ef233c;
+        font-weight: 900;
+      }
+      #s5-pill {
+        margin-top: 90px;
+        padding: 26px 70px;
+        border-radius: 100px;
+        background: #ef233c;
+        font-weight: 800;
+        font-size: 54px;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="10"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="bg-grid" class="clip" data-start="0" data-duration="10" data-track-index="0"></div>
+      <div id="bg-glow" class="clip" data-start="0" data-duration="10" data-track-index="1"></div>
+
+      <!-- Scene 1: ECG + wordmark (0 – 1.6) -->
+      <div id="ecg" class="clip" data-start="0" data-duration="1.7" data-track-index="2">
+        <svg viewBox="0 0 1080 400">
+          <path
+            id="ecg-path"
+            d="M-20,200 L250,200 L290,200 L320,150 L350,200 L400,200 L430,40 L470,360 L505,200 L560,200 L590,160 L630,200 L1100,200"
+          />
+        </svg>
+      </div>
+      <div id="s1" class="clip center" data-start="0" data-duration="1.7" data-track-index="3">
+        <div class="wordmark" id="s1-word"><span>חובש</span><span class="plus">+</span></div>
+      </div>
+
+      <!-- Scene 2: everything in one pocket (1.6 – 3.9) -->
+      <div id="s2" class="clip center" data-start="1.6" data-duration="2.4" data-track-index="4">
+        <div id="s2-line1">כל מה שחובש צריך</div>
+        <div id="s2-line2">בכיס אחד.</div>
+        <div id="phone">
+          <div class="notch"></div>
+          <svg class="ph-ecg" viewBox="0 0 300 120">
+            <path
+              id="ph-ecg-path"
+              d="M0,60 L80,60 L100,40 L115,60 L135,60 L150,5 L170,115 L185,60 L215,60 L230,45 L245,60 L300,60"
+              fill="none"
+              stroke="#22c55e"
+              stroke-width="6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Scene 3: features (3.9 – 6.8) -->
+      <div id="s3" class="clip" data-start="3.9" data-duration="3.0" data-track-index="5">
+        <div id="s3-kicker">הכלים שלך בשטח</div>
+        <div class="tiles">
+          <div class="tile t-blue" id="tile-1">
+            <div class="ico">
+              <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01" /></svg>
+            </div>
+            <div class="lbl">מחשבונים</div>
+          </div>
+          <div class="tile t-red" id="tile-2">
+            <div class="ico">
+              <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></svg>
+            </div>
+            <div class="lbl">מטרונום<br />החייאה</div>
+          </div>
+          <div class="tile t-amber" id="tile-3">
+            <div class="ico">
+              <svg viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" /><path d="m8.5 8.5 7 7" /></svg>
+            </div>
+            <div class="lbl">תרופות</div>
+          </div>
+          <div class="tile t-green" id="tile-4">
+            <div class="ico">
+              <svg viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg>
+            </div>
+            <div class="lbl">פרוטוקולים</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 4: free, always (6.8 – 8.0) -->
+      <div id="s4-bg" class="clip" data-start="6.8" data-duration="1.3" data-track-index="6"></div>
+      <div id="s4" class="clip center" data-start="6.8" data-duration="1.3" data-track-index="7">
+        <div id="s4-free">חינם.</div>
+        <div id="s4-always">תמיד.</div>
+      </div>
+
+      <!-- Scene 5: end card (8.0 – 10) -->
+      <div id="s5" class="clip center" data-start="8" data-duration="2" data-track-index="8">
+        <img id="s5-icon" src="assets/icon.svg" alt="" />
+        <div class="wordmark" id="s5-word"><span>חובש</span><span class="plus">+</span></div>
+        <div id="s5-tag">כי <b>כל שנייה</b> קובעת</div>
+        <div id="s5-pill">הוסיפו למסך הבית</div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Scene 1 — ECG draws, spike, wordmark slams in
+      const ecg = document.getElementById("ecg-path");
+      const ecgLen = ecg.getTotalLength();
+      gsap.set(ecg, { strokeDasharray: ecgLen, strokeDashoffset: ecgLen });
+      tl.to(ecg, { strokeDashoffset: 0, duration: 0.7, ease: "power1.inOut" }, 0);
+      tl.to("#ecg", { opacity: 0.18, duration: 0.3, ease: "power2.out" }, 0.65);
+      tl.fromTo("#s1-word", { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.2)" }, 0.6);
+      tl.fromTo("#bg-glow", { opacity: 0.4 }, { opacity: 1, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.out" }, 0.6);
+      tl.to("#s1-word", { scale: 0.85, opacity: 0, duration: 0.25, ease: "power2.in" }, 1.45);
+
+      // Scene 2 — headline + phone rises
+      tl.fromTo("#s2-line1", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 1.65);
+      tl.fromTo("#s2-line2", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 2.35);
+      tl.fromTo("#phone", { y: 500, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 1.9);
+      const pe = document.getElementById("ph-ecg-path");
+      const peLen = pe.getTotalLength();
+      gsap.set(pe, { strokeDasharray: peLen, strokeDashoffset: peLen });
+      tl.to(pe, { strokeDashoffset: 0, duration: 0.9, ease: "none" }, 2.4);
+      tl.to("#s2", { y: -300, opacity: 0, duration: 0.3, ease: "power2.in" }, 3.65);
+
+      // Scene 3 — tiles pop in sync with VO list
+      tl.fromTo("#s3-kicker", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 3.9);
+      ["#tile-1", "#tile-2", "#tile-3", "#tile-4"].forEach((id, i) => {
+        tl.fromTo(id, { scale: 0.5, opacity: 0, y: 80 }, { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.8)" }, 4.0 + i * 0.6);
+      });
+      tl.to(".tile", { scale: 0.92, opacity: 0, duration: 0.25, stagger: 0.03, ease: "power2.in" }, 6.55);
+      tl.to("#s3-kicker", { opacity: 0, duration: 0.2 }, 6.6);
+
+      // Scene 4 — green wipe, FREE stamp
+      tl.fromTo("#s4-bg", { clipPath: "circle(0% at 50% 50%)" }, { clipPath: "circle(80% at 50% 50%)", duration: 0.35, ease: "power3.out" }, 6.8);
+      tl.fromTo("#s4-free", { scale: 1.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.5)" }, 6.9);
+      tl.fromTo("#s4-always", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 7.35);
+
+      // Scene 5 — end card
+      tl.fromTo("#s5-icon", { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 8.0);
+      tl.fromTo("#s5-word", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 8.15);
+      tl.fromTo("#s5-tag", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 8.6);
+      tl.fromTo("#s5-pill", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 9.0);
+      tl.to("#s5-icon", { scale: 1.06, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, 9.3);
+
+      tl.to({}, { duration: 10 }, 0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
