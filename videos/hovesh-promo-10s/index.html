@@ -51,6 +51,7 @@
       }
       .title.sm { font-size: 112px; top: 96px; }
       .pw, .pz { position: absolute; inset: 0; pointer-events: none; }
+      img.shot { left: 240px; top: 560px; width: 600px; height: 1161px; right: auto; bottom: auto; border-radius: 56px; object-fit: cover; object-position: top center; }
       video.screen {
         left: 240px; top: 560px; width: 600px; height: 1161px; right: auto; bottom: auto;
         border-radius: 56px; object-fit: cover;
@@ -83,9 +84,9 @@
 
       /* offline graphic */
       .pill {
-        position: absolute; left: 50%; top: 360px; width: 840px; margin-left: -420px; height: 160px;
+        position: absolute; left: 50%; top: 360px; width: 940px; margin-left: -470px; height: 160px;
         border-radius: 100px; display: flex; align-items: center; justify-content: center; gap: 30px;
-        font-size: 66px; background: rgba(9, 9, 11, 0.8); border: 4px solid #ef233c; color: #fff;
+        font-size: 62px; background: rgba(9, 9, 11, 0.8); border: 4px solid #ef233c; color: #fff;
       }
       .pill svg { width: 84px; height: 84px; }
       #okring { position: absolute; left: 460px; top: 580px; width: 160px; height: 160px; border-radius: 50%; border: 8px solid #22c55e; opacity: 0; }
@@ -128,21 +129,21 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="40.1" data-width="1080" data-height="1920">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40.8" data-width="1080" data-height="1920">
       <!-- ============ FOOTAGE / BACKGROUNDS (track 0) ============ -->
       <video id="vA" class="clip field" src="assets/upload/field/graded/shot1.mp4" data-start="0" data-duration="4.9" data-media-start="0" data-playback-rate="0.82" data-track-index="0" muted playsinline></video>
       <video id="vB" class="clip field" src="assets/upload/field/graded/shot2.mp4" data-start="4.9" data-duration="2.6" data-media-start="0.6" data-track-index="0" muted playsinline></video>
       <video id="bg1" class="clip field" src="assets/upload/field/bg/bg2.mp4" data-start="7.5" data-duration="8.0" data-media-start="0" data-playback-rate="0.6" data-track-index="0" muted playsinline></video>
       <video id="vE" class="clip field" src="assets/upload/field/graded/shot4.mp4" data-start="15.5" data-duration="2.45" data-media-start="2.3" data-track-index="0" muted playsinline></video>
-      <video id="bg2" class="clip field" src="assets/upload/field/bg/bg4.mp4" data-start="17.95" data-duration="10.0" data-media-start="0" data-playback-rate="0.48" data-track-index="0" muted playsinline></video>
-      <video id="vI" class="clip field" src="assets/upload/field/graded/shot6.mp4" data-start="27.95" data-duration="2.65" data-media-start="0.5" data-track-index="0" muted playsinline></video>
-      <video id="vJ" class="clip field" src="assets/upload/field/graded/shot7.mp4" data-start="30.6" data-duration="2.85" data-media-start="0.8" data-track-index="0" muted playsinline></video>
-      <video id="bg3" class="clip field" src="assets/upload/field/bg/bg7.mp4" data-start="33.45" data-duration="2.85" data-media-start="1.0" data-track-index="0" muted playsinline></video>
-      <video id="bg4" class="clip field" src="assets/upload/field/bg/bg1.mp4" data-start="36.3" data-duration="3.8" data-media-start="0.5" data-track-index="0" muted playsinline></video>
+      <video id="bg2" class="clip field" src="assets/upload/field/bg/bg4.mp4" data-start="17.95" data-duration="10.25" data-media-start="0" data-playback-rate="0.48" data-track-index="0" muted playsinline></video>
+      <video id="vI" class="clip field" src="assets/upload/field/graded/shot6.mp4" data-start="28.2" data-duration="2.2" data-media-start="0.5" data-track-index="0" muted playsinline></video>
+      <video id="vJ" class="clip field" src="assets/upload/field/graded/shot7.mp4" data-start="30.4" data-duration="2.85" data-media-start="0.8" data-track-index="0" muted playsinline></video>
+      <video id="bg3" class="clip field" src="assets/upload/field/bg/bg7.mp4" data-start="33.25" data-duration="4.05" data-media-start="0.5" data-playback-rate="0.9" data-track-index="0" muted playsinline></video>
+      <video id="bg4" class="clip field" src="assets/upload/field/bg/bg1.mp4" data-start="37.3" data-duration="3.5" data-media-start="0.5" data-track-index="0" muted playsinline></video>
 
       <!-- tints over the blurred backgrounds (track 1) -->
       <div id="tint1" class="clip tint" data-start="7.5" data-duration="8.0" data-track-index="1"></div>
-      <div id="tint2" class="clip tint" data-start="17.95" data-duration="10.0" data-track-index="1"></div>
+      <div id="tint2" class="clip tint" data-start="17.95" data-duration="10.25" data-track-index="1"></div>
 
       <!-- phone 1: CPR + meds (real screen recordings in a frame) -->
       <div class="pw" id="pw1"><div class="pz" id="pz1">
@@ -155,27 +156,25 @@
         <video id="pF" class="clip screen" src="assets/clips/bridge.mp4" data-start="17.95" data-duration="1.8" data-media-start="0.2" data-playback-rate="3.4" data-track-index="2" muted playsinline></video>
         <video id="pF2" class="clip screen" src="assets/clips/bridge.mp4" data-start="19.75" data-duration="1.0" data-media-start="7.3" data-track-index="2" muted playsinline></video>
         <video id="pG" class="clip screen" src="assets/clips/burns.mp4" data-start="20.75" data-duration="4.85" data-media-start="0" data-playback-rate="1.6" data-track-index="2" muted playsinline></video>
-        <video id="pH" class="clip screen" src="assets/clips/hospitals.mp4" data-start="25.6" data-duration="2.35" data-media-start="2.1" data-track-index="2" muted playsinline></video>
-        <div id="frame2" class="clip" data-start="17.95" data-duration="10.0" data-track-index="3"><div class="frame-body"></div><div class="rip" id="r4" style="left:390px;top:1361px"></div><div class="rip" id="r5" style="left:690px;top:1067px"></div><div class="rip" id="r6" style="left:290px;top:1087px"></div><div class="rip" id="r7" style="left:402px;top:1237px"></div></div>
+        <video id="pH" class="clip screen" src="assets/clips/hospitals.mp4" data-start="25.6" data-duration="2.6" data-media-start="1.9" data-track-index="2" muted playsinline></video>
+        <div id="frame2" class="clip" data-start="17.95" data-duration="10.25" data-track-index="3"><div class="frame-body"></div><div class="rip" id="r4" style="left:390px;top:1361px"></div><div class="rip" id="r5" style="left:690px;top:1067px"></div><div class="rip" id="r6" style="left:290px;top:1087px"></div><div class="rip" id="r7" style="left:402px;top:1237px"></div><div class="rip" id="r8" style="left:313px;top:912px"></div></div>
       </div></div>
 
       <!-- share + end cards (track 1, over their blurred backgrounds) -->
-      <div id="share" class="clip tintg" data-start="33.45" data-duration="2.85" data-track-index="1">
-        <svg id="share-icon" viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="74" cy="22" r="12" /><circle cx="26" cy="50" r="12" /><circle cx="74" cy="78" r="12" />
-          <path d="M36 44 L64 28 M36 56 L64 72" />
-        </svg>
-        <div id="share-t1" class="disp">שלחו את זה</div>
-        <div id="share-t2" class="disp"><span class="l2" id="st2a">לחובש אחד</span><span class="l2" id="st2b">שאתם מכירים</span></div>
-        <div class="avatars">
-          <div class="av" id="av1" style="background:#ef233c">ד</div>
-          <div class="av" id="av2" style="background:#f59e0b">נ</div>
-          <div class="av" id="av3" style="background:#60a5fa">א</div>
-          <div class="av" id="av4" style="background:#22c55e">ש</div>
-        </div>
-        <svg id="plane" viewBox="0 0 24 24" fill="#22c55e"><path d="M2 11.5 L22 3 L15.5 21 L11.5 13.5 Z" /><path d="M11.5 13.5 L22 3" stroke="#0b3d1f" stroke-width="1.2" /></svg>
-      </div>
-      <div id="end" class="clip tintr" data-start="36.3" data-duration="3.8" data-track-index="1">
+      <div id="tint3" class="clip tintr" data-start="33.25" data-duration="4.05" data-track-index="1"></div>
+      <div class="pw" id="pw3"><div class="pz" id="pz3">
+        <img id="m0" class="clip shot" src="assets/screens/01-dashboard.png" alt="" data-start="33.25" data-duration="0.45" data-track-index="2" />
+        <img id="m1" class="clip shot" src="assets/screens/03-pulse-timer.png" alt="" data-start="33.70" data-duration="0.45" data-track-index="2" />
+        <img id="m2" class="clip shot" src="assets/screens/03-pulse-result.png" alt="" data-start="34.15" data-duration="0.45" data-track-index="2" />
+        <img id="m3" class="clip shot" src="assets/screens/02-metronome-a.png" alt="" data-start="34.60" data-duration="0.45" data-track-index="2" />
+        <img id="m4" class="clip shot" src="assets/screens/04-bridge-langs.png" alt="" data-start="35.05" data-duration="0.45" data-track-index="2" />
+        <img id="m5" class="clip shot" src="assets/screens/05-hospitals-near.png" alt="" data-start="35.50" data-duration="0.45" data-track-index="2" />
+        <img id="m6" class="clip shot" src="assets/screens/06-meds-result.png" alt="" data-start="35.95" data-duration="0.45" data-track-index="2" />
+        <img id="m7" class="clip shot" src="assets/screens/03-pulse-keypad.png" alt="" data-start="36.40" data-duration="0.45" data-track-index="2" />
+        <img id="m8" class="clip shot" src="assets/screens/04-bridge-list.png" alt="" data-start="36.85" data-duration="0.45" data-track-index="2" />
+        <div id="frame3" class="clip" data-start="33.25" data-duration="4.05" data-track-index="3"><div class="frame-body"></div></div>
+      </div></div>
+      <div id="end" class="clip tintr" data-start="37.3" data-duration="3.5" data-track-index="1">
         <div id="end-brand">
           <div id="iconwrap"><img src="assets/icon.svg" alt="" /><div id="shine"></div></div>
           <div class="wordmark" id="end-word"><span>חובש</span><span class="plus">+</span></div>
@@ -191,8 +190,8 @@
       <!-- scrims + opening overlays (track 3) -->
       <div id="sA" class="clip scrim-b" data-start="0" data-duration="7.5" data-track-index="4"></div>
       <div id="sE" class="clip scrim-b" data-start="15.5" data-duration="2.45" data-track-index="4"></div>
-      <div id="sI" class="clip scrim-t" data-start="27.95" data-duration="2.65" data-track-index="4"></div>
-      <div id="sJ" class="clip scrim-b" data-start="30.6" data-duration="2.85" data-track-index="4"></div>
+      <div id="sI" class="clip scrim-t" data-start="28.2" data-duration="2.2" data-track-index="4"></div>
+      <div id="sJ" class="clip scrim-b" data-start="30.4" data-duration="2.85" data-track-index="4"></div>
       <div id="siren" class="clip" data-start="0" data-duration="4.9" data-track-index="4"><div class="beam" id="beamL"></div><div class="beam" id="beamR"></div></div>
       <div id="heartvig" class="clip" data-start="0" data-duration="4.9" data-track-index="4"></div>
       <div id="ecgclip" class="clip" data-start="0.2" data-duration="4.7" data-track-index="4">
@@ -219,17 +218,19 @@
         <div class="more" id="gmore">ועוד מגוון מחשבונים.</div>
         <div class="sub" id="gsub">הכול בכיס.</div>
       </div>
-      <div id="tH" class="clip" data-start="25.6" data-duration="2.35" data-track-index="5"><div class="title"><span class="l2" id="tH1">בית החולים הקרוב,</span><span class="l2 acc" id="tH2">מיד.</span></div></div>
-      <div id="oI" class="clip" data-start="28.1" data-duration="2.5" data-track-index="5">
+      <div id="tH" class="clip" data-start="25.6" data-duration="2.6" data-track-index="5"><div class="title"><span class="l2" id="tH1">בית החולים הקרוב,</span><span class="l2 acc" id="tH2">בלחיצת כפתור.</span></div></div>
+      <div id="oI" class="clip" data-start="28.3" data-duration="2.1" data-track-index="5">
         <div class="pill" id="nosig">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ef233c" stroke-width="2.4" stroke-linecap="round"><path id="bar1" d="M4 20v-3" /><path id="bar2" d="M9 20v-6" /><path id="bar3" d="M14 20v-9" /><path id="bar4" d="M19 20V5" /><path id="slash" d="M3 3 L21 21" pathLength="1" stroke-dasharray="1" /></svg>
-          <span>וגם... בלי קליטה.</span>
+          <span>עובד ללא חיבור לרשת.</span>
         </div>
         <div id="okring"></div>
         <div id="okbadge"><svg viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5" /></svg></div>
       </div>
-      <div id="cJ1" class="clip" data-start="30.8" data-duration="2.65" data-track-index="5"><div class="cap" style="font-size:190px"><span class="grn">חינם</span> לגמרי.</div></div>
-      <div id="cJ2" class="clip" data-start="32.05" data-duration="1.4" data-track-index="5"><div class="cap" style="bottom:250px;font-size:110px">בלי פרסומות.</div></div>
+      <div id="cJ1" class="clip" data-start="30.6" data-duration="2.65" data-track-index="5"><div class="cap" style="font-size:190px"><span class="grn">חינם</span> לגמרי.</div></div>
+      <div id="cJ2" class="clip" data-start="31.85" data-duration="1.4" data-track-index="5"><div class="cap" style="bottom:250px;font-size:110px">בלי פרסומות.</div></div>
+
+      <div id="tK" class="clip" data-start="33.25" data-duration="4.05" data-track-index="5"><div class="title sm"><span class="l2" id="tK1">ועוד הרבה פיצ'רים,</span><span class="l2" id="tK2">שיעזרו לכם להיות</span><span class="l2 grn" id="tK3">חובשים מקצועיים יותר.</span></div></div>
 
       <!-- transitions (track 6) -->
       <div id="flash" class="clip" data-start="7.4" data-duration="0.4" data-track-index="6"></div>
@@ -237,9 +238,9 @@
       <div id="redflash" class="clip" data-start="4.0" data-duration="0.5" data-track-index="6"></div>
 
       <!-- ============ AUDIO ============ -->
-      <audio id="vo" src="assets/vo-timed.wav" data-start="0" data-duration="40.1" data-track-index="10" data-volume="1"></audio>
-      <audio id="bgm" src="assets/bgm-ducked.wav" data-start="0" data-duration="40.1" data-track-index="11" data-volume="1"></audio>
-      <audio id="sfx" src="assets/sfx-mix.wav" data-start="0" data-duration="40.1" data-track-index="12" data-volume="0.85"></audio>
+      <audio id="vo" src="assets/vo-timed.wav" data-start="0" data-duration="40.8" data-track-index="10" data-volume="1"></audio>
+      <audio id="bgm" src="assets/bgm-ducked.wav" data-start="0" data-duration="40.8" data-track-index="11" data-volume="1"></audio>
+      <audio id="sfx" src="assets/sfx-mix.wav" data-start="0" data-duration="40.8" data-track-index="12" data-volume="0.85"></audio>
     </div>
 
     <script>
@@ -249,10 +250,10 @@
       const ripple = (sel, at) => tl.fromTo(sel, { scale: 0.3, opacity: 1 }, { scale: 1.9, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, at);
       const shake = (sel, at, amt = 12, n = 7) => tl.to(sel, { x: amt, duration: 0.04, yoyo: true, repeat: n, ease: "none" }, at);
 
-      // ---------- opening: ECG trace, siren light sweep, heartbeat vignette ----------
+      // ---------- opening: ECG trace, siren strobe, heartbeat vignette ----------
       let d = "M0 150";
       for (let x = 0; x < 880; x += 110) {
-        d += ` L${x + 40} 150 L${x + 52} 128 L${x + 62} 150 L${x + 70} 150 L${x + 78} 172 L${x + 88} 60 L${x + 98} 190 L${x + 106} 150`;
+        d += " L" + (x + 40) + " 150 L" + (x + 52) + " 128 L" + (x + 62) + " 150 L" + (x + 70) + " 150 L" + (x + 78) + " 172 L" + (x + 88) + " 60 L" + (x + 98) + " 190 L" + (x + 106) + " 150";
       }
       d += " L900 150 L930 150 L948 10 L966 214 L984 150 L1080 150";
       document.getElementById("ecgpath").setAttribute("d", d);
@@ -260,27 +261,28 @@
       tl.fromTo("#ecgpath", { strokeDasharray: ecgLen, strokeDashoffset: ecgLen }, { strokeDashoffset: ecgLen * 0.14, duration: 3.6, ease: "none" }, 0.25);
       tl.to("#ecgpath", { strokeDashoffset: 0, duration: 0.18, ease: "power2.in" }, 3.9);
       tl.to("#ecg", { opacity: 0, duration: 0.35 }, 4.45);
-      tl.fromTo("#beamL", { opacity: 0.9 }, { opacity: 0.1, duration: 0.33, yoyo: true, repeat: 11, ease: "sine.inOut" }, 0);
-      tl.fromTo("#beamR", { opacity: 0.1 }, { opacity: 0.9, duration: 0.33, yoyo: true, repeat: 11, ease: "sine.inOut" }, 0);
+      // siren: hard alternating strobes left/right
+      tl.fromTo("#beamL", { opacity: 1 }, { opacity: 0, duration: 0.18, yoyo: true, repeat: 21, ease: "steps(1)" }, 0);
+      tl.fromTo("#beamR", { opacity: 0 }, { opacity: 1, duration: 0.18, yoyo: true, repeat: 21, ease: "steps(1)" }, 0);
       tl.to("#siren", { opacity: 0, duration: 0.3 }, 4.5);
       [0.15, 0.45, 3.93, 4.23].forEach((a, i) => tl.fromTo("#heartvig", { opacity: 0 }, { opacity: i % 2 ? 0.45 : 0.85, duration: 0.07, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, a));
 
       // field footage: slow push-in
-      [["#vA", 0, 4.9, 1.0, 1.12], ["#vE", 15.5, 2.0, 1.0, 1.06], ["#vI", 27.95, 2.65, 1.0, 1.05], ["#vJ", 30.6, 2.85, 1.0, 1.07], ["#bg1", 7.5, 8, 1.05, 1.15], ["#bg2", 17.95, 10, 1.05, 1.15]].forEach(([id, a, dur, s0, s1]) => {
+      [["#vA", 0, 4.9, 1.0, 1.12], ["#vE", 15.5, 2.0, 1.0, 1.06], ["#vI", 28.2, 2.2, 1.0, 1.05], ["#vJ", 30.4, 2.85, 1.0, 1.07], ["#bg1", 7.5, 8, 1.05, 1.15], ["#bg2", 17.95, 10.25, 1.05, 1.15], ["#bg3", 33.25, 4.05, 1.05, 1.12]].forEach(([id, a, dur, s0, s1]) => {
         tl.fromTo(id, { scale: s0 }, { scale: s1, duration: dur, ease: "none" }, a);
       });
       shake("#vA", 4.05, 18, 7);
 
       // captions over footage
-      [["#cA1", 0.35, 1.85], ["#cA2", 1.85, 3.95], ["#cE", 15.72, 17.6], ["#cJ2", 32.08, 33.45]].forEach(([id, a, b]) => {
+      [["#cA1", 0.35, 1.85], ["#cA2", 1.85, 3.95], ["#cE", 15.72, 17.6], ["#cJ2", 31.88, 33.25]].forEach(([id, a, b]) => {
         rise(id + " .cap", a, 50);
         tl.to(id + " .cap", { opacity: 0, duration: 0.18, ease: "power2.in" }, b - 0.2);
       });
       slam("#cA3 .cap", 4.03, 1.8);
       tl.fromTo("#redflash", { opacity: 0 }, { opacity: 0.5, duration: 0.06, yoyo: true, repeat: 1, ease: "power2.out" }, 4.05);
-      slam("#cJ1 .cap", 30.82, 1.7);
-      shake("#vJ", 30.84, 10, 5);
-      tl.to("#cJ1 .cap", { opacity: 0, duration: 0.18 }, 33.25);
+      slam("#cJ1 .cap", 30.62, 1.7);
+      shake("#vJ", 30.64, 10, 5);
+      tl.to("#cJ1 .cap", { opacity: 0, duration: 0.18 }, 33.05);
 
       // brand reveal on the Nachlaot shot (boom at the wordmark)
       rise("#b-lead", 5.25);
@@ -301,7 +303,7 @@
       tl.fromTo("#pw2", { scale: 0.16, opacity: 0, transformOrigin: "592px 1188px" }, { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" }, 17.95);
 
       // phone float: gentle 3D sway while on screen
-      [["#pw1", 8.05, 15.2], ["#pw2", 18.5, 27.6]].forEach(([id, a, b]) => {
+      [["#pw1", 8.05, 15.2], ["#pw2", 18.5, 27.9], ["#pw3", 33.8, 37.0]].forEach(([id, a, b]) => {
         tl.fromTo(id, { rotationY: -5, transformPerspective: 1600 }, { rotationY: 5, duration: (b - a) / 3, yoyo: true, repeat: 2, ease: "sine.inOut" }, a);
       });
 
@@ -311,7 +313,7 @@
       });
 
       // touch ripples on the real taps + camera flash on the shutter
-      [["#r1", 8.05], ["#r2", 9.71], ["#r3", 12.06], ["#r4", 19.64], ["#r5", 21.84], ["#r6", 23.09], ["#r7", 23.56]].forEach(([id, a]) => ripple(id, a));
+      [["#r1", 8.05], ["#r2", 9.71], ["#r3", 12.06], ["#r4", 19.64], ["#r5", 21.84], ["#r6", 23.09], ["#r7", 23.56], ["#r8", 26.87]].forEach(([id, a]) => ripple(id, a));
       tl.fromTo("#shutterflash", { opacity: 0 }, { opacity: 0.95, duration: 0.05, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, 12.08);
 
       // punch-ins on the key moments (zoom from the top edge so the titles stay clear)
@@ -323,14 +325,14 @@
 
       // stage exits
       tl.to("#pw1", { y: 160, opacity: 0, duration: 0.25, ease: "power2.in" }, 15.25);
-      tl.to("#pw2", { y: 160, opacity: 0, duration: 0.25, ease: "power2.in" }, 27.7);
+      tl.to("#pw2", { y: 160, opacity: 0, duration: 0.25, ease: "power2.in" }, 27.95);
 
       // phone titles: each line appears on its spoken word
-      [["#tC1", 7.8], ["#tC2", 8.65], ["#tD1", 10.9], ["#tD2", 12.35], ["#tD3", 13.5], ["#tF1", 18.2], ["#tF2", 19.85], ["#tH1", 25.78], ["#tH2", 27.17]].forEach(([id, a]) => rise(id, a));
-      [["#tC", 10.75], ["#tD", 15.5], ["#tF", 20.75], ["#tH", 27.95]].forEach(([id, b]) => {
+      [["#tC1", 7.8], ["#tC2", 8.65], ["#tD1", 10.9], ["#tD2", 12.35], ["#tD3", 13.5], ["#tF1", 18.2], ["#tF2", 19.85], ["#tH1", 25.78], ["#tH2", 26.85]].forEach(([id, a]) => rise(id, a));
+      [["#tC", 10.75], ["#tD", 15.5], ["#tF", 20.75], ["#tH", 28.2]].forEach(([id, b]) => {
         tl.to(id + " .title", { opacity: 0, duration: 0.15 }, b - 0.18);
       });
-      // calculators: chips pop on the spoken words
+      // calculators
       [["#ch1", 20.9], ["#ch2", 21.58], ["#ch3", 22.14]].forEach(([id, a]) => {
         tl.fromTo(id, { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.2)" }, a);
       });
@@ -339,47 +341,43 @@
       tl.to("#tG .chips, #gmore, #gsub", { opacity: 0, duration: 0.15 }, 25.42);
 
       // ---------- offline: bars drop one by one, slash, then a green check with a ring ----------
-      tl.fromTo("#nosig", { x: 0, y: -60, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 28.15);
-      tl.fromTo("#slash", { strokeDashoffset: 1 }, { strokeDashoffset: 1, duration: 0.01 }, 28.1);
-      [["#bar4", 28.5], ["#bar3", 28.62], ["#bar2", 28.74], ["#bar1", 28.86]].forEach(([id, a]) => {
+      tl.fromTo("#nosig", { x: 0, y: -60, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 28.35);
+      tl.fromTo("#slash", { strokeDashoffset: 1 }, { strokeDashoffset: 1, duration: 0.01 }, 28.3);
+      [["#bar4", 28.6], ["#bar3", 28.7], ["#bar2", 28.8], ["#bar1", 28.9]].forEach(([id, a]) => {
         tl.fromTo(id, { opacity: 1 }, { opacity: 0.15, duration: 0.08, ease: "steps(1)" }, a);
       });
-      tl.to("#slash", { strokeDashoffset: 0, duration: 0.18, ease: "power2.out" }, 29.02);
-      shake("#nosig", 29.07, 14, 5);
-      tl.fromTo("#okbadge", { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)" }, 29.62);
-      tl.fromTo("#okring", { scale: 1, opacity: 0.9 }, { scale: 2.6, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 29.67);
-      tl.to("#oI .pill, #okbadge", { opacity: 0, duration: 0.2 }, 30.35);
+      tl.to("#slash", { strokeDashoffset: 0, duration: 0.16, ease: "power2.out" }, 29.0);
+      shake("#nosig", 29.05, 14, 5);
+      tl.fromTo("#okbadge", { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)" }, 29.37);
+      tl.fromTo("#okring", { scale: 1, opacity: 0.9 }, { scale: 2.6, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 29.42);
+      tl.to("#oI .pill, #okbadge", { opacity: 0, duration: 0.2 }, 30.15);
 
-      // ---------- share card: paper plane lights up each contact ----------
-      tl.fromTo("#share-icon", { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(1.8)" }, 33.48);
-      tl.to("#share-icon", { scale: 1.08, duration: 0.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 34.0);
-      slam("#share-t1", 33.65, 1.4);
-      rise("#st2a", 34.13);
-      rise("#st2b", 34.71);
-      tl.fromTo("#plane", { x: 540, y: 510, scale: 0.4, rotation: 20, opacity: 0 }, { x: 540, y: 510, scale: 1, opacity: 1, duration: 0.12 }, 34.85);
-      [["#av1", 825], ["#av2", 635], ["#av3", 445], ["#av4", 255]].forEach(([id, x], i) => {
-        const at = 35.1 + i * 0.15;
-        tl.to("#plane", { x: x, y: 1225, rotation: 200, duration: i === 0 ? 0.13 : 0.15, ease: "sine.inOut" }, at - (i === 0 ? 0.13 : 0.15));
-        tl.fromTo(id, { y: 80, scale: 0.5, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2)" }, at + 0.01);
-        tl.fromTo(id, { boxShadow: "0 0 0 0 rgba(255,255,255,0)" }, { boxShadow: "0 0 50px 10px rgba(255,255,255,0.55)", duration: 0.18, yoyo: true, repeat: 1 }, at + 0.05);
+      // ---------- features: phone montage of more app screens ----------
+      tl.fromTo("#pw3", { scale: 0.6, y: 300, opacity: 0, transformOrigin: "540px 1140px" }, { scale: 1, y: 0, opacity: 1, duration: 0.45, ease: "back.out(1.4)" }, 33.25);
+      document.querySelectorAll("#pz3 img.shot").forEach((el, i) => {
+        if (i > 0) tl.fromTo(el, { x: -140, opacity: 0.3 }, { x: 0, opacity: 1, duration: 0.18, ease: "power3.out" }, 33.25 + i * 0.45);
       });
-      tl.to("#plane", { x: -120, y: 980, rotation: 250, opacity: 0, duration: 0.4, ease: "power2.in" }, 35.7);
+      rise("#tK1", 33.42);
+      rise("#tK2", 34.55);
+      slam("#tK3", 35.68, 1.5);
+      tl.to("#pw3", { y: 160, opacity: 0, duration: 0.25, ease: "power2.in" }, 37.05);
+      tl.to("#tK .title", { opacity: 0, duration: 0.15 }, 37.1);
 
       // ---------- end card: boom on the logo, search types "חובש פלוס" with the VO ----------
-      tl.fromTo("#iconwrap", { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 36.33);
-      slam("#end-word", 36.4, 1.6);
-      shake("#end-brand", 36.42, 10, 5);
-      tl.fromTo("#end-kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 36.46);
-      rise("#search", 36.8, 80);
-      tl.fromTo("#shine", { x: -200, rotation: 20 }, { x: 420, rotation: 20, duration: 0.6, ease: "power2.inOut" }, 37.0);
-      tl.to("#shine", { x: -200, duration: 0.01 }, 37.7);
-      tl.to("#shine", { x: 420, duration: 0.6, ease: "power2.inOut" }, 39.4);
-      document.querySelectorAll("#q span").forEach((el, i) => tl.to(el, { opacity: 1, duration: 0.01 }, 37.8 + i * 0.1));
-      tl.fromTo("#caret", { opacity: 1 }, { opacity: 0, duration: 0.25, yoyo: true, repeat: 11, ease: "steps(1)" }, 36.8);
-      tl.to("#search", { scale: 0.96, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.out" }, 39.2);
-      tl.fromTo("#sripple", { scale: 0.2, opacity: 0.9 }, { scale: 9, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 39.2);
+      tl.fromTo("#iconwrap", { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 37.33);
+      slam("#end-word", 37.4, 1.6);
+      shake("#end-brand", 37.42, 10, 5);
+      tl.fromTo("#end-kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 37.42);
+      rise("#search", 37.8, 80);
+      tl.fromTo("#shine", { x: -200, rotation: 20 }, { x: 420, rotation: 20, duration: 0.6, ease: "power2.inOut" }, 38.0);
+      tl.to("#shine", { x: -200, duration: 0.01 }, 38.7);
+      tl.to("#shine", { x: 420, duration: 0.6, ease: "power2.inOut" }, 40.1);
+      document.querySelectorAll("#q span").forEach((el, i) => tl.to(el, { opacity: 1, duration: 0.01 }, 38.72 + i * 0.1));
+      tl.fromTo("#caret", { opacity: 1 }, { opacity: 0, duration: 0.25, yoyo: true, repeat: 11, ease: "steps(1)" }, 37.8);
+      tl.to("#search", { scale: 0.96, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.out" }, 40.0);
+      tl.fromTo("#sripple", { scale: 0.2, opacity: 0.9 }, { scale: 9, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, 40.0);
 
-      tl.to({}, { duration: 40.1 }, 0);
+      tl.to({}, { duration: 40.8 }, 0);
       window.__timelines["main"] = tl;
     </script>
   </body>
