@@ -36,16 +36,13 @@
       .amb { color: #f59e0b; }
       .blu { color: #60a5fa; }
 
-      /* phone scenes: title on top, real screen recording in a phone frame */
+      /* phone scenes: spoken line on top, real screen recording in a phone frame */
       .stage { background: radial-gradient(circle at 50% 62%, rgba(239, 35, 60, 0.2), rgba(9, 9, 11, 0) 58%), #09090b; }
-      .kicker {
-        position: absolute; left: 0; right: 0; top: 118px; text-align: center;
-        font-weight: 700; font-size: 44px; letter-spacing: 0.04em; color: #a1a1aa;
-      }
       .title {
-        position: absolute; left: 50px; right: 50px; top: 206px; text-align: center;
-        font-weight: 900; font-size: 100px; line-height: 1.05; letter-spacing: -0.01em;
+        position: absolute; left: 50px; right: 50px; top: 130px; text-align: center;
+        font-weight: 900; font-size: 96px; line-height: 1.2; letter-spacing: -0.01em;
       }
+      .title.sm { font-size: 84px; top: 110px; }
       video.screen {
         left: 240px; top: 560px; width: 600px; height: 1161px; right: auto; bottom: auto;
         border-radius: 56px; object-fit: cover;
@@ -56,12 +53,12 @@
         border-radius: 72px; border: 16px solid #27272a;
         box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65), 0 0 0 2px #3f3f46;
       }
-      .chips { position: absolute; left: 40px; right: 40px; top: 230px; display: flex; justify-content: center; gap: 22px; }
+      .chips { position: absolute; left: 40px; right: 40px; top: 170px; display: flex; justify-content: center; gap: 22px; }
       .chip {
-        padding: 14px 34px; border-radius: 100px; font-weight: 900; font-size: 64px;
+        padding: 14px 34px; border-radius: 100px; font-weight: 900; font-size: 68px;
         background: rgba(39, 39, 42, 0.9); border: 3px solid #3f3f46;
       }
-      .sub { position: absolute; left: 0; right: 0; top: 380px; text-align: center; font-weight: 900; font-size: 76px; color: #22c55e; }
+      .sub { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font-weight: 900; font-size: 84px; color: #22c55e; }
 
       /* brand reveal */
       .brand { position: absolute; left: 0; right: 0; bottom: 330px; display: flex; flex-direction: column; align-items: center; }
@@ -72,19 +69,23 @@
 
       /* offline graphic */
       .pill {
-        position: absolute; left: 50%; top: 360px; width: 760px; margin-left: -380px; height: 150px;
+        position: absolute; left: 50%; top: 360px; width: 820px; margin-left: -410px; height: 150px;
         border-radius: 100px; display: flex; align-items: center; justify-content: center; gap: 30px;
-        font-weight: 900; font-size: 72px;
+        font-weight: 900; font-size: 72px; background: rgba(9, 9, 11, 0.8); border: 4px solid #ef233c; color: #fff;
       }
-      #nosig { background: rgba(9, 9, 11, 0.8); border: 4px solid #ef233c; color: #fff; }
-      #works { background: rgba(9, 9, 11, 0.84); border: 4px solid #22c55e; color: #22c55e; top: 560px; }
       .pill svg { width: 84px; height: 84px; }
+      #okbadge {
+        position: absolute; left: 460px; top: 560px; width: 160px; height: 160px; border-radius: 50%;
+        background: #22c55e; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 20px 60px rgba(34, 197, 94, 0.45);
+      }
+      #okbadge svg { width: 100px; height: 100px; }
 
       /* share card */
       #share { background: radial-gradient(circle at 50% 45%, rgba(34, 197, 94, 0.16), rgba(9, 9, 11, 0) 55%), #09090b; }
       #share-icon { position: absolute; left: 390px; top: 380px; width: 300px; height: 300px; }
       #share-t1 { position: absolute; left: 40px; right: 40px; top: 760px; text-align: center; font-weight: 900; font-size: 120px; line-height: 1.05; }
-      #share-t2 { position: absolute; left: 40px; right: 40px; top: 925px; text-align: center; font-weight: 900; font-size: 88px; line-height: 1.1; color: #22c55e; }
+      #share-t2 { position: absolute; left: 40px; right: 40px; top: 925px; text-align: center; font-weight: 900; font-size: 88px; line-height: 1.22; color: #22c55e; }
       .avatars { position: absolute; left: 0; right: 0; top: 1230px; display: flex; justify-content: center; gap: 40px; }
       .av { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 70px; color: #09090b; }
 
@@ -102,8 +103,6 @@
       #q { font-weight: 800; font-size: 84px; color: #18181b; display: flex; align-items: center; }
       #q span { opacity: 0; }
       #caret { width: 6px; height: 86px; background: #ef233c; margin-right: 6px; }
-      #end-free { position: absolute; left: 0; right: 0; top: 1400px; text-align: center; font-weight: 800; font-size: 60px; color: #a1a1aa; }
-      #end-free b { color: #22c55e; font-weight: 900; }
 
       #flash { background: #fff; opacity: 0; }
       #redflash { background: #ef233c; opacity: 0; }
@@ -112,39 +111,32 @@
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="40" data-width="1080" data-height="1920">
       <!-- ============ FOOTAGE / BACKGROUNDS (track 0) ============ -->
-      <!-- A: Chords Bridge -->
       <video id="vA" class="clip field" src="assets/upload/field/shot1.mp4" data-start="0" data-duration="4.9" data-media-start="0" data-playback-rate="0.82" data-track-index="0" muted playsinline></video>
-      <!-- B: Nachlaot -->
       <video id="vB" class="clip field" src="assets/upload/field/shot2.mp4" data-start="4.9" data-duration="2.6" data-media-start="0.6" data-track-index="0" muted playsinline></video>
-      <!-- C/D: phone stage (CPR, meds) -->
-      <div id="stage1" class="clip stage" data-start="7.5" data-duration="6.8" data-track-index="0"></div>
-      <!-- E: Jaffa -->
-      <video id="vE" class="clip field" src="assets/upload/field/shot4.mp4" data-start="14.3" data-duration="1.8" data-media-start="2.6" data-track-index="0" muted playsinline></video>
-      <!-- F/G/H: phone stage (bridge, burns, hospitals) -->
-      <div id="stage2" class="clip stage" data-start="16.1" data-duration="9.5" data-track-index="0"></div>
-      <!-- I: Judean desert -->
-      <video id="vI" class="clip field" src="assets/upload/field/shot6.mp4" data-start="25.6" data-duration="3.2" data-media-start="0.5" data-track-index="0" muted playsinline></video>
-      <!-- J: Tel Aviv rooftop -->
-      <video id="vJ" class="clip field" src="assets/upload/field/shot7.mp4" data-start="28.8" data-duration="3.1" data-media-start="0.8" data-track-index="0" muted playsinline></video>
+      <div id="stage1" class="clip stage" data-start="7.5" data-duration="8.0" data-track-index="0"></div>
+      <video id="vE" class="clip field" src="assets/upload/field/shot4.mp4" data-start="15.5" data-duration="2.45" data-media-start="2.3" data-track-index="0" muted playsinline></video>
+      <div id="stage2" class="clip stage" data-start="17.95" data-duration="9.0" data-track-index="0"></div>
+      <video id="vI" class="clip field" src="assets/upload/field/shot6.mp4" data-start="26.95" data-duration="2.85" data-media-start="0.5" data-track-index="0" muted playsinline></video>
+      <video id="vJ" class="clip field" src="assets/upload/field/shot7.mp4" data-start="29.8" data-duration="3.0" data-media-start="0.8" data-track-index="0" muted playsinline></video>
 
       <!-- real screen recordings (track 1), sitting inside the phone frame -->
       <video id="pC" class="clip screen" src="assets/clips/cpr.mp4" data-start="7.5" data-duration="3.25" data-media-start="2.4" data-playback-rate="1.5" data-track-index="1" muted playsinline></video>
-      <video id="pD" class="clip screen" src="assets/clips/meds.mp4" data-start="10.75" data-duration="3.55" data-media-start="1.4" data-playback-rate="2.6" data-track-index="1" muted playsinline></video>
-      <video id="pF" class="clip screen" src="assets/clips/bridge.mp4" data-start="16.1" data-duration="2.35" data-media-start="0.2" data-playback-rate="2.6" data-track-index="1" muted playsinline></video>
-      <video id="pF2" class="clip screen" src="assets/clips/bridge.mp4" data-start="18.45" data-duration="1.0" data-media-start="7.3" data-track-index="1" muted playsinline></video>
-      <video id="pG" class="clip screen" src="assets/clips/burns.mp4" data-start="19.45" data-duration="3.65" data-media-start="0" data-playback-rate="2" data-track-index="1" muted playsinline></video>
-      <video id="pH" class="clip screen" src="assets/clips/hospitals.mp4" data-start="23.1" data-duration="2.5" data-media-start="2.0" data-playback-rate="1" data-track-index="1" muted playsinline></video>
-      <div id="frame1" class="clip frame" data-start="7.5" data-duration="6.8" data-track-index="2"><div class="frame-body" id="fb1"></div></div>
-      <div id="frame2" class="clip frame" data-start="16.1" data-duration="9.5" data-track-index="2"><div class="frame-body" id="fb2"></div></div>
+      <video id="pD" class="clip screen" src="assets/clips/meds.mp4" data-start="10.75" data-duration="4.75" data-media-start="1.4" data-playback-rate="1.95" data-track-index="1" muted playsinline></video>
+      <video id="pF" class="clip screen" src="assets/clips/bridge.mp4" data-start="17.95" data-duration="1.8" data-media-start="0.2" data-playback-rate="3.4" data-track-index="1" muted playsinline></video>
+      <video id="pF2" class="clip screen" src="assets/clips/bridge.mp4" data-start="19.75" data-duration="1.0" data-media-start="7.3" data-track-index="1" muted playsinline></video>
+      <video id="pG" class="clip screen" src="assets/clips/burns.mp4" data-start="20.75" data-duration="3.65" data-media-start="0" data-playback-rate="2" data-track-index="1" muted playsinline></video>
+      <video id="pH" class="clip screen" src="assets/clips/hospitals.mp4" data-start="24.4" data-duration="2.55" data-media-start="1.95" data-track-index="1" muted playsinline></video>
+      <div id="frame1" class="clip frame" data-start="7.5" data-duration="8.0" data-track-index="2"><div class="frame-body" id="fb1"></div></div>
+      <div id="frame2" class="clip frame" data-start="17.95" data-duration="9.0" data-track-index="2"><div class="frame-body" id="fb2"></div></div>
 
       <!-- share + end cards -->
-      <div id="share" class="clip" data-start="31.9" data-duration="3.2" data-track-index="0">
+      <div id="share" class="clip" data-start="32.8" data-duration="3.05" data-track-index="0">
         <svg id="share-icon" viewBox="0 0 100 100" fill="none" stroke="#22c55e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="74" cy="22" r="12" /><circle cx="26" cy="50" r="12" /><circle cx="74" cy="78" r="12" />
           <path d="M36 44 L64 28 M36 56 L64 72" />
         </svg>
         <div id="share-t1">שלחו את זה</div>
-        <div id="share-t2">לחובש אחד<span class="l2">שאתם מכירים</span></div>
+        <div id="share-t2"><span class="l2" id="st2a">לחובש אחד</span><span class="l2" id="st2b">שאתם מכירים</span></div>
         <div class="avatars">
           <div class="av" id="av1" style="background:#ef233c">ד</div>
           <div class="av" id="av2" style="background:#f59e0b">נ</div>
@@ -152,7 +144,7 @@
           <div class="av" id="av4" style="background:#22c55e">ש</div>
         </div>
       </div>
-      <div id="end" class="clip" data-start="35.1" data-duration="4.9" data-track-index="0">
+      <div id="end" class="clip" data-start="35.85" data-duration="4.15" data-track-index="0">
         <div id="end-brand">
           <img id="end-icon" src="assets/icon.svg" alt="" />
           <div class="wordmark" id="end-word"><span>חובש</span><span class="plus">+</span></div>
@@ -162,16 +154,15 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7" /><path d="M16 16 L21.5 21.5" /></svg>
           <div id="q"><span>ח</span><span>ו</span><span>ב</span><span>ש</span><span>&nbsp;</span><span>פ</span><span>ל</span><span>ו</span><span>ס</span><div id="caret"></div></div>
         </div>
-        <div id="end-free"><b>חינם</b> · בלי פרסומות · עובד בלי אינטרנט</div>
       </div>
 
       <!-- scrims (track 3) -->
       <div id="sA" class="clip scrim-b" data-start="0" data-duration="7.5" data-track-index="3"></div>
-      <div id="sE" class="clip scrim-b" data-start="14.3" data-duration="1.8" data-track-index="3"></div>
-      <div id="sI" class="clip scrim-t" data-start="25.6" data-duration="3.2" data-track-index="3"></div>
-      <div id="sJ" class="clip scrim-b" data-start="28.8" data-duration="3.1" data-track-index="3"></div>
+      <div id="sE" class="clip scrim-b" data-start="15.5" data-duration="2.45" data-track-index="3"></div>
+      <div id="sI" class="clip scrim-t" data-start="26.95" data-duration="2.85" data-track-index="3"></div>
+      <div id="sJ" class="clip scrim-b" data-start="29.8" data-duration="3.0" data-track-index="3"></div>
 
-      <!-- ============ TEXT (track 4) ============ -->
+      <!-- ============ TEXT (track 4) — every line is spoken by the VO ============ -->
       <div id="cA1" class="clip" data-start="0.35" data-duration="1.5" data-track-index="4"><div class="cap">בהצלת חיים</div></div>
       <div id="cA2" class="clip" data-start="1.85" data-duration="2.1" data-track-index="4"><div class="cap">חייבים להיות<span class="l2">מוכנים <span class="acc">להכול.</span></span></div></div>
       <div id="cA3" class="clip" data-start="4.05" data-duration="0.85" data-track-index="4"><div class="cap xl acc">תמיד.</div></div>
@@ -182,28 +173,24 @@
           <div class="wordmark" id="b-word"><span>חובש</span><span class="plus">+</span></div>
         </div>
       </div>
-      <div id="tC" class="clip" data-start="7.5" data-duration="3.25" data-track-index="4"><div class="kicker">מטרונום החייאה</div><div class="title">מתעד <span class="amb">כל שוק.</span><span class="l2">עם שעה.</span></div></div>
-      <div id="tD" class="clip" data-start="10.75" data-duration="3.55" data-track-index="4"><div class="kicker">סורק תרופות AI</div><div class="title">מצלמים קופסה.<span class="l2 grn">ומקבלים תשובה.</span></div></div>
-      <div id="cE" class="clip" data-start="14.4" data-duration="1.7" data-track-index="4"><div class="cap">והמטופלת<span class="l2 acc">לא מדברת עברית?</span></div></div>
-      <div id="tF" class="clip" data-start="16.1" data-duration="3.35" data-track-index="4"><div class="kicker">גשר שפות · יותר מ-20 שפות</div><div class="title">מתנדב בשפה שלה.<span class="l2 blu">בלחיצה.</span></div></div>
-      <div id="tG" class="clip" data-start="19.45" data-duration="3.65" data-track-index="4">
-        <div class="kicker">10 מחשבונים רפואיים</div>
+      <div id="tC" class="clip" data-start="7.5" data-duration="3.25" data-track-index="4"><div class="title"><span class="l2" id="tC1">מטרונום החייאה,</span><span class="l2 amb" id="tC2">שמתעד כל שוק.</span></div></div>
+      <div id="tD" class="clip" data-start="10.75" data-duration="4.75" data-track-index="4"><div class="title sm"><span class="l2" id="tD1">מצלמים קופסת תרופה,</span><span class="l2 grn" id="tD2">ומקבלים תשובה,</span><span class="l2" id="tD3">עם מידע על התרופה.</span></div></div>
+      <div id="cE" class="clip" data-start="15.65" data-duration="2.3" data-track-index="4"><div class="cap">מתקשים בשפה<span class="l2 acc">מול המטופל?</span></div></div>
+      <div id="tF" class="clip" data-start="17.95" data-duration="2.8" data-track-index="4"><div class="title"><span class="l2" id="tF1">מתנדב בשפה שלו,</span><span class="l2 blu" id="tF2">בלחיצה.</span></div></div>
+      <div id="tG" class="clip" data-start="20.75" data-duration="3.65" data-track-index="4">
         <div class="chips"><div class="chip acc" id="ch1">כוויות</div><div class="chip amb" id="ch2">מינונים</div><div class="chip blu" id="ch3">גלזגו</div></div>
         <div class="sub" id="gsub">הכול בכיס.</div>
       </div>
-      <div id="tH" class="clip" data-start="23.1" data-duration="2.5" data-track-index="4"><div class="kicker">בתי חולים קרובים</div><div class="title">המיון הקרוב. <span class="acc">מיד.</span></div></div>
-      <div id="oI" class="clip" data-start="25.7" data-duration="3.1" data-track-index="4">
+      <div id="tH" class="clip" data-start="24.4" data-duration="2.55" data-track-index="4"><div class="title"><span class="l2" id="tH1">בית החולים הקרוב,</span><span class="l2 acc" id="tH2">מיד.</span></div></div>
+      <div id="oI" class="clip" data-start="27.1" data-duration="2.7" data-track-index="4">
         <div class="pill" id="nosig">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ef233c" stroke-width="2.4" stroke-linecap="round"><path d="M4 20v-3M9 20v-6M14 20v-9M19 20V5" /><path d="M3 3 L21 21" /></svg>
-          <span>אין קליטה</span>
+          <span>וגם... בלי קליטה.</span>
         </div>
-        <div class="pill" id="works">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5" /></svg>
-          <span>חובש+ עובד</span>
-        </div>
+        <div id="okbadge"><svg viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5" /></svg></div>
       </div>
-      <div id="cJ1" class="clip" data-start="28.95" data-duration="2.95" data-track-index="4"><div class="cap"><span class="grn">חינם</span> לגמרי.</div></div>
-      <div id="cJ2" class="clip" data-start="30.3" data-duration="1.6" data-track-index="4"><div class="cap" style="bottom:270px;font-size:84px">בלי פרסומות.</div></div>
+      <div id="cJ1" class="clip" data-start="30.0" data-duration="2.8" data-track-index="4"><div class="cap"><span class="grn">חינם</span> לגמרי.</div></div>
+      <div id="cJ2" class="clip" data-start="31.3" data-duration="1.5" data-track-index="4"><div class="cap" style="bottom:270px;font-size:84px">בלי פרסומות.</div></div>
 
       <!-- transitions (track 5) -->
       <div id="flash" class="clip" data-start="7.45" data-duration="0.35" data-track-index="5"></div>
@@ -211,21 +198,21 @@
 
       <!-- ============ AUDIO ============ -->
       <audio id="vo" src="assets/vo-timed.wav" data-start="0" data-duration="40" data-track-index="10" data-volume="1"></audio>
-      <audio id="bgm" src="assets/bgm-ducked.wav" data-start="0" data-duration="40" data-track-index="11" data-volume="1"></audio>
+      <audio id="bgm" src="assets/bgm-ducked.wav" data-start="0" data-duration="39.84" data-track-index="11" data-volume="1"></audio>
     </div>
 
     <script>
       const tl = gsap.timeline({ paused: true });
+      const rise = (sel, at, dy = 40) => tl.fromTo(sel, { y: dy, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power3.out" }, at);
 
       // field footage: slow push-in
-      [["#vA", 0, 4.9, 1.0, 1.12], ["#vB", 4.9, 2.6, 1.02, 1.1], ["#vE", 14.3, 1.8, 1.0, 1.06], ["#vI", 25.6, 3.2, 1.0, 1.05], ["#vJ", 28.8, 3.1, 1.0, 1.06]].forEach(([id, a, d, s0, s1]) => {
+      [["#vA", 0, 4.9, 1.0, 1.12], ["#vB", 4.9, 2.6, 1.02, 1.1], ["#vE", 15.5, 2.45, 1.0, 1.07], ["#vI", 26.95, 2.85, 1.0, 1.05], ["#vJ", 29.8, 3.0, 1.0, 1.06]].forEach(([id, a, d, s0, s1]) => {
         tl.fromTo(id, { scale: s0 }, { scale: s1, duration: d, ease: "none" }, a);
       });
 
-      // captions: rise in, fade out before their clip ends
-      const caps = [["#cA1", 0.35, 1.85], ["#cA2", 1.85, 3.95], ["#cE", 14.4, 16.1], ["#cJ1", 28.95, 31.9], ["#cJ2", 30.3, 31.9]];
-      caps.forEach(([id, a, b]) => {
-        tl.fromTo(id + " .cap", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, a);
+      // captions over footage: rise in on the spoken word, fade before the cut
+      [["#cA1", 0.35, 1.85], ["#cA2", 1.85, 3.95], ["#cE", 15.72, 17.95], ["#cJ1", 30.02, 32.8], ["#cJ2", 31.3, 32.8]].forEach(([id, a, b]) => {
+        rise(id + " .cap", a, 50);
         tl.to(id + " .cap", { opacity: 0, duration: 0.18, ease: "power2.in" }, b - 0.2);
       });
       // "תמיד." slam
@@ -233,62 +220,60 @@
       tl.fromTo("#redflash", { opacity: 0 }, { opacity: 0.45, duration: 0.06, yoyo: true, repeat: 1, ease: "power2.out" }, 4.05);
 
       // brand reveal on the Nachlaot shot
-      tl.fromTo("#b-lead", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 5.25);
+      rise("#b-lead", 5.25);
       tl.fromTo("#b-icon", { scale: 0, rotation: -25 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(1.8)" }, 5.9);
-      tl.fromTo("#b-word", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 6.15);
+      rise("#b-word", 6.15, 50);
       tl.to("#cB .brand", { opacity: 0, duration: 0.2 }, 7.28);
 
       // phone stage entrances: frame + screen rise together
-      [[["#fb1", "#pC"], 7.5], [["#fb2", "#pF"], 16.1]].forEach(([ids, a]) => {
+      [[["#fb1", "#pC"], 7.5], [["#fb2", "#pF"], 17.95]].forEach(([ids, a]) => {
         tl.fromTo(ids, { y: 700, scale: 0.92 }, { y: 0, scale: 1, duration: 0.5, ease: "power3.out" }, a);
       });
       tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.6, duration: 0.07, yoyo: true, repeat: 1, ease: "power2.out" }, 7.45);
       // screen swaps inside the phone: quick slide
-      [["#pD", 10.75], ["#pG", 19.45], ["#pH", 23.1]].forEach(([id, a]) => {
+      [["#pD", 10.75], ["#pG", 20.75], ["#pH", 24.4]].forEach(([id, a]) => {
         tl.fromTo(id, { x: -120, opacity: 0.2 }, { x: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, a);
       });
       // stage exits
-      tl.to(["#fb1", "#pD"], { y: 120, opacity: 0, duration: 0.25, ease: "power2.in" }, 14.05);
-      tl.to(["#fb2", "#pH"], { y: 120, opacity: 0, duration: 0.25, ease: "power2.in" }, 25.35);
+      tl.to(["#fb1", "#pD"], { y: 120, opacity: 0, duration: 0.25, ease: "power2.in" }, 15.25);
+      tl.to(["#fb2", "#pH"], { y: 120, opacity: 0, duration: 0.25, ease: "power2.in" }, 26.7);
 
-      // phone titles
-      [["#tC", 7.5, 10.75], ["#tD", 10.75, 14.3], ["#tF", 16.1, 19.45], ["#tH", 23.1, 25.6]].forEach(([id, a, b]) => {
-        tl.fromTo(id + " .kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, a + 0.1);
-        tl.fromTo(id + " .title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, a + 0.15);
+      // phone titles: each line appears on its spoken word
+      [["#tC1", 7.8], ["#tC2", 8.65], ["#tD1", 10.9], ["#tD2", 12.35], ["#tD3", 13.5], ["#tF1", 18.2], ["#tF2", 19.85], ["#tH1", 24.55], ["#tH2", 25.95]].forEach(([id, a]) => rise(id, a));
+      [["#tC", 10.75], ["#tD", 15.5], ["#tF", 20.75], ["#tH", 26.95]].forEach(([id, b]) => {
         tl.to(id + " .title", { opacity: 0, duration: 0.15 }, b - 0.18);
       });
       // calculators: chips pop on the spoken words
-      tl.fromTo("#tG .kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 19.5);
-      [["#ch1", 19.68], ["#ch2", 20.3], ["#ch3", 21.02]].forEach(([id, a]) => {
+      [["#ch1", 20.95], ["#ch2", 21.58], ["#ch3", 22.3]].forEach(([id, a]) => {
         tl.fromTo(id, { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.2)" }, a);
       });
-      tl.fromTo("#gsub", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power3.out" }, 21.9);
-      tl.to("#tG .chips, #gsub", { opacity: 0, duration: 0.15 }, 22.92);
+      rise("#gsub", 23.2, 30);
+      tl.to("#tG .chips, #gsub", { opacity: 0, duration: 0.15 }, 24.22);
 
       // offline graphic on the desert shot
-      tl.fromTo("#nosig", { y: -60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 25.8);
-      tl.fromTo("#nosig", { x: 0 }, { x: 14, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 26.2);
-      tl.fromTo("#works", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 26.85);
-      tl.to("#oI .pill", { opacity: 0, duration: 0.2 }, 28.55);
+      tl.fromTo("#nosig", { x: 0, y: -60, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 27.25);
+      tl.to("#nosig", { x: 14, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 28.1);
+      tl.fromTo("#okbadge", { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)" }, 28.75);
+      tl.to("#oI .pill, #okbadge", { opacity: 0, duration: 0.2 }, 29.55);
 
       // share card
-      tl.fromTo("#share-icon", { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(1.8)" }, 31.95);
-      tl.to("#share-icon", { scale: 1.08, duration: 0.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 32.5);
-      tl.fromTo("#share-t1", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 32.05);
-      tl.fromTo("#share-t2", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 32.8);
-      [["#av1", 33.3], ["#av2", 33.45], ["#av3", 33.6], ["#av4", 33.75]].forEach(([id, a]) => {
+      tl.fromTo("#share-icon", { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(1.8)" }, 32.85);
+      tl.to("#share-icon", { scale: 1.08, duration: 0.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 33.4);
+      rise("#share-t1", 33.05);
+      rise("#st2a", 33.52);
+      rise("#st2b", 34.1);
+      [["#av1", 34.35], ["#av2", 34.5], ["#av3", 34.65], ["#av4", 34.8]].forEach(([id, a]) => {
         tl.fromTo(id, { y: 80, scale: 0.5, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2)" }, a);
       });
 
       // end card: brand, then the search bar types "חובש פלוס" on the spoken words
-      tl.fromTo("#end-icon", { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 35.15);
-      tl.fromTo("#end-word", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 35.3);
-      tl.fromTo("#end-kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 35.4);
-      tl.fromTo("#search", { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 35.6);
-      document.querySelectorAll("#q span").forEach((el, i) => tl.to(el, { opacity: 1, duration: 0.01 }, 36.35 + i * 0.12));
-      tl.fromTo("#caret", { opacity: 1 }, { opacity: 0, duration: 0.25, yoyo: true, repeat: 11, ease: "steps(1)" }, 35.6);
-      tl.to("#search", { scale: 1.05, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, 37.9);
-      tl.fromTo("#end-free", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 38.2);
+      tl.fromTo("#end-icon", { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, 35.9);
+      rise("#end-word", 36.0, 60);
+      tl.fromTo("#end-kicker", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 36.1);
+      rise("#search", 36.35, 80);
+      document.querySelectorAll("#q span").forEach((el, i) => tl.to(el, { opacity: 1, duration: 0.01 }, 37.3 + i * 0.11));
+      tl.fromTo("#caret", { opacity: 1 }, { opacity: 0, duration: 0.25, yoyo: true, repeat: 11, ease: "steps(1)" }, 36.35);
+      tl.to("#search", { scale: 1.05, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut" }, 38.5);
 
       tl.to({}, { duration: 40 }, 0);
       window.__timelines["main"] = tl;
