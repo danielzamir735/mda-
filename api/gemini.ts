@@ -1,9 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { rateLimit, getIp } from './_rateLimit.js';
+import { DAILY_TYPES, buildDailyPrompt, type DailyType } from './_dailyPrompts.js';
+import { MED_SCAN_PROMPT } from './_medScanPrompt.js';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const MAX_PROMPT_LENGTH = 20_000;
+const MAX_QUERY_LENGTH = 200;
 const MAX_IMAGE_B64_LENGTH = 10 * 1024 * 1024; // ~7.5 MB file
 
 // Models tried in order — first success wins.
@@ -92,17 +94,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
 
-  const { prompt, image, model: preferredModel } = (req.body ?? {}) as {
-    prompt?: unknown;
+  // The prompt is always built here from a named task — free-form prompt text from
+  // the caller is never accepted, so the endpoint can't be used as a general LLM proxy.
+  const { task, type, today, query, image, model: preferredModel } = (req.body ?? {}) as {
+    task?: unknown;
+    type?: unknown;
+    today?: unknown;
+    query?: unknown;
     image?: { data?: unknown; mimeType?: unknown };
     model?: unknown;
   };
 
-  if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ error: 'prompt is required' });
-  }
-  if (prompt.length > MAX_PROMPT_LENGTH) {
-    return res.status(400).json({ error: 'prompt too long' });
+  let prompt: string;
+  if (task === 'daily') {
+    if (typeof type !== 'string' || !(DAILY_TYPES as readonly string[]).includes(type)) {
+      return res.status(400).json({ error: 'invalid type' });
+    }
+    if (typeof today !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(today)) {
+      return res.status(400).json({ error: 'invalid date' });
+    }
+    if (image !== undefined) {
+      return res.status(400).json({ error: 'image not allowed for this task' });
+    }
+    prompt = buildDailyPrompt(type as DailyType, today);
+  } else if (task === 'med_scan') {
+    if (image === undefined) {
+      if (typeof query !== 'string') {
+        return res.status(400).json({ error: 'query or image is required' });
+      }
+      const cleanQuery = query.trim().replace(/[\r\n]+/g, ' ').slice(0, MAX_QUERY_LENGTH);
+      if (!cleanQuery) {
+        return res.status(400).json({ error: 'query or image is required' });
+      }
+      prompt = MED_SCAN_PROMPT + '\n\nהתרופה המבוקשת: ' + cleanQuery;
+    } else {
+      prompt = MED_SCAN_PROMPT;
+    }
+  } else {
+    return res.status(400).json({ error: 'invalid task' });
   }
 
   let imagePayload: { data: string; mimeType: string } | undefined;

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS daily_questions (
 ALTER TABLE daily_questions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "dq_select_all" ON daily_questions FOR SELECT USING (true);
-CREATE POLICY "dq_insert_all" ON daily_questions FOR INSERT WITH CHECK (true);
+-- No INSERT policy: only the generate-daily-questions edge function (service role) writes.
 
 -- ── daily_responses ──────────────────────────────────────────────────────────
 -- One row per session per day per category. Unique constraint prevents duplicates.

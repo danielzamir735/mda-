@@ -31,12 +31,8 @@ create policy "translators_insert_public"
   for insert
   with check (true);
 
--- Allow anyone to update (needed for upsert on phone_number conflict)
-create policy "translators_update_public"
-  on public.translators
-  for update
-  using (true)
-  with check (true);
+-- No public UPDATE policy: edits and removals go through the token-checked
+-- functions in supabase_migration_security_hardening.sql (run it after this file).
 
 -- Allow users to delete only their own row
 create policy "translators_delete_own"

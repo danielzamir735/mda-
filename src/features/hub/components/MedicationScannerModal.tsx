@@ -3,30 +3,6 @@ import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronD
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
 
-const SYSTEM_PROMPT =
-  'אתה סוכן AI רפואי מקצועי. תפקידך לזהות תרופות מתמונה או טקסט.\n' +
-  'חובה עליך להחזיר את התשובה *אך ורק* במבנה המדויק הבא, ללא הקדמות וללא סיכומים מיותרים. השתמש בנקודות (bullets) היכן שמופיע בדוגמה.\n\n' +
-  'תבנית חובה (דוגמה על אופטלגין, החלף את המידע בהתאם לתרופה שזוהתה):\n\n' +
-  'שם מסחרי: אופטלגין (Optalgin)\n' +
-  'שם גנרי: מטאמיזול (Metamizole / Dipyrone)\n\n' +
-  'למה התרופה מיועדת:\n' +
-  '* שיכוך כאבים (כאב ראש, שיניים, כאבי שרירים וכו\')\n' +
-  '* הורדת חום\n' +
-  '* לעיתים גם לכאבים חזקים יותר כשמשככי כאבים רגילים לא מספיקים\n\n' +
-  'מינון מקובל (כללי):\n' +
-  '* מבוגרים: בדרך כלל 500–1000 מ״ג בכל פעם\n' +
-  '* ניתן לקחת עד 3–4 פעמים ביום לפי הצורך\n' +
-  '⚠️ לא לעבור מינון יומי מקסימלי ולהתייעץ עם רופא/רוקח\n\n' +
-  'התוויות נגד:\n' +
-  '* רגישות לחומר הפעיל או לתרופות דומות\n' +
-  '* היסטוריה של בעיות דם (אגרנולוציטוזיס)\n' +
-  '* בעיות חמורות במח העצם\n' +
-  '* יש להיזהר במחלות כבד או כליה\n' +
-  '* לא מומלץ לשימוש ממושך ללא מעקב רפואי\n\n' +
-  '❗ חשוב לדעת:\n' +
-  '[משפט אחד או שניים על אזהרה קריטית או תופעת לוואי חריגה שחובה לשים לב אליה].\n\n' +
-  'אם אתה רוצה, אפשר להשוות אותה לתרופות מקבילות או לבדוק התאמה למצב מסוים 👍';
-
 const IMAGE_LOADING_STEPS = [
   { text: 'מעבד תמונה...', Icon: Image },
   { text: 'מזהה תווית...', Icon: Scan },
@@ -217,7 +193,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: SYSTEM_PROMPT + '\n\nהתרופה המבוקשת: ' + query }),
+        body: JSON.stringify({ task: 'med_scan', query }),
       });
       if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
       const { text } = await res.json() as { text: string };
@@ -248,7 +224,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: SYSTEM_PROMPT,
+          task: 'med_scan',
           image: { data: base64, mimeType },
         }),
       });

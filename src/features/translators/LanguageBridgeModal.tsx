@@ -637,6 +637,14 @@ function LanguageRequestForm() {
 
 // ─── Registration Form ─────────────────────────────────────────────────────────
 
+// Editing/removing a translator row is authorised by a secret token issued once at
+// registration (see supabase_migration_security_hardening.sql) and kept on this device only.
+const LB_TOKEN_KEY = 'lb_translator_token';
+
+function getEditToken(id: string): string | null {
+  return localStorage.getItem('lb_translator_id') === id ? localStorage.getItem(LB_TOKEN_KEY) : null;
+}
+
 function RegisterForm({
   allLanguages,
   onSuccess,
@@ -693,6 +701,7 @@ function RegisterForm({
     setPhone(val);
     setMode('new');
     setExistingId(null);
+    setError(null);
     if (phoneTimerRef.current) clearTimeout(phoneTimerRef.current);
 
     const digits = val.replace(/\D/g, '');
@@ -705,6 +714,13 @@ function RegisterForm({
         .select('id, full_name, languages, is_24_7, start_time, end_time, time_slots, emergency_only_contact, availability')
         .eq('phone_number', val.trim())
         .maybeSingle();
+
+      if (data && !getEditToken(data.id)) {
+        // Knowing the phone number is not proof of ownership
+        setMode('new');
+        setError('מספר זה כבר רשום במערכת. ניתן לעדכן או להסיר את הרישום רק מהמכשיר שבו בוצעה ההרשמה.');
+        return;
+      }
 
       if (data) {
         setExistingId(data.id);
@@ -786,15 +802,22 @@ function RegisterForm({
         time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
-      console.log('[LB] update payload:', payload);
-      const { error: dbError } = await supabase
-        .from('translators')
-        .update(payload)
-        .eq('id', existingId!);
+      const { data: updated, error: dbError } = await supabase.rpc('update_translator', {
+        p_id:                     existingId!,
+        p_edit_token:             getEditToken(existingId!) ?? '',
+        p_full_name:              payload.full_name,
+        p_languages:              payload.languages,
+        p_availability:           payload.availability,
+        p_is_24_7:                payload.is_24_7,
+        p_start_time:             payload.start_time,
+        p_end_time:               payload.end_time,
+        p_time_slots:             payload.time_slots,
+        p_emergency_only_contact: payload.emergency_only_contact,
+      });
 
-      if (dbError) {
+      if (dbError || !updated) {
         console.error('[LB] Supabase update error:', dbError);
-        setError(`שגיאה בעדכון: ${dbError.message}`);
+        setError(dbError ? `שגיאה בעדכון: ${dbError.message}` : 'לא ניתן לעדכן את הרישום ממכשיר זה.');
         setLoading(false);
         return;
       }
@@ -813,12 +836,13 @@ function RegisterForm({
 
   const handleDelete = async () => {
     setLoading(true); setError(null);
-    const { error: dbError } = await supabase
-      .from('translators')
-      .delete()
-      .eq('id', existingId!);
+    const { data: deleted, error: dbError } = await supabase.rpc('delete_translator', {
+      p_id:         existingId!,
+      p_edit_token: getEditToken(existingId!) ?? '',
+    });
     setLoading(false);
-    if (dbError) { setError('שגיאה במחיקה. נסה שוב.'); return; }
+    if (dbError || !deleted) { setError('שגיאה במחיקה. נסה שוב.'); return; }
+    localStorage.removeItem(LB_TOKEN_KEY);
     ReactGA.event('translator_delete', {});
     setDeletedSuccess(true);
     setTimeout(() => onSuccess([]), 2000);
@@ -852,22 +876,41 @@ function RegisterForm({
         time_slots:              availMode === 'custom' ? Object.values(customDays).filter(d => d.enabled).flatMap(d => d.slots) : [],
         emergency_only_contact:  emergencyContact,
       };
-      console.log('[LB] insert payload:', payload);
-      const { data: inserted, error: dbError } = await supabase
-        .from('translators')
-        .insert(payload)
-        .select('id')
-        .single();
+      const { data: registered, error: rpcError } = await supabase.rpc('register_translator', {
+        p_full_name:              payload.full_name,
+        p_phone_number:           payload.phone_number,
+        p_languages:              payload.languages,
+        p_availability:           payload.availability,
+        p_is_24_7:                payload.is_24_7,
+        p_start_time:             payload.start_time,
+        p_end_time:               payload.end_time,
+        p_time_slots:             payload.time_slots,
+        p_emergency_only_contact: payload.emergency_only_contact,
+      });
+
+      let dbError = rpcError;
+      let reg = registered as { id: string; edit_token?: string } | null;
+      if (rpcError?.code === 'PGRST202') {
+        // Security migration not applied yet — plain insert, no edit token issued
+        const { data: inserted, error } = await supabase
+          .from('translators')
+          .insert(payload)
+          .select('id')
+          .single();
+        dbError = error;
+        reg = inserted as { id: string } | null;
+      }
 
       if (dbError) {
         console.error('[LB] Supabase insert error:', dbError);
-        setError(`שגיאה בשמירה: ${dbError.message}`);
+        setError(dbError.code === '23505' ? 'מספר זה כבר רשום במערכת.' : `שגיאה בשמירה: ${dbError.message}`);
         setLoading(false);
         return;
       }
 
-      const newId = (inserted as { id: string } | null)?.id;
+      const newId = reg?.id;
       if (newId) localStorage.setItem('lb_translator_id', newId);
+      if (reg?.edit_token) localStorage.setItem(LB_TOKEN_KEY, reg.edit_token);
       setLoading(false);
       ReactGA.event('translator_registration', { languages: selectedLangs.join(',') });
       setSubmitted(true);
@@ -1404,13 +1447,17 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
 
   const handleDelete = async () => {
     setSaving(true);
-    const { error: dbError } = await supabase.from('translators').delete().eq('id', id);
+    const { data: deleted, error: dbError } = await supabase.rpc('delete_translator', {
+      p_id:         id,
+      p_edit_token: getEditToken(id) ?? '',
+    });
     setSaving(false);
-    if (dbError) {
+    if (dbError || !deleted) {
       console.error('[LB] Delete error:', dbError);
       return;
     }
     localStorage.removeItem('lb_translator_id');
+    localStorage.removeItem(LB_TOKEN_KEY);
     onDeleted();
   };
 
