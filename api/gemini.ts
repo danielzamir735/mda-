@@ -12,9 +12,12 @@ const MAX_IMAGE_B64_LENGTH = 10 * 1024 * 1024; // ~7.5 MB file
 // Each uses a separate quota bucket; gemini-2.5-flash is the most capable and is
 // the last resort for prompts the 2.0 models block or fail to format (e.g. the
 // "improvise emergency care" scenarios, which trip 2.0's DANGEROUS_CONTENT filter).
+// (The 2.0 models were shut down by Google; 2.5-flash is legacy with a tiny free quota.)
 const MODEL_FALLBACK_CHAIN = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-2.5-flash',
 ];
 
