@@ -653,7 +653,13 @@ export function createProtocolRunner(root) {
       renderer.setPixelRatio(pr); renderer.setSize(w, h, false); if (composer) { composer.setPixelRatio(pr); composer.setSize(w, h); }
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
-    let sizeW = 4, sizeH = 4, slowFrames = 0;
+    let sizeW = 4, sizeH = 4, slowFrames = 0, probeFrames = 0;
+    const probe = new Uint8Array(4);
+    function skyIsBlack() {
+      const gl = renderer.getContext(), w = gl.drawingBufferWidth, h = gl.drawingBufferHeight; let sum = 0;
+      for (const fx of [.2, .5, .8]) { gl.readPixels(Math.floor(w * fx), Math.floor(h * .9), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, probe); sum += probe[0] + probe[1] + probe[2]; }
+      return sum === 0;
+    }
     api.resize = (w, h) => { sizeW = w; sizeH = h; resize(w, h); };
 
     let camX = 0, fov = 70, blur = 0, vig = 0, dashK = 0, susY = 0, susV = 0, lastLean = 0, pitch = 0, vSm = 0;
@@ -688,7 +694,7 @@ export function createProtocolRunner(root) {
       // ── אתרי ירושלים: שלוש משבצות ממוחזרות, כל אחת מקבלת אתר לפי אינדקס גלובלי ──
       const lBase = Math.floor(D / LM_S), lOff = D - lBase * LM_S;
       for (const l of LM) l.g.visible = false;
-      for (let j = 0; j < 3; j++) { const l = LM[(lBase + j) % LM.length], z = 70 - j * LM_S + lOff; if (hospOn && z < hosp.position.z + 60) continue; l.g.visible = true; l.g.position.z = z; if (l.len) zones.push([l.side, z - l.len / 2 - 5, z + l.len / 2 + 5]); }
+      for (let j = 0; j < 3; j++) { const l = LM[((lBase + j) % LM.length + LM.length) % LM.length], z = 70 - j * LM_S + lOff; if (hospOn && z < hosp.position.z + 60) continue; l.g.visible = true; l.g.position.z = z; if (l.len) zones.push([l.side, z - l.len / 2 - 5, z + l.len / 2 + 5]); }
       if (millSails) millSails.rotation.x = t * .5;
       const blocked = (sd, z0, z1) => { for (const q of zones) if ((q[0] === 0 || q[0] === sd) && z1 > q[1] && z0 < q[2]) return true; return false; };
 
@@ -753,8 +759,11 @@ export function createProtocolRunner(root) {
       // ── שכבות CSS ורינדור ──
       vig = damp(vig, gateActive ? .75 : .18, 4, dt); vigEl.style.opacity = vig.toFixed(2);
       if (S.flash) { flashEl.style.background = `radial-gradient(ellipse at 50% 46%, transparent 25%, rgba(${S.flash.c.map(x => Math.round(x * 255))},.95) 100%)`; flashEl.style.opacity = Math.min(1, S.flash.a).toFixed(2); } else flashEl.style.opacity = 0;
-      if (composer) { blur = damp(blur, S.dash ? .11 : 0, 5, dt); fxPass.uniforms.uBlur.value = blur; fxPass.enabled = blur > .004; composer.render(dt); }
-      else renderer.render(scene, camera);
+      if (composer) {
+        blur = damp(blur, S.dash ? .11 : 0, 5, dt); fxPass.uniforms.uBlur.value = blur; fxPass.enabled = blur > .004; composer.render(dt);
+        // רשת ביטחון: יש כרטיסי מסך שבהם ה־render target של הפוסט־פרוססינג יוצא שחור. אם השמיים שחורים — עוברים לרינדור ישיר.
+        if (++probeFrames > 2 && probeFrames < 8 && skyIsBlack()) { console.warn('protocol-runner: post-processing output is black, falling back to direct rendering'); composer.dispose(); composer = null; renderer.render(scene, camera); }
+      } else renderer.render(scene, camera);
     };
     api.dispose = () => { live.forEach(dropEnt); live.clear(); if (composer) composer.dispose(); renderer.dispose(); renderer.forceContextLoss(); };
     return api;
@@ -772,7 +781,15 @@ export function createProtocolRunner(root) {
     .catch(err => { if (dead) return; console.error(err); $('startBtn').textContent = 'הטעינה נכשלה — רענן את הדף'; });
 
   function draw(dt, rawDt) { gfx.render({ T, dist, v: vNow, px, lean, ents, dash: dash && !!activeGate, shake, flash }, dt, rawDt); }
-  function frame(now) { if (dead) return; const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now; update(dt); draw(dt, raw); raf = requestAnimationFrame(frame); }
+  // שגיאת גרפיקה מוצגת על המסך, כדי שלא יישאר מסך שחור בלי הסבר
+  function showError(msg) { let el = stage.querySelector('.pr-error'); if (!el) { el = document.createElement('div'); el.className = 'pr-error'; el.style.cssText = 'position:absolute;inset-inline:.8em;top:40%;padding:.8em;border-radius:.8em;background:rgba(40,8,14,.95);border:1px solid #EF233C;color:#fff;font-size:.8em;line-height:1.4;text-align:center;z-index:9;direction:ltr'; stage.appendChild(el); } el.textContent = 'שגיאת גרפיקה: ' + msg; }
+  cv.addEventListener('webglcontextlost', e => { e.preventDefault(); if (!dead) showError('WebGL context lost'); });
+  function frame(now) {
+    // הפריים הראשון יכול להגיע עם חותמת זמן שקודמת ל־last, ואז raw שלילי — לכן חוסמים מלמטה באפס
+    if (dead) return; const raw = Math.max(0, (now - last) / 1000), dt = Math.min(.05, raw); last = now;
+    try { update(dt); draw(dt, raw); } catch (err) { console.error(err); showError(String(err && err.message || err)); return; }
+    raf = requestAnimationFrame(frame);
+  }
   hud(); raf = requestAnimationFrame(frame);
 
   // כלי בדיקה: מאפשר להריץ את הלוגיקה צעד־צעד מהקונסול
