@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Languages, Volume2, ArrowRight, ExternalLink, Brain } from 'lucide-react';
+import { X, Languages, Volume2, ArrowRight, ExternalLink, Brain, Captions, ChevronLeft } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR, LANG_GT,
@@ -7,6 +7,7 @@ import {
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
 import FlashcardTrainer from '../../../components/FlashcardTrainer';
+import BigTextScreen from './BigTextScreen';
 
 interface Props { isOpen: boolean; onClose: () => void; initialLang?: Lang; }
 
@@ -34,15 +35,18 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   const [category, setCategory] = useState('הכל');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [trainerOpen, setTrainerOpen] = useState(false);
+  const [bigTextOpen, setBigTextOpen] = useState(false);
 
   // Refs for popstate handler — avoids stale closures
   const selectedLangRef = useRef<Lang | null>(null);
   const expandedRef = useRef<string | null>(null);
+  const bigTextRef = useRef(false);
   const onCloseRef = useRef(onClose);
   // Tracks how many history entries this modal has pushed
   const pushCountRef = useRef(0);
   selectedLangRef.current = selectedLang;
   expandedRef.current = expanded;
+  bigTextRef.current = bigTextOpen;
   onCloseRef.current = onClose;
 
   const speakText = (text: string, langCode: string) => {
@@ -69,6 +73,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
     setSelectedLang(null);
     setCategory('הכל');
     setExpanded(null);
+    setBigTextOpen(false);
     onClose();
   };
 
@@ -88,7 +93,10 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
 
     const handlePopState = () => {
       pushCountRef.current = Math.max(0, pushCountRef.current - 1);
-      if (expandedRef.current !== null) {
+      if (bigTextRef.current) {
+        // Big-text captions → back to language list
+        setBigTextOpen(false);
+      } else if (expandedRef.current !== null) {
         // Fullscreen phrase → back to phrase list
         window.speechSynthesis.cancel();
         setExpanded(null);
@@ -121,6 +129,13 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
     window.history.pushState({ mtLevel: 'lang' }, '');
   }, [selectedLang, isOpen]);
 
+  // Push history entry when the big-text captions screen opens
+  useEffect(() => {
+    if (!isOpen || !bigTextOpen) return;
+    pushCountRef.current++;
+    window.history.pushState({ mtLevel: 'bigtext' }, '');
+  }, [bigTextOpen, isOpen]);
+
   // Push history entry when a phrase is expanded (fullscreen level)
   useEffect(() => {
     if (!isOpen || expanded === null) return;
@@ -129,6 +144,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   }, [expanded, isOpen]);
 
   if (!isOpen) return null;
+  if (bigTextOpen) return <BigTextScreen onBack={() => setBigTextOpen(false)} />;
 
   const filtered = category === 'הכל' ? PHRASES : PHRASES.filter(p => p.category === category);
   const expandedPhrase = PHRASES.find(p => p.id === expanded);
@@ -186,6 +202,27 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             ))}
 
           </div>
+
+          {/* Big-text captions for hard-of-hearing patients */}
+          <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest mt-2">
+            מטופל כבד שמיעה
+          </p>
+          <HapticButton
+            pressScale={0.95}
+            onClick={() => {
+              trackInteraction('כתוביות למטופל', 'translation');
+              setBigTextOpen(true);
+            }}
+            className="w-full py-5 px-6 rounded-2xl border-2 border-orange-400/40
+                       bg-orange-400/10 flex items-center gap-4 text-right"
+          >
+            <Captions size={36} className="shrink-0 text-orange-400" />
+            <span className="flex-1 flex flex-col gap-0.5">
+              <span className="text-gray-900 dark:text-white font-bold text-2xl leading-tight">כתוביות למטופל</span>
+              <span className="text-gray-500 dark:text-emt-muted text-sm leading-snug">מקלידים או מדברים, והמטופל קורא באותיות גדולות</span>
+            </span>
+            <ChevronLeft size={22} className="shrink-0 text-gray-400" />
+          </HapticButton>
         </div>
 
       </div>

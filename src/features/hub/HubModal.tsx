@@ -160,6 +160,7 @@ const HUB_ITEMS: HubItem[] = [
   {
     id: 'realtime-translate',
     label: 'תרגום רפואי',
+    subtitle: 'כולל כתוביות לכבדי שמיעה',
     icon: Languages,
     color: 'text-orange-400',
     border: 'border-orange-400/30',
