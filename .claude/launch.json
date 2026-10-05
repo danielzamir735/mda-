@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "protocol-runner-sketch",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4310", "--directory", "sketches"],
+      "port": 4310
+    },
+    {
       "name": "medic-app-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview", "--", "--port", "4173"],

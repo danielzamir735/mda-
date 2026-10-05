@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>ריצת פרוטוקול · קוצר נשימה (סקיצה)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #EF233C; --green: #22C55E; --amber: #F59E0B; --blue: #60A5FA; --violet: #A78BFA;
+    --dark: #09090B; --card: rgba(10, 11, 20, .94); --border: rgba(255, 255, 255, .12);
+    --text: #F4F4F5; --muted: #A1A1AA;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #040409; overflow: hidden; }
+  body {
+    display: grid; place-items: center; font-family: 'Rubik', system-ui, sans-serif; color: var(--text);
+    background: radial-gradient(ellipse at 50% 30%, #1a1238 0%, #040409 70%);
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  #stage { position: relative; overflow: hidden; background: var(--dark); box-shadow: 0 0 80px rgba(239, 35, 60, .18), 0 0 0 1px rgba(255, 255, 255, .06); }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* HUD */
+  #hud { position: absolute; top: 0; inset-inline: 0; height: 2.9em; padding: .55em .8em 0; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+  #hearts { font-size: 1.25em; letter-spacing: .08em; color: var(--red); text-shadow: 0 0 .6em rgba(239, 35, 60, .7); }
+  #hearts .lost { color: #3f3f46; text-shadow: none; }
+  #dots { display: flex; gap: .38em; direction: rtl; }
+  #dots i { width: .62em; height: .62em; border-radius: 50%; background: #3f3f46; transition: all .25s; }
+  #dots i.cur { background: #fff; box-shadow: 0 0 .6em #fff; transform: scale(1.25); }
+  #dots i.ok { background: var(--green); box-shadow: 0 0 .5em var(--green); }
+  #dots i.bad { background: var(--red); box-shadow: 0 0 .5em var(--red); }
+  #scoreBox { display: flex; align-items: baseline; gap: .4em; font-weight: 900; font-variant-numeric: tabular-nums; }
+  #score { font-size: 1.3em; }
+  #streak { font-size: .72em; padding: .12em .5em; border-radius: 99em; background: var(--amber); color: #1c1203; opacity: 0; transform: scale(.6); transition: all .2s cubic-bezier(.34, 1.56, .64, 1); }
+  #streak.on { opacity: 1; transform: scale(1); }
+  #mute { position: absolute; bottom: .6em; left: .6em; width: 2.2em; height: 2.2em; border-radius: 50%; border: 1px solid var(--border); background: rgba(0, 0, 0, .45); color: var(--text); font-size: .9em; cursor: pointer; z-index: 3; }
+
+  /* כרטיס השאלה */
+  #card { position: absolute; top: 3.1em; inset-inline: .7em; padding: .75em .85em .8em; border-radius: 1.1em; background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 .6em 2em rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; transform: translateY(-.8em) scale(.97); transition: opacity .22s, transform .28s cubic-bezier(.34, 1.56, .64, 1), border-color .2s; }
+  #card.show { opacity: 1; transform: none; }
+  #card .tag { display: inline-block; font-size: .72em; font-weight: 700; letter-spacing: .06em; padding: .15em .6em; border-radius: 99em; background: rgba(96, 165, 250, .16); color: var(--blue); margin-bottom: .45em; }
+  #finding { font-size: 1.06em; font-weight: 500; line-height: 1.4; color: #f4f4f5; margin: 0 0 .45em; }
+  #question { font-size: 1.7em; font-weight: 900; line-height: 1.15; margin: 0 0 .5em; color: #fff; text-shadow: 0 0 .7em rgba(255, 255, 255, .25); }
+  #chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4em; direction: ltr; }
+  #chips div { direction: rtl; text-align: center; font-size: 1em; font-weight: 900; line-height: 1.15; padding: .5em .25em; border-radius: .7em; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); display: grid; place-items: center; min-height: 3.1em; }
+  #chips div.blocked { --c: #3f3f46; color: #52525b; border-style: dashed; background: none; }
+  #chips div::after { content: '▼'; font-size: .6em; color: var(--c); margin-top: .2em; }
+  #chips div.blocked::after { content: ''; }
+  #timer { height: .22em; border-radius: 99em; background: rgba(255, 255, 255, .1); margin-top: .65em; overflow: hidden; direction: ltr; }
+  #timer b { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); border-radius: inherit; }
+  #card.ok { border-color: rgba(34, 197, 94, .6); }
+  #card.ok .tag { background: rgba(34, 197, 94, .16); color: var(--green); }
+  #card.ok #finding { font-size: 1.15em; color: var(--text); margin: 0; font-weight: 500; }
+  #hint { font-size: .72em; color: var(--muted); text-align: center; margin-top: .5em; }
+  #card.ok #question, #card.ok #chips, #card.ok #timer, #card.ok #hint { display: none; }
+
+  /* שכבות */
+  .overlay { position: absolute; inset: 0; display: grid; z-index: 5; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .btn { font: inherit; font-weight: 900; font-size: 1.05em; color: #fff; background: linear-gradient(180deg, #ff4a5f, var(--red)); border: 0; border-radius: .9em; padding: .85em 1.4em; width: 100%; cursor: pointer; box-shadow: 0 .35em 0 #9f1023, 0 .8em 1.6em rgba(239, 35, 60, .4); transition: transform .08s, box-shadow .08s; }
+  .btn:active { transform: translateY(.25em); box-shadow: 0 .1em 0 #9f1023; }
+
+  #title { align-content: end; padding: 1.2em; background: linear-gradient(180deg, rgba(4, 4, 9, .25) 0%, rgba(4, 4, 9, .55) 45%, rgba(4, 4, 9, .96) 78%); }
+  #title .logo { font-size: 2.5em; font-weight: 900; line-height: .98; margin: 0 0 .15em; letter-spacing: -.02em; }
+  #title .logo span { color: var(--red); text-shadow: 0 0 .5em rgba(239, 35, 60, .6); }
+  #title .sub { color: var(--muted); font-size: .85em; margin: 0 0 1.1em; }
+  .dispatch { border-radius: 1em; border: 1px solid rgba(239, 35, 60, .45); background: rgba(239, 35, 60, .09); padding: .8em .9em; margin-bottom: .9em; }
+  .dispatch h3 { margin: 0 0 .25em; font-size: .68em; letter-spacing: .08em; color: var(--red); display: flex; align-items: center; gap: .5em; }
+  .dispatch h3::before { content: ''; width: .6em; height: .6em; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+  .dispatch p { margin: 0; font-size: .92em; line-height: 1.45; }
+  .dispatch b { font-size: 1.12em; }
+  .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45em; margin-bottom: 1em; font-size: .7em; color: #d4d4d8; text-align: center; }
+  .how div { padding: .6em .3em; border-radius: .8em; background: rgba(255, 255, 255, .05); border: 1px solid var(--border); line-height: 1.3; }
+  .how b { display: block; font-size: 1.7em; margin-bottom: .1em; }
+  @keyframes blink { 50% { opacity: .2; } }
+
+  #sheet { align-content: end; background: rgba(4, 4, 9, .6); }
+  #sheet .panel { margin: .7em; padding: 1em 1em 1.1em; border-radius: 1.2em; background: #12121c; border: 1px solid rgba(239, 35, 60, .5); box-shadow: 0 0 3em rgba(239, 35, 60, .25); transform: translateY(1.5em); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+  #sheet.show .panel { transform: none; }
+  #sheet h2 { margin: 0 0 .5em; font-size: 1.15em; color: var(--red); }
+  #sheet .row { font-size: .82em; margin: .2em 0; color: var(--muted); }
+  #sheet .row b { color: var(--text); }
+  #sheet .row.good b { color: var(--green); }
+  #sheet p { font-size: .9em; line-height: 1.5; margin: .7em 0 1em; padding-top: .7em; border-top: 1px solid var(--border); }
+
+  #end { align-content: center; padding: 1.1em; background: rgba(4, 4, 9, .9); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  #end h2 { margin: 0; font-size: 1.55em; font-weight: 900; text-align: center; line-height: 1.15; }
+  #end .stars { text-align: center; font-size: 2.3em; letter-spacing: .12em; color: var(--amber); text-shadow: 0 0 .5em rgba(245, 158, 11, .6); margin: .15em 0; }
+  #end .stars .off { color: #3f3f46; text-shadow: none; }
+  #end .big { text-align: center; font-size: 2.6em; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+  #end .small { text-align: center; color: var(--muted); font-size: .8em; margin: .3em 0 .9em; }
+  #recap { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: .35em; }
+  #recap li { display: grid; grid-template-columns: 1.5em 1fr; gap: .5em; align-items: start; font-size: .76em; line-height: 1.35; padding: .5em .6em; border-radius: .7em; background: rgba(255, 255, 255, .05); }
+  #recap li b { font-weight: 900; text-align: center; }
+  #recap li.ok b { color: var(--green); } #recap li.bad b { color: var(--red); } #recap li.na { opacity: .45; }
+  #end .src { text-align: center; color: #71717a; font-size: .62em; margin-top: .9em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div id="hearts"></div>
+    <div id="dots"></div>
+    <div id="scoreBox"><span id="streak">רצף ×2</span><span id="score">0</span></div>
+  </div>
+
+  <div id="card">
+    <span class="tag" id="tag">ממצא</span>
+    <p id="finding"></p>
+    <h2 id="question"></h2>
+    <div id="chips"></div>
+    <div id="timer"><b id="timerBar"></b></div>
+    <div id="hint">הזמן מאט · בחרת נתיב? החלק למעלה כדי לזנק</div>
+  </div>
+
+  <button id="mute" aria-label="השתק">🔊</button>
+
+  <div id="title" class="overlay show">
+    <div>
+      <h1 class="logo">ריצת <span>פרוטוקול</span></h1>
+      <p class="sub">סע בנתיב של ההחלטה הנכונה, עד בית החולים.</p>
+      <div class="dispatch">
+        <h3>קריאה נכנסת</h3>
+        <p><b>גבר בן 67 · קוצר נשימה</b><br>יושב על כיסא בסלון, נושם מהר ומתקשה לדבר. אשתו הזעיקה.</p>
+      </div>
+      <div class="how">
+        <div><b>⇆</b>החלק או חצים<br>כדי להחליף נתיב</div>
+        <div><b>✚</b>אסוף ציוד<br>רפואי בדרך</div>
+        <div><b>?</b>לפני שער הזמן<br>מאט — קרא ובחר</div>
+      </div>
+      <button class="btn" id="startBtn">צא לקריאה</button>
+    </div>
+  </div>
+
+  <div id="sheet" class="overlay">
+    <div class="panel">
+      <h2 id="sheetTitle">✗ לא לפי הפרוטוקול</h2>
+      <div class="row">בחרת: <b id="sheetChose"></b></div>
+      <div class="row good">הנתיב הנכון: <b id="sheetRight"></b></div>
+      <p id="sheetWhy"></p>
+      <button class="btn" id="sheetBtn">הבנתי, ממשיכים</button>
+    </div>
+  </div>
+
+  <div id="end" class="overlay">
+    <div>
+      <h2 id="endTitle"></h2>
+      <div class="stars" id="endStars"></div>
+      <div class="big" id="endScore"></div>
+      <div class="small" id="endSmall"></div>
+      <ul id="recap"></ul>
+      <button class="btn" id="againBtn">שחק שוב</button>
+      <div class="src">סקיצה · לפי "גישה למטופל עם קוצר נשימה", אוגדן BLS, אגף רפואה מד"א, ינואר 2016</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ───────── התרחיש: גישה למטופל עם קוצר נשימה (אוגדן BLS, עמ' 35–36) ─────────
+const STEPS = [
+  { name: 'חשד להשתנקות מגוף זר?',
+    finding: 'קוצר הנשימה החמיר בהדרגה מאתמול. לא אכל בשעות האחרונות, משתעל ומדבר במילים בודדות.',
+    q: 'חשד להשתנקות מגוף זר?',
+    opts: [{ t: 'לא', ok: true }, { t: 'כן' }],
+    ok: 'אין חשד להשתנקות — ממשיכים בפרוטוקול.',
+    why: 'אין כאן סיפור של שאיפת גוף זר: ההחמרה הדרגתית, והמטופל משתעל ומדבר. חשד להשתנקות היה מעביר אותך לפרוטוקול השתנקות.' },
+  { name: 'חשד לתגובה אלרגית?',
+    finding: 'אין גרד, אין פריחה ואין נפיחות בפנים או בשפתיים. לא נחשף לאלרגן ידוע.',
+    q: 'חשד לתגובה אלרגית?',
+    opts: [{ t: 'לא', ok: true }, { t: 'כן' }],
+    ok: 'אין סימני אלרגיה — ממשיכים לגישה הכללית למטופל חולה.',
+    why: 'זיהוי תגובה אלרגית לפי הפרוטוקול: הופעה פתאומית, חשיפה אפשרית לאלרגן ותסמינים נלווים כמו גרד, אורטיקריה ואנגיואדמה. אף אחד מהם לא קיים כאן.' },
+  { name: 'הושבה ומנוחה',
+    finding: 'המטופל חסר מנוחה ומנסה לקום וללכת.',
+    q: 'איך מנחים אותו?',
+    opts: [{ t: 'ישיבה,\nרגליים למטה', ok: true }, { t: 'שכיבה\nעל הגב' }, { t: 'הליכה\nלאמבולנס' }],
+    ok: 'הושב את המטופל במנוחה מלאה, רגליים כלפי מטה, והרגע אותו.',
+    why: 'לפי הפרוטוקול: ככל הניתן לסייע למטופל לשבת עם רגליים כלפי מטה, לפעול להרגעתו ולהקפיד על מנוחה מלאה.' },
+  { name: 'חמצן וסיוע נשימתי',
+    finding: '28 נשימות בדקה, שימוש בשרירי עזר ורטרקציות.',
+    q: 'מה הטיפול הנשימתי?',
+    opts: [{ t: 'חמצן במסיכה\n10–15 ל׳/דקה', ok: true }, { t: 'הנשמה\nבמפוח' }, { t: 'אין צורך\nבחמצן' }],
+    ok: 'מעל 20 נשימות בדקה או מצוקה נשימתית — חמצן במסיכה, 10–15 ליטר לדקה.',
+    why: 'חמצן במסיכה בקצב 10–15 ליטר לדקה ניתן לכל מטופל מעל 20 נשימות בדקה או במצוקה נשימתית. הנשמה במפוח מיועדת למטופל שאינו נושם או נושם פחות מ־8 נשימות בדקה.' },
+  { name: 'חשד למחלה חסימתית?',
+    finding: 'ברקע COPD, מעשן שנים רבות ומשתמש במשאפים. נשמעים צפצופים בנשיפה.',
+    q: 'חשד למחלה חסימתית?',
+    opts: [{ t: 'כן', ok: true }, { t: 'לא' }],
+    ok: 'מחלה חסימתית (אסטמה, COPD, דלקת סימפונות) — שקול סיוע באינהלציה.',
+    why: 'אסטמה, COPD ודלקת סימפונות הן מחלות חסימתיות. הרקע, המשאפים והצפצופים בנשיפה מכוונים לכך, ולכן שוקלים סיוע באינהלציה.' },
+  { name: 'פינוי',
+    finding: 'המטופל יושב, מקבל חמצן ומעט רגוע יותר.',
+    q: 'מה השלב הבא?',
+    opts: [{ t: 'פינוי דחוף\nוניטור בדרך', ok: true }, { t: 'להמתין במקום\nלשיפור' }, { t: 'להשאיר\nבבית' }],
+    ok: 'פינוי דחוף לחבירה או לבית החולים הקרוב, ניטור בדרך ודיווח מקדים.',
+    why: 'הפרוטוקול מסתיים בפינוי דחוף לחבירה או לבית החולים הקרוב, המשך ניטור וטיפול במהלך הפינוי ושקילת דיווח מקדים.' },
+];
+const LANE_COLORS = ['#60A5FA', '#A78BFA', '#F59E0B'];
+const KINDS = ['pill', 'heart', 'kit', 'plaster'], KIND_COLOR = { pill: '#f87171', heart: '#fb7185', kit: '#f4f4f5', plaster: '#f2c9a0' };
+
+// ───────── במה וקנבס ─────────
+const W = 420, H = 760, HOR = H * 0.48, PY = H * 0.86, F = 7, LW = 104, RW = LW * 1.5 + 6, ZF = 64, SHOW_Z = 30;
+const stage = document.getElementById('stage'), cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+function fit() {
+  const h = Math.min(innerHeight, innerWidth * H / W), w = h * W / H, dpr = Math.min(devicePixelRatio || 1, 2);
+  stage.style.width = w + 'px'; stage.style.height = h + 'px'; stage.style.fontSize = (w / W * 16) + 'px';
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+}
+addEventListener('resize', fit); fit();
+
+let cam = 0;
+const S = z => F / (F + z), SY = z => HOR + (PY - HOR) * S(z), SX = (lx, z) => W / 2 + (lx - cam) * S(z), laneX = l => (l - 1) * LW;
+const rnd = n => Math.floor(Math.random() * n), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// ───────── צליל ─────────
+let AC = null, muted = false;
+function beep(freq, dur = .08, type = 'sine', vol = .07, when = 0) {
+  if (muted) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + when;
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur);
+  } catch (e) { /* אין אודיו — ממשיכים בלי */ }
+}
+$('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; };
+
+// ───────── מצב המשחק ─────────
+let state = 'title', T = 0, runT = 0, dist = 0, last = performance.now();
+let lane = 1, px = 0, lean = 0, speed = 8, slow = 0, dash = false;
+let ents = [], parts = [], floats = [], shake = 0, flash = null;
+let score = 0, hearts = 3, streak = 0, stepIdx = 0, results = [], pendingNext = null, activeGate = null, cardTimer = 0;
+
+function reset() {
+  lane = 1; px = 0; speed = 8; slow = 0; ents = []; parts = []; floats = []; shake = 0; flash = null;
+  score = 0; hearts = 3; streak = 0; stepIdx = 0; results = []; pendingNext = null; activeGate = null;
+  hud(); hideCard();
+}
+function start() {
+  reset(); state = 'run'; $('title').classList.remove('show'); $('end').classList.remove('show');
+  spawnSegment(0); beep(523, .1, 'triangle'); beep(784, .14, 'triangle', .07, .1);
+}
+
+function makeGate(i, z) {
+  const st = STEPS[i], opts = [null, null, null];
+  const lanes = st.opts.length === 2 ? shuffle([0, 2]) : shuffle([0, 1, 2]);
+  const colors = shuffle(LANE_COLORS.slice());
+  st.opts.forEach((o, k) => { opts[lanes[k]] = { label: o.t, ok: !!o.ok, color: colors[k] }; });
+  return { type: 'gate', z, i, opts, shown: false, resolved: false, open: -1 };
+}
+function spawnSegment(i) {
+  const base = i === 0 ? 16 : 22;
+  let l = rnd(3), kind = KINDS[rnd(4)];
+  for (let k = 0; k < 6; k++) { if (k === 3) { l = (l + 1 + rnd(2)) % 3; kind = KINDS[(KINDS.indexOf(kind) + 1 + rnd(3)) % 4]; } ents.push({ type: 'orb', kind, lane: l, z: base + k * 3.2 }); }
+  ents.push({ type: 'cone', lane: (l + 1 + rnd(2)) % 3, z: base + 12 });
+  ents.push(makeGate(i, base + 16 + SHOW_Z)); // השער מתגלה רק אחרי שהדרך התפנתה
+  speed = 8 + i * .3;
+}
+function spawnFinish() {
+  for (let k = 0; k < 8; k++) ents.push({ type: 'orb', kind: KINDS[k % 4], lane: 1, z: 14 + k * 3.5 });
+  ents.push({ type: 'hosp', z: 62 });
+  state = 'finish';
+}
+
+// ───────── HUD וכרטיסים ─────────
+function hud() {
+  $('hearts').innerHTML = [0, 1, 2].map(i => `<span class="${i < hearts ? '' : 'lost'}">♥</span>`).join('');
+  $('dots').innerHTML = STEPS.map((_, i) => `<i class="${results[i] === true ? 'ok' : results[i] === false ? 'bad' : i === stepIdx && state !== 'title' ? 'cur' : ''}"></i>`).join('');
+  $('score').textContent = score;
+  const m = Math.min(3, streak); $('streak').textContent = 'רצף ×' + m; $('streak').classList.toggle('on', m >= 2);
+}
+function showCard(g) {
+  const st = STEPS[g.i]; activeGate = g; cardTimer = 0;
+  $('card').className = 'show'; $('tag').textContent = `ממצא · שלב ${g.i + 1} מתוך ${STEPS.length}`;
+  $('finding').textContent = st.finding; $('question').textContent = st.q;
+  $('chips').innerHTML = g.opts.map(o => o ? `<div style="--c:${o.color}">${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
+  beep(660, .05, 'square', .03);
+}
+function okCard(text) { $('card').className = 'show ok'; $('tag').textContent = '✓ לפי הפרוטוקול'; $('finding').textContent = text; cardTimer = 2.6; }
+function hideCard() { $('card').className = ''; cardTimer = 0; }
+
+function resolveGate(g) {
+  const st = STEPS[g.i], cur = clamp(Math.round(px / LW) + 1, 0, 2), opt = g.opts[cur], right = g.opts.find(o => o && o.ok);
+  g.resolved = true; activeGate = null; dash = false;
+  const gx = SX(laneX(cur), 0), gy = PY - 60;
+  if (opt && opt.ok) {
+    streak++; const gain = 100 * Math.min(3, streak); score += gain; results[g.i] = true; g.open = cur;
+    burst(gx, gy, opt.color, 34, 320); floats.push({ x: gx, y: gy - 30, text: '+' + gain, color: '#22C55E', life: 1 });
+    flash = { c: '34,197,94', a: .28 }; okCard(st.ok);
+    beep(523, .09, 'triangle'); beep(659, .09, 'triangle', .07, .08); beep(784, .16, 'triangle', .07, .16);
+    advance(g.i);
+  } else {
+    streak = 0; hearts--; results[g.i] = false; shake = 16; flash = { c: '239,35,60', a: .45 };
+    burst(gx, gy, '#EF233C', 26, 260); beep(160, .25, 'sawtooth', .09); beep(110, .3, 'sawtooth', .08, .1);
+    hideCard(); state = 'explain'; pendingNext = g.i;
+    $('sheetTitle').textContent = opt ? '✗ לא לפי הפרוטוקול' : '✗ לא בחרת נתיב';
+    $('sheetChose').textContent = opt ? opt.label.replace('\n', ' ') : 'הנתיב החסום';
+    $('sheetRight').textContent = right.label.replace('\n', ' ');
+    $('sheetWhy').textContent = st.why; $('sheetBtn').textContent = hearts > 0 ? 'הבנתי, ממשיכים' : 'לסיכום';
+    $('sheet').classList.add('show');
+  }
+  stepIdx = g.i + 1; hud();
+}
+function advance(i) { if (i + 1 < STEPS.length) spawnSegment(i + 1); else spawnFinish(); }
+function closeSheet() {
+  if (state !== 'explain') return;
+  $('sheet').classList.remove('show');
+  if (hearts <= 0) return endGame(false);
+  state = 'run'; okCard(STEPS[pendingNext].ok); advance(pendingNext); pendingNext = null;
+}
+function endGame(won) {
+  state = 'done'; hideCard();
+  const correct = results.filter(r => r === true).length, stars = !won ? 0 : correct === STEPS.length ? 3 : correct >= 4 ? 2 : 1;
+  $('endTitle').textContent = won ? 'המטופל הגיע לבית החולים' : 'המטופל מידרדר — ננסה שוב';
+  $('endStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
+  $('endScore').textContent = score;
+  $('endSmall').textContent = `${correct} מתוך ${STEPS.length} החלטות לפי הפרוטוקול`;
+  $('recap').innerHTML = STEPS.map((s, i) => { const r = results[i];
+    return `<li class="${r === true ? 'ok' : r === false ? 'bad' : 'na'}"><b>${r === true ? '✓' : r === false ? '✗' : '·'}</b><span><strong>${s.name}</strong><br>${s.ok}</span></li>`; }).join('');
+  $('end').classList.add('show');
+  if (won) [523, 659, 784, 1047].forEach((f, k) => beep(f, .2, 'triangle', .07, k * .12));
+}
+
+// ───────── קלט ─────────
+function doDash() { if (state === 'run' && activeGate && !dash) { dash = true; beep(990, .12, 'triangle', .05); } }
+function move(d) { if (state !== 'run' && state !== 'finish') return; const n = clamp(lane + d, 0, 2); if (n !== lane) { lane = n; beep(300 + n * 60, .04, 'sine', .04); } }
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') move(-1);
+  else if (e.key === 'ArrowRight' || e.key === 'd') move(1);
+  else if (e.key === 'ArrowUp' || e.key === 'w') doDash();
+  else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (state === 'run') doDash(); else if (state === 'title') start(); else if (state === 'explain') closeSheet(); else if (state === 'done') start(); }
+});
+let pd = null;
+cv.addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY }; });
+cv.addEventListener('pointerup', e => {
+  if (!pd) return; const dx = e.clientX - pd.x, dy = e.clientY - pd.y, r = cv.getBoundingClientRect(); pd = null;
+  if (dy < -30 && Math.abs(dy) > Math.abs(dx)) doDash(); else if (Math.abs(dx) > 24) move(dx > 0 ? 1 : -1); else move(e.clientX > r.left + r.width / 2 ? 1 : -1);
+});
+$('startBtn').onclick = start; $('againBtn').onclick = start; $('sheetBtn').onclick = closeSheet;
+
+// ───────── עדכון ─────────
+function burst(x, y, color, n, pow) {
+  for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = pow * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: .5 + Math.random() * .5, color, size: 2 + Math.random() * 4 }); }
+}
+function update(dt) {
+  T += dt;
+  const moving = state === 'run' || state === 'title' || state === 'finish';
+  if (moving) {
+    runT += dt; slow = Math.max(0, slow - dt);
+    // אזור החלטה: הדרך ריקה והזמן מאט כדי שאפשר יהיה לקרוא. זינוק מקצר את ההמתנה.
+    const k = activeGate ? (dash ? 3 : .5) : slow > 0 ? .55 : 1, v = state === 'title' ? 6 : speed * k;
+    runT -= dt * (1 - Math.min(1, k * 1.2)); dist += v * dt;
+    if (state !== 'title') for (const e of ents) e.z -= v * dt;
+  }
+  px += (laneX(lane) - px) * Math.min(1, dt * 14); lean = (laneX(lane) - px) / LW; cam = px * .22;
+
+  if (state === 'run' || state === 'finish') {
+    for (const e of ents) {
+      const near = e.z < .7 && e.z > -.6 && Math.abs(laneX(e.lane) - px) < LW * .45;
+      if (e.type === 'orb' && near) { e.dead = true; score += 10; burst(SX(laneX(e.lane), 0), PY - 40, KIND_COLOR[e.kind], 8, 140); beep(880 + rnd(3) * 110, .06, 'triangle', .04); hud(); }
+      else if (e.type === 'cone' && near) { e.dead = true; streak = 0; shake = 9; slow = .5; burst(SX(laneX(e.lane), 0), PY - 20, '#fb923c', 14, 200);
+        floats.push({ x: SX(px, 0), y: PY - 110, text: 'אאוץ׳!', color: '#fb923c', life: .9 }); beep(140, .15, 'sawtooth', .07); hud(); }
+      else if (e.type === 'gate') {
+        if (!e.shown && e.z <= SHOW_Z) { e.shown = true; showCard(e); hud(); }
+        if (e.shown && !e.resolved) { $('timerBar').style.width = clamp(e.z / SHOW_Z * 100, 0, 100) + '%'; if (e.z <= .4) { resolveGate(e); break; } }
+      }
+      else if (e.type === 'hosp' && e.z <= 6) { endGame(true); break; }
+    }
+    ents = ents.filter(e => !e.dead && e.z > -3);
+    if (cardTimer > 0 && (cardTimer -= dt) <= 0 && !activeGate) hideCard();
+  }
+  for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; p.life -= dt; }
+  parts = parts.filter(p => p.life > 0);
+  for (const f of floats) { f.y -= 55 * dt; f.life -= dt; }
+  floats = floats.filter(f => f.life > 0);
+  shake *= Math.pow(.002, dt); if (flash && (flash.a -= dt * 1.1) <= 0) flash = null;
+}
+
+// ───────── ציור ─────────
+const stars = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * HOR * .9, r: Math.random() * 1.3 + .3, p: Math.random() * 6 }));
+const skyline = [];
+for (let layer = 0; layer < 2; layer++) for (let x = -40; x < W + 40;) {
+  const w = 22 + rnd(34), h = (layer ? 26 : 44) + rnd(layer ? 46 : 62), win = [];
+  for (let wy = 6; wy < h - 6; wy += 9) for (let wx = 4; wx < w - 5; wx += 8) if (Math.random() < .3) win.push([wx, wy]);
+  skyline.push({ x, w, h, layer, win }); x += w + rnd(5);
+}
+function quad(lx1, lx2, z1, z2) {
+  ctx.beginPath(); ctx.moveTo(SX(lx1, z1), SY(z1)); ctx.lineTo(SX(lx2, z1), SY(z1)); ctx.lineTo(SX(lx2, z2), SY(z2)); ctx.lineTo(SX(lx1, z2), SY(z2)); ctx.closePath();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+const fog = z => clamp((ZF - z) / 12, 0, 1);
+
+function drawWorld() {
+  // שמיים
+  let g = ctx.createLinearGradient(0, 0, 0, HOR);
+  g.addColorStop(0, '#05060f'); g.addColorStop(.6, '#150f38'); g.addColorStop(1, '#43184d');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, HOR + 2);
+  for (const s of stars) { ctx.globalAlpha = .35 + .35 * Math.sin(T * 1.5 + s.p); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // אור משואה ביעד
+  const vx = W / 2 - cam * .05, k = (Math.sin(T * 7) + 1) / 2;
+  g = ctx.createRadialGradient(vx, HOR, 0, vx, HOR, 190);
+  g.addColorStop(0, `rgba(${Math.round(239 - 143 * k)},${Math.round(35 + 130 * k)},${Math.round(60 + 190 * k)},.55)`); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, HOR - 190, W, 192);
+  // קו רקיע
+  for (const b of skyline) {
+    const bx = b.x - cam * (b.layer ? .1 : .05);
+    ctx.fillStyle = b.layer ? '#0b0e20' : '#161a3a'; ctx.fillRect(bx, HOR - b.h, b.w, b.h + 1);
+    ctx.fillStyle = b.layer ? 'rgba(253,224,71,.55)' : 'rgba(253,224,71,.28)';
+    for (const [wx, wy] of b.win) ctx.fillRect(bx + wx, HOR - b.h + wy, 3, 4);
+  }
+  // קרקע
+  g = ctx.createLinearGradient(0, HOR, 0, H); g.addColorStop(0, '#1b1030'); g.addColorStop(1, '#07070d');
+  ctx.fillStyle = g; ctx.fillRect(0, HOR, W, H - HOR);
+  ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) { const z = i * 4 - (dist % 4); if (z < -1.6) continue; ctx.globalAlpha = .16 * fog(z); const y = SY(z); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  // כביש
+  const zn = -1.7, zf = 400;
+  g = ctx.createLinearGradient(0, HOR, 0, H); g.addColorStop(0, '#221a3a'); g.addColorStop(.35, '#16161f'); g.addColorStop(1, '#101016');
+  ctx.fillStyle = g; quad(-RW, RW, zf, zn); ctx.fill();
+  // צביעת נתיבים לפי השער הפעיל
+  if (activeGate) for (let l = 0; l < 3; l++) { const o = activeGate.opts[l]; if (!o) continue;
+    const zg = Math.min(activeGate.z, ZF), gr = ctx.createLinearGradient(0, SY(zg), 0, H);
+    gr.addColorStop(0, o.color + '55'); gr.addColorStop(1, o.color + '14'); ctx.fillStyle = gr;
+    quad(laneX(l) - LW / 2 + 3, laneX(l) + LW / 2 - 3, zg, zn); ctx.fill(); }
+  // קווי נתיב
+  ctx.fillStyle = 'rgba(244,244,245,.75)';
+  for (let i = 0; i < 16; i++) { const z = i * 5 - (dist % 5); if (z < -1.6) continue; ctx.globalAlpha = fog(z) * .8;
+    for (const lx of [-LW / 2, LW / 2]) { quad(lx - 2, lx + 2, z + 2, Math.max(z, zn)); ctx.fill(); } }
+  ctx.globalAlpha = 1;
+  // שולי ניאון
+  ctx.shadowColor = '#EF233C'; ctx.shadowBlur = 14; ctx.fillStyle = '#EF233C';
+  for (const sgn of [-1, 1]) { quad(sgn * RW - 3, sgn * RW + 3, zf, zn); ctx.fill(); }
+  ctx.shadowBlur = 0;
+  // ערפל אופק
+  g = ctx.createLinearGradient(0, HOR, 0, HOR + 70); g.addColorStop(0, 'rgba(67,24,77,.95)'); g.addColorStop(1, 'rgba(67,24,77,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, HOR, W, 70);
+}
+
+function drawLamp(z, side) {
+  const s = S(z), x = SX(side * (RW + 44), z), y = SY(z), hgt = 210 * s;
+  ctx.globalAlpha = fog(z); ctx.fillStyle = '#2a2a3a'; ctx.fillRect(x - 2 * s, y - hgt, 4 * s, hgt);
+  ctx.fillRect(Math.min(x, x - side * 26 * s), y - hgt, 26 * s, 3 * s);
+  const lx = x - side * 26 * s, g = ctx.createRadialGradient(lx, y - hgt, 0, lx, y - hgt, 46 * s);
+  g.addColorStop(0, 'rgba(253,230,138,.9)'); g.addColorStop(1, 'rgba(253,230,138,0)'); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(lx, y - hgt, 46 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+}
+function drawOrb(e) { // ציוד רפואי לאיסוף
+  const s = S(e.z), x = SX(laneX(e.lane), e.z), y = SY(e.z) - (34 + Math.sin(T * 5 + e.z) * 5) * s, r = 15 * s;
+  ctx.save(); ctx.globalAlpha = fog(e.z); ctx.translate(x, y);
+  const g = ctx.createRadialGradient(0, 0, r * .3, 0, 0, r * 2); g.addColorStop(0, 'rgba(255,255,255,.38)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, 7); ctx.fill();
+  if (e.kind === 'pill') {
+    ctx.rotate(-.6); ctx.fillStyle = '#f4f4f5'; rr(-r, -r * .48, r * 2, r * .96, r * .48); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.rect(-r, -r, r, r * 2); ctx.clip(); ctx.fillStyle = '#EF233C'; rr(-r, -r * .48, r * 2, r * .96, r * .48); ctx.fill(); ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(-r * .7, -r * .34, r * 1.4, r * .15, r * .08); ctx.fill();
+  } else if (e.kind === 'heart') {
+    ctx.fillStyle = '#EF233C'; ctx.beginPath(); ctx.moveTo(0, r * .9); ctx.bezierCurveTo(-r * 1.6, -r * .1, -r * .8, -r * 1.2, 0, -r * .4); ctx.bezierCurveTo(r * .8, -r * 1.2, r * 1.6, -r * .1, 0, r * .9); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1, r * .14); ctx.lineJoin = 'round'; ctx.beginPath();
+    ctx.moveTo(-r * .7, 0); ctx.lineTo(-r * .25, 0); ctx.lineTo(-r * .1, -r * .42); ctx.lineTo(r * .1, r * .36); ctx.lineTo(r * .25, 0); ctx.lineTo(r * .7, 0); ctx.stroke();
+  } else if (e.kind === 'kit') {
+    ctx.strokeStyle = '#d4d4d8'; ctx.lineWidth = Math.max(1, r * .16); rr(-r * .35, -r * .95, r * .7, r * .5, r * .15); ctx.stroke();
+    ctx.fillStyle = '#f4f4f5'; rr(-r, -r * .6, r * 2, r * 1.45, r * .25); ctx.fill();
+    ctx.fillStyle = '#EF233C'; ctx.fillRect(-r * .16, -r * .3, r * .32, r * .9); ctx.fillRect(-r * .45, -r * .01, r * .9, r * .32);
+  } else {
+    ctx.rotate(-.5); ctx.fillStyle = '#f2c9a0'; rr(-r * 1.15, -r * .42, r * 2.3, r * .84, r * .42); ctx.fill();
+    ctx.fillStyle = '#fde9d2'; rr(-r * .4, -r * .42, r * .8, r * .84, r * .1); ctx.fill();
+    ctx.fillStyle = '#d9a877'; for (const dx of [-.75, .75]) for (const dy of [-.15, .15]) { ctx.beginPath(); ctx.arc(dx * r, dy * r, r * .07, 0, 7); ctx.fill(); }
+  }
+  ctx.restore();
+}
+function drawCone(e) {
+  const s = S(e.z), x = SX(laneX(e.lane), e.z), y = SY(e.z), h = 46 * s, w = 34 * s;
+  ctx.globalAlpha = fog(e.z); ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(x, y, w * .7, 5 * s, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ea580c'; rr(x - w * .62, y - 6 * s, w * 1.24, 7 * s, 2 * s); ctx.fill();
+  ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.moveTo(x - w / 2, y - 5 * s); ctx.lineTo(x + w / 2, y - 5 * s); ctx.lineTo(x + 4 * s, y - h); ctx.lineTo(x - 4 * s, y - h); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff7ed'; ctx.beginPath(); ctx.moveTo(x - w * .33, y - h * .42); ctx.lineTo(x + w * .33, y - h * .42); ctx.lineTo(x + w * .24, y - h * .62); ctx.lineTo(x - w * .24, y - h * .62); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+function drawGate(e) {
+  const z = Math.max(e.z, -1.2), s = S(z), y = SY(z), h = 150 * s, a = fog(z);
+  for (let l = 0; l < 3; l++) {
+    if (l === e.open) continue;
+    const o = e.opts[l], x = SX(laneX(l), z), w = LW * s * .94;
+    ctx.globalAlpha = a;
+    if (!o) { // מחסום
+      const bh = 54 * s; ctx.save(); rr(x - w / 2, y - bh, w, bh, 5 * s); ctx.clip(); ctx.fillStyle = '#18181b'; ctx.fillRect(x - w / 2, y - bh, w, bh);
+      ctx.fillStyle = '#facc15'; for (let k = -6; k < 8; k++) { ctx.beginPath(); const bx = x - w / 2 + k * 18 * s; ctx.moveTo(bx, y); ctx.lineTo(bx + 9 * s, y); ctx.lineTo(bx + 9 * s + bh, y - bh); ctx.lineTo(bx + bh, y - bh); ctx.fill(); }
+      ctx.restore(); continue; }
+    ctx.fillStyle = o.color + '33'; rr(x - w / 2, y - h, w, h, 9 * s); ctx.fill();
+    ctx.shadowColor = o.color; ctx.shadowBlur = 20 * s; ctx.strokeStyle = o.color; ctx.lineWidth = Math.max(1.2, 4.5 * s); rr(x - w / 2, y - h, w, h, 9 * s); ctx.stroke(); ctx.shadowBlur = 0;
+    const fs = (o.label.length <= 3 ? 36 : 19) * s;
+    if (fs >= 6.5) { const lines = o.label.split('\n'); ctx.fillStyle = '#fff'; ctx.font = `700 ${fs}px Rubik,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+      lines.forEach((ln, k) => ctx.fillText(ln, x, y - h * .56 + (k - (lines.length - 1) / 2) * fs * 1.2)); }
+  }
+  ctx.globalAlpha = 1;
+}
+function drawHosp(e) { // היעד: בית החולים
+  const u = S(e.z), x = SX(0, e.z), y = SY(e.z);
+  ctx.globalAlpha = fog(e.z);
+  const win = (x0, y0, cols, rows) => { for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    ctx.fillStyle = (r * 7 + c * 3) % 5 < 3 ? '#fde68a' : '#334155'; ctx.fillRect(x + (x0 + c * 44) * u, y - (y0 - r * 36) * u, 30 * u, 22 * u); } };
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(x - 330 * u, y - 230 * u, 660 * u, 230 * u);
+  win(-318, 210, 3, 4); win(202, 210, 3, 4);
+  const g = ctx.createLinearGradient(0, y - 400 * u, 0, y); g.addColorStop(0, '#e2e8f0'); g.addColorStop(1, '#8b9bb3');
+  ctx.fillStyle = g; ctx.fillRect(x - 190 * u, y - 400 * u, 380 * u, 400 * u);
+  win(-169, 380, 8, 6);
+  ctx.shadowColor = '#EF233C'; ctx.shadowBlur = 40 * u; ctx.fillStyle = '#fff'; rr(x - 36 * u, y - 474 * u, 72 * u, 72 * u, 12 * u); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#EF233C'; ctx.fillRect(x - 9 * u, y - 462 * u, 18 * u, 48 * u); ctx.fillRect(x - 24 * u, y - 447 * u, 48 * u, 18 * u);
+  const d = ctx.createLinearGradient(0, y - 105 * u, 0, y); d.addColorStop(0, '#fef9c3'); d.addColorStop(1, '#fde68a');
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(x - 128 * u, y - 112 * u, 256 * u, 112 * u); ctx.fillStyle = d; ctx.fillRect(x - 112 * u, y - 100 * u, 224 * u, 100 * u);
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(x - 2 * u, y - 100 * u, 4 * u, 100 * u);
+  ctx.shadowColor = '#EF233C'; ctx.shadowBlur = 30 * u; ctx.fillStyle = '#EF233C'; rr(x - 138 * u, y - 150 * u, 276 * u, 40 * u, 7 * u); ctx.fill(); ctx.shadowBlur = 0;
+  if (28 * u > 5) { ctx.fillStyle = '#fff'; ctx.font = `900 ${28 * u}px Rubik,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl'; ctx.fillText('מיון', x, y - 129 * u); }
+  ctx.globalAlpha = 1;
+}
+function ambulanceRear(w, h) { // מבט מאחור, נקודת הייחוס במרכז התחתית
+  const u = w / 100, k = Math.sin(T * 12) > 0;
+  ctx.fillStyle = '#0a0a0a'; rr(-w * .46, -16 * u, 20 * u, 18 * u, 5 * u); ctx.fill(); rr(w * .46 - 20 * u, -16 * u, 20 * u, 18 * u, 5 * u); ctx.fill();
+  ctx.fillStyle = '#27272a'; rr(-w * .5, -22 * u, w, 11 * u, 3 * u); ctx.fill();
+  const g = ctx.createLinearGradient(0, -h, 0, 0); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#cbd5e1');
+  ctx.fillStyle = g; rr(-w / 2, -h, w, h - 17 * u, 10 * u); ctx.fill();
+  ctx.fillStyle = '#EF233C'; ctx.fillRect(-w / 2, -h * .47, w, 11 * u); ctx.fillStyle = '#fde047'; ctx.fillRect(-w / 2, -h * .47 + 11 * u, w, 3.5 * u);
+  ctx.fillStyle = '#0f172a'; rr(-w * .41, -h * .87, w * .37, h * .3, 5 * u); ctx.fill(); rr(w * .04, -h * .87, w * .37, h * .3, 5 * u); ctx.fill();
+  ctx.fillStyle = 'rgba(147,197,253,.22)'; ctx.fillRect(-w * .39, -h * .85, w * .12, h * .26); ctx.fillRect(w * .06, -h * .85, w * .12, h * .26);
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.4 * u; ctx.beginPath(); ctx.moveTo(0, -h * .93); ctx.lineTo(0, -24 * u); ctx.stroke();
+  ctx.fillStyle = '#EF233C'; for (const sd of [-1, 1]) { const cx = sd * w * .23, cy = -h * .27; ctx.fillRect(cx - 2.5 * u, cy - 8 * u, 5 * u, 16 * u); ctx.fillRect(cx - 8 * u, cy - 2.5 * u, 16 * u, 5 * u); }
+  ctx.fillStyle = '#ef4444'; rr(-w * .48, -33 * u, 9 * u, 8 * u, 2 * u); ctx.fill(); rr(w * .48 - 9 * u, -33 * u, 9 * u, 8 * u, 2 * u); ctx.fill();
+  ctx.fillStyle = '#27272a'; rr(-30 * u, -h - 4 * u, 60 * u, 6 * u, 2 * u); ctx.fill();
+  for (const [sx, on, c] of [[-1, k, '#EF233C'], [1, !k, '#3b82f6']]) { ctx.shadowColor = c; ctx.shadowBlur = on ? 34 * u : 0; ctx.fillStyle = on ? c : '#3f3f46'; rr(sx * w * .27 - 13 * u, -h - 8 * u, 26 * u, 10 * u, 3 * u); ctx.fill(); }
+  ctx.shadowBlur = 0;
+}
+function drawRunner() { // האמבולנס של השחקן
+  const x = SX(px, 0), moving = state !== 'explain' && state !== 'done', bob = moving ? Math.sin(runT * 24) * 1.1 : 0;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.ellipse(x, PY + 3, 52, 9, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(x, PY + bob); ctx.rotate(lean * .07); ambulanceRear(92, 100); ctx.restore();
+}
+
+function render() {
+  ctx.save();
+  if (shake > .3) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  drawWorld();
+  const list = ents.slice();
+  for (let i = 0; i < 8; i++) { const z = i * 9 - (dist % 9); if (z > -1.4) list.push({ type: 'lamp', z, side: -1 }, { type: 'lamp', z, side: 1 }); }
+  list.sort((a, b) => b.z - a.z);
+  let runnerDrawn = false;
+  for (const e of list) {
+    if (!runnerDrawn && e.z <= 0) { drawRunner(); runnerDrawn = true; }
+    if (e.type === 'lamp') drawLamp(e.z, e.side); else if (e.type === 'orb') drawOrb(e); else if (e.type === 'cone') drawCone(e);
+    else if (e.type === 'gate') drawGate(e); else if (e.type === 'hosp') drawHosp(e);
+  }
+  if (!runnerDrawn) drawRunner();
+  for (const p of parts) { ctx.globalAlpha = clamp(p.life * 2, 0, 1); ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+  for (const f of floats) { ctx.globalAlpha = clamp(f.life * 2, 0, 1); ctx.font = '900 26px Rubik,sans-serif'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(f.text, f.x, f.y); ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  if (activeGate) { const g = ctx.createRadialGradient(W / 2, PY - 120, 150, W / 2, PY - 120, 520); g.addColorStop(0, 'rgba(4,4,14,0)'); g.addColorStop(1, 'rgba(4,4,14,.6)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  if (flash) { ctx.fillStyle = `rgba(${flash.c},${flash.a})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; update(dt); render(); requestAnimationFrame(frame); }
+hud(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
