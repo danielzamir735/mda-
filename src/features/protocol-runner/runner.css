@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Secular+One&display=swap');
 /* Generated from the protocol-runner sketch; scoped under .pr-root so nothing leaks into the app. */
 .pr-root {
   --red: #EF233C; --green: #22C55E; --amber: #F59E0B; --blue: #60A5FA; --violet: #A78BFA;
@@ -28,23 +29,45 @@
 .pr-root .pr-mute { position: absolute; bottom: .6em; left: .6em; width: 2.2em; height: 2.2em; border-radius: 50%; border: 1px solid var(--border); background: rgba(0, 0, 0, .45); color: var(--text); font-size: .9em; cursor: pointer; z-index: 3; }
 .pr-root .floater { position: absolute; left: 50%; top: 56%; font-weight: 900; font-size: 2em; pointer-events: none; z-index: 2; text-shadow: 0 .08em .3em rgba(0, 0, 0, .9); animation: prFloatUp .95s ease-out forwards; }
 @keyframes prFloatUp { from { opacity: 0; transform: translate(-50%, .4em) scale(.7); } 18% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } to { opacity: 0; transform: translate(-50%, -2.6em) scale(1); } }
-.pr-root .pr-card { position: absolute; top: 3.1em; inset-inline: .7em; padding: .75em .85em .8em; border-radius: 1.1em; background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 .6em 2em rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; transform: translateY(-.8em) scale(.97); transition: opacity .22s, transform .28s cubic-bezier(.34, 1.56, .64, 1), border-color .2s; }
-.pr-root .pr-card.show { opacity: 1; transform: none; }
-.pr-root .pr-card .tag { display: inline-block; font-size: .72em; font-weight: 700; letter-spacing: .06em; padding: .15em .6em; border-radius: 99em; background: rgba(96, 165, 250, .16); color: var(--blue); margin-bottom: .45em; }
-.pr-root .pr-finding { font-size: 1.06em; font-weight: 500; line-height: 1.4; color: #f4f4f5; margin: 0 0 .45em; }
-.pr-root .pr-question { font-size: 1.7em; font-weight: 900; line-height: 1.15; margin: 0 0 .5em; color: #fff; text-shadow: 0 0 .7em rgba(255, 255, 255, .25); }
-.pr-root .pr-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4em; direction: ltr; }
-.pr-root .pr-chips div { direction: rtl; text-align: center; font-size: 1em; font-weight: 900; line-height: 1.15; padding: .5em .25em; border-radius: .7em; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); display: grid; place-items: center; min-height: 3.1em; }
-.pr-root .pr-chips div.blocked { --c: #3f3f46; color: #52525b; border-style: dashed; background: none; }
-.pr-root .pr-chips div::after { content: '▼'; font-size: .6em; color: var(--c); margin-top: .2em; }
-.pr-root .pr-chips div.blocked::after { content: ''; }
-.pr-root .pr-timer { height: .22em; border-radius: 99em; background: rgba(255, 255, 255, .1); margin-top: .65em; overflow: hidden; direction: ltr; }
-.pr-root .pr-timer b { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); border-radius: inherit; }
-.pr-root .pr-hint { font-size: .72em; color: var(--muted); text-align: center; margin-top: .5em; }
-.pr-root .pr-card.ok { border-color: rgba(34, 197, 94, .6); }
-.pr-root .pr-card.ok .tag { background: rgba(34, 197, 94, .16); color: var(--green); }
-.pr-root .pr-card.ok .pr-finding { font-size: 1.15em; color: var(--text); margin: 0; font-weight: 500; }
-.pr-root .pr-card.ok .pr-question, .pr-root .pr-card.ok .pr-chips, .pr-root .pr-card.ok .pr-timer, .pr-root .pr-card.ok .pr-hint { display: none; }
+/* ── כרטיס השאלה: בשפה של תרשימי הזרימה באוגדן ──
+   תיבת הערות ירוקה לממצא, צומת החלטה כתום לשאלה, ומחומשים שמצביעים על הנתיבים לתשובות.
+   מילוי אחיד, קו שחור וצל קשיח — כמו בתרשים המקורי, וקריא גם באור יום. */
+.pr-root { --ink: #000; --doc-green: #92D050; --doc-orange: #FFC000; --doc-cyan: #5CE6F2; --ease-out: cubic-bezier(.23, 1, .32, 1); --display: 'Secular One', ui-sans-serif, system-ui, sans-serif; }
+.pr-root .pr-card { position: absolute; top: 3.2em; inset-inline: .9em; pointer-events: none; visibility: hidden; }
+.pr-root .pr-card.show { visibility: visible; }
+.pr-root .pr-card > * { opacity: 0; transform: translateY(-.5em) scale(.97); transition: opacity 120ms var(--ease-out), transform 120ms var(--ease-out); }
+.pr-root .pr-card.show > * { opacity: 1; transform: none; transition-duration: 200ms; }
+.pr-root .pr-card.show > .pr-node { transition-delay: 50ms; }
+.pr-root .pr-card.show > .pr-chips { transition-delay: 100ms; }
+.pr-root .pr-card.show > .pr-hint { transition-delay: 160ms; }
+
+.pr-root .pr-note { margin: 0 .5em .55em; padding: .5em .7em .55em; background: var(--doc-green); color: var(--ink); border: .14em solid var(--ink); box-shadow: .26em .26em 0 var(--ink); font-size: 1em; font-weight: 600; line-height: 1.38; }
+.pr-root .pr-tag { font-weight: 800; text-decoration: underline; text-underline-offset: .15em; margin-inline-end: .2em; }
+
+.pr-root .pr-node { position: relative; filter: drop-shadow(.26em .26em 0 var(--ink)); }
+.pr-root .pr-question { position: relative; z-index: 0; margin: 0; padding: .5em 2.1em .55em; min-height: 3.1em; display: grid; place-items: center; text-align: center; font-family: var(--display); font-size: 1.55em; font-weight: 400; line-height: 1.12; color: var(--ink); background: var(--ink); clip-path: polygon(1.5em 0, calc(100% - 1.5em) 0, 100% 50%, calc(100% - 1.5em) 100%, 1.5em 100%, 0 50%); }
+.pr-root .pr-question::before { content: ''; position: absolute; inset: .1em .2em; z-index: -1; background: var(--doc-orange); clip-path: polygon(1.42em 0, calc(100% - 1.42em) 0, 100% 50%, calc(100% - 1.42em) 100%, 1.42em 100%, 0 50%); }
+.pr-root .pr-timer { position: absolute; top: -.75em; left: 1.6em; z-index: 1; padding: .1em .5em .12em; background: var(--ink); color: #fff; font-size: .78em; font-weight: 700; font-variant-numeric: tabular-nums; direction: rtl; }
+.pr-root .pr-timer b { color: var(--doc-orange); font-weight: 800; }
+
+.pr-root .pr-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; direction: ltr; margin-top: .85em; filter: drop-shadow(.22em .22em 0 var(--ink)); }
+.pr-root .pr-chips div { position: relative; z-index: 0; direction: rtl; display: grid; place-items: center; text-align: center; min-height: 4.1em; padding: .4em .35em 1.15em; font-family: var(--display); font-size: 1.02em; line-height: 1.12; color: var(--ink); background: var(--ink); clip-path: polygon(0 0, 100% 0, 100% 74%, 50% 100%, 0 74%); }
+.pr-root .pr-chips div::before { content: ''; position: absolute; inset: .14em; z-index: -1; background: var(--c); clip-path: polygon(0 0, 100% 0, 100% 73.5%, 50% 98.5%, 0 73.5%); }
+/* קווים מחברים מהצומת לכל נתיב, כמו חצים בתרשים */
+.pr-root .pr-chips { position: relative; }
+.pr-root .pr-chips::before { content: ''; position: absolute; inset-inline: 0; top: -.85em; height: .85em; background: linear-gradient(var(--ink), var(--ink)) 16% 0 / .16em 100% no-repeat, linear-gradient(var(--ink), var(--ink)) 50% 0 / .16em 100% no-repeat, linear-gradient(var(--ink), var(--ink)) 84% 0 / .16em 100% no-repeat; }
+.pr-root .pr-chips div.short { font-size: 1.7em; min-height: 2.45em; padding-bottom: .7em; }
+.pr-root .pr-hint[hidden] { display: none; }
+.pr-root .pr-chips div.blocked { font-family: inherit; font-size: .8em; font-weight: 800; color: #fff; text-shadow: 0 0 .25em #000, 0 0 .25em #000; min-height: 0; align-self: start; height: 2.6em; padding: 0; clip-path: none; }
+.pr-root .pr-chips div.blocked::before { clip-path: none; background: repeating-linear-gradient(-45deg, #facc15 0 .55em, #111 .55em 1.1em); }
+
+.pr-root .pr-hint { margin-top: .5em; text-align: center; font-size: .78em; font-weight: 700; color: #fff; text-shadow: 0 .06em .25em rgba(0, 0, 0, .9), 0 0 .6em rgba(0, 0, 0, .6); }
+
+/* אחרי תשובה נכונה: תיבת פעולה בצבע התכלת של התרשים, עם מה שהפרוטוקול מורה לעשות */
+.pr-root .pr-card.ok .pr-note { background: var(--doc-cyan); font-size: 1.08em; font-weight: 700; }
+.pr-root .pr-card.ok .pr-node, .pr-root .pr-card.ok .pr-chips, .pr-root .pr-card.ok .pr-hint { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .pr-root .pr-card > * { transform: none; } }
 .pr-root .overlay { position: absolute; inset: 0; display: grid; z-index: 5; opacity: 0; pointer-events: none; transition: opacity .25s; }
 .pr-root .overlay.show { opacity: 1; pointer-events: auto; }
 .pr-root .btn { font: inherit; font-weight: 900; font-size: 1.05em; color: #fff; background: linear-gradient(180deg, #ff4a5f, var(--red)); border: 0; border-radius: .9em; padding: .85em 1.4em; width: 100%; cursor: pointer; box-shadow: 0 .35em 0 #9f1023, 0 .8em 1.6em rgba(239, 35, 60, .4); transition: transform .08s, box-shadow .08s, filter .2s; }
@@ -84,3 +107,4 @@
 .pr-root .pr-recap li.bad b { color: var(--red); }
 .pr-root .pr-recap li.na { opacity: .45; }
 .pr-root .pr-end .src { text-align: center; color: #71717a; font-size: .62em; margin-top: .9em; line-height: 1.5; }
+.pr-root .floater { direction: ltr; }

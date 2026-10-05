@@ -20,12 +20,10 @@ const TEMPLATE = `
   </div>
 
   <div class="pr-card">
-    <span class="pr-tag tag">ממצא</span>
-    <p class="pr-finding"></p>
-    <h2 class="pr-question"></h2>
+    <p class="pr-note"><span class="pr-tag"></span><span class="pr-finding"></span></p>
+    <div class="pr-node"><h2 class="pr-question"></h2><span class="pr-timer">שער בעוד <b class="pr-timerBar"></b> מ׳</span></div>
     <div class="pr-chips"></div>
-    <div class="pr-timer"><b class="pr-timerBar"></b></div>
-    <div class="pr-hint">הזמן מאט · בחרת נתיב? החלק למעלה כדי לזנק</div>
+    <div class="pr-hint">בחרת נתיב? החלק למעלה כדי לזנק</div>
   </div>
 
   <button class="pr-mute" aria-label="השתק">🔊</button>
@@ -111,14 +109,14 @@ export function createProtocolRunner(root) {
       ok: 'פינוי דחוף לחבירה או לבית החולים הקרוב, ניטור בדרך ודיווח מקדים.',
       why: 'הפרוטוקול מסתיים בפינוי דחוף לחבירה או לבית החולים הקרוב, המשך ניטור וטיפול במהלך הפינוי ושקילת דיווח מקדים.' },
   ];
-  const LANE_COLORS = ['#60A5FA', '#A78BFA', '#F59E0B'];
+  const LANE_COLORS = ['#5CE6F2', '#FF6FDD', '#FFE14A'];   // תכלת, ורוד וצהוב מתרשימי האוגדן
   const KINDS = ['pill', 'heart', 'kit', 'plaster'], KIND_COLOR = { pill: '#f87171', heart: '#fb7185', kit: '#f4f4f5', plaster: '#f2c9a0' };
 
   // ═════════ לוגיקת המשחק (לא תלויה בגרפיקה) ═════════
   const W = 420, H = 760, LW = 104, SHOW_Z = 30;
   root.classList.add('pr-root'); root.innerHTML = TEMPLATE;
   const stage = root.querySelector('.pr-stage'), cv = root.querySelector('.pr-c');
-  const FONT = getComputedStyle(root).fontFamily || 'sans-serif';
+  const FONT = "'Secular One', " + (getComputedStyle(root).fontFamily || 'sans-serif');
   const $ = id => root.querySelector('.pr-' + id);
   const laneX = l => (l - 1) * LW, rnd = n => Math.floor(Math.random() * n), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -136,7 +134,7 @@ export function createProtocolRunner(root) {
   $('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; };
 
   let gfx = null;
-  let dead = false, raf = 0;
+  let dead = false, raf = 0, lastMeters = -1;
   let state = 'title', T = 0, dist = 0, vNow = 0, last = performance.now();
   let lane = 1, px = 0, lean = 0, speed = 8, slow = 0, dash = false;
   let ents = [], shake = 0, flash = null;
@@ -181,12 +179,12 @@ export function createProtocolRunner(root) {
   }
   function showCard(g) {
     const st = STEPS[g.i]; activeGate = g; cardTimer = 0;
-    $('card').className = 'pr-card show'; $('tag').textContent = `ממצא · שלב ${g.i + 1} מתוך ${STEPS.length}`;
+    $('card').className = 'pr-card show'; $('tag').textContent = 'ממצא:'; lastMeters = -1; $('hint').hidden = g.i > 0;   // הנחיית הזינוק מוצגת רק בשער הראשון
     $('finding').textContent = st.finding; $('question').textContent = st.q;
-    $('chips').innerHTML = g.opts.map(o => o ? `<div style="--c:${o.color}">${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
+    $('chips').innerHTML = g.opts.map(o => o ? `<div class="${o.label.length <= 3 ? 'short' : ''}" style="--c:${o.color}">${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
     beep(660, .05, 'square', .03);
   }
-  function okCard(text) { $('card').className = 'pr-card show ok'; $('tag').textContent = '✓ לפי הפרוטוקול'; $('finding').textContent = text; cardTimer = 2.6; }
+  function okCard(text) { $('card').className = 'pr-card show ok'; $('tag').textContent = 'לפי הפרוטוקול:'; $('finding').textContent = text; cardTimer = 2.6; }
   function hideCard() { $('card').className = 'pr-card'; cardTimer = 0; }
   function floater(text, color) { const d = document.createElement('div'); d.className = 'floater'; d.textContent = text; d.style.color = color; stage.appendChild(d); setTimeout(() => d.remove(), 950); }
 
@@ -268,7 +266,7 @@ export function createProtocolRunner(root) {
           floater('אאוץ׳!', '#fb923c'); beep(140, .15, 'sawtooth', .07); hud(); }
         else if (e.type === 'gate') {
           if (!e.shown && e.z <= SHOW_Z) { e.shown = true; showCard(e); hud(); }
-          if (e.shown && !e.resolved) { $('timerBar').style.width = clamp(e.z / SHOW_Z * 100, 0, 100) + '%'; if (e.z <= .4) { resolveGate(e); break; } }
+          if (e.shown && !e.resolved) { const m = Math.max(0, Math.round(e.z * 3 / 5) * 5); if (m !== lastMeters) { lastMeters = m; $('timerBar').textContent = m; } if (e.z <= .4) { resolveGate(e); break; } }
         }
         else if (e.type === 'hosp' && e.z <= 6) { endGame(true); break; }
       }
@@ -586,7 +584,7 @@ export function createProtocolRunner(root) {
           for (const sd of [-1, 1]) { const p = new THREE.Mesh(boxG, neon); p.scale.set(.16, GH, .16); p.position.set(x + sd * (LANE / 2 - .1), GH / 2, 0); grp.add(p); parts.push(p); }
           const top = new THREE.Mesh(boxG, neon); top.scale.set(LANE - .04, .16, .16); top.position.set(x, GH, 0); grp.add(top); parts.push(top);
           const sheet = new THREE.Mesh(sheetG, new THREE.MeshBasicMaterial({ color: o.color, transparent: true, opacity: .3, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); sheet.position.set(x, GH / 2, 0); grp.add(sheet); parts.push(sheet);
-          const t = textTex(o.label.split('\n'), { color: '#ffffff', bg: 'rgba(8,9,18,.94)', border: o.color, max: 150 }); grp.userData.tex.push(t);
+          const t = textTex(o.label.split('\n'), { color: '#000000', bg: o.color, border: '#000000', max: 150, weight: 400 }); grp.userData.tex.push(t);
           const sign = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); sign.position.set(x, GH + 1.05, .05); grp.add(sign);
         }
         grp.userData.lanes.push(parts);
@@ -613,7 +611,7 @@ export function createProtocolRunner(root) {
     // ── טעינת נכסים ──
     const api = { loaded: false, sparks, lite };
     async function load() {
-      try { await document.fonts.ready; } catch (e) { /* נמשיך עם גופן המערכת */ }
+      try { await Promise.all([document.fonts.load("400 40px 'Secular One'", 'אב'), document.fonts.ready]); } catch (e) { /* נמשיך עם גופן המערכת */ }
       const erSign = new THREE.Mesh(new THREE.PlaneGeometry(13, 3.2), new THREE.MeshBasicMaterial({ map: textTex(['מיון'], { w: 512, h: 128, color: '#ffffff', bg: '#d0142c', max: 100 }) })); erSign.position.set(0, 8, 5.1);
       const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(17, 3.4), new THREE.MeshBasicMaterial({ map: textTex(['שערי צדק'], { w: 640, h: 128, color: '#17324d', bg: '#f4f1ea', max: 96 }) })); nameSign.position.set(0, 18.5, -.9);
       hosp.add(erSign, nameSign);
