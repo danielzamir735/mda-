@@ -1,22 +1,43 @@
+import { useEffect, useState } from 'react';
 import { X, Phone, MessageCircle, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
-import { trackEvent } from '../../../utils/analytics';
+import { trackEvent, trackInteraction } from '../../../utils/analytics';
+import HazmatLookup from './HazmatLookup';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
+type Tab = 'poison' | 'hazmat';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'poison', label: 'מרכזי הרעלות' },
+  { id: 'hazmat', label: 'חומרים מסוכנים' },
+];
+
 export default function PoisonCentersModal({ isOpen, onClose }: Props) {
+  const [tab, setTab] = useState<Tab>('poison');
   useModalBackHandler(isOpen, onClose);
+
+  // Always reopen on the phone numbers — the most urgent content
+  useEffect(() => {
+    if (!isOpen) setTab('poison');
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const selectTab = (next: Tab) => {
+    setTab(next);
+    if (next === 'hazmat') trackInteraction('חומרים מסוכנים', 'emergency_info');
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden">
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
-        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכזי הרעלות</h2>
+        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">הרעלות וחומרים מסוכנים</h2>
         <HapticButton
           onClick={onClose}
           pressScale={0.88}
@@ -29,8 +50,28 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
         </HapticButton>
       </div>
 
+      {/* Tabs */}
+      <div role="tablist" className="shrink-0 flex gap-2 px-4 pt-3">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => selectTab(id)}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-colors
+                        ${tab === id
+                          ? 'bg-emt-red text-white border-emt-red'
+                          : 'bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted border-gray-200 dark:border-emt-border'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        {tab === 'hazmat' && <HazmatLookup />}
+        {tab === 'poison' && (<>
         {/* Intro */}
         <p className="text-sm text-gray-600 dark:text-emt-muted leading-relaxed">
           מרכזים אלו זמינים להתייעצות בנושאי תרופות ומינון יתר של תרופות, הרעלות מחומרים כימיים, הכשות נחשים, עקיצות עקרבים, הרעלות מזון ועוד.
@@ -101,6 +142,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
             <li>במקרה של אובדן הכרה, פרכוסים או קושי בנשימה - חייג לכוחות ההצלה.</li>
           </ul>
         </div>
+        </>)}
       </div>
     </div>
   );

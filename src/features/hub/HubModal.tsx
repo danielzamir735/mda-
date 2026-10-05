@@ -183,7 +183,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'poison-centers',
-    label: 'מרכזי הרעלות',
+    label: 'מרכזי הרעלות – חומרים מסוכנים',
     icon: Skull,
     color: 'text-lime-400',
     border: 'border-lime-400/30',
