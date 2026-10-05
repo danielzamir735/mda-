@@ -1,5 +1,5 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge } from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
 let _personalCardShown = false;
@@ -12,6 +12,9 @@ import { trackInteraction } from '../../utils/analytics';
 import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
 import MedicalAbbreviationsModal from './components/MedicalAbbreviationsModal';
+
+// Three.js is heavy, so the game is its own chunk, fetched only when opened.
+const ProtocolRunnerModal = lazy(() => import('../protocol-runner/ProtocolRunnerModal'));
 
 const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
   { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
@@ -107,6 +110,15 @@ const HUB_ITEMS: HubItem[] = [
     color: 'text-yellow-400',
     border: 'border-yellow-400/40',
     bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+  },
+  {
+    id: 'protocol-runner',
+    label: 'ריצת פרוטוקול',
+    subtitle: 'משחק · קוצר נשימה',
+    icon: Ambulance,
+    color: 'text-emt-red',
+    border: 'border-emt-red/30',
+    bg: 'bg-emt-red/10',
   },
   {
     id: 'medical-terms',
@@ -276,7 +288,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
+const ENABLED = new Set(['protocol-runner', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
 
 // v3: bumped so the new hospital-load tile lands in its intended top-right
 // slot for existing users too — loadHubOrder() otherwise appends any id
@@ -362,6 +374,7 @@ export default function HubModal({
   };
   const [showCampaign, setShowCampaign] = useState(false);
   const [showConcepts, setShowConcepts] = useState(false);
+  const [showProtocolRunner, setShowProtocolRunner] = useState(false);
   const [showMedicalTerms, setShowMedicalTerms] = useState(false);
   const [showPersonalCard, setShowPersonalCard] = useState(false);
   const [campaignBitCopied, setCampaignBitCopied] = useState(false);
@@ -395,6 +408,7 @@ export default function HubModal({
 
   const HUB_TRACKING: Record<string, [string, string]> = {
     'daily-challenge':            ['האתגר היומי',             'learning'],
+    'protocol-runner':            ['ריצת פרוטוקול',           'learning'],
     calculators:                  ['מחשבונים',                'calculators'],
     settings:                     ['הגדרות',                  'utility'],
     clinical:                     ['טבלת מדדים',              'medical_knowledge'],
@@ -425,6 +439,7 @@ export default function HubModal({
     if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
     if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
     if (id === 'medical-terms') { setShowMedicalTerms(true); return; }
+    if (id === 'protocol-runner') { setShowProtocolRunner(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
     if (id === 'clinical')     onVitalsReferenceOpen();
@@ -1262,6 +1277,13 @@ https://hovesh-plus.vercel.app/`;
 
       {/* Concepts Modal */}
       <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />
+
+      {/* Protocol Runner game */}
+      {showProtocolRunner && (
+        <Suspense fallback={null}>
+          <ProtocolRunnerModal isOpen onClose={() => setShowProtocolRunner(false)} />
+        </Suspense>
+      )}
 
       {/* Medical Terms / Abbreviations Modal */}
       <MedicalAbbreviationsModal isOpen={showMedicalTerms} onClose={() => setShowMedicalTerms(false)} />
