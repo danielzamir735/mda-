@@ -7,8 +7,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const ASSETS = import.meta.env.BASE_URL + 'protocol-runner/';
 const TEMPLATE = `
@@ -67,7 +65,7 @@ const TEMPLATE = `
       <div class="pr-endSmall small"></div>
       <ul class="pr-recap"></ul>
       <button class="pr-againBtn btn">שחק שוב</button>
-      <div class="src">לפי "גישה למטופל עם קוצר נשימה", אוגדן BLS, אגף רפואה מד"א, ינואר 2016<br>מודל האמבולנס: Kenney Car Kit (CC0) · HDRI: Poly Haven (CC0)</div>
+      <div class="src">לפי "גישה למטופל עם קוצר נשימה", אוגדן BLS, אגף רפואה מד"א, ינואר 2016<br>מודל האמבולנס: Kenney Car Kit (CC0)</div>
     </div>
   </div>
 </div>
@@ -284,80 +282,61 @@ export function createProtocolRunner(root) {
   function createGfx(canvas) {
     const LANE = 3.2, ZS = 3, ROAD_HALF = 6, ROAD_LEN = 440, ROAD_Z0 = 30;
     const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-    const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const damp = (cur, target, rate, dt) => cur + (target - cur) * (1 - Math.exp(-rate * dt));
-    const hdr = (hex, k) => new THREE.Color(hex).multiplyScalar(k);
+    // רמת איכות: בנייד אין פוסט־פרוססינג והרזולוציה מוגבלת, כדי שהמשחק ירוץ חלק
+    const shortSide = Math.min(screen.width, screen.height);
+    const lite = matchMedia('(pointer: coarse)').matches || (shortSide > 0 && shortSide < 720);
+    const hdr = (hex, k) => new THREE.Color(hex).multiplyScalar(lite ? Math.min(k, 1.1) : k);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    let pr = Math.min(devicePixelRatio || 1, 2);
-    const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
+    let pr = Math.min(devicePixelRatio || 1, lite ? 1.5 : 2);
 
-    const scene = new THREE.Scene(), FOG = new THREE.Color(0x0f0a22);
-    scene.fog = new THREE.FogExp2(FOG, .0125); scene.background = FOG;
+    // שעת זהב בירושלים: השמש נמוכה מלפנים־משמאל, אובך חם באופק
+    const scene = new THREE.Scene(), FOG = new THREE.Color(0xf3be8e), SUN = new THREE.Vector3(-.42, .3, -.86).normalize();
+    scene.fog = new THREE.FogExp2(FOG, .0072); scene.background = FOG;
     const camera = new THREE.PerspectiveCamera(70, W / H, .3, 1600);
-    camera.position.set(0, 4, 9.2);
+    camera.position.set(0, 4.5, 10.2);
 
-    // ── פוסט־פרוססינג ──
-    const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 }));
-    composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), .42, .6, 1.05); composer.addPass(bloom);
-    const fxPass = new ShaderPass({
-      uniforms: { tDiffuse: { value: null }, uBlur: { value: 0 }, uVig: { value: .5 }, uFlash: { value: 0 }, uFlashCol: { value: new THREE.Color(1, 0, 0) } },
-      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-      fragmentShader: `uniform sampler2D tDiffuse; uniform float uBlur, uVig, uFlash; uniform vec3 uFlashCol; varying vec2 vUv;
-        void main(){
-          vec2 c = vUv - vec2(.5, .44); float d = length(c * vec2(.75, 1.));
-          vec3 col = vec3(0.); float amt = uBlur * smoothstep(.08, .6, d);
-          for (int i = 0; i < 10; i++) col += texture2D(tDiffuse, vUv - c * amt * (float(i) / 9.)).rgb;   // radial blur לפי מהירות
-          col /= 10.;
-          col *= mix(1., smoothstep(.95, .18, d), uVig);                                                    // vignette
-          col = mix(col, uFlashCol * 1.4, uFlash * smoothstep(.12, .7, d));                               // הבזק בשוליים
-          gl_FragColor = vec4(col, 1.);
-        }` });
-    composer.addPass(fxPass); composer.addPass(new OutputPass());
+    // ── פוסט־פרוססינג (רק ברמת האיכות המלאה) ──
+    let composer = null, fxPass = null;
+    if (!lite) {
+      composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 }));
+      composer.addPass(new RenderPass(scene, camera));
+      composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), .22, .5, 1.0));
+      fxPass = new ShaderPass({
+        uniforms: { tDiffuse: { value: null }, uBlur: { value: 0 } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+        fragmentShader: `uniform sampler2D tDiffuse; uniform float uBlur; varying vec2 vUv;
+          void main(){
+            vec2 c = vUv - vec2(.5, .44); float amt = uBlur * smoothstep(.08, .6, length(c * vec2(.75, 1.)));
+            vec3 col = vec3(0.); for (int i = 0; i < 8; i++) col += texture2D(tDiffuse, vUv - c * amt * (float(i) / 7.)).rgb;   // radial blur בזינוק
+            gl_FragColor = vec4(col / 8., 1.);
+          }` });
+      composer.addPass(fxPass); composer.addPass(new OutputPass());
+    }
+    // vignette והבזק צבע נעשים ב־CSS — זול בהרבה ממעבר shader נוסף
+    const vigEl = document.createElement('div'), flashEl = document.createElement('div');
+    for (const el of [vigEl, flashEl]) { el.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0'; canvas.after(el); }
+    vigEl.style.background = 'radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(20,8,28,.82) 100%)';
 
     // ── טקסטורות פרוצדורליות ──
-    function canvasTex(w, h, draw, srgb = true) {
+    function canvasTex(w, h, draw) {
       const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
-      const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAX_ANISO; return t;
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t;
     }
-    function tileNoise(size, cells, seed) {            // רעש ערכים שמתחבר לעצמו בקצוות
-      const g = new Float32Array(cells * cells); let s = seed; for (let i = 0; i < g.length; i++) { s = (s * 16807) % 2147483647; g[i] = s / 2147483647; }
-      const out = new Float32Array(size * size);
-      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-        const fx = x / size * cells, fy = y / size * cells, x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = (x0 + 1) % cells, y1 = (y0 + 1) % cells;
-        let tx = fx - x0, ty = fy - y0; tx = tx * tx * (3 - 2 * tx); ty = ty * ty * (3 - 2 * ty);
-        out[y * size + x] = (g[y0 * cells + x0] * (1 - tx) + g[y0 * cells + x1] * tx) * (1 - ty) + (g[y1 * cells + x0] * (1 - tx) + g[y1 * cells + x1] * tx) * ty;
-      }
-      return out;
-    }
-    const roadMap = canvasTex(512, 1024, (c, w, h) => {      // 12 מ' רוחב × 16 מ' אורך
-      c.fillStyle = '#1d1f28'; c.fillRect(0, 0, w, h);
-      for (let i = 0; i < 14000; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.16)'; c.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2); }
+    const roadMap = canvasTex(256, 512, (c, w, h) => {      // 12 מ' רוחב × 16 מ' אורך
+      c.fillStyle = '#8b867f'; c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 5000; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.12)'; c.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2); }
       const mx = m => m / 12 * w;
-      c.fillStyle = '#dfe3ec'; for (const m of [1.2 + LANE, 1.2 + 2 * LANE]) for (const y of [0, 512]) c.fillRect(mx(m) - 3, y, 6, 200);
-      c.fillStyle = '#e7e9f0'; c.fillRect(mx(1.2) - 3, 0, 6, h); c.fillRect(mx(10.8) - 3, 0, 6, h);
+      c.fillStyle = '#f4f1e8'; for (const m of [1.2 + LANE, 1.2 + 2 * LANE]) for (const y of [0, 256]) c.fillRect(mx(m) - 1.5, y, 3, 100);
+      c.fillStyle = '#f2c94c'; c.fillRect(mx(1.2) - 1.5, 0, 3, h); c.fillRect(mx(10.8) - 1.5, 0, 3, h);
     });
-    const N = 256, hN = (() => { const a = tileNoise(N, 32, 7), b = tileNoise(N, 64, 13), c = tileNoise(N, 128, 29), o = new Float32Array(N * N); for (let i = 0; i < o.length; i++) o[i] = a[i] * .5 + b[i] * .3 + c[i] * .2; return o; })();
-    const roadNormal = canvasTex(N, N, c => {
-      const img = c.createImageData(N, N), at = (x, y) => hN[((y + N) % N) * N + ((x + N) % N)];
-      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-        const dx = (at(x + 1, y) - at(x - 1, y)) * 5, dy = (at(x, y + 1) - at(x, y - 1)) * 5, l = Math.hypot(dx, dy, 1), i = (y * N + x) * 4;
-        img.data[i] = (-dx / l * .5 + .5) * 255; img.data[i + 1] = (-dy / l * .5 + .5) * 255; img.data[i + 2] = (1 / l * .5 + .5) * 255; img.data[i + 3] = 255;
-      }
-      c.putImageData(img, 0, 0);
-    }, false);
-    const roadRough = canvasTex(N, N, c => {                 // שלוליות: אזורים חלקים ומבריקים
-      const a = tileNoise(N, 5, 3), b = tileNoise(N, 12, 17), img = c.createImageData(N, N);
-      for (let i = 0; i < N * N; i++) { const n = a[i] * .62 + b[i] * .38, r = (.13 + .34 * smooth(.4, .6, n)) * 255; img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = r; img.data[i * 4 + 3] = 255; }
-      c.putImageData(img, 0, 0);
-    }, false);
-    roadMap.repeat.set(1, ROAD_LEN / 16); roadNormal.repeat.set(2, ROAD_LEN / 6); roadRough.repeat.set(.5, ROAD_LEN / 24);
-    const glowTex = canvasTex(128, 128, (c, w) => { const g = c.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.5)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, w); });
+    roadMap.repeat.set(1, ROAD_LEN / 16);
+    const glowTex = canvasTex(64, 64, (c, w) => { const g = c.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.5)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, w); });
+    const shadowTex = canvasTex(64, 64, (c, w) => { const g = c.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(20,10,30,.75)'); g.addColorStop(.55, 'rgba(20,10,30,.45)'); g.addColorStop(1, 'rgba(20,10,30,0)'); c.fillStyle = g; c.fillRect(0, 0, w, w); });
     const hazardTex = canvasTex(256, 64, (c, w, h) => { c.fillStyle = '#111'; c.fillRect(0, 0, w, h); c.fillStyle = '#facc15'; for (let x = -h; x < w + h; x += 48) { c.beginPath(); c.moveTo(x, h); c.lineTo(x + 24, h); c.lineTo(x + 24 + h, 0); c.lineTo(x + h, 0); c.fill(); } });
     function textTex(lines, { w = 512, h = 256, color = '#fff', bg = null, border = null, glow = 0, max = 150, weight = 900 } = {}) {
       return canvasTex(w, h, c => {
@@ -370,62 +349,86 @@ export function createProtocolRunner(root) {
       });
     }
 
-    // ── שמיים ──
-    const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 32, 16), new THREE.ShaderMaterial({
-      side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uHor: { value: FOG }, uTop: { value: new THREE.Color(0x04050f) }, uGlow: { value: new THREE.Color(0x7a4cff) } },
+    // ── שמיים, שמש וקו הרקיע של העיר העתיקה ──
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { uHor: { value: FOG }, uMid: { value: new THREE.Color(0xeda39a) }, uTop: { value: new THREE.Color(0x4a76b8) }, uSun: { value: SUN }, uSunCol: { value: new THREE.Color(1, .78, .46) } },
       vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-      fragmentShader: `uniform vec3 uHor, uTop, uGlow; varying vec3 vDir;
-        float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      fragmentShader: `uniform vec3 uHor, uMid, uTop, uSun, uSunCol; varying vec3 vDir;
         void main(){ vec3 d = normalize(vDir); float h = max(d.y, 0.);
-          vec3 col = mix(uHor, uTop, smoothstep(0., .45, h));
-          col += uGlow * .07 * pow(max(0., -d.z), 6.) * exp(-h * 9.);
-          vec2 sp = vec2(atan(d.x, -d.z), asin(d.y)) * 150.; vec2 cell = floor(sp);
-          float st = step(.985, h21(cell)) * smoothstep(.22, 0., length(fract(sp) - .5)) * smoothstep(.08, .3, h);
-          col += vec3(st) * (.35 + .8 * h21(cell + 3.));
-          gl_FragColor = vec4(col, 1.); }` }));
-    sky.frustumCulled = false; sky.renderOrder = -10; scene.add(sky);
+          vec3 col = mix(uHor, uMid, smoothstep(0., .17, h)); col = mix(col, uTop, smoothstep(.12, .62, h));
+          float band = sin(d.y * 34. + sin(atan(d.x, -d.z) * 3.) * 1.6) * .5 + .5;                       // פסי ענן דקים
+          col += vec3(1., .62, .5) * .1 * smoothstep(.55, .95, band) * smoothstep(.06, .2, h) * (1. - smoothstep(.3, .5, h));
+          float s = max(dot(d, uSun), 0.); col += uSunCol * (pow(s, 420.) * 7. + pow(s, 26.) * .6 + pow(s, 4.) * .2);
+          gl_FragColor = vec4(col, 1.);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }` });
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), skyMat); sky.frustumCulled = false; sky.renderOrder = -10; scene.add(sky);
+    const skylineTex = canvasTex(2048, 320, (c, w, h) => {
+      const base = 250, A = '#d8a48b', B = '#9a6c70', G = '#5f5a4c', rnd = (() => { let s = 11; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+      const dome = (x, y, r, col, k = 1) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, r, r * k, 0, Math.PI, 0); c.fill(); };
+      const minaret = (x, ht) => { c.fillStyle = B; c.fillRect(x - 4, base - ht, 8, ht); c.fillRect(x - 7, base - ht * .78, 14, 4); c.beginPath(); c.moveTo(x - 5, base - ht); c.lineTo(x, base - ht - 16); c.lineTo(x + 5, base - ht); c.fill(); };
+      // שכבה רחוקה: הר הזיתים והרים
+      c.fillStyle = A; c.beginPath(); c.moveTo(0, base);
+      for (let x = 0; x <= w; x += 16) c.lineTo(x, 196 - Math.sin(x * .0042 + 1) * 22 - Math.sin(x * .013) * 7);
+      c.lineTo(w, base); c.fill();
+      for (let x = 0; x < w; x += 9 + rnd() * 14) { const bh = 5 + rnd() * 13; c.fillRect(x, 200 - Math.sin(x * .0042 + 1) * 22 - bh, 6 + rnd() * 9, bh + 20); }
+      c.fillRect(1652, 122, 7, 70); c.fillRect(1648, 118, 15, 6);                                        // מגדל על הר הזיתים
+      // שכבה קרובה: חומות העיר העתיקה
+      c.fillStyle = B; c.fillRect(0, 214, w, base - 214);
+      for (let x = 0; x < w; x += 14) c.fillRect(x, 208, 8, 7);
+      for (let x = 90; x < w; x += 250) { c.fillRect(x, 190, 36, 26); for (let k = 0; k < 3; k++) c.fillRect(x + k * 13, 184, 8, 7); }
+      for (let x = 0; x < w; x += 11 + rnd() * 16) { const bh = 6 + rnd() * 16; c.fillRect(x, 214 - bh, 8 + rnd() * 12, bh); }
+      // כנסיית הדורמיציון
+      c.fillRect(270, 176, 56, 40); c.beginPath(); c.moveTo(264, 176); c.lineTo(298, 142); c.lineTo(332, 176); c.fill();
+      c.fillRect(338, 150, 16, 66); dome(346, 150, 9, B, 1.3);
+      // מגדל דוד
+      c.fillRect(486, 172, 78, 44); for (let k = 0; k < 6; k++) c.fillRect(486 + k * 14, 165, 8, 8); minaret(540, 150);
+      // כנסיית הקבר
+      c.fillRect(820, 186, 86, 30); dome(850, 186, 24, '#7d7480'); dome(892, 186, 14, '#7d7480');
+      // כיפת הסלע ואל־אקצא
+      c.fillStyle = '#8a86a6'; c.fillRect(1074, 184, 112, 32); c.fillStyle = B; c.fillRect(1100, 168, 60, 18);
+      dome(1130, 170, 31, '#f2c23e', 1.12); c.fillStyle = '#ffe9a0'; c.beginPath(); c.ellipse(1118, 152, 9, 15, -.5, 0, 7); c.fill();
+      c.fillStyle = '#f2c23e'; c.fillRect(1129, 126, 2, 12);
+      c.fillStyle = B; c.fillRect(1250, 190, 96, 26); dome(1300, 190, 16, '#77707c');
+      for (const [x, ht] of [[706, 96], [986, 84], [1452, 104], [1716, 88], [1900, 76]]) minaret(x, ht);
+      c.fillStyle = G; for (let i = 0; i < 46; i++) { const x = rnd() * w, th = 16 + rnd() * 20; c.beginPath(); c.ellipse(x, 214 - th / 2, 3.5, th / 2, 0, 0, 7); c.fill(); }
+      c.fillStyle = '#' + FOG.getHexString(); c.fillRect(0, base - 2, w, h - base + 2);                 // התחתית נמסה באובך
+    });
+    skylineTex.wrapS = skylineTex.wrapT = THREE.ClampToEdgeWrapping;
+    const skyline = new THREE.Mesh(new THREE.PlaneGeometry(2400, 375), new THREE.MeshBasicMaterial({ map: skylineTex, alphaTest: .5, depthTest: false, depthWrite: false, fog: false }));
+    skyline.frustumCulled = false; skyline.renderOrder = -9; scene.add(skyline);
+    const sunGlow = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(1, .72, .4), transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }));
+    sunGlow.frustumCulled = false; scene.add(sunGlow);
 
-    // ── תאורה ──
-    scene.add(new THREE.HemisphereLight(0x8e9bff, 0x1a1024, .4));
-    const moon = new THREE.DirectionalLight(0xaab6ff, .85); moon.castShadow = true;
-    moon.shadow.mapSize.set(1024, 1024); Object.assign(moon.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 60 });
-    moon.shadow.bias = -.0006; moon.shadow.normalBias = .04; scene.add(moon, moon.target);
-    const streetL = [new THREE.PointLight(0xffd8a0, 0, 38, 1.7), new THREE.PointLight(0xffd8a0, 0, 38, 1.7)]; scene.add(...streetL);
+    // ── תאורה: שמיים, שמש, והצ'קלקה האדומה — שלושה אורות בסך הכול ──
+    scene.add(new THREE.HemisphereLight(0xffe6cc, 0x8a705c, 1.05));
+    const sun = new THREE.DirectionalLight(0xffc98a, 2.3); sun.position.copy(SUN).multiplyScalar(50); scene.add(sun);
 
-    // ── כביש וסביבתו ──
-    const roadMat = new THREE.MeshStandardMaterial({ map: roadMap, normalMap: roadNormal, normalScale: new THREE.Vector2(.14, .14), roughnessMap: roadRough, roughness: 1, metalness: 0, envMapIntensity: 1.25 });
-    const road = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_HALF * 2, ROAD_LEN), roadMat);
-    road.rotation.x = -Math.PI / 2; road.position.z = ROAD_Z0 - ROAD_LEN / 2; road.receiveShadow = true; scene.add(road);
+    // ── כביש, מדרכות וקרקע ──
+    const lam = (color, extra) => new THREE.MeshLambertMaterial({ color, ...extra });
     const zMid = ROAD_Z0 - ROAD_LEN / 2;
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, ROAD_LEN), new THREE.MeshStandardMaterial({ color: 0x0c0d16, roughness: .55, envMapIntensity: .5 }));
-    ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.03, zMid); scene.add(ground);
-    const walkMat = new THREE.MeshStandardMaterial({ color: 0x23242f, roughness: .5, envMapIntensity: .8 });
-    const railMat = new THREE.MeshStandardMaterial({ color: 0x8b93a8, roughness: .35, metalness: .9 });
-    const neonEdge = new THREE.MeshBasicMaterial({ color: hdr(0xff2848, 2.6), toneMapped: false });
-    for (const sd of [-1, 1]) {
-      const walk = new THREE.Mesh(new THREE.BoxGeometry(4.2, .2, ROAD_LEN), walkMat); walk.position.set(sd * (ROAD_HALF + 2.1), .1, zMid); walk.receiveShadow = true; scene.add(walk);
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(.07, .22, ROAD_LEN), railMat); rail.position.set(sd * (ROAD_HALF + .3), .92, zMid); scene.add(rail);
-      const neon = new THREE.Mesh(new THREE.BoxGeometry(.06, .06, ROAD_LEN), neonEdge); neon.position.set(sd * (ROAD_HALF + .3), .38, zMid); scene.add(neon);
-    }
-    const dummy = new THREE.Object3D();
-    function inst(geo, mat, count, shadow = false) { const m = new THREE.InstancedMesh(geo, mat, count); m.frustumCulled = false; m.castShadow = shadow; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); return m; }
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_HALF * 2, ROAD_LEN), lam(0xffffff, { map: roadMap }));
+    road.rotation.x = -Math.PI / 2; road.position.z = zMid; scene.add(road);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(700, ROAD_LEN), lam(0xb39a72)); ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.03, zMid); scene.add(ground);
+    const stoneMat = lam(0xe2cb9c), walkMat = lam(0xd7c097);
+    for (const sd of [-1, 1]) { const walk = new THREE.Mesh(new THREE.BoxGeometry(4.4, .22, ROAD_LEN), walkMat); walk.position.set(sd * (ROAD_HALF + 2.2), .11, zMid); scene.add(walk); }
+
+    const dummy = new THREE.Object3D(), boxG = new THREE.BoxGeometry(1, 1, 1), tmpC = new THREE.Color();
+    function inst(geo, mat, count) { const m = new THREE.InstancedMesh(geo, mat, count); m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); return m; }
     function put(mesh, i, x, y, z, sx = 1, sy = 1, sz = 1) { dummy.position.set(x, y, z); dummy.scale.set(sx, sy, sz); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); }
+    // קבוצת תיבות קבועה כ־InstancedMesh אחד: [x, y, z, sx, sy, sz, צבע?]
+    function boxes(mat, list) { const m = new THREE.InstancedMesh(boxG, mat, list.length); list.forEach((b, i) => { put(m, i, b[0], b[1], b[2], b[3], b[4], b[5]); if (list[0][6] !== undefined) m.setColorAt(i, tmpC.set(b[6] ?? 0xffffff)); }); m.frustumCulled = false; return m; }
 
-    const POST_S = 5, POST_N = 84, posts = inst(new THREE.BoxGeometry(.1, .95, .1), railMat, POST_N * 2);
+    // עמודי תאורה וברושים לאורך המדרכה
+    const LAMP_S = 34, LAMP_N = 11, poleMat = lam(0x4a4640);
+    const lampPole = inst(new THREE.CylinderGeometry(.08, .12, 7.4, 6), poleMat, LAMP_N * 2), lampArm = inst(boxG, poleMat, LAMP_N * 2);
+    const TREE_S = 17, TREE_N = 22, trees = inst(new THREE.ConeGeometry(.78, 7, 7), lam(0x4d6340), TREE_N * 2);
 
-    // פנסי רחוב
-    const LAMP_S = 30, LAMP_N = 13;
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x3a3d4c, roughness: .4, metalness: .8 });
-    const bulbMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 2.6, 1.6), toneMapped: false });
-    const addMat = (color, opacity) => new THREE.MeshBasicMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: true });
-    const lampPole = inst(new THREE.CylinderGeometry(.09, .13, 7.6, 8), poleMat, LAMP_N * 2), lampArm = inst(new THREE.BoxGeometry(2.3, .1, .12), poleMat, LAMP_N * 2);
-    const lampBulb = inst(new THREE.BoxGeometry(.95, .1, .36), bulbMat, LAMP_N * 2), lampHalo = inst(new THREE.PlaneGeometry(1, 1), addMat(new THREE.Color(1.3, 1.05, .6), .55), LAMP_N * 2);
-    const poolGeo = new THREE.PlaneGeometry(1, 1); poolGeo.rotateX(-Math.PI / 2);
-    const lampPool = inst(poolGeo, addMat(new THREE.Color(1, .78, .45), .16), LAMP_N * 2);
-
-    // בניינים — חלונות מצוירים ב־shader, בלי טקסטורה
+    // בנייני אבן ירושלמית — אבן, חלונות מקושתים ותאורת שקיעה מצוירים ב־shader
     const bldMat = new THREE.ShaderMaterial({
-      fog: true, uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]),
+      fog: true, uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uSun: { value: SUN } }]),
       vertexShader: `#include <common>
         #include <fog_pars_vertex>
         attribute float aSeed; varying vec2 vWin; varying float vSeed; varying vec3 vN;
@@ -438,86 +441,135 @@ export function createProtocolRunner(root) {
         }`,
       fragmentShader: `#include <common>
         #include <fog_pars_fragment>
-        varying vec2 vWin; varying float vSeed; varying vec3 vN;
+        uniform vec3 uSun; varying vec2 vWin; varying float vSeed; varying vec3 vN;
         float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         void main(){
-          vec3 base = vec3(.022, .026, .05) * (1. + .5 * fract(vSeed * 7.3)), col = base;
+          vec3 stone = vec3(.72, .57, .36) * (.9 + .22 * fract(vSeed * 7.3));
+          stone *= 1. - .07 * step(.9, fract(vWin.y / .55)) - .05 * h21(floor(vWin / vec2(1.1, .55)));          // נדבכי אבן
+          vec3 light = vec3(1., .7, .4) * 1.75 * max(dot(vN, uSun), 0.) + vec3(.42, .43, .56) + vec3(.25, .16, .1) * max(vN.y, 0.);
+          vec3 col = stone * light;
           if (abs(vN.y) < .5) {
-            vec2 g = vWin / vec2(2.0, 3.0), id = floor(g), f = fract(g);
-            float win = step(.16, f.x) * step(f.x, .84) * step(.22, f.y) * step(f.y, .8) * step(1., id.y);
-            float r = h21(id + vSeed * 17.), lit = step(.8 - .14 * fract(vSeed * 3.1), r);
-            vec3 wc = mix(vec3(1., .8, .42), vec3(.5, .78, 1.), step(.88, r));
-            col = mix(base, vec3(.035, .042, .075), win) + win * lit * wc * (.55 + 1.1 * fract(r * 9.7));
+            vec2 g = vWin / vec2(2.7, 3.2), id = floor(g), p = (fract(g) - vec2(.5, .58)) * vec2(2.7, 3.2);
+            float win = (step(abs(p.x), .5) * step(p.y, 0.) * step(-1.25, p.y) + step(length(p), .5) * step(0., p.y)) * step(1., id.y);   // חלון מקושת
+            float r = h21(id + vSeed * 17.);
+            vec3 glass = vec3(.07, .09, .13) + vec3(1., .62, .3) * .75 * step(.72, r) * max(dot(vN, uSun) + .25, 0.) + vec3(1., .8, .45) * .8 * step(.93, r);
+            col = mix(col, glass, win);
+            col *= 1. - .22 * step(vWin.y, 3.1) * step(.5, fract(vWin.x / 5.4 + vSeed));                         // פתחי חנויות בקומת הקרקע
           }
           gl_FragColor = vec4(col, 1.);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
           #include <fog_fragment>
         }` });
-    const BLD_S = 18, BLD_N = 24, bldGeo = new THREE.BoxGeometry(1, 1, 1), bldSeed = new THREE.InstancedBufferAttribute(new Float32Array(BLD_N * 2), 1);
+    const BLD_S = 17, BLD_N = 24, bldGeo = new THREE.BoxGeometry(1, 1, 1), bldSeed = new THREE.InstancedBufferAttribute(new Float32Array(BLD_N * 2), 1);
     bldSeed.setUsage(THREE.DynamicDrawUsage); bldGeo.setAttribute('aSeed', bldSeed);
     const blds = inst(bldGeo, bldMat, BLD_N * 2);
-    const NEON = [0xff2d95, 0x22d3ee, 0xffb020, 0x9d5cff, 0x22ff88].map(c => hdr(c, 2.4));
-    const neonBars = inst(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ toneMapped: false }), BLD_N * 2);
-    for (let i = 0; i < BLD_N * 2; i++) neonBars.setColorAt(i, NEON[0]);
-    let signTex = [];
-    const signs = Array.from({ length: 14 }, () => { const m = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.2), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, toneMapped: false, color: new THREE.Color(1.9, 1.9, 1.9), side: THREE.DoubleSide })); m.visible = false; scene.add(m); return m; });
+    // דודי שמש על הגגות
+    const tankGeo = new THREE.CylinderGeometry(.42, .42, 1.5, 8); tankGeo.rotateZ(Math.PI / 2);
+    const panelGeo = new THREE.BoxGeometry(1.7, .08, 1.2); panelGeo.rotateX(.55);
+    const tanks = inst(tankGeo, lam(0xf2f0ea), BLD_N * 2), panels = inst(panelGeo, lam(0x27303f), BLD_N * 2);
 
-    // ── גשם ──
-    const RAIN = 900, rainPos = new Float32Array(RAIN * 6), rainSeed = new Float32Array(RAIN * 3);
-    for (let i = 0; i < RAIN; i++) { rainSeed[i * 3] = Math.random() * 44 - 22; rainSeed[i * 3 + 1] = Math.random() * 18; rainSeed[i * 3 + 2] = Math.random() * 80 - 68; }
-    const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3).setUsage(THREE.DynamicDrawUsage));
-    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaec2ff, transparent: true, opacity: .32, depthWrite: false })); rain.frustumCulled = false; scene.add(rain);
+    // ── אתרי ירושלים לצד הדרך ──
+    const whiteMat = lam(0xf4f1ea, { emissive: 0x4a4038 }), darkMat = lam(0x3b3531), tintMat = lam(0xffffff);
+    const brown = t => new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1.35), new THREE.MeshBasicMaterial({ map: textTex([t], { w: 512, h: 128, color: '#fff', bg: '#6b4423', border: '#f3e6d0', max: 78 }) }));
+    function landmark(side, len, label, build) {
+      const g = new THREE.Group(); g.visible = false; build(g);
+      const sign = brown(label), post = new THREE.Mesh(boxG, poleMat), sx = (side || -1) * 6.75, sz = len / 2 + 9;
+      sign.position.set(sx, 3.3, sz); post.scale.set(.14, 2.7, .14); post.position.set(sx, 1.35, sz - .05); g.add(sign, post);
+      scene.add(g); return { g, side, len };
+    }
+    let millSails = null;
+    const LM = [
+      landmark(-1, 0, 'הרכבת הקלה', g => {
+        const cars = []; for (const k of [-1, 0, 1]) cars.push([-8.25, 1.95, k * 12.7, 2.2, 3, 12.1, 0xdfe3e8], [-7.13, 2.45, k * 12.7, .06, 1, 10.6, 0x1c2430], [-7.13, 1.05, k * 12.7, .06, .2, 12.1, 0xc8102e], [-8.25, .32, k * 12.7, 1.6, .5, 9, 0x2a2a2e]);
+        g.add(boxes(tintMat, cars), boxes(darkMat, [[-8.9, .25, 0, .1, .07, 150], [-7.6, .25, 0, .1, .07, 150], [-8.25, 5.6, 0, .05, .05, 150]]));
+      }),
+      landmark(0, 26, 'גשר המיתרים', g => {
+        g.add(boxes(whiteMat, [[4, 9.6, 0, 70, .9, 6], [-31, 4.6, 0, 2.4, 9.2, 5], [39, 4.6, 0, 2.4, 9.2, 5]]));
+        const lower = new THREE.Mesh(boxG, whiteMat), upper = new THREE.Mesh(boxG, whiteMat);
+        lower.scale.set(2.3, 30, 2.3); lower.position.set(-15.3, 24.2, 0); lower.rotation.z = -.32;
+        upper.scale.set(1.9, 26, 1.9); upper.position.set(-13.45, 50.7, 0); upper.rotation.z = .22; g.add(lower, upper);
+        const pts = []; for (let i = 0; i < 16; i++) { const k = (i + 2) / 18; pts.push(-10.6 - 5.7 * k, 38 + 25.4 * k, 0, -6 + i * 2.7, 10.1, i % 2 ? 2.4 : -2.4); }
+        const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        const cables = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 })); cables.frustumCulled = false; g.add(cables);
+      }),
+      landmark(1, 50, 'שוק מחנה יהודה', g => {
+        const AW = [0xc8102e, 0xf4f1ea, 0x2f8f4e, 0xf2b632, 0x2d6cb5], CR = [0xf08a24, 0x7ab648, 0xd63b3b, 0xf2d24b], list = [[15.8, 3.2, 0, 1, 6.4, 46, 0xe2cb9c]];
+        for (let k = 0; k < 7; k++) { const z = k * 6.4 - 19.2;
+          list.push([13, .65, z, 3, 1.3, 4.8, 0x8a5a36], [12.3, 3.35, z, 4.6, .2, 5.4, AW[k % 5]], [10.2, 1.7, z - 2.4, .12, 3.4, .12, 0x4a4640], [10.2, 1.7, z + 2.4, .12, 3.4, .12, 0x4a4640]);
+          for (let j = 0; j < 3; j++) list.push([12.5, 1.55, z - 1.5 + j * 1.5, 1.6, .5, 1.1, CR[(k + j) % 4]]); }
+        g.add(boxes(tintMat, list));
+      }),
+      landmark(-1, 28, 'טחנת הרוח', g => {
+        g.add(boxes(stoneMat, [[-17, .6, 0, 15, 1.2, 22]]));
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 3.3, 13, 12), stoneMat); tower.position.set(-17, 7.7, 0);
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(2.7, 3.2, 12), darkMat); cap.position.set(-17, 15.8, 0);
+        millSails = new THREE.Group(); millSails.position.set(-14.2, 13.2, 0);
+        for (let k = 0; k < 4; k++) { const arm = new THREE.Group(), sail = new THREE.Mesh(boxG, whiteMat); sail.scale.set(.14, 8.4, 1.3); sail.position.y = 4.6; arm.rotation.x = k * Math.PI / 2; arm.add(sail); millSails.add(arm); }
+        const hub = new THREE.Mesh(boxG, darkMat); hub.scale.set(3, .5, .5); hub.position.set(-15.4, 13.2, 0); g.add(tower, cap, millSails, hub);
+      }),
+      landmark(1, 100, 'העיר העתיקה · מגדל דוד', g => {
+        const list = [[15, 5.5, 0, 3, 11, 100], [14.6, 7.5, -42, 5, 15, 7], [14.6, 7.5, 34, 5, 15, 7], [17.5, 10, -8, 10, 20, 10]];
+        for (let k = -16; k <= 16; k++) list.push([15, 11.6, k * 3.05, 3, 1.2, 1.5]);
+        for (let k = -2; k <= 2; k++) list.push([13 + 0, 20.6, -8 + k * 2.2, 1, 1.2, 1.1], [22, 20.6, -8 + k * 2.2, 1, 1.2, 1.1]);
+        g.add(boxes(stoneMat, list), boxes(darkMat, [[13.45, 3.2, 20, .2, 6.4, 4.4]]));
+        const min = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 14, 10), stoneMat); min.position.set(17.5, 27, -8);
+        const bal = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, .7, 10), stoneMat); bal.position.set(17.5, 30, -8);
+        const top = new THREE.Mesh(new THREE.ConeGeometry(1.6, 4.5, 10), darkMat); top.position.set(17.5, 36.2, -8); g.add(min, bal, top);
+      }),
+    ];
+    const LM_S = 190;
 
-    // ── ניצוצות ──
-    const SP = 520, spPos = new Float32Array(SP * 3).fill(-999), spCol = new Float32Array(SP * 3), spVel = new Float32Array(SP * 3), spLife = new Float32Array(SP); let spNext = 0;
+    // ── קווי מהירות (רק בזינוק) וניצוצות ──
+    const SL = 70, slPos = new Float32Array(SL * 6), slSeed = Array.from({ length: SL }, () => [Math.random() * 6.28, 3.6 + Math.random() * 4, Math.random() * 46 - 40]);
+    const slGeo = new THREE.BufferGeometry(); slGeo.setAttribute('position', new THREE.BufferAttribute(slPos, 3).setUsage(THREE.DynamicDrawUsage));
+    const speedLines = new THREE.LineSegments(slGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false })); speedLines.frustumCulled = false; scene.add(speedLines);
+    const SP = lite ? 260 : 520, spPos = new Float32Array(SP * 3).fill(-999), spCol = new Float32Array(SP * 3), spVel = new Float32Array(SP * 3), spLife = new Float32Array(SP); let spNext = 0, spLive = 0;
     const spGeo = new THREE.BufferGeometry(); spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3).setUsage(THREE.DynamicDrawUsage)); spGeo.setAttribute('color', new THREE.BufferAttribute(spCol, 3).setUsage(THREE.DynamicDrawUsage));
-    const sparkPts = new THREE.Points(spGeo, new THREE.PointsMaterial({ size: .24, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, sizeAttenuation: true }));
+    const sparkPts = new THREE.Points(spGeo, new THREE.PointsMaterial({ size: .3, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, toneMapped: false, sizeAttenuation: true }));
     sparkPts.frustumCulled = false; scene.add(sparkPts);
-    const tmpC = new THREE.Color();
     function sparks(laneOff, y, color, n, pow) {
-      tmpC.set(color).multiplyScalar(3.4); const x = laneOff * LANE;
+      tmpC.set(color).multiplyScalar(lite ? 1.1 : 1.8); const x = laneOff * LANE; if (lite) n = Math.ceil(n / 2);
       for (let k = 0; k < n; k++) { const i = spNext = (spNext + 1) % SP, a = Math.random() * Math.PI * 2, b = Math.random() * Math.PI - Math.PI / 2, v = pow * (.25 + Math.random() * .75);
         spPos[i * 3] = x + (Math.random() - .5) * 1.6; spPos[i * 3 + 1] = y + (Math.random() - .5) * 1.8; spPos[i * 3 + 2] = -2.6;
         spVel[i * 3] = Math.cos(a) * Math.cos(b) * v; spVel[i * 3 + 1] = Math.sin(b) * v + 3; spVel[i * 3 + 2] = Math.sin(a) * Math.cos(b) * v * .6;
         spCol[i * 3] = tmpC.r; spCol[i * 3 + 1] = tmpC.g; spCol[i * 3 + 2] = tmpC.b; spLife[i] = .5 + Math.random() * .6; }
+      spLive = SP;
     }
-    const rings = Array.from({ length: 3 }, () => { const m = new THREE.Mesh(new THREE.RingGeometry(.92, 1.06, 56), new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); m.visible = false; m.userData.t = 1; scene.add(m); return m; });
-    function ring(x, z, color) { const r = rings.find(r => !r.visible) || rings[0]; r.position.set(x, 2.2, z); r.material.color.set(color).multiplyScalar(2.5); r.userData.t = 0; r.visible = true; }
+    const rings = Array.from({ length: 3 }, () => { const m = new THREE.Mesh(new THREE.RingGeometry(.92, 1.08, 40), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); m.visible = false; m.userData.t = 1; scene.add(m); return m; });
+    function ring(x, z, color) { const r = rings.find(r => !r.visible) || rings[0]; r.position.set(x, 2.2, z); r.material.color.copy(hdr(color, 1.8)); r.userData.t = 0; r.visible = true; }
 
-    // ── האמבולנס ──
+    // ── האמבולנס: צ'קלקה אדומה בלבד ──
+    const addMat = (color, opacity) => new THREE.MeshBasicMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
     const car = new THREE.Group(), carBody = new THREE.Group(); car.add(carBody); scene.add(car);
-    const wheels = [];
-    const beaconMat = [new THREE.MeshBasicMaterial({ toneMapped: false }), new THREE.MeshBasicMaterial({ toneMapped: false })];
-    const beaconL = [new THREE.PointLight(0xff1830, 0, 30, 1.8), new THREE.PointLight(0x2a6bff, 0, 30, 1.8)];
-    const beaconHalo = [new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), addMat(new THREE.Color(1, .1, .15), 1)), new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), addMat(new THREE.Color(.15, .4, 1), 1))];
-    [-1, 1].forEach((sd, i) => {
-      const b = new THREE.Mesh(new THREE.BoxGeometry(.5, .16, .34), beaconMat[i]); b.position.set(sd * .42, 2.62, .25); carBody.add(b);
-      beaconL[i].position.set(sd * 1.5, 4.2, .4); carBody.add(beaconL[i]); beaconHalo[i].position.set(sd * .42, 2.66, .46); carBody.add(beaconHalo[i]);
-    });
-    const tailMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, .1, .08), toneMapped: false });
+    const carShadow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 7.4), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })); carShadow.rotation.x = -Math.PI / 2; carShadow.position.set(.5, .04, .9); car.add(carShadow);
+    const wheels = [], beaconMat = [0, 1].map(() => new THREE.MeshBasicMaterial({ toneMapped: false })), beaconHalo = [0, 1].map(() => new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), addMat(new THREE.Color(1, .08, .1), 1)));
+    [-1, 1].forEach((sd, i) => { const b = new THREE.Mesh(new THREE.BoxGeometry(.5, .16, .34), beaconMat[i]); b.position.set(sd * .42, 2.62, .25); beaconHalo[i].position.set(sd * .42, 2.66, .46); carBody.add(b, beaconHalo[i]); });
+    const beaconL = new THREE.PointLight(0xff1428, 0, 13, 1.8); beaconL.position.set(0, 3.9, .6); carBody.add(beaconL);
+    const tailMat = new THREE.MeshBasicMaterial({ color: hdr(0xff2018, 1.6), toneMapped: false });
     for (const sd of [-1, 1]) { const t = new THREE.Mesh(new THREE.BoxGeometry(.13, .24, .04), tailMat); t.position.set(sd * .93, 1.3, 2.29); carBody.add(t); }
-    const head = new THREE.SpotLight(0xdfe8ff, 170, 80, .5, .8, 1.5); head.position.set(0, 1.25, -2.2); head.target.position.set(0, .2, -34); carBody.add(head, head.target);
 
     // ── פריטים לאיסוף ──
-    const std = (color, emissive, ei = .35, rough = .35) => new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: ei, roughness: rough, metalness: .05 });
-    const mWhite = std(0xf4f4f5, 0xffffff, .28), mRed = std(0xef233c, 0xff1830, .9), mSkin = std(0xf2c9a0, 0xf2a060, .35), mPad = std(0xfdeedd, 0xffe0c0, .4);
+    const std = (color, emissive, ei = .35) => new THREE.MeshLambertMaterial({ color, emissive, emissiveIntensity: ei });
+    const mWhite = std(0xf8f8f8, 0xffffff, .25), mRed = std(0xef233c, 0xff1830, .55), mSkin = std(0xf2c9a0, 0xf2a060, .3), mPad = std(0xfdeedd, 0xffe0c0, .3);
     const haloGeo = new THREE.PlaneGeometry(2.6, 2.6);
-    function withHalo(g, color) { const h = new THREE.Mesh(haloGeo, addMat(new THREE.Color(color).multiplyScalar(.9), .7)); h.position.z = -.25; const o = new THREE.Group(); o.add(g, h); return o; }
+    function withHalo(g, color) { const h = new THREE.Mesh(haloGeo, addMat(new THREE.Color(color).multiplyScalar(.8), .6)); h.position.z = -.25; const o = new THREE.Group(); o.add(g, h); return o; }
     const PROTO = {};
-    { const g = new THREE.Group(), cap = new THREE.Mesh(new THREE.CapsuleGeometry(.27, .62, 6, 16), mWhite), half = new THREE.Mesh(new THREE.CylinderGeometry(.275, .275, .31, 16), mRed), end = new THREE.Mesh(new THREE.SphereGeometry(.275, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mRed);
+    { const g = new THREE.Group(), cap = new THREE.Mesh(new THREE.CapsuleGeometry(.27, .62, 4, 12), mWhite), half = new THREE.Mesh(new THREE.CylinderGeometry(.275, .275, .31, 12), mRed), end = new THREE.Mesh(new THREE.SphereGeometry(.275, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mRed);
       half.position.y = .155; end.position.y = .31; g.add(cap, half, end); g.rotation.z = .7; const s = new THREE.Group(); s.add(g); PROTO.pill = withHalo(s, 0xff6070); }
     { const sh = new THREE.Shape(); sh.moveTo(25, 25); sh.bezierCurveTo(25, 25, 20, 0, 0, 0); sh.bezierCurveTo(-30, 0, -30, 35, -30, 35); sh.bezierCurveTo(-30, 55, -10, 77, 25, 95); sh.bezierCurveTo(60, 77, 80, 55, 80, 35); sh.bezierCurveTo(80, 35, 80, 0, 50, 0); sh.bezierCurveTo(35, 0, 25, 25, 25, 25);
-      const geo = new THREE.ExtrudeGeometry(sh, { depth: 26, bevelEnabled: true, bevelThickness: 7, bevelSize: 6, bevelSegments: 3, curveSegments: 12 }); geo.center(); geo.rotateZ(Math.PI); geo.scale(.0105, .0105, .0105);
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: 26, bevelEnabled: true, bevelThickness: 7, bevelSize: 6, bevelSegments: 2, curveSegments: 8 }); geo.center(); geo.rotateZ(Math.PI); geo.scale(.0105, .0105, .0105);
       const s = new THREE.Group(); s.add(new THREE.Mesh(geo, mRed)); PROTO.heart = withHalo(s, 0xff2040); }
-    { const s = new THREE.Group(), box = new THREE.Mesh(new THREE.BoxGeometry(1, .72, .42), mWhite), c1 = new THREE.Mesh(new THREE.BoxGeometry(.15, .44, .46), mRed), c2 = new THREE.Mesh(new THREE.BoxGeometry(.44, .15, .46), mRed), hd = new THREE.Mesh(new THREE.TorusGeometry(.17, .035, 8, 16, Math.PI), mWhite);
+    { const s = new THREE.Group(), box = new THREE.Mesh(new THREE.BoxGeometry(1, .72, .42), mWhite), c1 = new THREE.Mesh(new THREE.BoxGeometry(.15, .44, .46), mRed), c2 = new THREE.Mesh(new THREE.BoxGeometry(.44, .15, .46), mRed), hd = new THREE.Mesh(new THREE.TorusGeometry(.17, .035, 6, 12, Math.PI), mWhite);
       hd.position.y = .36; s.add(box, c1, c2, hd); PROTO.kit = withHalo(s, 0xffffff); }
     { const g = new THREE.Group(), strip = new THREE.Mesh(new THREE.BoxGeometry(1.25, .36, .09), mSkin), pad = new THREE.Mesh(new THREE.BoxGeometry(.4, .37, .12), mPad); g.add(strip, pad); g.rotation.z = -.5; const s = new THREE.Group(); s.add(g); PROTO.plaster = withHalo(s, 0xffc890); }
     const coneProto = new THREE.Group();
-    { const o = std(0xff6a10, 0xff4400, .5, .5), w = std(0xffffff, 0xffffff, .6), body = new THREE.Mesh(new THREE.ConeGeometry(.4, 1.05, 18), o), band = new THREE.Mesh(new THREE.CylinderGeometry(.2, .275, .2, 18), w), base = new THREE.Mesh(new THREE.BoxGeometry(.9, .07, .9), o);
-      body.position.y = .56; band.position.y = .55; base.position.y = .035; body.castShadow = true; coneProto.add(body, band, base); }
+    { const o = std(0xff6a10, 0xff4400, .35), w = std(0xffffff, 0xffffff, .4), body = new THREE.Mesh(new THREE.ConeGeometry(.4, 1.05, 14), o), band = new THREE.Mesh(new THREE.CylinderGeometry(.2, .275, .2, 14), w), base = new THREE.Mesh(new THREE.BoxGeometry(.9, .07, .9), o);
+      body.position.y = .56; band.position.y = .55; base.position.y = .035; coneProto.add(body, band, base); }
 
     // ── שערים ──
-    const gantryMat = new THREE.MeshStandardMaterial({ color: 0x4a4e60, roughness: .4, metalness: .85 });
-    const GH = 4.3, boxG = new THREE.BoxGeometry(1, 1, 1), sheetG = new THREE.PlaneGeometry(LANE - .28, GH - .1), signG = new THREE.PlaneGeometry(LANE - .12, 1.6);
+    const gantryMat = lam(0x5a5d68);
+    const GH = 4.3, sheetG = new THREE.PlaneGeometry(LANE - .28, GH - .1), signG = new THREE.PlaneGeometry(LANE - .12, 1.6);
     function buildGate(g) {
       const grp = new THREE.Group(); grp.userData = { lanes: [], tex: [] };
       const beam = new THREE.Mesh(boxG, gantryMat); beam.scale.set(LANE * 3 + 1.4, .22, .22); beam.position.y = GH + 2.05; grp.add(beam);
@@ -525,61 +577,65 @@ export function createProtocolRunner(root) {
       g.opts.forEach((o, l) => {
         const x = (l - 1) * LANE, parts = [];
         if (!o) {
-          const bar = new THREE.Mesh(boxG, new THREE.MeshStandardMaterial({ map: hazardTex, emissive: 0xfacc15, emissiveMap: hazardTex, emissiveIntensity: .7, roughness: .5 })); bar.scale.set(LANE - .3, .75, .22); bar.position.set(x, 1, 0); grp.add(bar);
+          const bar = new THREE.Mesh(boxG, new THREE.MeshBasicMaterial({ map: hazardTex })); bar.scale.set(LANE - .3, .75, .22); bar.position.set(x, 1, 0); grp.add(bar);
           for (const sd of [-1, 1]) { const leg = new THREE.Mesh(boxG, gantryMat); leg.scale.set(.12, 1.3, .12); leg.position.set(x + sd * 1.3, .65, 0); grp.add(leg); }
-          const t = textTex(['✕'], { w: 256, h: 128, color: '#ff4757', glow: 22, max: 110 }); grp.userData.tex.push(t);
-          const s = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false, color: new THREE.Color(1.6, 1.6, 1.6), depthWrite: false })); s.position.set(x, GH + 1.05, .05); grp.add(s);
+          const t = textTex(['✕'], { w: 256, h: 128, color: '#ff4757', bg: 'rgba(8,9,18,.92)', max: 110 }); grp.userData.tex.push(t);
+          const s = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); s.position.set(x, GH + 1.05, .05); grp.add(s);
         } else {
-          const neon = new THREE.MeshBasicMaterial({ color: hdr(o.color, 2.3), toneMapped: false });
-          for (const sd of [-1, 1]) { const p = new THREE.Mesh(boxG, neon); p.scale.set(.13, GH, .13); p.position.set(x + sd * (LANE / 2 - .1), GH / 2, 0); grp.add(p); parts.push(p); }
-          const top = new THREE.Mesh(boxG, neon); top.scale.set(LANE - .07, .13, .13); top.position.set(x, GH, 0); grp.add(top); parts.push(top);
-          const sheet = new THREE.Mesh(sheetG, new THREE.MeshBasicMaterial({ color: hdr(o.color, .9), transparent: true, opacity: .2, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false })); sheet.position.set(x, GH / 2, 0); grp.add(sheet); parts.push(sheet);
-          const t = textTex(o.label.split('\n'), { color: '#ffffff', bg: 'rgba(8,9,18,.92)', border: o.color, glow: 16, max: 150 }); grp.userData.tex.push(t);
-          const sign = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false, color: new THREE.Color(1.35, 1.35, 1.35) })); sign.position.set(x, GH + 1.05, .05); grp.add(sign);
+          const neon = new THREE.MeshBasicMaterial({ color: hdr(o.color, 1.7), toneMapped: false });
+          for (const sd of [-1, 1]) { const p = new THREE.Mesh(boxG, neon); p.scale.set(.16, GH, .16); p.position.set(x + sd * (LANE / 2 - .1), GH / 2, 0); grp.add(p); parts.push(p); }
+          const top = new THREE.Mesh(boxG, neon); top.scale.set(LANE - .04, .16, .16); top.position.set(x, GH, 0); grp.add(top); parts.push(top);
+          const sheet = new THREE.Mesh(sheetG, new THREE.MeshBasicMaterial({ color: o.color, transparent: true, opacity: .3, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); sheet.position.set(x, GH / 2, 0); grp.add(sheet); parts.push(sheet);
+          const t = textTex(o.label.split('\n'), { color: '#ffffff', bg: 'rgba(8,9,18,.94)', border: o.color, max: 150 }); grp.userData.tex.push(t);
+          const sign = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); sign.position.set(x, GH + 1.05, .05); grp.add(sign);
         }
         grp.userData.lanes.push(parts);
       });
       return grp;
     }
     const tintGeo = new THREE.PlaneGeometry(1, 1); tintGeo.rotateX(-Math.PI / 2); tintGeo.translate(0, 0, -.5);
-    const tints = [0, 1, 2].map(l => { const m = new THREE.Mesh(tintGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); m.position.set((l - 1) * LANE, .04, 2); m.visible = false; scene.add(m); return m; });
+    const tints = [0, 1, 2].map(l => { const m = new THREE.Mesh(tintGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: .34, depthWrite: false, toneMapped: false })); m.position.set((l - 1) * LANE, .05, 2); m.visible = false; scene.add(m); return m; });
 
     // ── בית החולים ──
     const hosp = new THREE.Group(); hosp.visible = false; scene.add(hosp);
     {
       const geo = new THREE.BoxGeometry(1, 1, 1); geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(new Float32Array([3.3, 8.1, 5.7]), 1));
       const body = new THREE.InstancedMesh(geo, bldMat, 3); body.frustumCulled = false;
-      [[0, 19, -9.5, 28, 38, 17], [-23, 8, -9, 18, 16, 15], [23, 8, -9, 18, 16, 15]].forEach((b, i) => { dummy.position.set(b[0], b[1], b[2]); dummy.scale.set(b[3], b[4], b[5]); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); body.setMatrixAt(i, dummy.matrix); });
-      hosp.add(body);
-      const dark = new THREE.MeshStandardMaterial({ color: 0x1a1d2b, roughness: .4, metalness: .5 });
-      const canopy = new THREE.Mesh(new THREE.BoxGeometry(15, .6, 6.5), dark); canopy.position.set(0, 5.9, 1.8); hosp.add(canopy);
-      for (const sd of [-1, 1]) { const c = new THREE.Mesh(new THREE.BoxGeometry(.5, 5.6, .5), dark); c.position.set(sd * 6.9, 2.8, 4.6); hosp.add(c); }
-      const door = new THREE.Mesh(new THREE.PlaneGeometry(12, 5.4), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.25, 1.08, .72), toneMapped: false })); door.position.set(0, 2.7, -.94); hosp.add(door);
-      const mull = new THREE.Mesh(new THREE.BoxGeometry(.18, 5.4, .1), dark); mull.position.set(0, 2.7, -.9); hosp.add(mull);
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(6, 6, .5), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.5, 1.55), toneMapped: false })); plate.position.set(0, 31, -.8); hosp.add(plate);
-      const crossMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, .15, .25), toneMapped: false });
-      const c1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 4.4, .6), crossMat), c2 = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.5, .6), crossMat); c1.position.set(0, 31, -.6); c2.position.set(0, 31, -.6); hosp.add(c1, c2);
-      const glow = new THREE.Mesh(new THREE.PlaneGeometry(30, 16), addMat(new THREE.Color(1, .82, .5), .5)); glow.position.set(0, 3, 6); hosp.add(glow);
+      [[0, 15, -9.5, 28, 30, 17], [-23, 8, -9, 18, 16, 15], [23, 8, -9, 18, 16, 15]].forEach((b, i) => put(body, i, ...b));
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(15, .6, 6.5), darkMat); canopy.position.set(0, 5.9, 1.8);
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(12, 5.4), new THREE.MeshBasicMaterial({ color: hdr(0xffe2a8, 1.2), toneMapped: false })); door.position.set(0, 2.7, -.94);
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(6, 6, .5), whiteMat); plate.position.set(0, 25, -.8);
+      const crossMat = new THREE.MeshBasicMaterial({ color: hdr(0xe0142c, 1.5), toneMapped: false });
+      const c1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 4.4, .6), crossMat), c2 = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.5, .6), crossMat); c1.position.set(0, 25, -.6); c2.position.set(0, 25, -.6);
+      hosp.add(body, canopy, door, plate, c1, c2, boxes(darkMat, [[-6.9, 2.8, 4.6, .5, 5.6, .5], [6.9, 2.8, 4.6, .5, 5.6, .5], [0, 2.7, -.9, .18, 5.4, .1]]));
     }
 
     // ── טעינת נכסים ──
-    const api = { loaded: false, sparks };
+    const api = { loaded: false, sparks, lite };
     async function load() {
       try { await document.fonts.ready; } catch (e) { /* נמשיך עם גופן המערכת */ }
-      signTex = [['בית מרקחת', '#22ff88'], ['קפה', '#ffb020'], ['פיצה', '#ff2d95'], ['24/7', '#22d3ee'], ['מלון', '#9d5cff'], ['מוסך', '#ff5533'], ['מרפאה', '#22d3ee']]
-        .map(([t, c]) => textTex([t], { w: 512, h: 200, color: c, border: c, glow: 26, max: 120 }));
-      const erTex = textTex(['מיון'], { w: 512, h: 128, color: '#ffffff', bg: '#d0142c', max: 100 });
-      const erSign = new THREE.Mesh(new THREE.PlaneGeometry(13, 3.2), new THREE.MeshBasicMaterial({ map: erTex, toneMapped: false, color: new THREE.Color(1.7, 1.7, 1.7) })); erSign.position.set(0, 8, 5.1); hosp.add(erSign);
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environmentIntensity = .3;
-      const env = new RGBELoader().loadAsync(ASSETS + 'night_city_1k.hdr').then(t => { t.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pmrem.fromEquirectangular(t).texture; t.dispose(); })
-        .catch(() => { scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; });
-      const model = new GLTFLoader().loadAsync(ASSETS + 'ambulance.glb').then(gltf => {
-        const m = gltf.scene; m.rotation.y = Math.PI; m.scale.setScalar(1.4);     // החזית במודל פונה ל־+Z; אנחנו נוסעים ל־-Z
-        m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material.roughness = .42; o.material.metalness = .05; o.material.envMapIntensity = 1.1; o.material.color.setScalar(.78); o.material.side = THREE.FrontSide; } if (o.name.startsWith('wheel')) wheels.push(o); });
-        carBody.add(m);
-      });
-      await Promise.all([env, model]); pmrem.dispose(); api.loaded = true;
+      const erSign = new THREE.Mesh(new THREE.PlaneGeometry(13, 3.2), new THREE.MeshBasicMaterial({ map: textTex(['מיון'], { w: 512, h: 128, color: '#ffffff', bg: '#d0142c', max: 100 }) })); erSign.position.set(0, 8, 5.1);
+      const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(17, 3.4), new THREE.MeshBasicMaterial({ map: textTex(['שערי צדק'], { w: 640, h: 128, color: '#17324d', bg: '#f4f1ea', max: 96 }) })); nameSign.position.set(0, 18.5, -.9);
+      hosp.add(erSign, nameSign);
+      // השתקפויות על האמבולנס: מפת סביבה קטנה שנוצרת מהשמיים עצמם, בלי קובץ HDRI
+      const pmrem = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(sky.geometry, skyMat));
+      scene.environment = pmrem.fromScene(envScene, 0, .1, 2000).texture; pmrem.dispose();
+      const gltf = await new GLTFLoader().loadAsync(ASSETS + 'ambulance.glb');
+      const m = gltf.scene; m.rotation.y = Math.PI; m.scale.setScalar(1.4);     // החזית במודל פונה ל־+Z; אנחנו נוסעים ל־-Z
+      m.traverse(o => { if (o.isMesh) { o.material.roughness = .45; o.material.metalness = .05; o.material.envMapIntensity = .9; o.material.side = THREE.FrontSide; } if (o.name.startsWith('wheel')) wheels.push(o); });
+      redOnlyLightbar(m);
+      carBody.add(m); api.loaded = true;
+    }
+    // במודל המקורי פס האורות חציו כחול. מעבירים כל קודקוד שצבעו כחול בוהק לצבע האדום של אותה טקסטורה.
+    function redOnlyLightbar(model) {
+      let img = null; model.traverse(o => { if (o.isMesh && o.material.map) img = o.material.map.image; }); if (!img) return;
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const cx = c.getContext('2d'); cx.drawImage(img, 0, 0);
+      const px = cx.getImageData(0, 0, c.width, c.height).data, at = (u, v) => { const x = Math.min(c.width - 1, Math.floor((u - Math.floor(u)) * c.width)), y = Math.min(c.height - 1, Math.floor((v - Math.floor(v)) * c.height)), i = (y * c.width + x) * 4; return [px[i], px[i + 1], px[i + 2]]; };
+      const isBlue = ([r, g, b]) => b > 150 && b > r * 1.6 && b > g * 1.15, isRed = ([r, g, b]) => r > 170 && r > g * 2.2 && r > b * 2.2;
+      const meshes = []; model.traverse(o => { if (o.isMesh && o.geometry.attributes.uv) meshes.push(o); });
+      let red = null; for (const o of meshes) { const uv = o.geometry.attributes.uv; for (let i = 0; i < uv.count && !red; i++) if (isRed(at(uv.getX(i), uv.getY(i)))) red = [uv.getX(i), uv.getY(i)]; }
+      if (!red) return;
+      for (const o of meshes) { const uv = o.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) if (isBlue(at(uv.getX(i), uv.getY(i)))) uv.setXY(i, red[0], red[1]); uv.needsUpdate = true; }
     }
     api.ready = load();
 
@@ -594,69 +650,26 @@ export function createProtocolRunner(root) {
     function dropEnt(o) { scene.remove(o); if (o.userData.tex) { o.traverse(c => { if (c.isMesh && c.material.map && o.userData.tex.includes(c.material.map)) c.material.dispose(); }); o.userData.tex.forEach(t => t.dispose()); } }
 
     function resize(w, h) {
-      renderer.setPixelRatio(pr); renderer.setSize(w, h, false); composer.setPixelRatio(pr); composer.setSize(w, h);
+      renderer.setPixelRatio(pr); renderer.setSize(w, h, false); if (composer) { composer.setPixelRatio(pr); composer.setSize(w, h); }
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
     let sizeW = 4, sizeH = 4, slowFrames = 0;
     api.resize = (w, h) => { sizeW = w; sizeH = h; resize(w, h); };
 
-    let camX = 0, fov = 70, blur = 0, vig = .5, susY = 0, susV = 0, lastLean = 0, pitch = 0, vSm = 0;
+    let camX = 0, fov = 70, blur = 0, vig = 0, dashK = 0, susY = 0, susV = 0, lastLean = 0, pitch = 0, vSm = 0;
+    const zones = [];
     api.render = (S, dt, rawDt) => {
       // איכות אדפטיבית: אם הקצב צונח, מורידים רזולוציה
-      if (rawDt < .1) { slowFrames = rawDt > 1 / 40 ? slowFrames + 1 : Math.max(0, slowFrames - 2); if (slowFrames > 90 && pr > 1) { pr = Math.max(1, pr - .5); slowFrames = 0; resize(sizeW, sizeH); } }
+      if (rawDt < .1) { slowFrames = rawDt > 1 / 45 ? slowFrames + 1 : Math.max(0, slowFrames - 2); if (slowFrames > 70 && pr > 1) { pr = Math.max(1, pr - .25); slowFrames = 0; resize(sizeW, sizeH); } }
 
       const v = S.v * ZS, D = S.dist * ZS, t = S.T; vSm = damp(vSm, v, 6, dt);
       const carX = S.px / LW * LANE, kSpeed = v / 24;
-      roadMap.offset.y = D / 16 % 1; roadNormal.offset.y = D / 6 % 1; roadRough.offset.y = D / 24 % 1;
+      roadMap.offset.y = D / 16 % 1;
 
-      // מעקות, פנסים, בניינים, שלטים — ממוחזרים לפי אינדקס גלובלי
-      const pOff = D % POST_S;
-      for (let i = 0; i < POST_N; i++) { const z = 25 - i * POST_S + pOff; put(posts, i * 2, -(ROAD_HALF + .3), .47, z); put(posts, i * 2 + 1, ROAD_HALF + .3, .47, z); }
-      posts.instanceMatrix.needsUpdate = true;
-
-      [-1, 1].forEach((sd, si) => {
-        const Ds = D + (sd < 0 ? LAMP_S / 2 : 0), base = Math.floor(Ds / LAMP_S), off = Ds - base * LAMP_S; let lit = false;
-        for (let i = 0; i < LAMP_N; i++) {
-          const z = 24 - i * LAMP_S + off, k = si * LAMP_N + i;
-          put(lampPole, k, sd * 7.4, 3.8, z); put(lampArm, k, sd * 6.3, 7.5, z); put(lampBulb, k, sd * 5.4, 7.42, z);
-          put(lampHalo, k, sd * 5.4, 7.4, z + .05, 3.2, 3.2, 1); put(lampPool, k, sd * 4.4, .05, z, 12, 1, 17);
-          if (!lit && (base + i) % 2 === 0 && z <= 10 && z > -50) { lit = true; streetL[si].position.set(sd * 5.2, 7.1, z); streetL[si].intensity = 110 * smooth(-50, -36, z) * (1 - smooth(4, 10, z)); }
-        }
-        if (!lit) streetL[si].intensity = 0;
-      });
-      for (const m of [lampPole, lampArm, lampBulb, lampHalo, lampPool]) m.instanceMatrix.needsUpdate = true;
-
-      const bBase = Math.floor(D / BLD_S), bOff = D - bBase * BLD_S; let sgn = 0;
-      [-1, 1].forEach((sd, si) => {
-        for (let i = 0; i < BLD_N; i++) {
-          const g = bBase + i, k = si * BLD_N + i, h1 = hash(g * 2 + si + 11.3), h2 = hash(g * 2 + si + 47.9), h3 = hash(g * 2 + si + 83.1);
-          const w = 12 + h1 * 9, len = 13.5 + h2 * 3.5, ht = 13 + h3 * h3 * 56, z = 34 - i * BLD_S + bOff, x = sd * (10.4 + w / 2);
-          put(blds, k, x, ht / 2, z, w, ht, len); bldSeed.array[k] = h1 * 100;
-          if (h2 > .42) { const nh = Math.min(ht - 4, 6 + h1 * 16); put(neonBars, k, sd * 10.28, 3.2 + nh / 2, z + (h3 - .5) * len * .7, .22, nh, .22); neonBars.setColorAt(k, NEON[Math.floor(h3 * 97) % NEON.length]); }
-          else put(neonBars, k, 0, -50, 0, .01, .01, .01);
-          if ((g + si * 2) % 4 === 0 && sgn < signs.length && signTex.length) { const s = signs[sgn++]; s.visible = true; s.position.set(sd * 7.5, 6.4 + h1 * 2.6, z); s.material.map = signTex[Math.floor(h2 * 89) % signTex.length]; }
-        }
-      });
-      for (let i = sgn; i < signs.length; i++) signs[i].visible = false;
-      blds.instanceMatrix.needsUpdate = bldSeed.needsUpdate = neonBars.instanceMatrix.needsUpdate = neonBars.instanceColor.needsUpdate = true;
-
-      // ── האמבולנס: הטיה, סבסוב, מתלים, גלגלים, צ'קלקה ──
-      const leanV = (S.lean - lastLean) / Math.max(dt, .001); lastLean = S.lean;
-      susV += (-190 * susY - 13 * susV) * dt + Math.abs(leanV) * .0009 + (Math.random() - .5) * kSpeed * .13 * dt; susY += susV * dt;
-      if (S.shake > 8.5 && susY > -.02) susV = -1.3;
-      pitch = damp(pitch, clamp((v - vSm) * .012, -.07, .07), 8, dt);
-      car.position.set(carX, 0, 0);
-      carBody.position.y = susY; carBody.rotation.set(-pitch, -S.lean * .2, S.lean * .13);
-      for (const w of wheels) w.rotation.x += v * dt / .42;
-      const bt = t * 5.2 % 1, onR = bt < .5 ? (bt % .25 < .14 ? 1 : .08) : 0, onB = bt >= .5 ? (bt % .25 < .14 ? 1 : .08) : 0;
-      beaconMat[0].color.setRGB(.25 + 2.6 * onR, .02, .04); beaconMat[1].color.setRGB(.03, .08 + .7 * onB, .3 + 2.6 * onB);
-      beaconL[0].intensity = 55 * onR; beaconL[1].intensity = 70 * onB; beaconHalo[0].material.opacity = .6 * onR; beaconHalo[1].material.opacity = .6 * onB;
-      moon.position.set(carX + 7, 20, 9); moon.target.position.set(carX, 0, -4);
-
-      // ── ישויות ──
-      const seen = new Set(); let hospOn = false, gateActive = null;
+      // ── ישויות (לפני הסביבה, כי בית החולים מפנה לעצמו מקום בין הבניינים) ──
+      const seen = new Set(); let hospOn = false, gateActive = null; zones.length = 0;
       for (const e of S.ents) {
-        if (e.type === 'hosp') { hospOn = true; hosp.position.set(0, 0, -e.z * ZS); continue; }
+        if (e.type === 'hosp') { hospOn = true; hosp.position.set(0, 0, -e.z * ZS); zones.push([0, -e.z * ZS - 40, -e.z * ZS + 12]); continue; }
         let o = live.get(e); if (!o) { o = makeEnt(e); if (!o) continue; live.set(e, o); scene.add(o); }
         seen.add(e);
         if (e.type === 'gate') {
@@ -670,22 +683,62 @@ export function createProtocolRunner(root) {
       for (const [e, o] of live) if (!seen.has(e)) { dropEnt(o); live.delete(e); }
       hosp.visible = hospOn;
       tints.forEach((m, l) => { const o = gateActive && gateActive.opts[l]; m.visible = !!o; if (o) { m.material.color.set(o.color); m.scale.set(LANE - .2, 1, Math.max(.1, gateActive.z * ZS + 2)); } });
-      for (const r of rings) if (r.visible) { r.userData.t += dt * 1.9; const k = r.userData.t; r.scale.setScalar(1 + k * 4.5); r.material.opacity = Math.max(0, 1 - k) * .7; if (k >= 1) r.visible = false; }
+      for (const r of rings) if (r.visible) { r.userData.t += dt * 1.9; const k = r.userData.t; r.scale.setScalar(1 + k * 4.5); r.material.opacity = Math.max(0, 1 - k) * .8; if (k >= 1) r.visible = false; }
 
-      // ── גשם וניצוצות ──
-      for (let i = 0; i < RAIN; i++) {
-        let y = rainSeed[i * 3 + 1] - 24 * dt, z = rainSeed[i * 3 + 2] + v * dt;
-        if (y < 0) y += 18; if (z > 12) z -= 80;
-        rainSeed[i * 3 + 1] = y; rainSeed[i * 3 + 2] = z; const x = rainSeed[i * 3] + camX, j = i * 6;
-        rainPos[j] = x; rainPos[j + 1] = y; rainPos[j + 2] = z; rainPos[j + 3] = x; rainPos[j + 4] = y + .55; rainPos[j + 5] = z - v * .028;
+      // ── אתרי ירושלים: שלוש משבצות ממוחזרות, כל אחת מקבלת אתר לפי אינדקס גלובלי ──
+      const lBase = Math.floor(D / LM_S), lOff = D - lBase * LM_S;
+      for (const l of LM) l.g.visible = false;
+      for (let j = 0; j < 3; j++) { const l = LM[(lBase + j) % LM.length], z = 70 - j * LM_S + lOff; if (hospOn && z < hosp.position.z + 60) continue; l.g.visible = true; l.g.position.z = z; if (l.len) zones.push([l.side, z - l.len / 2 - 5, z + l.len / 2 + 5]); }
+      if (millSails) millSails.rotation.x = t * .5;
+      const blocked = (sd, z0, z1) => { for (const q of zones) if ((q[0] === 0 || q[0] === sd) && z1 > q[1] && z0 < q[2]) return true; return false; };
+
+      // ── סביבת הרחוב: בניינים, דודי שמש, ברושים ועמודי תאורה ──
+      const bBase = Math.floor(D / BLD_S), bOff = D - bBase * BLD_S;
+      [-1, 1].forEach((sd, si) => {
+        for (let i = 0; i < BLD_N; i++) {
+          const g = bBase + i, k = si * BLD_N + i, h1 = hash(g * 2 + si + 11.3), h2 = hash(g * 2 + si + 47.9), h3 = hash(g * 2 + si + 83.1);
+          const w = 11 + h1 * 7, len = 13 + h2 * 3.5, ht = (3 + Math.floor(h3 * 4)) * 3.2 + 1, z = 34 - i * BLD_S + bOff, x = sd * (10.5 + w / 2);
+          if (blocked(sd, z - len / 2, z + len / 2)) { put(blds, k, 0, -80, 0, .01, .01, .01); put(tanks, k, 0, -80, 0); put(panels, k, 0, -80, 0); continue; }
+          put(blds, k, x, ht / 2, z, w, ht, len); bldSeed.array[k] = h1 * 100;
+          const rx = x - sd * w * .22, rz = z + (h2 - .5) * len * .5; put(tanks, k, rx, ht + 1.25, rz); put(panels, k, rx, ht + .5, rz + 1.1);
+        }
+        const tOff = (D + TREE_S / 2) % TREE_S;
+        for (let i = 0; i < TREE_N; i++) { const z = 30 - i * TREE_S + tOff, s = .8 + hash(Math.floor((D + TREE_S / 2) / TREE_S) + i + si * 31.7) * .45; put(trees, si * TREE_N + i, sd * 9.95, 3.5 * s + .2, z, 1, s, 1); }
+        const pOff = (D + si * LAMP_S / 2) % LAMP_S;
+        for (let i = 0; i < LAMP_N; i++) { const z = 28 - i * LAMP_S + pOff, k = si * LAMP_N + i; put(lampPole, k, sd * 6.75, 3.7, z); put(lampArm, k, sd * 5.9, 7.3, z, 1.9, .12, .3); }
+      });
+      for (const m of [blds, tanks, panels, trees, lampPole, lampArm]) m.instanceMatrix.needsUpdate = true;
+      bldSeed.needsUpdate = true;
+
+      // ── האמבולנס: הטיה, סבסוב, מתלים, גלגלים, צ'קלקה ──
+      const leanV = (S.lean - lastLean) / Math.max(dt, .001); lastLean = S.lean;
+      susV += (-190 * susY - 13 * susV) * dt + Math.abs(leanV) * .0009 + (Math.random() - .5) * kSpeed * .13 * dt; susY += susV * dt;
+      if (S.shake > 8.5 && susY > -.02) susV = -1.3;
+      pitch = damp(pitch, clamp((v - vSm) * .012, -.07, .07), 8, dt);
+      car.position.set(carX, 0, 0);
+      carBody.position.y = susY; carBody.rotation.set(-pitch, -S.lean * .2, S.lean * .13);
+      for (const w of wheels) w.rotation.x += v * dt / .42;
+      const bt = t * 4.6 % 1, on = [bt < .5 ? (bt % .25 < .15 ? 1 : .1) : 0, bt >= .5 ? (bt % .25 < .15 ? 1 : .1) : 0];
+      for (let i = 0; i < 2; i++) { beaconMat[i].color.setRGB(.3 + (lite ? .7 : 2.2) * on[i], .03, .05); beaconHalo[i].material.opacity = .85 * on[i]; }
+      beaconL.intensity = 16 * Math.max(on[0], on[1]);
+
+      // ── קווי מהירות וניצוצות ──
+      dashK = damp(dashK, S.dash ? 1 : 0, 7, dt); speedLines.visible = dashK > .02;
+      if (speedLines.visible) {
+        speedLines.material.opacity = dashK * .55;
+        for (let i = 0; i < SL; i++) { const q = slSeed[i]; q[2] += v * dt * 1.4; if (q[2] > 8) q[2] -= 48; const x = camX + Math.cos(q[0]) * q[1], y = 4 + Math.sin(q[0]) * q[1] * .8, j = i * 6;
+          slPos[j] = x; slPos[j + 1] = y; slPos[j + 2] = q[2]; slPos[j + 3] = x; slPos[j + 4] = y; slPos[j + 5] = q[2] - 5.5; }
+        slGeo.attributes.position.needsUpdate = true;
       }
-      rainGeo.attributes.position.needsUpdate = true;
-      for (let i = 0; i < SP; i++) if (spLife[i] > 0) {
-        spLife[i] -= dt; const j = i * 3; spVel[j + 1] -= 16 * dt; spPos[j] += spVel[j] * dt; spPos[j + 1] += spVel[j + 1] * dt; spPos[j + 2] += (spVel[j + 2] + v * .5) * dt;
-        if (spPos[j + 1] < .05) { spPos[j + 1] = .05; spVel[j + 1] *= -.35; }
-        if (spLife[i] <= 0) spPos[j + 1] = -999; else if (spLife[i] < .25) { spCol[j] *= .9; spCol[j + 1] *= .9; spCol[j + 2] *= .9; }
+      if (spLive > 0) {
+        spLive = 0;
+        for (let i = 0; i < SP; i++) if (spLife[i] > 0) {
+          spLife[i] -= dt; const j = i * 3; spVel[j + 1] -= 16 * dt; spPos[j] += spVel[j] * dt; spPos[j + 1] += spVel[j + 1] * dt; spPos[j + 2] += (spVel[j + 2] + v * .5) * dt;
+          if (spPos[j + 1] < .05) { spPos[j + 1] = .05; spVel[j + 1] *= -.35; }
+          if (spLife[i] <= 0) spPos[j + 1] = -999; else spLive++;
+        }
+        spGeo.attributes.position.needsUpdate = spGeo.attributes.color.needsUpdate = true;
       }
-      spGeo.attributes.position.needsUpdate = spGeo.attributes.color.needsUpdate = true;
 
       // ── מצלמת מרדף ──
       camX = damp(camX, carX * .62, 5.5, dt);
@@ -694,14 +747,16 @@ export function createProtocolRunner(root) {
       camera.position.set(camX + (Math.random() - .5) * sh, 4.5 + susY * .4 + (Math.random() - .5) * sh, damp(camera.position.z, back, 4, dt));
       camera.lookAt(camX * .9 + carX * .22, 1.7, -17);
       sky.position.copy(camera.position);
+      skyline.position.set(camera.position.x, camera.position.y + 100, camera.position.z - 950);
+      sunGlow.position.copy(SUN).multiplyScalar(900).add(camera.position);
 
-      // ── פוסט ──
-      blur = damp(blur, S.dash ? .13 : .012 + Math.max(0, kSpeed - .5) * .016, 5, dt); vig = damp(vig, gateActive ? .82 : .5, 4, dt);
-      fxPass.uniforms.uBlur.value = blur; fxPass.uniforms.uVig.value = vig;
-      fxPass.uniforms.uFlash.value = S.flash ? S.flash.a : 0; if (S.flash) fxPass.uniforms.uFlashCol.value.setRGB(...S.flash.c);
-      composer.render(dt);
+      // ── שכבות CSS ורינדור ──
+      vig = damp(vig, gateActive ? .75 : .18, 4, dt); vigEl.style.opacity = vig.toFixed(2);
+      if (S.flash) { flashEl.style.background = `radial-gradient(ellipse at 50% 46%, transparent 25%, rgba(${S.flash.c.map(x => Math.round(x * 255))},.95) 100%)`; flashEl.style.opacity = Math.min(1, S.flash.a).toFixed(2); } else flashEl.style.opacity = 0;
+      if (composer) { blur = damp(blur, S.dash ? .11 : 0, 5, dt); fxPass.uniforms.uBlur.value = blur; fxPass.enabled = blur > .004; composer.render(dt); }
+      else renderer.render(scene, camera);
     };
-    api.dispose = () => { live.forEach(dropEnt); live.clear(); composer.dispose(); renderer.dispose(); renderer.forceContextLoss(); };
+    api.dispose = () => { live.forEach(dropEnt); live.clear(); if (composer) composer.dispose(); renderer.dispose(); renderer.forceContextLoss(); };
     return api;
   }
 
