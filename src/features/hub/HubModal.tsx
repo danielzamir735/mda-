@@ -207,7 +207,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'breathing',
-    label: 'מסנכרן נשימות',
+    label: 'מסנכרן נשימות – מסך הרגעה לילד',
     icon: Wind,
     color: 'text-sky-400',
     border: 'border-sky-400/30',

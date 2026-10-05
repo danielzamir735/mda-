@@ -1,10 +1,12 @@
-import { X, Wind, Volume2, VolumeX } from 'lucide-react';
+import { X, Wind, Volume2, VolumeX, Sparkles, ChevronLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { trackInteraction } from '../../../utils/analytics';
+import ChildCalmScreen from './ChildCalmScreen';
 
 type Phase = 'idle' | 'inhale' | 'exhale';
+type Mode = 'choose' | 'breathing' | 'calm';
 
 const PETAL_ANGLES = [0, 60, 120, 180, 240, 300];
 
@@ -123,6 +125,7 @@ function CandleSVG({ active }: { active: boolean }) {
 interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
+  const [mode, setMode]           = useState<Mode>('choose');
   const [running, setRunning]     = useState(false);
   const [phase, setPhase]         = useState<Phase>('idle');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -144,6 +147,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
   // Reset on close + release wake lock
   useEffect(() => {
     if (!isOpen) {
+      setMode('choose');
       setRunning(false);
       setPhase('idle');
       audioRef.current?.pause();
@@ -161,6 +165,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
   }, []);
 
   if (!isOpen) return null;
+  if (mode === 'calm') return <ChildCalmScreen onBack={() => setMode('choose')} />;
 
   const handleStart = async () => {
     setRunning(true);
@@ -301,19 +306,46 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
                         border-b border-white/10 backdrop-blur-sm bg-black/10">
           <div className="flex items-center gap-2">
             <Wind size={20} className="text-sky-300" />
-            <h2 className="text-white font-bold text-xl">מסנכרן נשימות</h2>
+            <h2 className="text-white font-bold text-xl">{mode === 'choose' ? 'נשימות והרגעה' : 'מסנכרן נשימות'}</h2>
           </div>
           <HapticButton
-            onClick={() => { handleStop(); onClose(); }}
+            onClick={() => { handleStop(); if (mode === 'choose') onClose(); else setMode('choose'); }}
             pressScale={0.88}
             className="w-10 h-10 rounded-full bg-white/10 border border-white/20
                        flex items-center justify-center text-white/70 hover:text-white"
-            aria-label="סגור"
+            aria-label={mode === 'choose' ? 'סגור' : 'חזרה לבחירה'}
           >
             <X size={20} />
           </HapticButton>
         </div>
 
+        {mode === 'choose' && (
+          <div className="flex-1 flex flex-col justify-center gap-4 px-6">
+            {[
+              { id: 'breathing' as const, icon: Wind,     title: 'מסנכרן נשימות',   sub: 'שאיפה 4 שנ׳ · נשיפה 6 שנ׳',           tint: 'text-sky-300',   ring: 'border-sky-300/30' },
+              { id: 'calm' as const,      icon: Sparkles, title: 'מסך הרגעה לילד', sub: 'בועות וחיות שמגיבות למגע', tint: 'text-amber-300', ring: 'border-amber-300/30' },
+            ].map(({ id, icon: Icon, title, sub, tint, ring }) => (
+              <HapticButton
+                key={id}
+                onClick={() => setMode(id)}
+                pressScale={0.97}
+                className={`w-full flex items-center gap-4 rounded-3xl px-5 py-6 text-right
+                            bg-white/10 border ${ring} backdrop-blur-sm`}
+              >
+                <span className={`shrink-0 w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center ${tint}`}>
+                  <Icon size={30} />
+                </span>
+                <span className="flex-1 flex flex-col gap-1">
+                  <span className="text-white font-black text-2xl leading-tight">{title}</span>
+                  <span className="text-white/55 text-sm leading-snug">{sub}</span>
+                </span>
+                <ChevronLeft size={22} className="shrink-0 text-white/40" />
+              </HapticButton>
+            ))}
+          </div>
+        )}
+
+        {mode === 'breathing' && (<>
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 select-none">
 
@@ -384,6 +416,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
               : <VolumeX size={22} />}
           </HapticButton>
         </div>
+        </>)}
 
       </div>
     </div>
