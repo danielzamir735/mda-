@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { X, Phone, MessageCircle, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
@@ -19,12 +19,9 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function PoisonCentersModal({ isOpen, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('poison');
-  useModalBackHandler(isOpen, onClose);
-
   // Always reopen on the phone numbers — the most urgent content
-  useEffect(() => {
-    if (!isOpen) setTab('poison');
-  }, [isOpen]);
+  const close = () => { setTab('poison'); onClose(); };
+  useModalBackHandler(isOpen, close);
 
   if (!isOpen) return null;
 
@@ -39,7 +36,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
         <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">הרעלות וחומרים מסוכנים</h2>
         <HapticButton
-          onClick={onClose}
+          onClick={close}
           pressScale={0.88}
           className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
                      flex items-center justify-center
