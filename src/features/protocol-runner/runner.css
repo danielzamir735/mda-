@@ -110,5 +110,23 @@
 .pr-root .floater { direction: ltr; }
 .pr-root .pr-chips div i { display: block; font-style: normal; font-size: 1.15em; line-height: .85; }
 .pr-root .pr-chips div.short i { font-size: .7em; }
-/* שם העיר אחרי פנייה — בצורת תיבת הפתיחה הצהובה של התרשים */
-.pr-root .pr-city { position: absolute; top: 34%; left: 50%; transform: translateX(-50%); padding: .2em 1.1em .28em; border-radius: 99em; background: #FFE14A; color: #000; border: .1em solid #000; box-shadow: .16em .16em 0 #000; font-family: var(--display); font-size: 2.3em; white-space: nowrap; pointer-events: none; opacity: 0; }
+.pr-root .pr-note[hidden] { display: none; }
+.pr-root .btn.ghost { margin-top: .6em; padding: .6em; font-size: .9em; font-weight: 700; background: none; border: 1px solid var(--border); box-shadow: none; }
+.pr-root .pr-recap .miss { color: var(--red); text-decoration: underline; }
+.pr-root .pick { margin: 0 0 .45em; font-size: .78em; font-weight: 700; color: #d4d4d8; }
+.pr-root .levels { display: grid; gap: .4em; margin-bottom: .8em; }
+.pr-root .levels button { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: .7em; text-align: start; font: inherit; color: #d4d4d8; padding: .62em .8em; border-radius: .8em; background: rgba(20, 20, 30, .85); border: 1px solid var(--border); cursor: pointer; transition: transform 140ms var(--ease-out); }
+.pr-root .levels button::before { content: ''; grid-row: span 2; width: 1.05em; height: 1.05em; border-radius: 50%; border: .13em solid #71717a; }
+.pr-root .levels button b { font-size: 1.02em; color: #fff; }
+.pr-root .levels button span { font-size: .78em; color: var(--muted); }
+.pr-root .levels button.on { border-color: var(--red); background: rgba(239, 35, 60, .18); }
+.pr-root .levels button.on::before { border-color: var(--red); background: radial-gradient(var(--red) 0 45%, transparent 50%); }
+.pr-root .levels button:active { transform: scale(.98); }
+.pr-root .tips { margin: 0 0 .9em; font-size: .76em; line-height: 1.45; color: #a1a1aa; text-align: center; }
+.pr-root .pr-home { position: absolute; bottom: .6em; right: .6em; z-index: 3; padding: .45em .85em; border-radius: 99em; border: 1px solid var(--border); background: rgba(0, 0, 0, .5); color: var(--text); font: inherit; font-size: .78em; font-weight: 700; cursor: pointer; }
+.pr-root .pr-home[hidden] { display: none; }
+.pr-root .pr-card.intro .pr-note { background: #fff; }
+.pr-root .protos { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4em; margin-bottom: .75em; }
+.pr-root .protos button { font: inherit; font-size: .9em; font-weight: 700; color: #d4d4d8; padding: .6em .4em; border-radius: .8em; background: rgba(20, 20, 30, .85); border: 1px solid var(--border); cursor: pointer; transition: transform 140ms var(--ease-out); }
+.pr-root .protos button.on { color: #fff; border-color: var(--red); background: rgba(239, 35, 60, .22); }
+.pr-root .protos button:active { transform: scale(.98); }

@@ -114,7 +114,7 @@ const HUB_ITEMS: HubItem[] = [
   {
     id: 'protocol-runner',
     label: 'ריצת פרוטוקול',
-    subtitle: 'משחק · קוצר נשימה',
+    subtitle: 'משחק · תרגול פרוטוקולים',
     icon: Ambulance,
     color: 'text-emt-red',
     border: 'border-emt-red/30',

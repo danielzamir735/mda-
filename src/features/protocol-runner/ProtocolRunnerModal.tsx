@@ -32,7 +32,7 @@ export default function ProtocolRunnerModal({ isOpen, onClose }: Props) {
           </div>
           <div className="min-w-0">
             <p className="text-emt-light font-bold text-base leading-tight">ריצת פרוטוקול</p>
-            <p className="text-emt-muted text-xs">קוצר נשימה</p>
+            <p className="text-emt-muted text-xs">תרגול פרוטוקולים</p>
           </div>
         </div>
         <HapticButton

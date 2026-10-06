@@ -27,20 +27,17 @@ const TEMPLATE = `
   </div>
 
   <button class="pr-mute" aria-label="השתק">🔊</button>
+  <button class="pr-home" hidden>תפריט</button>
 
   <div class="pr-title overlay show">
     <div>
       <h1 class="logo">ריצת <span>פרוטוקול</span></h1>
-      <p class="sub">בכל צומת פנה לכיוון של ההחלטה הנכונה.</p>
-      <div class="dispatch">
-        <h3>קריאה נכנסת</h3>
-        <p><b>גבר בן 67 · קוצר נשימה</b><br>יושב על כיסא בסלון, נושם מהר ומתקשה לדבר. אשתו הזעיקה.</p>
-      </div>
-      <div class="how">
-        <div><b>⇆</b>החלק או חצים<br>כדי להחליף נתיב</div>
-        <div><b>✚</b>אסוף ציוד<br>רפואי בדרך</div>
-        <div><b>?</b>לפני צומת הזמן<br>מאט — קרא ובחר</div>
-      </div>
+      <p class="sub">שלושה מטופלים בכל משמרת. בכל צומת פנה לפי הפרוטוקול.</p>
+      <h3 class="pick">בחר פרוטוקול</h3>
+      <div class="pr-protos protos"></div>
+      <h3 class="pick">בחר רמה</h3>
+      <div class="pr-levels levels"></div>
+      <p class="tips">החלק ימינה או שמאלה כדי לבחור נתיב לפני הצומת. החלק למעלה כדי לזנק.</p>
       <button class="pr-startBtn btn" disabled>טוען…</button>
     </div>
   </div>
@@ -63,52 +60,159 @@ const TEMPLATE = `
       <div class="pr-endSmall small"></div>
       <ul class="pr-recap"></ul>
       <button class="pr-againBtn btn">שחק שוב</button>
-      <div class="src">לפי "גישה למטופל עם קוצר נשימה", אוגדן BLS, אגף רפואה מד"א, ינואר 2016<br>מודל האמבולנס: Kenney Car Kit (CC0)</div>
+      <button class="pr-menuBtn btn ghost">החלף רמה</button>
+      <div class="src">לפי "<span class="pr-srcName"></span>", אוגדן BLS, אגף רפואה מד"א, ינואר 2016<br>מודל האמבולנס: Kenney Car Kit (CC0)</div>
     </div>
   </div>
 </div>
 `;
 
 export function createProtocolRunner(root) {
-  // ═════════ התרחיש: גישה למטופל עם קוצר נשימה (אוגדן BLS, עמ' 35–36) ═════════
-  const STEPS = [
-    { name: 'חשד להשתנקות מגוף זר?',
-      finding: 'קוצר הנשימה החמיר בהדרגה מאתמול. לא אכל בשעות האחרונות, משתעל ומדבר במילים בודדות.',
-      q: 'חשד להשתנקות מגוף זר?',
-      opts: [{ t: 'לא', ok: true }, { t: 'כן' }],
-      ok: 'אין חשד להשתנקות — ממשיכים בפרוטוקול.',
-      why: 'אין כאן סיפור של שאיפת גוף זר: ההחמרה הדרגתית, והמטופל משתעל ומדבר. חשד להשתנקות היה מעביר אותך לפרוטוקול השתנקות.' },
-    { name: 'חשד לתגובה אלרגית?',
-      finding: 'אין גרד, אין פריחה ואין נפיחות בפנים או בשפתיים. לא נחשף לאלרגן ידוע.',
-      q: 'חשד לתגובה אלרגית?',
-      opts: [{ t: 'לא', ok: true }, { t: 'כן' }],
-      ok: 'אין סימני אלרגיה — ממשיכים לגישה הכללית למטופל חולה.',
-      why: 'זיהוי תגובה אלרגית לפי הפרוטוקול: הופעה פתאומית, חשיפה אפשרית לאלרגן ותסמינים נלווים כמו גרד, אורטיקריה ואנגיואדמה. אף אחד מהם לא קיים כאן.' },
-    { name: 'הושבה ומנוחה',
-      finding: 'המטופל חסר מנוחה ומנסה לקום וללכת.',
-      q: 'איך מנחים אותו?',
-      opts: [{ t: 'ישיבה,\nרגליים למטה', ok: true }, { t: 'שכיבה\nעל הגב' }, { t: 'הליכה\nלאמבולנס' }],
-      ok: 'הושב את המטופל במנוחה מלאה, רגליים כלפי מטה, והרגע אותו.',
-      why: 'לפי הפרוטוקול: ככל הניתן לסייע למטופל לשבת עם רגליים כלפי מטה, לפעול להרגעתו ולהקפיד על מנוחה מלאה.' },
-    { name: 'חמצן וסיוע נשימתי',
-      finding: '28 נשימות בדקה, שימוש בשרירי עזר ורטרקציות.',
-      q: 'מה הטיפול הנשימתי?',
-      opts: [{ t: 'חמצן במסיכה\n10–15 ל׳/דקה', ok: true }, { t: 'הנשמה\nבמפוח' }, { t: 'אין צורך\nבחמצן' }],
-      ok: 'מעל 20 נשימות בדקה או מצוקה נשימתית — חמצן במסיכה, 10–15 ליטר לדקה.',
-      why: 'חמצן במסיכה בקצב 10–15 ליטר לדקה ניתן לכל מטופל מעל 20 נשימות בדקה או במצוקה נשימתית. הנשמה במפוח מיועדת למטופל שאינו נושם או נושם פחות מ־8 נשימות בדקה.' },
-    { name: 'חשד למחלה חסימתית?',
-      finding: 'ברקע COPD, מעשן שנים רבות ומשתמש במשאפים. נשמעים צפצופים בנשיפה.',
-      q: 'חשד למחלה חסימתית?',
-      opts: [{ t: 'כן', ok: true }, { t: 'לא' }],
-      ok: 'מחלה חסימתית (אסטמה, COPD, דלקת סימפונות) — שקול סיוע באינהלציה.',
-      why: 'אסטמה, COPD ודלקת סימפונות הן מחלות חסימתיות. הרקע, המשאפים והצפצופים בנשיפה מכוונים לכך, ולכן שוקלים סיוע באינהלציה.' },
-    { name: 'פינוי',
-      finding: 'המטופל יושב, מקבל חמצן ומעט רגוע יותר.',
-      q: 'מה השלב הבא?',
-      opts: [{ t: 'פינוי דחוף\nוניטור בדרך', ok: true }, { t: 'להמתין במקום\nלשיפור' }, { t: 'להשאיר\nבבית' }],
+  // ═════════ הפרוטוקול: גישה למטופל עם קוצר נשימה (אוגדן BLS, עמ' 35–36) ═════════
+  // צמתי התרשים לפי הסדר. city הוא אינדקס העיר שבה הצומת מופיע תמיד — עוגן זיכרון לסדר השלבים.
+  const SEAT_OPTS = () => [{ t: 'ישיבה,\nרגליים למטה', ok: true }, { t: 'שכיבה\nעל הגב' }, { t: 'הליכה\nלאמבולנס' }];
+  const EVAC_OPTS = () => [{ t: 'פינוי דחוף\nוניטור בדרך', ok: true }, { t: 'להמתין במקום\nלשיפור' }, { t: 'להשאיר\nבבית' }];
+  const SOB_NODES = {
+    choke: { city: 0, name: 'חשד להשתנקות מגוף זר?', short: 'השתנקות\nמגוף זר?', yn: true,
+      yes: 'חשד להשתנקות — עוברים לפרוטוקול השתנקות.', no: 'אין חשד להשתנקות — ממשיכים.',
+      rule: 'השאלה הראשונה בפרוטוקול היא חשד להשתנקות מגוף זר. אם יש חשד, עוברים לפרוטוקול השתנקות.' },
+    allergy: { city: 1, name: 'חשד לתגובה אלרגית?', short: 'תגובה\nאלרגית?', yn: true,
+      yes: 'חשד לתגובה אלרגית — עוברים לפרוטוקול אנאפילקסיס.', no: 'אין סימני אלרגיה — ממשיכים לגישה הכללית למטופל חולה.',
+      rule: 'זיהוי תגובה אלרגית לפי הפרוטוקול: הופעה פתאומית, חשיפה אפשרית לאלרגן ותסמינים נלווים כמו גרד, אורטיקריה ואנגיואדמה. אם יש חשד, עוברים לפרוטוקול אנאפילקסיס.' },
+    seat: { city: 2, name: 'גישה כללית והושבה במנוחה', short: 'הושבה\nבמנוחה', q: 'איך מנחים את המטופל?', opts: SEAT_OPTS,
+      ok: 'גישה כללית למטופל חולה, והושבה במנוחה מלאה עם רגליים כלפי מטה.',
+      rule: 'לפי הפרוטוקול: ככל הניתן לסייע למטופל לשבת עם רגליים כלפי מטה, לפעול להרגעתו ולהקפיד על מנוחה מלאה.' },
+    o2: { city: 3, name: 'חמצן וסיוע נשימתי', short: 'חמצן וסיוע\nנשימתי', q: 'מה הטיפול הנשימתי?',
+      opts: p => [{ t: 'חמצן במסיכה\n10–15 ל׳/דקה', ok: p.o2 === 'mask' }, { t: 'הנשמה\nבמפוח', ok: p.o2 === 'bvm' }, { t: 'אין צורך\nבחמצן' }],
+      mask: 'מעל 20 נשימות בדקה או מצוקה נשימתית — חמצן במסיכה, 10–15 ליטר לדקה.', bvm: 'מטופל שאינו נושם או נושם פחות מ־8 נשימות בדקה — הנשמה במפוח מחובר לחמצן.',
+      rule: 'חמצן במסיכה בקצב 10–15 ליטר לדקה ניתן לכל מטופל מעל 20 נשימות בדקה או במצוקה נשימתית. הנשמה במפוח מחובר לחמצן ניתנת למטופל אפנאי או מתחת ל־8 נשימות בדקה.' },
+    obstr: { city: 4, name: 'חשד למחלה חסימתית?', short: 'מחלה\nחסימתית?', yn: true,
+      yes: 'מחלה חסימתית — שקול סיוע באינהלציה, ואז פינוי.', no: 'אין חשד למחלה חסימתית — בודקים חשד לגודש ריאתי.',
+      rule: 'מחלה חסימתית לפי הפרוטוקול: אסטמה, COPD, דלקת סימפונות. אם יש חשד, שוקלים סיוע באינהלציה ומפנים.' },
+    congest: { city: 5, name: 'חשד לגודש ריאתי?', short: 'גודש\nריאתי?', yn: true,
+      yes: 'חשד לגודש ריאתי — שקול טיפול בכפוף לפרוטוקול כאב בחזה ממקור לבבי.', no: 'אין חשד לגודש ריאתי — מפנים.',
+      rule: 'אחרי שנשללה מחלה חסימתית בודקים חשד לגודש ריאתי. אם יש חשד, שוקלים טיפול בכפוף לפרוטוקול כאב בחזה ממקור לבבי.' },
+    evac: { city: 6, name: 'פינוי דחוף', short: 'פינוי\nדחוף', q: 'מה השלב הבא?', opts: EVAC_OPTS,
       ok: 'פינוי דחוף לחבירה או לבית החולים הקרוב, ניטור בדרך ודיווח מקדים.',
-      why: 'הפרוטוקול מסתיים בפינוי דחוף לחבירה או לבית החולים הקרוב, המשך ניטור וטיפול במהלך הפינוי ושקילת דיווח מקדים.' },
+      rule: 'הפרוטוקול מסתיים בפינוי דחוף לחבירה או לבית החולים הקרוב, המשך ניטור וטיפול במהלך הפינוי ושקילת דיווח מקדים.' },
+  };
+  const SOB_ORDER = ['choke', 'allergy', 'seat', 'o2', 'obstr', 'congest', 'evac'];
+  // הצומת הבא לפי התרשים. ערך שמתחיל ב־'>' הוא יציאה לפרוטוקול אחר; 'hosp' הוא ההגעה לבית החולים.
+  const SOB_NEXT = { choke: a => a ? '>פרוטוקול השתנקות' : 'allergy', allergy: a => a ? '>פרוטוקול אנאפילקסיס' : 'seat', seat: () => 'o2', o2: () => 'obstr',
+    obstr: a => a ? 'evac' : 'congest', congest: a => a ? '>פרוטוקול כאב בחזה ממקור לבבי' : 'evac', evac: () => 'hosp' };
+
+  // חמישה מטופלים — אחד לכל סיום אפשרי של הפרוטוקול.
+  // ans: התשובה בצמתי כן/לא · o2: מסיכה או מפוח · find: הממצא שמוצג בכל צומת ברמה המודרכת.
+  const SOB_PATIENTS = [
+    { who: 'גבר בן 58', brief: 'במסעדה, באמצע ארוחה. התחיל להשתעל בפתאומיות, אוחז בצוואר ומתקשה להוציא קול.', ans: { choke: true },
+      find: { choke: 'התחיל להשתעל בפתאומיות באמצע ארוחה. אוחז בצוואר ומתקשה להוציא קול.' } },
+    { who: 'אישה בת 31', brief: 'נעקצה מדבורה לפני רבע שעה. קוצר נשימה שהופיע בפתאומיות, גרד ופריחה בכל הגוף ונפיחות בשפתיים.', ans: { choke: false, allergy: true },
+      find: { choke: 'לא אכלה לאחרונה ואין סיפור של שאיפת גוף זר. מדברת ומשתעלת.', allergy: 'נעקצה מדבורה. הופעה פתאומית, גרד, אורטיקריה ונפיחות בשפתיים.' } },
+    { who: 'גבר בן 67', brief: 'יושב על כיסא בסלון, נושם מהר ומתקשה לדבר. ברקע COPD, מעשן שנים רבות ומשתמש במשאפים. ההחמרה הדרגתית מאתמול.', ans: { choke: false, allergy: false, obstr: true }, o2: 'mask',
+      find: { choke: 'קוצר הנשימה החמיר בהדרגה מאתמול. לא אכל בשעות האחרונות, משתעל ומדבר במילים בודדות.', allergy: 'אין גרד, אין פריחה ואין נפיחות בפנים או בשפתיים. לא נחשף לאלרגן ידוע.',
+        seat: 'המטופל חסר מנוחה ומנסה לקום וללכת.', o2: '28 נשימות בדקה, שימוש בשרירי עזר ורטרקציות.', obstr: 'ברקע COPD, מעשן שנים רבות ומשתמש במשאפים. נשמעים צפצופים בנשיפה.', evac: 'המטופל יושב, מקבל חמצן ומעט רגוע יותר.' } },
+    { who: 'אישה בת 79', brief: 'התעוררה בלילה עם קוצר נשימה. ברקע אי ספיקת לב ויתר לחץ דם, ללא מחלת ריאות. ליחה מרובה וכאבים בחזה.', ans: { choke: false, allergy: false, obstr: false, congest: true }, o2: 'mask',
+      find: { choke: 'התעוררה משינה עם קוצר נשימה. לא אכלה ואין סיפור של שאיפת גוף זר.', allergy: 'אין גרד, אין פריחה ואין נפיחות. לא נחשפה לאלרגן ידוע.',
+        seat: 'חסרת מנוחה, מתקשה לנשום בשכיבה.', o2: '30 נשימות בדקה, מאמץ נשימתי ניכר וכחלון בשפתיים.', obstr: 'אין ברקע אסטמה או מחלת ריאות כרונית. לא משתמשת במשאפים, לא נשמעים צפצופים.', congest: 'ברקע אי ספיקת לב ויתר לחץ דם. ליחה מרובה וכאבים בחזה.' } },
+    { who: 'גבר בן 72', brief: 'חום ושיעול עם ליחה מזה שלושה ימים. כעת חלש מאוד ונושם לאט. ללא מחלות רקע, לא מעשן.', ans: { choke: false, allergy: false, obstr: false, congest: false }, o2: 'bvm',
+      find: { choke: 'ההחמרה הדרגתית, לאורך שלושה ימים. אין סיפור של שאיפת גוף זר.', allergy: 'אין גרד, אין פריחה ואין נפיחות. לא נחשף לאלרגן ידוע.',
+        seat: 'שוכב במיטה, חלש מאוד.', o2: '6 נשימות בדקה, נשימות שטחיות ושינוי במצב ההכרה.', obstr: 'אין ברקע אסטמה או COPD. לא מעשן ולא משתמש במשאפים, לא נשמעים צפצופים.', congest: 'אין ברקע אי ספיקת לב או יתר לחץ דם. אין כאבים בחזה.', evac: 'המטופל מונשם במפוח ומצבו יציב.' } },
   ];
+  const CALLS = 3;   // מטופלים במשמרת אחת
+
+  // ═════════ הפרוטוקול: גישה למטופל עם כאב בחזה ממקור לבבי (אוגדן BLS) ═════════
+  // התרשים כאן ישר, בלי הסתעפויות; ההחלטות הן בשלבי ה"שקול": חמצן, אספירין וניטרטים, לפי הדגשים.
+  const CHEST_NODES = {
+    approach: { city: 0, name: 'גישה כללית, אנמנזה ובדיקה מכוונת', short: 'אנמנזה\nובדיקה', q: 'מה השלב הראשון?',
+      opts: () => [{ t: 'אנמנזה ובדיקה\nגופנית מכוונת', ok: true }, { t: 'ניטרטים\nתת לשוני' }, { t: 'פינוי\nמיידי' }],
+      ok: 'גישה כללית למטופל חולה, ואז אנמנזה ובדיקה גופנית מכוונת.',
+      rule: 'הפרוטוקול נפתח בגישה כללית למטופל חולה ובאנמנזה ובדיקה גופנית מכוונת: מועד הופעת הסימפטומים, מחלות רקע וגורמי סיכון, וטיפול תרופתי קבוע בדגש על אספירין, ניטרטים ונוגדי קרישה.' },
+    seat: { city: 1, name: 'הושבה ומנוחה מלאה', short: 'הושבה\nומנוחה', q: 'איך מנחים את המטופל?', find: 'המטופל עומד ומתהלך בחדר באי שקט.',
+      opts: () => [{ t: 'ישיבה\nומנוחה מלאה', ok: true }, { t: 'הליכה\nלאמבולנס' }, { t: 'להמשיך\nבפעילות' }],
+      ok: 'מושיבים את המטופל במידת האפשר ומוודאים שהוא במנוחה מלאה.',
+      rule: 'לפי הפרוטוקול: הושב את המטופל במידת האפשר, וודא כי הוא מצוי במנוחה מלאה.' },
+    o2: { city: 2, name: 'לתת חמצן?', short: 'חמצן?', yn: true,
+      yes: 'יש סימני מצוקה נשימתית — נותנים חמצן.', no: 'אין סימני מצוקה נשימתית — לא נדרש חמצן כרגע.',
+      rule: 'חמצן ניתן אם המטופל מראה סימנים של מצוקה נשימתית: כחלון, טכיפניאה, שימוש בשרירי עזר, רטרקציות.' },
+    aspirin: { city: 3, name: 'לתת אספירין בלעיסה?', short: 'אספירין\nבלעיסה?', yn: true,
+      yes: 'אין התוויות נגד — אספירין בלעיסה, 160–325 מ"ג.', no: 'יש התוויית נגד, או שנטל אספירין בשעה האחרונה — לא נותנים.',
+      rule: 'אספירין ניתן בלעיסה, 160–325 מ"ג, אחרי וידוא התוויות נגד: רגישות יתר ידועה, כיב פעיל, דימום מדרכי העיכול בשלושת החודשים האחרונים, היסטוריה של אסטמה פעילה. נותנים גם למי שנוטל אספירין בקביעות, בתנאי שלא נטל בשעה האחרונה.' },
+    nitro: { city: 4, name: 'לסייע במתן ניטרטים?', short: 'ניטרטים\nתת לשוני?', yn: true,
+      yes: 'עדיין כואב, נוטל בקביעות ואין התוויות נגד — מסייעים: תת לשוני, עד 2 מנות בהפרש של 2–3 דקות.', no: 'התנאים לא מתקיימים — לא מסייעים במתן ניטרטים.',
+      rule: 'מסייעים רק למטופל שעדיין סובל מכאב בחזה ונוטל ניטרטים בקביעות לפי הוראת רופא. מודדים לחץ דם לפני כל מנה. התוויות נגד: לחץ דם סיסטולי מתחת ל־100, או תרופות לאין־אונות ב־36 השעות האחרונות.' },
+    evac: { city: 6, name: 'פינוי דחוף', short: 'פינוי\nדחוף', q: 'מה השלב הבא?', opts: EVAC_OPTS, find: 'הטיפול הראשוני ניתן והמטופל במנוחה.',
+      ok: 'פינוי דחוף לחבירה או לבית החולים הקרוב, ניטור בדרך ודיווח מקדים.',
+      rule: 'הפרוטוקול מסתיים בפינוי דחוף לחבירה או לבית החולים הקרוב, המשך ניטור וטיפול במהלך הפינוי ושקילת דיווח מקדים.' },
+  };
+  const CHEST_ORDER = ['approach', 'seat', 'o2', 'aspirin', 'nitro', 'evac'];
+  const CHEST_NEXT = { approach: () => 'seat', seat: () => 'o2', o2: () => 'aspirin', aspirin: () => 'nitro', nitro: () => 'evac', evac: () => 'hosp' };
+  // חמישה מטופלים עם צירופים שונים של חמצן, אספירין וניטרטים
+  const CHEST_PATIENTS = [
+    { who: 'גבר בן 61', brief: 'כאב לוחץ בקדמת החזה שמקרין ליד שמאל, מזה חצי שעה. מזיע ויש בחילה. נוטל ניטרטים בקביעות. נושם רגיל, לחץ דם 135/85.', ans: { o2: false, aspirin: true, nitro: true },
+      find: { o2: '16 נשימות בדקה, ללא כחלון וללא מאמץ נשימתי.', aspirin: 'אין רגישות לאספירין, אין כיב ואין דימום מדרכי העיכול. לא נטל אספירין היום.', nitro: 'עדיין כואב. נוטל ניטרטים בקביעות לפי הוראת רופא. לחץ דם 135/85. לא נטל תרופות לאין־אונות.' } },
+    { who: 'אישה בת 74', brief: 'סוכרתית. חולשה, בחילה ולחץ לא ברור בחזה מזה שעה. נושמת מהר ושפתיה כחלחלות. ברקע כיב קיבה פעיל. אינה נוטלת ניטרטים.', ans: { o2: true, aspirin: false, nitro: false },
+      find: { o2: '26 נשימות בדקה, כחלון בשפתיים ושימוש בשרירי עזר.', aspirin: 'ברקע כיב קיבה פעיל.', nitro: 'אינה נוטלת ניטרטים בקביעות.' } },
+    { who: 'גבר בן 55', brief: 'כאב לוחץ בחזה שמקרין לצוואר, מזה 40 דקות. נוטל אספירין וניטרטים בקביעות. אמש נטל תרופה לאין־אונות. נושם רגיל.', ans: { o2: false, aspirin: true, nitro: false },
+      find: { o2: '18 נשימות בדקה, ללא סימני מצוקה נשימתית.', aspirin: 'נוטל אספירין בקביעות; המנה האחרונה הייתה הבוקר, לפני יותר משעה. אין התוויות נגד.', nitro: 'עדיין כואב ונוטל ניטרטים בקביעות, אבל נטל תרופה לאין־אונות אמש, בתוך 36 השעות האחרונות.' } },
+    { who: 'גבר בן 68', brief: 'כאב בחזה והזעה מרובה מזה שעה. חיוור, נושם מהר ובמאמץ. נוטל ניטרטים בקביעות. לחץ דם 90/60.', ans: { o2: true, aspirin: true, nitro: false },
+      find: { o2: '28 נשימות בדקה, נשימות מאומצות ורטרקציות.', aspirin: 'אין רגישות לאספירין, אין כיב ואין דימום מדרכי העיכול. לא נטל אספירין היום.', nitro: 'עדיין כואב ונוטל ניטרטים בקביעות, אבל לחץ הדם 90/60.' } },
+    { who: 'אישה בת 59', brief: 'כאב לוחץ בחזה שמקרין לגב, מזה 20 דקות. לעסה אספירין בעצמה לפני רבע שעה. נוטלת ניטרטים בקביעות. נושמת רגיל, לחץ דם 140/90.', ans: { o2: false, aspirin: false, nitro: true },
+      find: { o2: '14 נשימות בדקה, ללא כחלון וללא מאמץ נשימתי.', aspirin: 'לעסה אספירין בעצמה לפני רבע שעה, כלומר בתוך השעה האחרונה.', nitro: 'עדיין כואבת. נוטלת ניטרטים בקביעות לפי הוראת רופא. לחץ דם 140/90. לא נטלה תרופות לאין־אונות.' } },
+  ];
+
+  // ═════════ הפרוטוקול: אנאפילקסיס (אוגדן BLS) ═════════
+  // שתי הסתעפויות (דום לב? תגובה אנאפילקטית?) ושתי החלטות לפי הדגשים: אישור המוקד לפני אדרנלין, ומנה נוספת.
+  const ANA_NODES = {
+    assess: { city: 0, name: 'הערכה ראשונית: הכרה, נשימה ודופק', short: 'הערכה\nראשונית', q: 'מה בודקים קודם?',
+      opts: () => [{ t: 'הכרה,\nנשימה ודופק', ok: true }, { t: 'מזריקים\nאדרנלין' }, { t: 'פינוי\nמיידי' }],
+      ok: 'מתחילים בהערכה ראשונית של מצב ההכרה, הנשימה והדופק.',
+      rule: 'הפרוטוקול נפתח בהערכה ראשונית של מצב ההכרה, הנשימה והדופק, עוד לפני האנמנזה והטיפול.' },
+    arrest: { city: 1, name: 'דום לב?', short: 'דום לב?', yn: true,
+      yes: 'דום לב — מבצעים החייאה לפי הפרוטוקול המקובל, כולל אדרנלין תוך שרירי.', no: 'אין דום לב — משלימים אנמנזה ובדיקה גופנית.',
+      rule: 'אחרי ההערכה הראשונית שואלים אם יש דום לב. אם כן, מבצעים החייאה לפי הפרוטוקול המקובל, כולל מתן אדרנלין תוך שרירי. אם לא, משלימים אנמנזה ובדיקה גופנית.' },
+    ana: { city: 2, name: 'תגובה אנאפילקטית?', short: 'תגובה\nאנאפילקטית?', yn: true,
+      yes: 'תגובה אנאפילקטית — שוקלים מתן אדרנלין תוך שרירי.', no: 'לא תגובה אנאפילקטית — טיפול סימפטומטי ופינוי לבית החולים.',
+      rule: 'אבחנה, אחד מהבאים: מחלה אקוטית עם הפרעה נשימתית או המודינמית; התפתחות מהירה של תסמינים עוריים, נשימתיים, גסטרו או המודינמיים אחרי חשיפה אפשרית לאלרגן; סימנים לירידה בפרפוזיה או ירידה חדה בלחץ הדם הסיסטולי אחרי חשיפה לאלרגן.' },
+    epi: { city: 3, name: 'אדרנלין: נדרש אישור מהמוקד?', short: 'אדרנלין\nתוך שרירי', yn: true,
+      yes: 'אין סכנת חיים מיידית — נדרש אישור רופא במוקד לפני השימוש במזרק. בירך: מבוגר 0.3 מ"ג, ילד 0.15 מ"ג.', no: 'סכנת חיים מיידית — מזריקים בלי לחכות לאישור. בירך: מבוגר 0.3 מ"ג, ילד 0.15 מ"ג.',
+      rule: 'אדרנלין במזרק אוטומטי ניתן בשריר הירך: מבוגר 0.3 מ"ג, ילד 0.15 מ"ג. בסכנת חיים מיידית (חוסר הכרה, חסימת דרכי אוויר עליונות, קוצר נשימה קיצוני, כחלון, דופק לא נמוש) אין צורך באישור המוקד. בכל מקרה אחר נדרש אישור רופא במוקד הרפואי.' },
+    support: { city: 4, name: 'חמצן במסיכה, קו ורידי ונוזלים', short: 'חמצן\nונוזלים', q: 'מה נותנים אחרי האדרנלין?', find: 'האדרנלין ניתן. המטופל שוכב על גבו עם רגליים מורמות.',
+      opts: () => [{ t: 'חמצן במסיכה\nושקילת נוזלים', ok: true }, { t: 'אספירין\nבלעיסה' }, { t: 'אין צורך\nבטיפול נוסף' }],
+      ok: 'חמצן במסיכה, 10–15 ליטר לדקה, ושקילת קו ורידי ועירוי נוזלים.',
+      rule: 'אחרי האדרנלין נותנים חמצן במסיכה בקצב 10–15 ליטר לדקה ושוקלים התקנת קו ורידי ומתן עירוי נוזלים. המטופל שוכב על גבו עם רגליים מורמות.' },
+    recheck: { city: 5, name: 'הערכה חוזרת: מנה נוספת של אדרנלין?', short: 'הערכה\nחוזרת', yn: true,
+      yes: 'אין תגובה, או שהתגובה אינה מספקת — אפשר לתת מנה נוספת כעבור 5–10 דקות, ככל שיש.', no: 'המטופל הגיב לטיפול — אין צורך במנה נוספת כרגע.',
+      rule: 'אחרי הטיפול מבצעים הערכה חוזרת. אפשר לתת מנה נוספת של אדרנלין כעבור 5–10 דקות אם אין תגובה או שהתגובה אינה מספקת.' },
+    evac: { city: 6, name: 'פינוי דחוף', short: 'פינוי\nדחוף', q: 'מה השלב הבא?', opts: EVAC_OPTS, find: 'הטיפול ניתן והמטופל בהשגחה.',
+      ok: 'פינוי דחוף לבית החולים הקרוב, שקילת חבירה עם צוות ALS ודיווח מקדים לבית החולים הקולט.',
+      rule: 'הפרוטוקול מסתיים בפינוי דחוף לבית החולים הקרוב, שקילת חבירה עם צוות ALS והעברת דיווח מקדים לבית החולים הקולט.' },
+  };
+  const ANA_ORDER = ['assess', 'arrest', 'ana', 'epi', 'support', 'recheck', 'evac'];
+  const ANA_NEXT = { assess: () => 'arrest', arrest: a => a ? '>החייאה לפי הפרוטוקול' : 'ana', ana: a => a ? 'epi' : '>טיפול סימפטומטי ופינוי', epi: () => 'support', support: () => 'recheck', recheck: () => 'evac', evac: () => 'hosp' };
+  // חמישה מטופלים: דום לב, תגובה שאינה אנאפילקטית, ושלושה מקרי אנאפילקסיס בחומרה שונה
+  const ANA_PATIENTS = [
+    { who: 'ילד בן 9', brief: 'נעקץ מצרעה בטיול, אלרגיה ידועה לעקיצות. התמוטט: אינו מגיב, אינו נושם ואין דופק.', ans: { arrest: true },
+      find: { arrest: 'אינו מגיב, אינו נושם, דופק לא נמוש.' } },
+    { who: 'אישה בת 26', brief: 'תפרחת מגרדת בזרועות אחרי מגע בצמח. נושמת רגיל, דופק ולחץ דם תקינים, בלי נפיחות בפנים.', ans: { arrest: false, ana: false },
+      find: { arrest: 'בהכרה מלאה, נושמת רגיל, דופק סדיר ונמוש היטב.', ana: 'תפרחת מגרדת בזרועות בלבד. אין הפרעה נשימתית או המודינמית, ואין מעורבות של מערכת נוספת.' } },
+    { who: 'גבר בן 34', brief: 'אכל בוטנים לפני 10 דקות, אלרגיה ידועה. נפיחות בלשון ובשפתיים, נשימה מחרחרת וכחלון. נושא מזרק אדרנלין.', ans: { arrest: false, ana: true, epi: false, recheck: true },
+      find: { arrest: 'הכרה מעורפלת, נושם במאמץ, דופק מהיר וחלש.', ana: 'התפתחות מהירה אחרי חשיפה לאלרגן: נפיחות בלשון, נשימה מחרחרת ודופק מהיר וחלש.', epi: 'נשימה מחרחרת, כחלון והכרה מעורפלת.', recheck: 'עברו 7 דקות מהמנה הראשונה. עדיין נשימה מחרחרת וכחלון, בלי שיפור.' } },
+    { who: 'אישה בת 45', brief: 'קיבלה אנטיביוטיקה לפני 20 דקות. תפרחת מגרדת בכל הגוף, בחילה והקאות, צפצופים קלים. בהכרה מלאה, לחץ דם 110/70.', ans: { arrest: false, ana: true, epi: true, recheck: false },
+      find: { arrest: 'בהכרה מלאה, נושמת, דופק מהיר ונמוש.', ana: 'התפתחות מהירה אחרי תרופה: תפרחת בכל הגוף, הקאות וצפצופים — עור, מערכת העיכול ונשימה.', epi: 'בהכרה מלאה, מדברת, בלי כחלון, דופק נמוש היטב.', recheck: 'עברו 8 דקות. הצפצופים חלפו, הנשימה רגועה והתפרחת דועכת.' } },
+    { who: 'ילד בן 6', brief: 'אכל בגן עוגה עם אגוזים. נפיחות בעפעפיים ובשפתיים, שיעול וצפצופים, הקיא פעמיים. ערני ובוכה. משקלו 20 ק"ג.', ans: { arrest: false, ana: true, epi: true, recheck: true },
+      find: { arrest: 'ערני ובוכה, נושם, דופק מהיר ונמוש.', ana: 'התפתחות מהירה אחרי חשיפה לאלרגן: נפיחות בפנים, צפצופים והקאות.', epi: 'ערני ובוכה, צפצופים בלי כחלון, דופק נמוש היטב.', recheck: 'עברו 10 דקות מהמנה הראשונה. הצפצופים מחמירים והנפיחות בשפתיים גדלה.' } },
+  ];
+
+  // הפרוטוקולים שאפשר לתרגל. המשתמש בוחר אחד במסך הפתיחה.
+  const PROTOCOLS = {
+    sob: { name: 'קוצר נשימה', title: 'גישה למטופל עם קוצר נשימה', nodes: SOB_NODES, order: SOB_ORDER, next: SOB_NEXT, patients: SOB_PATIENTS },
+    ana: { name: 'אנאפילקסיס', title: 'אנאפילקסיס', nodes: ANA_NODES, order: ANA_ORDER, next: ANA_NEXT, patients: ANA_PATIENTS },
+    chest: { name: 'כאב בחזה', title: 'גישה למטופל עם כאב בחזה ממקור לבבי', nodes: CHEST_NODES, order: CHEST_ORDER, next: CHEST_NEXT, patients: CHEST_PATIENTS },
+  };
+  let proto = 'sob', NODES = SOB_NODES, ORDER = SOB_ORDER, NEXT = SOB_NEXT, PATIENTS = SOB_PATIENTS;
+  function useProto(k) { proto = PROTOCOLS[k] ? k : 'sob'; ({ nodes: NODES, order: ORDER, next: NEXT, patients: PATIENTS } = PROTOCOLS[proto]); }
+  // שלוש רמות: במודרך עונים על שאלת הצומת; בשליפה ובבעל פה בוחרים איזה שלב בא עכשיו.
+  const LEVELS = [{ name: 'מודרך', hint: 'השאלה מוצגת, אתה עונה' }, { name: 'שליפה', hint: 'אתה בוחר מה השלב הבא' }, { name: 'בעל פה', hint: 'בלי תיאור המטופל בצמתים, ומהר יותר' }];
   const LANE_COLORS = ['#5CE6F2', '#FF6FDD', '#FFE14A'];   // תכלת, ורוד וצהוב מתרשימי האוגדן
   const KINDS = ['pill', 'heart', 'kit', 'plaster'], KIND_COLOR = { pill: '#f87171', heart: '#fb7185', kit: '#f4f4f5', plaster: '#f2c9a0' };
 
@@ -120,6 +224,7 @@ export function createProtocolRunner(root) {
   const $ = id => root.querySelector('.pr-' + id);
   const laneX = l => (l - 1) * LW, rnd = n => Math.floor(Math.random() * n), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const flatten = t => t.replace('\n', ' ');
 
   let AC = null, muted = false;
   function beep(freq, dur = .08, type = 'sine', vol = .07, when = 0) {
@@ -138,32 +243,69 @@ export function createProtocolRunner(root) {
   let state = 'title', T = 0, dist = 0, vNow = 0, last = performance.now();
   let lane = 1, px = 0, lean = 0, speed = 8, slow = 0, dash = false;
   let ents = [], shake = 0, flash = null;
-  let score = 0, hearts = 3, streak = 0, stepIdx = 0, results = [], pendingNext = null, pendingDir = 0, activeGate = null, cardTimer = 0;
+  let score = 0, hearts = 3, streak = 0, answered = 0, activeGate = null, cardTimer = 0;
+  // level: הרמה שנבחרה · calls: המטופלים של המשמרת · nodeKey: הצומת הנוכחי בפרוטוקול · trail: השלבים שכבר עברו בקריאה · log: סיכום לכל קריאה
+  let level = 0, calls = [], callIdx = 0, patient = null, nodeKey = 'choke', trail = [], log = [], callLog = null, pendingKey = null, pendingDir = 0, handoffT = 0, cityNow = 0;
+  try { level = clamp(+localStorage.getItem('pr-level') || 0, 0, 2); useProto(localStorage.getItem('pr-proto')); } catch (e) { /* בלי אחסון מקומי נשארים בברירת המחדל */ }
+
+  function drawLevels() { $('levels').innerHTML = LEVELS.map((l, i) => `<button type="button" data-l="${i}" class="${i === level ? 'on' : ''}"><b>${l.name}</b><span>${l.hint}</span></button>`).join(''); }
+  $('levels').onclick = e => { const b = e.target.closest('button'); if (!b) return; level = +b.dataset.l; try { localStorage.setItem('pr-level', level); } catch (err) { /* לא נורא */ } drawLevels(); };
+  drawLevels();
+  function drawProtos() { $('protos').innerHTML = Object.keys(PROTOCOLS).map(k => `<button type="button" data-p="${k}" class="${k === proto ? 'on' : ''}">${PROTOCOLS[k].name}</button>`).join(''); }
+  $('protos').onclick = e => { const b = e.target.closest('button'); if (!b) return; useProto(b.dataset.p); try { localStorage.setItem('pr-proto', proto); } catch (err) { /* לא נורא */ } drawProtos(); };
+  drawProtos();
 
   function reset() {
     lane = 1; px = 0; speed = 8; slow = 0; dash = false; ents = []; shake = 0; flash = null;
-    score = 0; hearts = 3; streak = 0; stepIdx = 0; results = []; pendingNext = null; activeGate = null;
+    score = 0; hearts = 3; streak = 0; answered = 0; activeGate = null; log = []; calls = []; callIdx = 0;
     hud(); hideCard();
   }
   function start() {
     if (!gfx || !gfx.loaded) return;
-    reset(); gfx.setTheme(0); state = 'run'; $('title').classList.remove('show'); $('end').classList.remove('show');
-    spawnSegment(0); beep(523, .1, 'triangle'); beep(784, .14, 'triangle', .07, .1);
+    reset(); calls = shuffle(PATIENTS.slice()).slice(0, CALLS); callIdx = -1;
+    $('title').classList.remove('show'); $('end').classList.remove('show'); nextCall();
   }
-  function makeGate(i, z) {
-    const st = STEPS[i], opts = [null, null, null];
-    const lanes = st.opts.length === 2 ? shuffle([0, 2]) : shuffle([0, 1, 2]);
+  function showMenu() { state = 'title'; ents = []; activeGate = null; score = 0; streak = 0; hearts = 3; calls = []; hideCard(); $('sheet').classList.remove('show'); $('end').classList.remove('show'); $('title').classList.add('show'); hud(); }
+  // כל קריאה מתחילה בראש הפרוטוקול (ירושלים). לא עוצרים: המטופל מוצג בכרטיס בזמן שהכביש עוד ריק.
+  const goCity = (dir, i) => { cityNow = i; gfx.turn(dir, i); };
+  function nextCall() {
+    callIdx++; if (callIdx >= calls.length) return endGame(true);
+    patient = calls[callIdx]; nodeKey = ORDER[0]; trail = []; callLog = { p: patient, steps: [], end: '' }; log.push(callLog);
+    ents = []; lane = 1; activeGate = null; dash = false; state = 'run';
+    if (callIdx === 0) { cityNow = 0; gfx.setTheme(0); } else if (cityNow !== 0) goCity(0, 0);
+    spawnSegment(); hud();
+    $('card').className = 'pr-card show ok intro'; $('note').hidden = false; $('tag').textContent = `קריאה ${callIdx + 1} מתוך ${calls.length}:`; $('finding').textContent = `${patient.who}. ${patient.brief}`; cardTimer = 6.2;
+    beep(523, .1, 'triangle'); beep(784, .14, 'triangle', .07, .1);
+  }
+
+  // הצומת הנוכחי: ברמה המודרכת עונים על השאלה שלו; ברמות השליפה בוחרים איזה שלב בא עכשיו בפרוטוקול
+  function junction() {
+    const key = nodeKey, n = NODES[key], p = patient;
+    if (level === 0) {
+      const opts = n.yn ? [{ t: 'כן', ok: p.ans[key] }, { t: 'לא', ok: !p.ans[key] }] : n.opts(p);
+      return { tag: 'ממצא:', note: p.find[key] || n.find || p.brief, q: n.q || n.name, opts };
+    }
+    // המסיחים הם השלבים הסמוכים בתרשים: קודם אלה שבאים אחריו (פיתוי לדלג), ואם אין — אלה שלפניו
+    const i = ORDER.indexOf(key), near = [];
+    for (const k of [ORDER[i + 1], ORDER[i + 2], ORDER[i - 1], ORDER[i - 2]]) if (k && near.length < 2) near.push(k);
+    return { tag: 'המטופל:', note: level === 1 ? p.brief : '', q: 'מה השלב הבא בפרוטוקול?', opts: [{ t: n.short, ok: true }, ...near.map(k => ({ t: NODES[k].short }))] };
+  }
+  const reveal = key => { const n = NODES[key]; return n.yn ? (patient.ans[key] ? n.yes : n.no) : n[patient.o2] || n.ok; };
+
+  function makeGate(z) {
+    const j = junction(), opts = [null, null, null];
+    const lanes = j.opts.length === 2 ? shuffle([0, 2]) : shuffle([0, 1, 2]);
     const colors = shuffle(LANE_COLORS.slice());
-    st.opts.forEach((o, k) => { opts[lanes[k]] = { label: o.t, ok: !!o.ok, color: colors[k] }; });
-    return { type: 'gate', z, i, opts, shown: false, resolved: false, open: -1 };
+    j.opts.forEach((o, k) => { opts[lanes[k]] = { label: o.t, ok: !!o.ok, color: colors[k] }; });
+    return { type: 'gate', z, key: nodeKey, j, opts, shown: false, resolved: false, open: -1 };
   }
-  function spawnSegment(i) {
-    const base = i === 0 ? 16 : 22;
+  function spawnSegment() {
+    const base = trail.length === 0 ? 42 : 22;   // בתחילת קריאה משאירים כביש ריק כדי לקרוא על המטופל
     let l = rnd(3), kind = KINDS[rnd(4)];
     for (let k = 0; k < 6; k++) { if (k === 3) { l = (l + 1 + rnd(2)) % 3; kind = KINDS[(KINDS.indexOf(kind) + 1 + rnd(3)) % 4]; } ents.push({ type: 'orb', kind, lane: l, z: base + k * 3.2 }); }
     ents.push({ type: 'cone', lane: (l + 1 + rnd(2)) % 3, z: base + 12 });
-    ents.push(makeGate(i, base + 16 + SHOW_Z)); // השער מתגלה רק אחרי שהדרך התפנתה
-    speed = 8 + i * .3;
+    ents.push(makeGate(base + 16 + SHOW_Z)); // הצומת מתגלה רק אחרי שהדרך התפנתה
+    speed = Math.min(9.8, 8 + answered * .12) * (level === 2 ? 1.2 : 1);
   }
   function spawnFinish() {
     for (let k = 0; k < 8; k++) ents.push({ type: 'orb', kind: KINDS[k % 4], lane: 1, z: 14 + k * 3.5 });
@@ -173,59 +315,70 @@ export function createProtocolRunner(root) {
 
   function hud() {
     $('hearts').innerHTML = [0, 1, 2].map(i => `<span class="${i < hearts ? '' : 'lost'}">♥</span>`).join('');
-    $('dots').innerHTML = STEPS.map((_, i) => `<i class="${results[i] === true ? 'ok' : results[i] === false ? 'bad' : i === stepIdx && state !== 'title' ? 'cur' : ''}"></i>`).join('');
-    $('score').textContent = score;
+    $('dots').innerHTML = calls.map((_, i) => `<i class="${i < callIdx ? 'ok' : i === callIdx && state !== 'title' ? 'cur' : ''}"></i>`).join('');
+    $('score').textContent = score; $('home').hidden = state === 'title' || state === 'done';
     const m = Math.min(3, streak); $('streak').textContent = 'רצף ×' + m; $('streak').classList.toggle('on', m >= 2);
   }
   function showCard(g) {
-    const st = STEPS[g.i]; activeGate = g; cardTimer = 0;
-    $('card').className = 'pr-card show'; $('tag').textContent = 'ממצא:'; lastMeters = -1; $('hint').hidden = g.i > 0;   // הנחיית הזינוק מוצגת רק בשער הראשון
-    $('finding').textContent = st.finding; $('question').textContent = st.q;
-    $('chips').innerHTML = g.opts.map((o, l) => o ? `<div class="${o.label.length <= 3 ? 'short' : ''}" style="--c:${o.color}"><i>${'←↑→'[l]}</i>${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
+    activeGate = g; cardTimer = 0; lastMeters = -1;
+    $('card').className = 'pr-card show'; $('tag').textContent = g.j.tag; $('note').hidden = !g.j.note; $('hint').hidden = answered > 0;   // הנחיית הזינוק מוצגת רק בצומת הראשון
+    $('finding').textContent = g.j.note; $('question').textContent = g.j.q;
+    $('chips').innerHTML = g.opts.map((o, l) => o ? `<div class="${o.label.length <= 3 ? 'short' : ''}" style="--c:${o.color}"><i>${'←↑→'[l]}</i>${flatten(o.label)}</div>` : '<div class="blocked">חסום</div>').join('');
     beep(660, .05, 'square', .03);
   }
-  function okCard(text) { $('card').className = 'pr-card show ok'; $('tag').textContent = 'לפי הפרוטוקול:'; $('finding').textContent = text; cardTimer = 2.6; }
+  function okCard(text) { $('card').className = 'pr-card show ok'; $('note').hidden = false; $('tag').textContent = 'לפי הפרוטוקול:'; $('finding').textContent = text; cardTimer = 2.8; }
   function hideCard() { $('card').className = 'pr-card'; cardTimer = 0; }
   function floater(text, color) { const d = document.createElement('div'); d.className = 'floater'; d.textContent = text; d.style.color = color; stage.appendChild(d); setTimeout(() => d.remove(), 950); }
 
   function resolveGate(g) {
-    const st = STEPS[g.i], cur = clamp(Math.round(px / LW) + 1, 0, 2), opt = g.opts[cur], right = g.opts.find(o => o && o.ok);
-    g.resolved = true; activeGate = null; dash = false;
+    const n = NODES[g.key], cur = clamp(Math.round(px / LW) + 1, 0, 2), opt = g.opts[cur], right = g.opts.find(o => o && o.ok);
+    g.resolved = true; activeGate = null; dash = false; answered++;
     if (opt && opt.ok) {
-      streak++; const gain = 100 * Math.min(3, streak); score += gain; results[g.i] = true; g.open = cur; gfx.turn(cur - 1, g.i + 1);
-      gfx.sparks(cur - 1, 2.2, opt.color, 140, 15); floater('+' + gain, '#22C55E');
-      flash = { c: [.13, .77, .37], a: .3 }; okCard(st.ok);
+      streak++; const gain = 100 * Math.min(3, streak); score += gain; callLog.steps.push({ key: g.key, ok: true }); g.open = cur;
+      gfx.sparks(cur - 1, 2.2, opt.color, 140, 15); floater('+' + gain, '#22C55E'); flash = { c: [.13, .77, .37], a: .3 };
       beep(523, .09, 'triangle'); beep(659, .09, 'triangle', .07, .08); beep(784, .16, 'triangle', .07, .16);
-      advance(g.i);
+      proceed(g.key, cur - 1);
     } else {
-      streak = 0; hearts--; results[g.i] = false; shake = 16; flash = { c: [.94, .14, .24], a: .8 };
+      streak = 0; hearts--; callLog.steps.push({ key: g.key, ok: false }); shake = 16; flash = { c: [.94, .14, .24], a: .8 };
       gfx.sparks(cur - 1, 1.6, '#EF233C', 70, 11); beep(160, .25, 'sawtooth', .09); beep(110, .3, 'sawtooth', .08, .1);
-      hideCard(); state = 'explain'; pendingNext = g.i; pendingDir = g.opts.indexOf(right) - 1;
+      hideCard(); state = 'explain'; pendingKey = g.key; pendingDir = g.opts.indexOf(right) - 1;
       $('sheetTitle').textContent = opt ? '✗ לא לפי הפרוטוקול' : '✗ לא בחרת נתיב';
-      $('sheetChose').textContent = opt ? opt.label.replace('\n', ' ') : 'הנתיב החסום';
-      $('sheetRight').textContent = right.label.replace('\n', ' ');
-      $('sheetWhy').textContent = st.why; $('sheetBtn').textContent = hearts > 0 ? 'הבנתי, ממשיכים' : 'לסיכום';
+      $('sheetChose').textContent = opt ? flatten(opt.label) : 'הנתיב החסום';
+      $('sheetRight').textContent = flatten(right.label);
+      $('sheetWhy').textContent = level === 0 ? `${n.rule} הממצא כאן: ${g.j.note}`
+        : `${trail.length ? 'הסדר עד כאן: ' + trail.join(' ← ') + '.' : 'זו תחילת הפרוטוקול.'} השלב הבא הוא "${n.name}". ${n.rule}`;
+      $('sheetBtn').textContent = hearts > 0 ? 'הבנתי, ממשיכים' : 'לסיכום';
       $('sheet').classList.add('show');
     }
-    stepIdx = g.i + 1; hud();
+    hud();
   }
-  function advance(i) { if (i + 1 < STEPS.length) spawnSegment(i + 1); else spawnFinish(); }
+  // ממשיכים לפי התרשים: צומת נוסף, יציאה לפרוטוקול אחר, או פינוי לבית החולים
+  function proceed(key, dir) {
+    const n = NODES[key], nx = NEXT[key](patient.ans[key]); trail.push(n.name.replace('?', ''));
+    okCard((level > 0 && n.yn ? n.name + ' ' : '') + reveal(key));
+    if (nx[0] === '>') { callLog.end = nx.slice(1); goCity(dir, 0); state = 'handoff'; handoffT = 3; }   // הפנייה כבר מחזירה לראש הפרוטוקול, לקריאה הבאה
+    else if (nx === 'hosp') { callLog.end = 'בית החולים'; goCity(dir, NODES.evac.city); spawnFinish(); }
+    else { nodeKey = nx; goCity(dir, NODES[nx].city); spawnSegment(); }
+  }
   function closeSheet() {
     if (state !== 'explain') return;
     $('sheet').classList.remove('show');
     if (hearts <= 0) return endGame(false);
-    state = 'run'; gfx.turn(pendingDir, pendingNext + 1); okCard(STEPS[pendingNext].ok); advance(pendingNext); pendingNext = null;
+    state = 'run'; proceed(pendingKey, pendingDir);
   }
   function endGame(won) {
-    state = 'done'; hideCard();
-    const correct = results.filter(r => r === true).length, stars = !won ? 0 : correct === STEPS.length ? 3 : correct >= 4 ? 2 : 1;
-    $('endTitle').textContent = won ? 'המטופל הגיע לבית החולים' : 'המטופל מידרדר — ננסה שוב';
+    state = 'done'; hideCard(); ents = [];
+    const steps = log.flatMap(c => c.steps), correct = steps.filter(s => s.ok).length, ratio = steps.length ? correct / steps.length : 0;
+    const stars = !won ? 0 : ratio === 1 ? 3 : ratio >= .75 ? 2 : 1;
+    $('endTitle').textContent = won ? 'המשמרת הסתיימה' : 'נגמרו הלבבות — ננסה שוב';
     $('endStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
-    $('endScore').textContent = score;
-    $('endSmall').textContent = `${correct} מתוך ${STEPS.length} החלטות לפי הפרוטוקול`;
-    $('recap').innerHTML = STEPS.map((s, i) => { const r = results[i];
-      return `<li class="${r === true ? 'ok' : r === false ? 'bad' : 'na'}"><b>${r === true ? '✓' : r === false ? '✗' : '·'}</b><span><strong>${s.name}</strong><br>${s.ok}</span></li>`; }).join('');
-    $('end').classList.add('show');
+    $('endScore').textContent = score; $('srcName').textContent = PROTOCOLS[proto].title;
+    $('endSmall').textContent = `${correct} מתוך ${steps.length} החלטות נכונות, ברמת ${LEVELS[level].name}`;
+    // לכל מטופל: המסלול שעבר בתרשים, עם סימון השלבים שבהם טעית
+    $('recap').innerHTML = log.map(c => { const clean = c.steps.every(s => s.ok);
+      const path = c.steps.map(s => `<span class="${s.ok ? '' : 'miss'}">${NODES[s.key].name}</span>`).concat(c.end ? [c.end] : []).join(' ← ');
+      return `<li class="${clean ? 'ok' : 'bad'}"><b>${clean ? '✓' : '✗'}</b><span><strong>${c.p.who}</strong><br>${path}</span></li>`; }).join('');
+    $('end').classList.add('show'); hud();
     if (won) [523, 659, 784, 1047].forEach((f, k) => beep(f, .2, 'triangle', .07, k * .12));
   }
 
@@ -244,17 +397,18 @@ export function createProtocolRunner(root) {
     if (!pd) return; const dx = e.clientX - pd.x, dy = e.clientY - pd.y, r = cv.getBoundingClientRect(); pd = null;
     if (dy < -30 && Math.abs(dy) > Math.abs(dx)) doDash(); else if (Math.abs(dx) > 24) move(dx > 0 ? 1 : -1); else move(e.clientX > r.left + r.width / 2 ? 1 : -1);
   });
-  $('startBtn').onclick = start; $('againBtn').onclick = start; $('sheetBtn').onclick = closeSheet;
+  $('startBtn').onclick = start; $('againBtn').onclick = start; $('menuBtn').onclick = showMenu; $('sheetBtn').onclick = closeSheet; $('home').onclick = showMenu;
 
   function update(dt) {
     T += dt; vNow = 0;
-    const moving = state === 'run' || state === 'title' || state === 'finish';
+    const moving = state === 'run' || state === 'title' || state === 'finish' || state === 'handoff';
     if (moving) {
       slow = Math.max(0, slow - dt);
       // אזור החלטה: הדרך ריקה והזמן מאט כדי שאפשר יהיה לקרוא. זינוק מקצר את ההמתנה.
-      const k = activeGate ? (dash ? 3 : .5) : slow > 0 ? .55 : 1, v = state === 'title' ? 6 : speed * k;
+      const k = activeGate ? (dash ? 3 : level === 2 ? .7 : .5) : slow > 0 ? .55 : 1, v = state === 'title' ? 6 : speed * k;
       vNow = v; dist += v * dt;
       if (state !== 'title') for (const e of ents) e.z -= v * dt;
+      if (cardTimer > 0 && (cardTimer -= dt) <= 0 && !activeGate) hideCard();
     }
     px += (laneX(lane) - px) * Math.min(1, dt * 14); lean = (laneX(lane) - px) / LW;
 
@@ -268,11 +422,11 @@ export function createProtocolRunner(root) {
           if (!e.shown && e.z <= SHOW_Z) { e.shown = true; showCard(e); hud(); }
           if (e.shown && !e.resolved) { const m = Math.max(0, Math.round(e.z * 3 / 5) * 5); if (m !== lastMeters) { lastMeters = m; $('timerBar').textContent = m; } if (e.z <= .4) { resolveGate(e); break; } }
         }
-        else if (e.type === 'hosp' && e.z <= 6) { endGame(true); break; }
+        else if (e.type === 'hosp' && e.z <= 6) { const last = callIdx >= calls.length - 1; if (!last) goCity(0, 0); state = 'handoff'; handoffT = last ? 1.4 : .65; speed = 1.5; break; }   // הגענו לבית החולים — הקריאה הסתיימה
       }
       ents = ents.filter(e => !e.dead && e.z > -3);
-      if (cardTimer > 0 && (cardTimer -= dt) <= 0 && !activeGate) hideCard();
     }
+    if (state === 'handoff' && (handoffT -= dt) <= 0) nextCall();
     shake *= Math.pow(.002, dt); if (flash && (flash.a -= dt * 1.1) <= 0) flash = null;
   }
 
@@ -607,9 +761,9 @@ export function createProtocolRunner(root) {
       { name: 'אילת', sky: 'eilat', fog: 0xf4b78e, mid: 0xee9e92, top: 0x3f6fb8, stone: [.9, .88, .84], style: 4, floors: [4, 5], density: 1, sea: -1, seaColor: 0x2f7fc0, palm: true, tanks: false, ground: 0xe3c08e, walk: 0xd8cdbb, lm: [LM2.marina] },
     ];
     const ALL_LM = LM.concat(Object.values(LM2));
-    let TH = THEMES[0], curD = 0, lmD0 = 0, turn = null, announce = 0;
-    const fadeEl = document.createElement('div'), cityEl = document.createElement('div');
-    fadeEl.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0'; cityEl.className = 'pr-city'; vigEl.after(fadeEl, cityEl);
+    let TH = THEMES[0], curD = 0, lmD0 = 0, turn = null;
+    const fadeEl = document.createElement('div');
+    fadeEl.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0'; vigEl.after(fadeEl);
     function applyTheme(i) {
       TH = THEMES[((i % THEMES.length) + THEMES.length) % THEMES.length]; lmD0 = curD;
       FOG.set(TH.fog); skyMat.uniforms.uMid.value.set(TH.mid); skyMat.uniforms.uTop.value.set(TH.top); skyline.material.map = skylineFor(TH.sky);
@@ -617,7 +771,7 @@ export function createProtocolRunner(root) {
       ground.material.color.set(TH.ground); walkMat.color.set(TH.walk);
       sea.visible = TH.sea !== 0; if (TH.sea) { sea.position.x = TH.sea * 182; sea.material.color.set(TH.seaColor); }
       trees.visible = !TH.palm; palmTrunk.visible = palmCrown.visible = TH.palm;
-      fadeEl.style.background = '#' + FOG.getHexString(); cityEl.textContent = TH.name;
+      fadeEl.style.background = '#' + FOG.getHexString();
     }
     applyTheme(0);
 
@@ -728,7 +882,7 @@ export function createProtocolRunner(root) {
 
     // ── טעינת נכסים ──
     const api = { loaded: false, sparks, lite };
-    api.setTheme = i => { turn = null; fadeEl.style.opacity = 0; applyTheme(i); announce = 2.2; };
+    api.setTheme = i => { turn = null; fadeEl.style.opacity = 0; applyTheme(i); };
     api.turn = (dir, i) => { turn = { k: 0, dir, i, done: false }; };
     async function load() {
       try { await Promise.all([document.fonts.load("400 40px 'Secular One'", 'אב'), document.fonts.ready]); } catch (e) { /* נמשיך עם גופן המערכת */ }
@@ -843,11 +997,10 @@ export function createProtocolRunner(root) {
       let tw = 0;
       if (turn) {
         turn.k += dt / 1.2; const k = Math.min(1, turn.k);
-        if (k >= .5 && !turn.done) { turn.done = true; applyTheme(turn.i); announce = 2.2; }
+        if (k >= .5 && !turn.done) { turn.done = true; applyTheme(turn.i); }
         tw = Math.sin(Math.PI * k) * turn.dir; fadeEl.style.opacity = Math.min(1, 2.2 * (1 - Math.abs(2 * k - 1))).toFixed(2);
         if (k >= 1) { turn = null; fadeEl.style.opacity = 0; }
       }
-      if (announce > 0) { announce -= dt; cityEl.style.opacity = Math.max(0, Math.min(1, announce * 3, (2.2 - announce) * 5)).toFixed(2); }
       carBody.position.y = susY; carBody.rotation.set(-pitch, -S.lean * .2 - tw * .7, S.lean * .13 + tw * .12);
       for (const w of wheels) w.rotation.x += v * dt / .42;
       const bt = t * 4.6 % 1, on = [bt < .5 ? (bt % .25 < .15 ? 1 : .1) : 0, bt >= .5 ? (bt % .25 < .15 ? 1 : .1) : 0];
@@ -919,7 +1072,7 @@ export function createProtocolRunner(root) {
   hud(); raf = requestAnimationFrame(frame);
 
   // כלי בדיקה: מאפשר להריץ את הלוגיקה צעד־צעד מהקונסול
-  if (import.meta.env.DEV) window.__prDbg = { update, draw, start, doDash, closeSheet, setLane: l => { lane = l; }, get s() { return { state, score, hearts, stepIdx, results, activeGate, ents, loaded: gfx.loaded }; } };
+  if (import.meta.env.DEV) window.__prDbg = { update, draw, start, doDash, closeSheet, setLane: l => { lane = l; }, setLevel: l => { level = l; }, setProto: useProto, get s() { return { proto, state, score, hearts, stepIdx: answered, activeGate, ents, loaded: gfx.loaded, callIdx, nodeKey, level, patient, log }; } };
 
   return {
     destroy() {
