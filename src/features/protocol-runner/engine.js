@@ -38,6 +38,7 @@ const TEMPLATE = `
       <h3 class="pick">בחר רמה</h3>
       <div class="pr-levels levels"></div>
       <p class="tips">החלק ימינה או שמאלה כדי לבחור נתיב לפני הצומת. החלק למעלה כדי לזנק.</p>
+      <button class="pr-studyBtn btn ghost">עיון בפרוטוקול לפני המשחק</button>
       <button class="pr-startBtn btn" disabled>טוען…</button>
     </div>
   </div>
@@ -49,6 +50,17 @@ const TEMPLATE = `
       <div class="row good">הנתיב הנכון: <b class="pr-sheetRight"></b></div>
       <p class="pr-sheetWhy"></p>
       <button class="pr-sheetBtn btn">הבנתי, ממשיכים</button>
+    </div>
+  </div>
+
+  <div class="pr-study overlay">
+    <div class="wrap">
+      <h2 class="pr-studyTitle"></h2>
+      <div class="pr-studyBody"></div>
+      <div class="acts">
+        <button class="pr-studyBack btn ghost">חזרה</button>
+        <button class="pr-studyGo btn">צא לקריאה</button>
+      </div>
     </div>
   </div>
 
@@ -205,10 +217,11 @@ export function createProtocolRunner(root) {
 
   // הפרוטוקולים שאפשר לתרגל. המשתמש בוחר אחד במסך הפתיחה.
   const PROTOCOLS = {
-    sob: { name: 'קוצר נשימה', title: 'גישה למטופל עם קוצר נשימה', nodes: SOB_NODES, order: SOB_ORDER, next: SOB_NEXT, patients: SOB_PATIENTS },
-    ana: { name: 'אנאפילקסיס', title: 'אנאפילקסיס', nodes: ANA_NODES, order: ANA_ORDER, next: ANA_NEXT, patients: ANA_PATIENTS },
-    chest: { name: 'כאב בחזה', title: 'גישה למטופל עם כאב בחזה ממקור לבבי', nodes: CHEST_NODES, order: CHEST_ORDER, next: CHEST_NEXT, patients: CHEST_PATIENTS },
+    sob: { name: 'קוצר נשימה', title: 'גישה למטופל עם קוצר נשימה', start: 'מטופל בקוצר נשימה', nodes: SOB_NODES, order: SOB_ORDER, next: SOB_NEXT, patients: SOB_PATIENTS },
+    ana: { name: 'אנאפילקסיס', title: 'אנאפילקסיס', start: 'חשד לתגובה אנאפילקטית', nodes: ANA_NODES, order: ANA_ORDER, next: ANA_NEXT, patients: ANA_PATIENTS },
+    chest: { name: 'כאב בחזה', title: 'גישה למטופל עם כאב בחזה ממקור לבבי', start: 'חשד לתסמונת כלילית חריפה', nodes: CHEST_NODES, order: CHEST_ORDER, next: CHEST_NEXT, patients: CHEST_PATIENTS },
   };
+  const CITY = ['ירושלים', 'תל אביב', 'חיפה', 'טבריה', 'באר שבע', 'ים המלח', 'אילת'];   // העיר של כל שלב, לפי city בצומת
   let proto = 'sob', NODES = SOB_NODES, ORDER = SOB_ORDER, NEXT = SOB_NEXT, PATIENTS = SOB_PATIENTS;
   function useProto(k) { proto = PROTOCOLS[k] ? k : 'sob'; ({ nodes: NODES, order: ORDER, next: NEXT, patients: PATIENTS } = PROTOCOLS[proto]); }
   // שלוש רמות: במודרך עונים על שאלת הצומת; בשליפה ובבעל פה בוחרים איזה שלב בא עכשיו.
@@ -254,6 +267,15 @@ export function createProtocolRunner(root) {
   function drawProtos() { $('protos').innerHTML = Object.keys(PROTOCOLS).map(k => `<button type="button" data-p="${k}" class="${k === proto ? 'on' : ''}">${PROTOCOLS[k].name}</button>`).join(''); }
   $('protos').onclick = e => { const b = e.target.closest('button'); if (!b) return; useProto(b.dataset.p); try { localStorage.setItem('pr-proto', proto); } catch (err) { /* לא נורא */ } drawProtos(); };
   drawProtos();
+  function showStudy() {
+    $('studyTitle').textContent = PROTOCOLS[proto].title;
+    $('studyBody').innerHTML = `<div class="st-start">${PROTOCOLS[proto].start}</div>` + ORDER.map(k => { const n = NODES[k];
+      const body = n.yn ? `<p><b>כן:</b> ${n.yes}</p><p><b>לא:</b> ${n.no}</p>` : n.mask ? `<p>${n.mask}</p><p>${n.bvm}</p>` : `<p>${n.ok}</p>`;
+      return `<div class="st-step ${n.yn ? 'yn' : ''}"><span class="st-city">${CITY[n.city]}</span><h4>${n.name}</h4>${body}<p class="st-rule">${n.rule}</p></div>`; }).join('');
+    $('studyBody').scrollTop = 0; $('study').classList.add('show');
+  }
+  $('studyBtn').onclick = showStudy; $('studyBack').onclick = () => $('study').classList.remove('show');
+  $('studyGo').onclick = () => { $('study').classList.remove('show'); start(); };
 
   function reset() {
     lane = 1; px = 0; speed = 8; slow = 0; dash = false; ents = []; shake = 0; flash = null;
@@ -265,7 +287,7 @@ export function createProtocolRunner(root) {
     reset(); calls = shuffle(PATIENTS.slice()).slice(0, CALLS); callIdx = -1;
     $('title').classList.remove('show'); $('end').classList.remove('show'); nextCall();
   }
-  function showMenu() { state = 'title'; ents = []; activeGate = null; score = 0; streak = 0; hearts = 3; calls = []; hideCard(); $('sheet').classList.remove('show'); $('end').classList.remove('show'); $('title').classList.add('show'); hud(); }
+  function showMenu() { state = 'title'; $('study').classList.remove('show'); ents = []; activeGate = null; score = 0; streak = 0; hearts = 3; calls = []; hideCard(); $('sheet').classList.remove('show'); $('end').classList.remove('show'); $('title').classList.add('show'); hud(); }
   // כל קריאה מתחילה בראש הפרוטוקול (ירושלים). לא עוצרים: המטופל מוצג בכרטיס בזמן שהכביש עוד ריק.
   const goCity = (dir, i) => { cityNow = i; gfx.turn(dir, i); };
   function nextCall() {

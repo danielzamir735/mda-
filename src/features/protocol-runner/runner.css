@@ -130,3 +130,19 @@
 .pr-root .protos button { font: inherit; font-size: .9em; font-weight: 700; color: #d4d4d8; padding: .6em .4em; border-radius: .8em; background: rgba(20, 20, 30, .85); border: 1px solid var(--border); cursor: pointer; transition: transform 140ms var(--ease-out); }
 .pr-root .protos button.on { color: #fff; border-color: var(--red); background: rgba(239, 35, 60, .22); }
 .pr-root .protos button:active { transform: scale(.98); }
+/* ── עיון בפרוטוקול: התרשים בשפת האוגדן — כתום להחלטה, תכלת לפעולה, ירוק לדגשים ── */
+.pr-root .pr-studyBtn { margin: 0 0 .6em; }
+.pr-root .pr-study { background: rgba(4, 4, 9, .94); }
+.pr-root .pr-study .wrap { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: .7em; height: 100%; min-height: 0; padding: .9em; }
+.pr-root .pr-study h2 { margin: 0; font-size: 1.12em; line-height: 1.2; text-align: center; }
+.pr-root .pr-studyBody { display: grid; align-content: start; gap: 1em; min-height: 0; overflow-y: auto; padding: .2em .45em 1em .15em; touch-action: pan-y; overscroll-behavior: contain; }
+.pr-root .st-start { justify-self: center; padding: .3em 1.2em .38em; border-radius: 99em; background: #FFE14A; color: #000; border: .12em solid #000; box-shadow: .2em .2em 0 #000; font-family: var(--display); font-size: 1.05em; }
+.pr-root .st-step { position: relative; padding: .55em .75em .65em; background: var(--doc-cyan); color: #000; border: .12em solid #000; box-shadow: .22em .22em 0 #000; }
+.pr-root .st-step.yn { background: var(--doc-orange); }
+.pr-root .st-step::before { content: ''; position: absolute; top: -1.1em; left: calc(50% - .07em); width: .14em; height: 1em; background: #e4e4e7; }
+.pr-root .st-step h4 { margin: 0 0 .3em; padding-inline-end: 4.6em; font-family: var(--display); font-weight: 400; font-size: 1.12em; line-height: 1.15; }
+.pr-root .st-step p { margin: .15em 0; font-size: .86em; font-weight: 600; line-height: 1.4; }
+.pr-root .st-step .st-rule { margin-top: .5em; padding: .4em .55em; background: var(--doc-green); border: .1em solid #000; font-weight: 500; }
+.pr-root .st-city { position: absolute; top: .5em; left: .5em; padding: .1em .5em .14em; background: #000; color: #fff; font-size: .68em; font-weight: 800; }
+.pr-root .pr-study .acts { display: grid; grid-template-columns: 1fr 1.5fr; gap: .5em; align-items: stretch; }
+.pr-root .pr-study .acts .btn.ghost { margin-top: 0; }
