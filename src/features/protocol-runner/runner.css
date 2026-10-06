@@ -118,7 +118,7 @@
 .pr-root .levels button { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: .7em; text-align: start; font: inherit; color: #d4d4d8; padding: .62em .8em; border-radius: .8em; background: rgba(20, 20, 30, .85); border: 1px solid var(--border); cursor: pointer; transition: transform 140ms var(--ease-out); }
 .pr-root .levels button::before { content: ''; grid-row: span 2; width: 1.05em; height: 1.05em; border-radius: 50%; border: .13em solid #71717a; }
 .pr-root .levels button b { font-size: 1.02em; color: #fff; }
-.pr-root .levels button span { font-size: .78em; color: var(--muted); }
+.pr-root .levels button span { font-size: .78em; line-height: 1.35; color: #c4c4cc; }
 .pr-root .levels button.on { border-color: var(--red); background: rgba(239, 35, 60, .18); }
 .pr-root .levels button.on::before { border-color: var(--red); background: radial-gradient(var(--red) 0 45%, transparent 50%); }
 .pr-root .levels button:active { transform: scale(.98); }
@@ -136,10 +136,9 @@
 .pr-root .st-step { position: relative; padding: .55em .75em .65em; background: var(--doc-cyan); color: #000; border: .12em solid #000; box-shadow: .22em .22em 0 #000; }
 .pr-root .st-step.yn { background: var(--doc-orange); }
 .pr-root .st-step::before { content: ''; position: absolute; top: -1.1em; left: calc(50% - .07em); width: .14em; height: 1em; background: #e4e4e7; }
-.pr-root .st-step h4 { margin: 0 0 .3em; padding-inline-end: 4.6em; font-family: var(--display); font-weight: 400; font-size: 1.12em; line-height: 1.15; }
+.pr-root .st-step h4 { margin: 0 0 .3em; font-family: var(--display); font-weight: 400; font-size: 1.12em; line-height: 1.15; }
 .pr-root .st-step p { margin: .15em 0; font-size: .86em; font-weight: 600; line-height: 1.4; }
 .pr-root .st-step .st-rule { margin-top: .5em; padding: .4em .55em; background: var(--doc-green); border: .1em solid #000; font-weight: 500; }
-.pr-root .st-city { position: absolute; top: .5em; left: .5em; padding: .1em .5em .14em; background: #000; color: #fff; font-size: .68em; font-weight: 800; }
 .pr-root .pr-study .acts { display: grid; grid-template-columns: 1fr 1.5fr; gap: .5em; align-items: stretch; }
 .pr-root .pr-study .acts .btn.ghost { margin-top: 0; }
 .pr-root .protoBtn { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: .75em; padding: .62em .85em; font: inherit; font-size: 1.02em; font-weight: 700; color: #fff; text-align: start; border-radius: .8em; background: rgba(239, 35, 60, .18); border: 1px solid var(--red); cursor: pointer; transition: transform 140ms var(--ease-out); }

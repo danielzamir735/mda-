@@ -687,11 +687,14 @@ export function createProtocolRunner(root) {
     birth: { name: 'קבלת לידה', title: 'קבלת לידה', start: 'חשד ללידה פעילה', ...BIRTH },
     birthC: { name: 'סיבוכים בלידה', title: 'סיבוכים בלידה', start: 'לידה פעילה', ...BIRTH_C },
   };
-  const CITY = ['ירושלים', 'תל אביב', 'חיפה', 'טבריה', 'באר שבע', 'ים המלח', 'אילת'];   // העיר של כל שלב, לפי city בצומת
   let proto = 'sob', NODES = SOB_NODES, ORDER = SOB_ORDER, NEXT = SOB_NEXT, PATIENTS = SOB_PATIENTS;
   function useProto(k) { proto = PROTOCOLS[k] ? k : 'sob'; ({ nodes: NODES, order: ORDER, next: NEXT, patients: PATIENTS } = PROTOCOLS[proto]); }
   // שלוש רמות: במודרך עונים על שאלת הצומת; בשליפה ובבעל פה בוחרים איזה שלב בא עכשיו.
-  const LEVELS = [{ name: 'מודרך', hint: 'השאלה מוצגת, אתה עונה' }, { name: 'שליפה', hint: 'אתה בוחר מה השלב הבא' }, { name: 'בעל פה', hint: 'בלי תיאור המטופל בצמתים, ומהר יותר' }];
+  const LEVELS = [
+    { name: 'מתחיל', hint: 'המשחק שואל ואתה עונה. למשל: "חשד לתגובה אלרגית?" — כן או לא.' },
+    { name: 'מתקדם', hint: 'אין שאלה מוכנה. אתה צריך לזכור מה השלב הבא בפרוטוקול ולבחור אותו מתוך שלושה.' },
+    { name: 'מומחה', hint: 'כמו מתקדם, אבל בלי תיאור המטופל ליד השאלה, ובנסיעה מהירה יותר.' },
+  ];
   const LANE_COLORS = ['#5CE6F2', '#FF6FDD', '#FFE14A'];   // תכלת, ורוד וצהוב מתרשימי האוגדן
   const KINDS = ['pill', 'heart', 'kit', 'plaster'], KIND_COLOR = { pill: '#f87171', heart: '#fb7185', kit: '#f4f4f5', plaster: '#f2c9a0' };
 
@@ -738,7 +741,7 @@ export function createProtocolRunner(root) {
     $('studyTitle').textContent = PROTOCOLS[proto].title;
     $('studyBody').innerHTML = `<div class="st-start">${PROTOCOLS[proto].start}</div>` + ORDER.map(k => { const n = NODES[k];
       const body = n.yn ? `<p><b>כן:</b> ${n.yes}</p><p><b>לא:</b> ${n.no}</p>` : n.study ? n.study.map(t => `<p>${t}</p>`).join('') : n.mask ? `<p>${n.mask}</p><p>${n.bvm}</p>` : `<p>${n.ok}</p>`;
-      return `<div class="st-step ${n.yn ? 'yn' : ''}"><span class="st-city">${CITY[n.city]}</span><h4>${n.name}</h4>${body}<p class="st-rule">${n.rule}</p></div>`; }).join('');
+      return `<div class="st-step ${n.yn ? 'yn' : ''}"><h4>${n.name}</h4>${body}<p class="st-rule">${n.rule}</p></div>`; }).join('');
     $('studyBody').scrollTop = 0; $('study').classList.add('show');
   }
   $('studyBtn').onclick = showStudy; $('studyBack').onclick = () => $('study').classList.remove('show');
