@@ -21,7 +21,7 @@ const TEMPLATE = `
 
   <div class="pr-card">
     <p class="pr-note"><span class="pr-tag"></span><span class="pr-finding"></span></p>
-    <div class="pr-node"><h2 class="pr-question"></h2><span class="pr-timer">שער בעוד <b class="pr-timerBar"></b> מ׳</span></div>
+    <div class="pr-node"><h2 class="pr-question"></h2><span class="pr-timer">צומת בעוד <b class="pr-timerBar"></b> מ׳</span></div>
     <div class="pr-chips"></div>
     <div class="pr-hint">בחרת נתיב? החלק למעלה כדי לזנק</div>
   </div>
@@ -31,7 +31,7 @@ const TEMPLATE = `
   <div class="pr-title overlay show">
     <div>
       <h1 class="logo">ריצת <span>פרוטוקול</span></h1>
-      <p class="sub">סע בנתיב של ההחלטה הנכונה, עד בית החולים.</p>
+      <p class="sub">בכל צומת פנה לכיוון של ההחלטה הנכונה.</p>
       <div class="dispatch">
         <h3>קריאה נכנסת</h3>
         <p><b>גבר בן 67 · קוצר נשימה</b><br>יושב על כיסא בסלון, נושם מהר ומתקשה לדבר. אשתו הזעיקה.</p>
@@ -39,7 +39,7 @@ const TEMPLATE = `
       <div class="how">
         <div><b>⇆</b>החלק או חצים<br>כדי להחליף נתיב</div>
         <div><b>✚</b>אסוף ציוד<br>רפואי בדרך</div>
-        <div><b>?</b>לפני שער הזמן<br>מאט — קרא ובחר</div>
+        <div><b>?</b>לפני צומת הזמן<br>מאט — קרא ובחר</div>
       </div>
       <button class="pr-startBtn btn" disabled>טוען…</button>
     </div>
@@ -138,7 +138,7 @@ export function createProtocolRunner(root) {
   let state = 'title', T = 0, dist = 0, vNow = 0, last = performance.now();
   let lane = 1, px = 0, lean = 0, speed = 8, slow = 0, dash = false;
   let ents = [], shake = 0, flash = null;
-  let score = 0, hearts = 3, streak = 0, stepIdx = 0, results = [], pendingNext = null, activeGate = null, cardTimer = 0;
+  let score = 0, hearts = 3, streak = 0, stepIdx = 0, results = [], pendingNext = null, pendingDir = 0, activeGate = null, cardTimer = 0;
 
   function reset() {
     lane = 1; px = 0; speed = 8; slow = 0; dash = false; ents = []; shake = 0; flash = null;
@@ -147,7 +147,7 @@ export function createProtocolRunner(root) {
   }
   function start() {
     if (!gfx || !gfx.loaded) return;
-    reset(); state = 'run'; $('title').classList.remove('show'); $('end').classList.remove('show');
+    reset(); gfx.setTheme(0); state = 'run'; $('title').classList.remove('show'); $('end').classList.remove('show');
     spawnSegment(0); beep(523, .1, 'triangle'); beep(784, .14, 'triangle', .07, .1);
   }
   function makeGate(i, z) {
@@ -181,7 +181,7 @@ export function createProtocolRunner(root) {
     const st = STEPS[g.i]; activeGate = g; cardTimer = 0;
     $('card').className = 'pr-card show'; $('tag').textContent = 'ממצא:'; lastMeters = -1; $('hint').hidden = g.i > 0;   // הנחיית הזינוק מוצגת רק בשער הראשון
     $('finding').textContent = st.finding; $('question').textContent = st.q;
-    $('chips').innerHTML = g.opts.map(o => o ? `<div class="${o.label.length <= 3 ? 'short' : ''}" style="--c:${o.color}">${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
+    $('chips').innerHTML = g.opts.map((o, l) => o ? `<div class="${o.label.length <= 3 ? 'short' : ''}" style="--c:${o.color}"><i>${'←↑→'[l]}</i>${o.label.replace('\n', ' ')}</div>` : '<div class="blocked">חסום</div>').join('');
     beep(660, .05, 'square', .03);
   }
   function okCard(text) { $('card').className = 'pr-card show ok'; $('tag').textContent = 'לפי הפרוטוקול:'; $('finding').textContent = text; cardTimer = 2.6; }
@@ -192,7 +192,7 @@ export function createProtocolRunner(root) {
     const st = STEPS[g.i], cur = clamp(Math.round(px / LW) + 1, 0, 2), opt = g.opts[cur], right = g.opts.find(o => o && o.ok);
     g.resolved = true; activeGate = null; dash = false;
     if (opt && opt.ok) {
-      streak++; const gain = 100 * Math.min(3, streak); score += gain; results[g.i] = true; g.open = cur;
+      streak++; const gain = 100 * Math.min(3, streak); score += gain; results[g.i] = true; g.open = cur; gfx.turn(cur - 1, g.i + 1);
       gfx.sparks(cur - 1, 2.2, opt.color, 140, 15); floater('+' + gain, '#22C55E');
       flash = { c: [.13, .77, .37], a: .3 }; okCard(st.ok);
       beep(523, .09, 'triangle'); beep(659, .09, 'triangle', .07, .08); beep(784, .16, 'triangle', .07, .16);
@@ -200,7 +200,7 @@ export function createProtocolRunner(root) {
     } else {
       streak = 0; hearts--; results[g.i] = false; shake = 16; flash = { c: [.94, .14, .24], a: .8 };
       gfx.sparks(cur - 1, 1.6, '#EF233C', 70, 11); beep(160, .25, 'sawtooth', .09); beep(110, .3, 'sawtooth', .08, .1);
-      hideCard(); state = 'explain'; pendingNext = g.i;
+      hideCard(); state = 'explain'; pendingNext = g.i; pendingDir = g.opts.indexOf(right) - 1;
       $('sheetTitle').textContent = opt ? '✗ לא לפי הפרוטוקול' : '✗ לא בחרת נתיב';
       $('sheetChose').textContent = opt ? opt.label.replace('\n', ' ') : 'הנתיב החסום';
       $('sheetRight').textContent = right.label.replace('\n', ' ');
@@ -214,7 +214,7 @@ export function createProtocolRunner(root) {
     if (state !== 'explain') return;
     $('sheet').classList.remove('show');
     if (hearts <= 0) return endGame(false);
-    state = 'run'; okCard(STEPS[pendingNext].ok); advance(pendingNext); pendingNext = null;
+    state = 'run'; gfx.turn(pendingDir, pendingNext + 1); okCard(STEPS[pendingNext].ok); advance(pendingNext); pendingNext = null;
   }
   function endGame(won) {
     state = 'done'; hideCard();
@@ -363,7 +363,7 @@ export function createProtocolRunner(root) {
           #include <colorspace_fragment>
         }` });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), skyMat); sky.frustumCulled = false; sky.renderOrder = -10; scene.add(sky);
-    const skylineTex = canvasTex(2048, 320, (c, w, h) => {
+    const SKY = {}; SKY.jlm = (c, w, h) => {
       const base = 250, A = '#d8a48b', B = '#9a6c70', G = '#5f5a4c', rnd = (() => { let s = 11; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
       const dome = (x, y, r, col, k = 1) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, r, r * k, 0, Math.PI, 0); c.fill(); };
       const minaret = (x, ht) => { c.fillStyle = B; c.fillRect(x - 4, base - ht, 8, ht); c.fillRect(x - 7, base - ht * .78, 14, 4); c.beginPath(); c.moveTo(x - 5, base - ht); c.lineTo(x, base - ht - 16); c.lineTo(x + 5, base - ht); c.fill(); };
@@ -393,9 +393,45 @@ export function createProtocolRunner(root) {
       for (const [x, ht] of [[706, 96], [986, 84], [1452, 104], [1716, 88], [1900, 76]]) minaret(x, ht);
       c.fillStyle = G; for (let i = 0; i < 46; i++) { const x = rnd() * w, th = 16 + rnd() * 20; c.beginPath(); c.ellipse(x, 214 - th / 2, 3.5, th / 2, 0, 0, 7); c.fill(); }
       c.fillStyle = '#' + FOG.getHexString(); c.fillRect(0, base - 2, w, h - base + 2);                 // התחתית נמסה באובך
-    });
-    skylineTex.wrapS = skylineTex.wrapT = THREE.ClampToEdgeWrapping;
-    const skyline = new THREE.Mesh(new THREE.PlaneGeometry(2400, 375), new THREE.MeshBasicMaterial({ map: skylineTex, alphaTest: .5, depthTest: false, depthWrite: false, fog: false }));
+    };
+    // קווי רקיע של שאר הערים. skyBase הוא קו האופק; מתחתיו הכול נמס באובך.
+    const skyBase = 250, haze = (c, w, h) => { c.fillStyle = '#' + FOG.getHexString(); c.fillRect(0, skyBase - 2, w, h - skyBase + 2); };
+    const lcg = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+    const ridge = (c, w, col, y0, amp, f, jag = 0, seed = 5) => { const r = lcg(seed); c.fillStyle = col; c.beginPath(); c.moveTo(0, skyBase);
+      for (let x = 0; x <= w; x += 14) c.lineTo(x, y0 - Math.sin(x * f + seed) * amp - Math.sin(x * f * 3.1 + 2) * amp * .35 - r() * jag); c.lineTo(w, skyBase); c.fill(); };
+    SKY.tlv = (c, w, h) => { const r = lcg(23);                                                               // הים בצד שמאל, המגדלים בימין
+      c.fillStyle = '#c9a9a4'; for (let x = 820; x < w; x += 16 + r() * 22) { const bh = 14 + r() * 40; c.fillRect(x, skyBase - bh, 12 + r() * 16, bh); }
+      c.fillStyle = '#8f7f98'; for (let x = 900; x < w; x += 46 + r() * 60) { const bh = 50 + r() * 110; c.fillRect(x, skyBase - bh, 24 + r() * 26, bh); }
+      c.fillStyle = '#7a86a8'; c.fillRect(1260, skyBase - 168, 46, 168); c.beginPath(); c.ellipse(1283, skyBase - 168, 23, 7, 0, 0, 7); c.fill();   // עזריאלי: עגול, משולש, מרובע
+      c.beginPath(); c.moveTo(1322, skyBase); c.lineTo(1322, skyBase - 176); c.lineTo(1352, skyBase - 150); c.lineTo(1352, skyBase); c.fill();
+      c.fillRect(1368, skyBase - 150, 44, 150);
+      c.fillStyle = 'rgba(255,236,200,.5)'; for (let y = skyBase - 160; y < skyBase - 6; y += 9) { c.fillRect(1264, y, 38, 2); c.fillRect(1372, y, 36, 2); }
+      haze(c, w, h); };
+    SKY.haifa = (c, w, h) => { const r = lcg(31);                                                             // הכרמל בשמאל, הנמל והים בימין
+      c.fillStyle = '#c9a495'; c.beginPath(); c.moveTo(0, skyBase); c.lineTo(0, 96); c.bezierCurveTo(500, 70, 900, 150, 1500, 236); c.lineTo(1500, skyBase); c.fill();
+      c.fillStyle = '#a98478'; for (let i = 0; i < 150; i++) { const x = r() * 1300, top = 96 + x * .1, y = top + 14 + r() * (skyBase - top - 30); c.fillRect(x, y, 7 + r() * 9, 5 + r() * 8); }
+      c.fillStyle = '#7f9a62'; c.beginPath(); c.moveTo(560, 118); c.lineTo(640, 124); c.lineTo(690, skyBase); c.lineTo(520, skyBase); c.fill();       // הגנים הבהאיים
+      c.strokeStyle = '#e9dcc0'; c.lineWidth = 2; for (let y = 132; y < skyBase; y += 13) { c.beginPath(); c.moveTo(556 - (y - 118) * .3, y); c.lineTo(644 + (y - 118) * .36, y); c.stroke(); }
+      c.fillStyle = '#efe6d2'; c.fillRect(582, 178, 40, 16); c.fillStyle = '#f2c23e'; c.beginPath(); c.ellipse(602, 178, 15, 19, 0, Math.PI, 0); c.fill();
+      c.fillStyle = '#8a8fa6'; c.fillRect(1010, skyBase - 120, 24, 120);                                                                             // מגדל המפרש
+      c.strokeStyle = '#a05a4a'; c.lineWidth = 4; for (const x of [1250, 1330, 1410]) { c.beginPath(); c.moveTo(x, skyBase); c.lineTo(x, skyBase - 54); c.lineTo(x + 44, skyBase - 66); c.moveTo(x - 14, skyBase - 54); c.lineTo(x + 20, skyBase - 54); c.stroke(); }
+      c.fillStyle = '#8f7f98'; for (const x of [1620, 1840]) { c.fillRect(x, skyBase - 10, 90, 10); c.fillRect(x + 60, skyBase - 22, 20, 12); }    // אוניות
+      haze(c, w, h); };
+    SKY.tiberias = (c, w, h) => { ridge(c, w, '#cfa596', 204, 5, .0021, 3, 9); ridge(c, w, '#b98f88', 222, 4, .004, 2, 4); haze(c, w, h); };          // רמת הגולן מעבר לכנרת
+    SKY.negev = (c, w, h) => { ridge(c, w, '#dcae7e', 196, 16, .0031, 0, 3); ridge(c, w, '#c58f5f', 222, 10, .0052, 0, 8);
+      c.fillStyle = '#6e4a36'; for (const [x, k] of [[620, 1], [700, .85], [770, 1.05]]) { c.save(); c.translate(x, 214); c.scale(k, k);              // גמלים
+        c.beginPath(); c.ellipse(0, 0, 22, 10, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(-2, -10, 9, 8, 0, 0, 7); c.fill();
+        for (const lx of [-16, -6, 8, 16]) c.fillRect(lx, 4, 4, 22); c.fillRect(18, -24, 5, 24); c.fillRect(18, -28, 14, 7); c.restore(); }
+      c.fillRect(1396, 180, 6, 44); c.beginPath(); c.ellipse(1399, 178, 44, 10, 0, 0, 7); c.fill();                                                   // שיטה
+      haze(c, w, h); };
+    SKY.deadsea = (c, w, h) => { ridge(c, w, '#d4a9a6', 168, 12, .0024, 6, 6);                                                                         // הרי מואב ומצדה
+      c.fillStyle = '#b07f6c'; c.beginPath(); c.moveTo(150, skyBase); c.lineTo(260, 142); c.lineTo(640, 138); c.lineTo(780, skyBase); c.fill();
+      c.fillStyle = '#9a6c5c'; c.fillRect(330, 130, 60, 9); c.fillRect(470, 128, 34, 11);
+      haze(c, w, h); };
+    SKY.eilat = (c, w, h) => { ridge(c, w, '#d59c86', 150, 26, .0046, 22, 12); ridge(c, w, '#b0614f', 190, 22, .0071, 26, 2); ridge(c, w, '#8f4a40', 226, 9, .011, 12, 7); haze(c, w, h); };   // הרי אילת האדומים
+    const skyCache = {};
+    function skylineFor(kind) { if (!skyCache[kind]) { const t = canvasTex(2048, 320, SKY[kind]); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; skyCache[kind] = t; } return skyCache[kind]; }
+    const skyline = new THREE.Mesh(new THREE.PlaneGeometry(2400, 375), new THREE.MeshBasicMaterial({ map: skylineFor('jlm'), alphaTest: .5, depthTest: false, depthWrite: false, fog: false }));
     skyline.frustumCulled = false; skyline.renderOrder = -9; scene.add(skyline);
     const sunGlow = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshBasicMaterial({ map: glowTex, color: new THREE.Color(1, .72, .4), transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }));
     sunGlow.frustumCulled = false; scene.add(sunGlow);
@@ -426,7 +462,7 @@ export function createProtocolRunner(root) {
 
     // בנייני אבן ירושלמית — אבן, חלונות מקושתים ותאורת שקיעה מצוירים ב־shader
     const bldMat = new THREE.ShaderMaterial({
-      fog: true, uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uSun: { value: SUN } }]),
+      fog: true, uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uSun: { value: SUN }, uStone: { value: new THREE.Color(.72, .57, .36) }, uStyle: { value: 0 } }]),
       vertexShader: `#include <common>
         #include <fog_pars_vertex>
         attribute float aSeed; varying vec2 vWin; varying float vSeed; varying vec3 vN;
@@ -439,20 +475,32 @@ export function createProtocolRunner(root) {
         }`,
       fragmentShader: `#include <common>
         #include <fog_pars_fragment>
-        uniform vec3 uSun; varying vec2 vWin; varying float vSeed; varying vec3 vN;
+        uniform vec3 uSun, uStone; uniform float uStyle; varying vec2 vWin; varying float vSeed; varying vec3 vN;
         float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float box(vec2 p, vec2 b){ return step(abs(p.x), b.x) * step(abs(p.y), b.y); }
         void main(){
-          vec3 stone = vec3(.72, .57, .36) * (.9 + .22 * fract(vSeed * 7.3));
-          stone *= 1. - .07 * step(.9, fract(vWin.y / .55)) - .05 * h21(floor(vWin / vec2(1.1, .55)));          // נדבכי אבן
+          // uStyle: 0 אבן ירושלמית · 1 טיח לבן (תל אביב, חיפה) · 2 בזלת (טבריה) · 3 בית מדברי · 4 מלון זכוכית (אילת)
+          vec3 wall = uStone * (.9 + .22 * fract(vSeed * 7.3));
+          if (uStyle < .5 || (uStyle > 1.5 && uStyle < 2.5)) wall *= 1. - .07 * step(.9, fract(vWin.y / .55)) - .05 * h21(floor(vWin / vec2(1.1, .55)));   // נדבכי אבן
           vec3 light = vec3(1., .7, .4) * 1.75 * max(dot(vN, uSun), 0.) + vec3(.42, .43, .56) + vec3(.25, .16, .1) * max(vN.y, 0.);
-          vec3 col = stone * light;
+          vec3 col = wall * light;
           if (abs(vN.y) < .5) {
-            vec2 g = vWin / vec2(2.7, 3.2), id = floor(g), p = (fract(g) - vec2(.5, .58)) * vec2(2.7, 3.2);
-            float win = (step(abs(p.x), .5) * step(p.y, 0.) * step(-1.25, p.y) + step(length(p), .5) * step(0., p.y)) * step(1., id.y);   // חלון מקושת
-            float r = h21(id + vSeed * 17.);
+            vec2 cell = vec2(2.7, 3.2);
+            if (uStyle > 3.5) cell = vec2(2., 3.); else if (uStyle > .5 && uStyle < 1.5) cell = vec2(4.2, 3.2);
+            vec2 g = vWin / cell, id = floor(g), p = (fract(g) - vec2(.5, .58)) * cell;
+            float r = h21(id + vSeed * 17.), up = step(1., id.y), win = 0., trim = 0.;
+            if (uStyle < .5) win = box(p + vec2(0., .625), vec2(.5, .625)) + step(length(p), .5) * step(0., p.y);                 // חלון מקושת
+            else if (uStyle < 1.5) { win = box(p, vec2(1.75, .55)) * step(.1, fract(p.x / 1.1 + .5)); trim = box(p + vec2(0., .9), vec2(2.1, .1)); }   // חלונות סרט ומרפסת
+            else if (uStyle < 2.5) { win = box(p, vec2(.5, .8)); trim = box(p, vec2(.68, .98)) - win; }                              // מסגרת אבן בהירה
+            else if (uStyle < 3.5) win = box(p, vec2(.42, .42)) * step(.35, r);                                                       // חלונות קטנים ודלילים
+            else { win = box(p, vec2(.86, 1.15)); trim = box(p + vec2(0., .95), vec2(1., .08)); }                                      // קיר זכוכית ומעקה
+            win = min(win, 1.) * up; trim = clamp(trim, 0., 1.) * up;
             vec3 glass = vec3(.07, .09, .13) + vec3(1., .62, .3) * .75 * step(.72, r) * max(dot(vN, uSun) + .25, 0.) + vec3(1., .8, .45) * .8 * step(.93, r);
+            if (uStyle > 3.5) glass += vec3(.1, .22, .34);
+            vec3 trimCol = col * .72; if (uStyle > 1.5 && uStyle < 2.5) trimCol = vec3(.92, .9, .84) * light;
+            col = mix(col, trimCol, trim);
             col = mix(col, glass, win);
-            col *= 1. - .22 * step(vWin.y, 3.1) * step(.5, fract(vWin.x / 5.4 + vSeed));                         // פתחי חנויות בקומת הקרקע
+            col *= 1. - .22 * step(vWin.y, 3.1) * step(.5, fract(vWin.x / 5.4 + vSeed));                                              // פתחי חנויות בקומת הקרקע
           }
           gl_FragColor = vec4(col, 1.);
           #include <tonemapping_fragment>
@@ -516,7 +564,62 @@ export function createProtocolRunner(root) {
         const top = new THREE.Mesh(new THREE.ConeGeometry(1.6, 4.5, 10), darkMat); top.position.set(17.5, 36.2, -8); g.add(min, bal, top);
       }),
     ];
-    const LM_S = 190;
+
+    // ── אתרים של שאר הערים ──
+    const glassMat = lam(0x9fc4e8, { emissive: 0x1f3a52 }), goldMat = lam(0xf2c23e, { emissive: 0x6b4a00 });
+    const cyl = (mat, rt, rb, hgt, seg, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, hgt, seg), mat); m.position.set(x, y, z); return m; };
+    const RED = 0xd0452c, WOOD = 0x8a5a36, CAMEL = 0xb98a55;
+    const LM2 = {
+      azrieli: landmark(1, 44, 'מגדלי עזריאלי', g => { g.add(cyl(glassMat, 6.5, 6.5, 62, 20, 21, 31, -10), cyl(glassMat, 8, 8, 68, 3, 33, 34, 2), boxes(glassMat, [[21, 27, 12, 11, 54, 11]]), boxes(whiteMat, [[25, 2, 1, 26, 4, 40]])); }),
+      beach: landmark(-1, 0, 'חוף הים', g => {
+        const list = [[-17, 2.6, -12, 2.8, 1.8, 2.8, 0xf4f1ea], [-17, .85, -12, 2.2, 1.7, 2.2, WOOD]];
+        [0xc8102e, 0x2d6cb5, 0xf2b632, 0x2f8f4e].forEach((c, i) => { const x = -15 - (i % 2) * 5, z = -2 + i * 6; list.push([x, 1.1, z, .1, 2.2, .1, 0x4a4640]); const u = new THREE.Mesh(new THREE.ConeGeometry(1.7, .7, 8), lam(c)); u.position.set(x, 2.5, z); g.add(u); });
+        g.add(boxes(tintMat, list)); }),
+      bahai: landmark(-1, 34, 'הגנים הבהאיים', g => {
+        const list = []; for (let k = 0; k < 6; k++) list.push([-13.5 - k * 3.2, (k + 1) * .8, 0, 3.2, (k + 1) * 1.6, 28 - k * 2, k % 2 ? 0x6f9a55 : 0x86ab66]);
+        list.push([-35.5, 11.6, 0, 9, 4, 9, 0xefe6d2]); g.add(boxes(tintMat, list), cyl(whiteMat, 3.2, 3.2, 3, 12, -35.5, 15.1, 0));
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(3.3, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), goldMat); dome.scale.y = 1.25; dome.position.set(-35.5, 16.6, 0); g.add(dome); }),
+      crane: landmark(1, 0, 'נמל חיפה', g => { g.add(boxes(tintMat, [[18, 9, -5, .8, 18, .8, RED], [18, 9, 5, .8, 18, .8, RED], [24, 9, -5, .8, 18, .8, RED], [24, 9, 5, .8, 18, .8, RED], [21, 18.4, 0, 8, 1, 12, RED], [27, 20, 0, 26, 1, 1.4, RED], [21, 23, 0, 1, 6, 1, RED],
+        [31, 1.3, -10, 6, 2.6, 2.5, 0x2d6cb5], [31, 1.3, -6.5, 6, 2.6, 2.5, 0xf2b632], [31, 3.9, -8.5, 6, 2.6, 2.5, 0xc8102e]])); }),
+      boat: landmark(-1, 0, 'הכנרת', g => { g.add(boxes(tintMat, [[-21, .5, 0, 21, .3, 2.4, WOOD], [-36, .9, 6, 3.4, 1.4, 10, WOOD], [-36, 2.2, 7, 2.4, 1.3, 4, 0xf4f1ea], [-36, 4.6, 4.5, .16, 6, .16, 0x4a4640]])); }),
+      tent: landmark(1, 26, 'מאהל בדואי', g => { g.add(boxes(tintMat, [[18, 1.5, 2, 10, 3, 15, 0x3a2e28], [18, 3.15, 2, 11, .3, 16, 0x574236], [12.6, 1.5, -4, .15, 3, .15, WOOD], [12.6, 1.5, 8, .15, 3, .15, WOOD],
+        [14, 2, -11, 1.1, 1.3, 2.6, CAMEL], [14, 2.9, -11.2, .9, .7, 1, CAMEL], [13.7, .7, -10, .25, 1.4, .25, CAMEL], [14.3, .7, -10, .25, 1.4, .25, CAMEL], [13.7, .7, -12, .25, 1.4, .25, CAMEL], [14.3, .7, -12, .25, 1.4, .25, CAMEL], [14, 3, -12.6, .3, 1.8, .3, CAMEL], [14, 3.9, -13, .45, .4, .9, CAMEL]])); }),
+      salt: landmark(1, 0, 'המקום הנמוך בעולם', g => { const list = []; for (let k = 0; k < 9; k++) list.push([13 + hash(k) * 9, .5 + hash(k + 9) * .9, -14 + k * 3.4, 1 + hash(k + 3) * 1.6, 1 + hash(k + 9) * 1.8, 1 + hash(k + 5) * 1.6]); g.add(boxes(whiteMat, list)); }),
+      marina: landmark(-1, 0, 'המרינה של אילת', g => {
+        g.add(boxes(tintMat, [[-30, 1, -4, 3.2, 1.6, 11, 0xf4f1ea], [-30, 2.3, -3, 2.2, 1, 4.5, 0xdfe3e8], [-30, 7, -5, .14, 10, .14, 0x4a4640], [-20, .5, 8, 19, .3, 2.2, WOOD]]), cyl(whiteMat, 1.3, 1.6, 12, 12, -38, 6, 12), cyl(glassMat, 3, 2.2, 2.4, 12, -38, 13, 12));
+        const sail = new THREE.Mesh(new THREE.ConeGeometry(2.6, 8.5, 3), whiteMat); sail.scale.z = .08; sail.position.set(-30, 7.2, -3.4); g.add(sail); }),
+    };
+
+    // דקלים וים — מופיעים רק בערים שיש בהן
+    const palmTrunk = inst(new THREE.CylinderGeometry(.14, .22, 6.4, 6), lam(0x8a6a4a), TREE_N * 2), palmCrown = inst(new THREE.ConeGeometry(2.1, 1.5, 7), lam(0x5f8a45), TREE_N * 2);
+    const seaTex = canvasTex(64, 256, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 70; i++) { c.fillStyle = `rgba(255,${200 + Math.random() * 40 | 0},${150 + Math.random() * 60 | 0},${.15 + Math.random() * .35})`; c.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 22, 1.5); } });
+    seaTex.repeat.set(10, ROAD_LEN / 40);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(320, ROAD_LEN), lam(0x3f8fb5, { map: seaTex, emissive: 0x123a52 })); sea.rotation.x = -Math.PI / 2; sea.position.set(0, .02, zMid); sea.visible = false; scene.add(sea);
+
+    // ── ערים: כל פנייה בצומת מחליפה את הנוף ──
+    const THEMES = [
+      { name: 'ירושלים', sky: 'jlm', fog: 0xf3be8e, mid: 0xeda39a, top: 0x4a76b8, stone: [.72, .57, .36], style: 0, floors: [3, 4], density: 1, sea: 0, palm: false, tanks: true, ground: 0xb39a72, walk: 0xd7c097, lm: [LM[1], LM[4], LM[3], LM[2], LM[0]] },
+      { name: 'תל אביב', sky: 'tlv', fog: 0xf5c9a2, mid: 0xf0aea0, top: 0x4687c9, stone: [.84, .82, .76], style: 1, floors: [3, 5], density: 1, sea: -1, seaColor: 0x3f93c0, palm: true, tanks: true, ground: 0xe6cf9f, walk: 0xcfc7b8, lm: [LM2.azrieli, LM2.beach] },
+      { name: 'חיפה', sky: 'haifa', fog: 0xf0c4a4, mid: 0xe9a9a4, top: 0x4c7dbd, stone: [.78, .7, .58], style: 1, floors: [3, 5], density: 1, sea: 1, seaColor: 0x3a86b4, palm: false, tanks: true, ground: 0xc9b48a, walk: 0xcfc2a8, lm: [LM2.bahai, LM2.crane] },
+      { name: 'טבריה', sky: 'tiberias', fog: 0xecbc9e, mid: 0xe6a59c, top: 0x4f7fb8, stone: [.2, .2, .23], style: 2, floors: [2, 3], density: .9, sea: -1, seaColor: 0x4a8fae, palm: true, tanks: false, ground: 0xb9a37c, walk: 0x8f8a84, lm: [LM2.boat] },
+      { name: 'באר שבע', sky: 'negev', fog: 0xf2c38c, mid: 0xeeb08e, top: 0x5a86bd, stone: [.8, .64, .42], style: 3, floors: [1, 3], density: .55, sea: 0, palm: true, tanks: true, ground: 0xdcb37a, walk: 0xd9bd8c, lm: [LM2.tent] },
+      { name: 'ים המלח', sky: 'deadsea', fog: 0xf3cdb0, mid: 0xecb3a6, top: 0x5f8cc0, stone: [.86, .8, .7], style: 3, floors: [1, 2], density: .15, sea: 1, seaColor: 0x57c4c4, palm: true, tanks: false, ground: 0xead9bd, walk: 0xe6dccb, lm: [LM2.salt] },
+      { name: 'אילת', sky: 'eilat', fog: 0xf4b78e, mid: 0xee9e92, top: 0x3f6fb8, stone: [.9, .88, .84], style: 4, floors: [4, 5], density: 1, sea: -1, seaColor: 0x2f7fc0, palm: true, tanks: false, ground: 0xe3c08e, walk: 0xd8cdbb, lm: [LM2.marina] },
+    ];
+    const ALL_LM = LM.concat(Object.values(LM2));
+    let TH = THEMES[0], curD = 0, lmD0 = 0, turn = null, announce = 0;
+    const fadeEl = document.createElement('div'), cityEl = document.createElement('div');
+    fadeEl.style.cssText = 'position:absolute;inset:0;pointer-events:none;opacity:0'; cityEl.className = 'pr-city'; vigEl.after(fadeEl, cityEl);
+    function applyTheme(i) {
+      TH = THEMES[((i % THEMES.length) + THEMES.length) % THEMES.length]; lmD0 = curD;
+      FOG.set(TH.fog); skyMat.uniforms.uMid.value.set(TH.mid); skyMat.uniforms.uTop.value.set(TH.top); skyline.material.map = skylineFor(TH.sky);
+      bldMat.uniforms.uStone.value.setRGB(TH.stone[0], TH.stone[1], TH.stone[2]); bldMat.uniforms.uStyle.value = TH.style;
+      ground.material.color.set(TH.ground); walkMat.color.set(TH.walk);
+      sea.visible = TH.sea !== 0; if (TH.sea) { sea.position.x = TH.sea * 182; sea.material.color.set(TH.seaColor); }
+      trees.visible = !TH.palm; palmTrunk.visible = palmCrown.visible = TH.palm;
+      fadeEl.style.background = '#' + FOG.getHexString(); cityEl.textContent = TH.name;
+    }
+    applyTheme(0);
 
     // ── קווי מהירות (רק בזינוק) וניצוצות ──
     const SL = 70, slPos = new Float32Array(SL * 6), slSeed = Array.from({ length: SL }, () => [Math.random() * 6.28, 3.6 + Math.random() * 4, Math.random() * 46 - 40]);
@@ -567,27 +670,42 @@ export function createProtocolRunner(root) {
 
     // ── שערים ──
     const gantryMat = lam(0x5a5d68);
-    const GH = 4.3, sheetG = new THREE.PlaneGeometry(LANE - .28, GH - .1), signG = new THREE.PlaneGeometry(LANE - .12, 1.6);
+    // ── צומת: כביש חוצה, מעבר חצייה, חץ על כל נתיב ושלט כיוון לכל תשובה ──
+    function arrowPath(c, cx, cy, size, dir) { c.save(); c.translate(cx, cy); c.rotate(dir * Math.PI / 2); c.beginPath(); for (const [x, y] of [[0, -.5], [.4, -.05], [.15, -.05], [.15, .5], [-.15, .5], [-.15, -.05], [-.4, -.05]]) c.lineTo(x * size, y * size); c.closePath(); c.fill(); c.restore(); }
+    const arrowTex = [-1, 0, 1].map(d => canvasTex(128, 256, (c, w, h) => { c.fillStyle = '#fff'; arrowPath(c, w / 2, h / 2, d ? 120 : 210, d); }));
+    function signTex(lines, color, dir) {
+      return canvasTex(512, 384, (c, w, h) => {
+        c.fillStyle = '#000'; c.beginPath(); c.roundRect(2, 2, w - 4, h - 4, 26); c.fill(); c.fillStyle = color; c.beginPath(); c.roundRect(14, 14, w - 28, h - 28, 16); c.fill();
+        c.fillStyle = '#000'; arrowPath(c, w / 2, 98, 132, dir);
+        c.direction = 'rtl'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        let fs = Math.min(120, 190 / lines.length / 1.1);
+        for (;;) { c.font = `400 ${fs}px ${FONT}`; if (Math.max(...lines.map(l => c.measureText(l).width)) <= w - 70 || fs < 20) break; fs -= 4; }
+        lines.forEach((l, i) => c.fillText(l, w / 2, 268 + (i - (lines.length - 1) / 2) * fs * 1.1));
+      });
+    }
+    const zebraTex = canvasTex(64, 16, (c, w, h) => { c.fillStyle = '#f4f1e8'; c.fillRect(0, 0, w / 2, h); }); zebraTex.repeat.set(12, 1);
+    const crossMat = lam(0x8b867f), zebraMat = new THREE.MeshBasicMaterial({ map: zebraTex, transparent: true, opacity: .85, depthWrite: false });
+    const flat = (w, d) => { const g = new THREE.PlaneGeometry(w, d); g.rotateX(-Math.PI / 2); return g; };
+    const crossG = flat(170, 15), zebraG = flat(ROAD_HALF * 2 - 1, 2.6), laneArrowG = flat(1.7, 4.2);
+    const GH = 4.6, signG = new THREE.PlaneGeometry(LANE - .12, 2.3);
     function buildGate(g) {
       const grp = new THREE.Group(); grp.userData = { lanes: [], tex: [] };
-      const beam = new THREE.Mesh(boxG, gantryMat); beam.scale.set(LANE * 3 + 1.4, .22, .22); beam.position.y = GH + 2.05; grp.add(beam);
-      for (const sd of [-1, 1]) { const col = new THREE.Mesh(boxG, gantryMat); col.scale.set(.22, GH + 2.1, .22); col.position.set(sd * (LANE * 1.5 + .6), (GH + 2.1) / 2, 0); grp.add(col); }
+      const cross = new THREE.Mesh(crossG, crossMat); cross.position.set(0, .035, -10.5); const zebra = new THREE.Mesh(zebraG, zebraMat); zebra.position.set(0, .05, -1.4); grp.add(cross, zebra);
+      const beam = new THREE.Mesh(boxG, gantryMat); beam.scale.set(LANE * 3 + 1.4, .22, .22); beam.position.y = GH + 2.45; grp.add(beam);
+      for (const sd of [-1, 1]) { const col = new THREE.Mesh(boxG, gantryMat); col.scale.set(.22, GH + 2.5, .22); col.position.set(sd * (LANE * 1.5 + .6), (GH + 2.5) / 2, 0); grp.add(col); }
       g.opts.forEach((o, l) => {
-        const x = (l - 1) * LANE, parts = [];
-        if (!o) {
-          const bar = new THREE.Mesh(boxG, new THREE.MeshBasicMaterial({ map: hazardTex })); bar.scale.set(LANE - .3, .75, .22); bar.position.set(x, 1, 0); grp.add(bar);
-          for (const sd of [-1, 1]) { const leg = new THREE.Mesh(boxG, gantryMat); leg.scale.set(.12, 1.3, .12); leg.position.set(x + sd * 1.3, .65, 0); grp.add(leg); }
-          const t = textTex(['✕'], { w: 256, h: 128, color: '#ff4757', bg: 'rgba(8,9,18,.92)', max: 110 }); grp.userData.tex.push(t);
-          const s = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); s.position.set(x, GH + 1.05, .05); grp.add(s);
+        const x = (l - 1) * LANE;
+        if (!o) {   // הכיוון הזה סגור
+          const bar = new THREE.Mesh(boxG, new THREE.MeshBasicMaterial({ map: hazardTex })); bar.scale.set(LANE - .3, .75, .22); bar.position.set(x, 1, -2.6); grp.add(bar);
+          for (const sd of [-1, 1]) { const leg = new THREE.Mesh(boxG, gantryMat); leg.scale.set(.12, 1.3, .12); leg.position.set(x + sd * 1.3, .65, -2.6); grp.add(leg); }
+          const t = textTex(['✕'], { w: 256, h: 192, color: '#ff4757', bg: 'rgba(8,9,18,.92)', max: 130 }); grp.userData.tex.push(t);
+          const s = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); s.position.set(x, GH + 1.2, .05); grp.add(s);
         } else {
-          const neon = new THREE.MeshBasicMaterial({ color: hdr(o.color, 1.7), toneMapped: false });
-          for (const sd of [-1, 1]) { const p = new THREE.Mesh(boxG, neon); p.scale.set(.16, GH, .16); p.position.set(x + sd * (LANE / 2 - .1), GH / 2, 0); grp.add(p); parts.push(p); }
-          const top = new THREE.Mesh(boxG, neon); top.scale.set(LANE - .04, .16, .16); top.position.set(x, GH, 0); grp.add(top); parts.push(top);
-          const sheet = new THREE.Mesh(sheetG, new THREE.MeshBasicMaterial({ color: o.color, transparent: true, opacity: .3, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); sheet.position.set(x, GH / 2, 0); grp.add(sheet); parts.push(sheet);
-          const t = textTex(o.label.split('\n'), { color: '#000000', bg: o.color, border: '#000000', max: 150, weight: 400 }); grp.userData.tex.push(t);
-          const sign = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); sign.position.set(x, GH + 1.05, .05); grp.add(sign);
+          const t = signTex(o.label.split('\n'), o.color, l - 1); grp.userData.tex.push(t);
+          const sign = new THREE.Mesh(signG, new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })); sign.position.set(x, GH + 1.2, .05); grp.add(sign);
+          const a = new THREE.Mesh(laneArrowG, new THREE.MeshBasicMaterial({ map: arrowTex[l], color: o.color, transparent: true, depthWrite: false, toneMapped: false })); a.position.set(x, .06, 8); grp.add(a);
         }
-        grp.userData.lanes.push(parts);
+        grp.userData.lanes.push([]);
       });
       return grp;
     }
@@ -610,10 +728,12 @@ export function createProtocolRunner(root) {
 
     // ── טעינת נכסים ──
     const api = { loaded: false, sparks, lite };
+    api.setTheme = i => { turn = null; fadeEl.style.opacity = 0; applyTheme(i); announce = 2.2; };
+    api.turn = (dir, i) => { turn = { k: 0, dir, i, done: false }; };
     async function load() {
       try { await Promise.all([document.fonts.load("400 40px 'Secular One'", 'אב'), document.fonts.ready]); } catch (e) { /* נמשיך עם גופן המערכת */ }
       const erSign = new THREE.Mesh(new THREE.PlaneGeometry(13, 3.2), new THREE.MeshBasicMaterial({ map: textTex(['מיון'], { w: 512, h: 128, color: '#ffffff', bg: '#d0142c', max: 100 }) })); erSign.position.set(0, 8, 5.1);
-      const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(17, 3.4), new THREE.MeshBasicMaterial({ map: textTex(['שערי צדק'], { w: 640, h: 128, color: '#17324d', bg: '#f4f1ea', max: 96 }) })); nameSign.position.set(0, 18.5, -.9);
+      const nameSign = new THREE.Mesh(new THREE.PlaneGeometry(17, 3.4), new THREE.MeshBasicMaterial({ map: textTex(['יוספטל'], { w: 640, h: 128, color: '#17324d', bg: '#f4f1ea', max: 96 }) })); nameSign.position.set(0, 18.5, -.9);
       hosp.add(erSign, nameSign);
       // השתקפויות על האמבולנס: מפת סביבה קטנה שנוצרת מהשמיים עצמם, בלי קובץ HDRI
       const pmrem = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(sky.geometry, skyMat));
@@ -668,7 +788,7 @@ export function createProtocolRunner(root) {
 
       const v = S.v * ZS, D = S.dist * ZS, t = S.T; vSm = damp(vSm, v, 6, dt);
       const carX = S.px / LW * LANE, kSpeed = v / 24;
-      roadMap.offset.y = D / 16 % 1;
+      roadMap.offset.y = D / 16 % 1; seaTex.offset.y = D / 40 % 1; curD = D;
 
       // ── ישויות (לפני הסביבה, כי בית החולים מפנה לעצמו מקום בין הבניינים) ──
       const seen = new Set(); let hospOn = false, gateActive = null; zones.length = 0;
@@ -677,7 +797,7 @@ export function createProtocolRunner(root) {
         let o = live.get(e); if (!o) { o = makeEnt(e); if (!o) continue; live.set(e, o); scene.add(o); }
         seen.add(e);
         if (e.type === 'gate') {
-          o.position.set(0, 0, -e.z * ZS);
+          o.position.set(0, 0, -e.z * ZS); zones.push([0, -e.z * ZS - 20, -e.z * ZS + 3]);   // הכביש החוצה פותח רווח בין הבניינים
           if (e.open >= 0 && !o.userData.opened) { o.userData.opened = true; o.userData.lanes[e.open].forEach(p => p.visible = false); ring((e.open - 1) * LANE, o.position.z, e.opts[e.open].color); }
           if (e.shown && !e.resolved) gateActive = e;
         } else if (e.type === 'orb') {
@@ -689,10 +809,9 @@ export function createProtocolRunner(root) {
       tints.forEach((m, l) => { const o = gateActive && gateActive.opts[l]; m.visible = !!o; if (o) { m.material.color.set(o.color); m.scale.set(LANE - .2, 1, Math.max(.1, gateActive.z * ZS + 2)); } });
       for (const r of rings) if (r.visible) { r.userData.t += dt * 1.9; const k = r.userData.t; r.scale.setScalar(1 + k * 4.5); r.material.opacity = Math.max(0, 1 - k) * .8; if (k >= 1) r.visible = false; }
 
-      // ── אתרי ירושלים: שלוש משבצות ממוחזרות, כל אחת מקבלת אתר לפי אינדקס גלובלי ──
-      const lBase = Math.floor(D / LM_S), lOff = D - lBase * LM_S;
-      for (const l of LM) l.g.visible = false;
-      for (let j = 0; j < 3; j++) { const l = LM[((lBase + j) % LM.length + LM.length) % LM.length], z = 70 - j * LM_S + lOff; if (hospOn && z < hosp.position.z + 60) continue; l.g.visible = true; l.g.position.z = z; if (l.len) zones.push([l.side, z - l.len / 2 - 5, z + l.len / 2 + 5]); }
+      // ── אתרי העיר: הראשון מופיע קרוב אחרי הפנייה (האובך מסתיר את ההחלפה), ואחר כך הם חוזרים במחזור מרחוק ──
+      for (const l of ALL_LM) l.g.visible = false;
+      TH.lm.forEach((l, k) => { const z0 = -110 - k * 150 + (D - lmD0), z = z0 <= 80 ? z0 : -330 + ((z0 - 80) % 410); if (hospOn && z < hosp.position.z + 60) return; l.g.visible = true; l.g.position.z = z; if (l.len) zones.push([l.side, z - l.len / 2 - 5, z + l.len / 2 + 5]); });
       if (millSails) millSails.rotation.x = t * .5;
       const blocked = (sd, z0, z1) => { for (const q of zones) if ((q[0] === 0 || q[0] === sd) && z1 > q[1] && z0 < q[2]) return true; return false; };
 
@@ -701,17 +820,17 @@ export function createProtocolRunner(root) {
       [-1, 1].forEach((sd, si) => {
         for (let i = 0; i < BLD_N; i++) {
           const g = bBase + i, k = si * BLD_N + i, h1 = hash(g * 2 + si + 11.3), h2 = hash(g * 2 + si + 47.9), h3 = hash(g * 2 + si + 83.1);
-          const w = 11 + h1 * 7, len = 13 + h2 * 3.5, ht = (3 + Math.floor(h3 * 4)) * 3.2 + 1, z = 34 - i * BLD_S + bOff, x = sd * (10.5 + w / 2);
-          if (blocked(sd, z - len / 2, z + len / 2)) { put(blds, k, 0, -80, 0, .01, .01, .01); put(tanks, k, 0, -80, 0); put(panels, k, 0, -80, 0); continue; }
+          const w = 11 + h1 * 7, len = 13 + h2 * 3.5, ht = (TH.floors[0] + Math.floor(h3 * TH.floors[1])) * 3.2 + 1, z = 34 - i * BLD_S + bOff, x = sd * (10.5 + w / 2);
+          if (TH.sea === sd || hash(g * 2 + si + 5.5) > TH.density || blocked(sd, z - len / 2, z + len / 2)) { put(blds, k, 0, -80, 0, .01, .01, .01); put(tanks, k, 0, -80, 0); put(panels, k, 0, -80, 0); continue; }
           put(blds, k, x, ht / 2, z, w, ht, len); bldSeed.array[k] = h1 * 100;
-          const rx = x - sd * w * .22, rz = z + (h2 - .5) * len * .5; put(tanks, k, rx, ht + 1.25, rz); put(panels, k, rx, ht + .5, rz + 1.1);
+          if (TH.tanks) { const rx = x - sd * w * .22, rz = z + (h2 - .5) * len * .5; put(tanks, k, rx, ht + 1.25, rz); put(panels, k, rx, ht + .5, rz + 1.1); } else { put(tanks, k, 0, -80, 0); put(panels, k, 0, -80, 0); }
         }
         const tOff = (D + TREE_S / 2) % TREE_S;
-        for (let i = 0; i < TREE_N; i++) { const z = 30 - i * TREE_S + tOff, s = .8 + hash(Math.floor((D + TREE_S / 2) / TREE_S) + i + si * 31.7) * .45; put(trees, si * TREE_N + i, sd * 9.95, 3.5 * s + .2, z, 1, s, 1); }
+        for (let i = 0; i < TREE_N; i++) { const z = 30 - i * TREE_S + tOff, s = .8 + hash(Math.floor((D + TREE_S / 2) / TREE_S) + i + si * 31.7) * .45; const q = si * TREE_N + i; put(trees, q, sd * 9.95, 3.5 * s + .2, z, 1, s, 1); put(palmTrunk, q, sd * 9.6, 3.2 * s, z, 1, s, 1); put(palmCrown, q, sd * 9.6, 6.4 * s + .45, z, s, s, s); }
         const pOff = (D + si * LAMP_S / 2) % LAMP_S;
         for (let i = 0; i < LAMP_N; i++) { const z = 28 - i * LAMP_S + pOff, k = si * LAMP_N + i; put(lampPole, k, sd * 6.75, 3.7, z); put(lampArm, k, sd * 5.9, 7.3, z, 1.9, .12, .3); }
       });
-      for (const m of [blds, tanks, panels, trees, lampPole, lampArm]) m.instanceMatrix.needsUpdate = true;
+      for (const m of [blds, tanks, panels, trees, palmTrunk, palmCrown, lampPole, lampArm]) m.instanceMatrix.needsUpdate = true;
       bldSeed.needsUpdate = true;
 
       // ── האמבולנס: הטיה, סבסוב, מתלים, גלגלים, צ'קלקה ──
@@ -720,7 +839,16 @@ export function createProtocolRunner(root) {
       if (S.shake > 8.5 && susY > -.02) susV = -1.3;
       pitch = damp(pitch, clamp((v - vSm) * .012, -.07, .07), 8, dt);
       car.position.set(carX, 0, 0);
-      carBody.position.y = susY; carBody.rotation.set(-pitch, -S.lean * .2, S.lean * .13);
+      // פנייה בצומת: האמבולנס מסתובב, המסך נמס לאובך, ומאחוריו מתחלפת העיר
+      let tw = 0;
+      if (turn) {
+        turn.k += dt / 1.2; const k = Math.min(1, turn.k);
+        if (k >= .5 && !turn.done) { turn.done = true; applyTheme(turn.i); announce = 2.2; }
+        tw = Math.sin(Math.PI * k) * turn.dir; fadeEl.style.opacity = Math.min(1, 2.2 * (1 - Math.abs(2 * k - 1))).toFixed(2);
+        if (k >= 1) { turn = null; fadeEl.style.opacity = 0; }
+      }
+      if (announce > 0) { announce -= dt; cityEl.style.opacity = Math.max(0, Math.min(1, announce * 3, (2.2 - announce) * 5)).toFixed(2); }
+      carBody.position.y = susY; carBody.rotation.set(-pitch, -S.lean * .2 - tw * .7, S.lean * .13 + tw * .12);
       for (const w of wheels) w.rotation.x += v * dt / .42;
       const bt = t * 4.6 % 1, on = [bt < .5 ? (bt % .25 < .15 ? 1 : .1) : 0, bt >= .5 ? (bt % .25 < .15 ? 1 : .1) : 0];
       for (let i = 0; i < 2; i++) { beaconMat[i].color.setRGB(.3 + (lite ? .7 : 2.2) * on[i], .03, .05); beaconHalo[i].material.opacity = .85 * on[i]; }
@@ -749,7 +877,7 @@ export function createProtocolRunner(root) {
       fov = damp(fov, 70 + (S.dash ? 17 : 0) + (kSpeed - 1) * 3, 4, dt); camera.fov = fov; camera.updateProjectionMatrix();
       const sh = S.shake * .014 + Math.max(0, kSpeed - 1) * .02, back = 10.2 - (S.dash ? 1.2 : 0);
       camera.position.set(camX + (Math.random() - .5) * sh, 4.5 + susY * .4 + (Math.random() - .5) * sh, damp(camera.position.z, back, 4, dt));
-      camera.lookAt(camX * .9 + carX * .22, 1.7, -17);
+      camera.lookAt(camX * .9 + carX * .22 + tw * 9, 1.7, -17);
       sky.position.copy(camera.position);
       skyline.position.set(camera.position.x, camera.position.y + 100, camera.position.z - 950);
       sunGlow.position.copy(SUN).multiplyScalar(900).add(camera.position);

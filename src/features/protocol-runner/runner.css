@@ -108,3 +108,7 @@
 .pr-root .pr-recap li.na { opacity: .45; }
 .pr-root .pr-end .src { text-align: center; color: #71717a; font-size: .62em; margin-top: .9em; line-height: 1.5; }
 .pr-root .floater { direction: ltr; }
+.pr-root .pr-chips div i { display: block; font-style: normal; font-size: 1.15em; line-height: .85; }
+.pr-root .pr-chips div.short i { font-size: .7em; }
+/* שם העיר אחרי פנייה — בצורת תיבת הפתיחה הצהובה של התרשים */
+.pr-root .pr-city { position: absolute; top: 34%; left: 50%; transform: translateX(-50%); padding: .2em 1.1em .28em; border-radius: 99em; background: #FFE14A; color: #000; border: .1em solid #000; box-shadow: .16em .16em 0 #000; font-family: var(--display); font-size: 2.3em; white-space: nowrap; pointer-events: none; opacity: 0; }
