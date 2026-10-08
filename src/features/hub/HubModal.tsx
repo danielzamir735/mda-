@@ -113,7 +113,7 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'protocol-runner',
-    label: 'ריצת פרוטוקול',
+    label: 'שעת הזהב',
     subtitle: 'משחק · תרגול פרוטוקולים',
     icon: Ambulance,
     color: 'text-emt-red',

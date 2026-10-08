@@ -63,7 +63,7 @@
 
 .pr-root .pr-hint { margin-top: .5em; text-align: center; font-size: .78em; font-weight: 700; color: #fff; text-shadow: 0 .06em .25em rgba(0, 0, 0, .9), 0 0 .6em rgba(0, 0, 0, .6); }
 
-/* אחרי תשובה נכונה: תיבת פעולה בצבע התכלת של התרשים, עם מה שהפרוטוקול מורה לעשות */
+/* אחרי צומת: ירוק עם "נכון!" כשצדקת, תכלת עם התשובה הנכונה אחרי טעות */
 .pr-root .pr-card.ok .pr-note { background: var(--doc-cyan); font-size: 1.08em; font-weight: 700; }
 .pr-root .pr-card.ok .pr-node, .pr-root .pr-card.ok .pr-chips, .pr-root .pr-card.ok .pr-hint { display: none; }
 
@@ -94,7 +94,7 @@
 .pr-root .pr-sheet .row b { color: var(--text); }
 .pr-root .pr-sheet .row.good b { color: var(--green); }
 .pr-root .pr-sheet p { font-size: .9em; line-height: 1.5; margin: .7em 0 1em; padding-top: .7em; border-top: 1px solid var(--border); }
-.pr-root .pr-end { align-content: center; padding: 1.1em; background: rgba(4, 4, 9, .9); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.pr-root .pr-end { align-content: start; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; padding: 1.1em; background: rgba(4, 4, 9, .9); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .pr-root .pr-end h2 { margin: 0; font-size: 1.55em; font-weight: 900; text-align: center; line-height: 1.15; }
 .pr-root .pr-end .stars { text-align: center; font-size: 2.3em; letter-spacing: .12em; color: var(--amber); text-shadow: 0 0 .5em rgba(245, 158, 11, .6); margin: .15em 0; }
 .pr-root .pr-end .stars .off { color: #3f3f46; text-shadow: none; }
@@ -151,3 +151,94 @@
 .pr-root .protos { display: grid; align-content: start; gap: .4em; min-height: 0; overflow-y: auto; padding-inline-end: .2em; touch-action: pan-y; overscroll-behavior: contain; }
 .pr-root .protos button { font: inherit; font-size: .98em; font-weight: 600; color: #e4e4e7; text-align: start; padding: .68em .85em; border-radius: .7em; background: rgba(20, 20, 30, .9); border: 1px solid var(--border); cursor: pointer; }
 .pr-root .protos button.on { color: #fff; border-color: var(--red); background: rgba(239, 35, 60, .22); }
+.pr-root [hidden] { display: none !important; }
+.pr-root .pr-end > div { margin: auto 0; }
+.pr-root .pr-card.right .pr-note { background: var(--doc-green); }
+.pr-root .pr-card.right .pr-tag, .pr-root .pr-card.fix .pr-tag { display: block; margin: 0 0 .1em; font-family: var(--display); font-weight: 400; text-decoration: none; }
+.pr-root .pr-card.right .pr-tag { font-size: 1.5em; line-height: 1.1; }
+.pr-root .pr-title .hello { margin: 0; font-size: .95em; font-weight: 700; color: #e4e4e7; text-shadow: 0 .1em .5em rgba(0, 0, 0, .8); }
+.pr-root .pr-title .logo { font-family: var(--display); font-weight: 400; font-size: 3em; letter-spacing: 0; }
+.pr-root .pr-title .logo span { color: #FFC000; text-shadow: 0 0 .5em rgba(255, 192, 0, .55); }
+.pr-root .stepT { margin: 0 0 .6em; font-family: var(--display); font-weight: 400; font-size: 1.7em; line-height: 1.1; text-shadow: 0 .1em .5em rgba(0, 0, 0, .8); }
+.pr-root .field { display: grid; grid-template-columns: 2.6em 1fr; align-items: center; margin-bottom: .5em; font-size: .9em; font-weight: 700; color: #d4d4d8; }
+.pr-root .field input { width: 100%; min-width: 0; padding: .7em .8em; font: inherit; font-size: 16px; font-weight: 600; color: #fff; border-radius: .7em; background: rgba(20, 20, 30, .9); border: 1px solid var(--border); user-select: text; -webkit-user-select: text; touch-action: manipulation; }
+.pr-root .field input::placeholder { color: #8b8b95; font-weight: 400; }
+.pr-root .field input:focus { outline: none; border-color: #FFC000; }
+.pr-root .pr-siren { position: absolute; bottom: .6em; left: 3.3em; width: 2.2em; height: 2.2em; border-radius: 50%; border: 1px solid var(--border); background: rgba(0, 0, 0, .45); color: var(--text); font-size: .9em; cursor: pointer; z-index: 3; }
+.pr-root .pr-siren.on { border-color: var(--red); background: rgba(239, 35, 60, .35); box-shadow: 0 0 .9em rgba(239, 35, 60, .6); }
+.pr-root .rank { margin: 0 0 .8em; padding: .6em .75em .7em; background: var(--doc-orange); color: #000; border: .12em solid #000; box-shadow: .22em .22em 0 #000; font-size: .86em; font-weight: 600; }
+.pr-root .rank h3 { margin: 0 0 .15em; font-family: var(--display); font-weight: 400; font-size: 1.15em; }
+.pr-root .rank .me { margin: 0 0 .4em; font-weight: 800; }
+.pr-root .rank ol { margin: 0; padding: 0; list-style: none; counter-reset: r; display: grid; gap: .2em; }
+.pr-root .rank li { counter-increment: r; display: flex; justify-content: space-between; gap: .6em; padding: .25em .5em; background: rgba(255, 255, 255, .55); }
+.pr-root .rank li span::before { content: counter(r) '. '; font-weight: 800; }
+.pr-root .rank li b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pr-root .btn.share { margin-bottom: 1em; color: #000; background: #FFE14A; border: .12em solid #000; border-radius: 0; box-shadow: .22em .22em 0 #000; }
+.pr-root .btn.share:active { transform: translate(.15em, .15em); box-shadow: .07em .07em 0 #000; }
+.pr-root .dare { margin: 0 0 .8em; padding: .55em .7em .6em; background: #FFE14A; color: #000; border: .12em solid #000; box-shadow: .22em .22em 0 #000; font-size: .95em; font-weight: 700; line-height: 1.4; }
+.pr-root .nudge { margin: 0 0 1em; padding: .7em .75em .1em; background: var(--doc-cyan); color: #000; border: .12em solid #000; box-shadow: .22em .22em 0 #000; }
+.pr-root .nudge p { margin: 0 0 .65em; font-family: var(--display); font-size: 1.08em; line-height: 1.3; text-align: center; }
+.pr-root .nudge .btn.share { margin-bottom: .65em; }
+.pr-root .nudge .two { display: grid; grid-template-columns: 1fr 1fr; gap: .55em; }
+.pr-root .nudge .two .btn { padding: .7em .3em; font-size: .82em; background: #fff; }
+/* יעדי מגע של 44 פיקסלים לפחות, וסימון פוקוס למקלדת */
+.pr-root .pr-mute, .pr-root .pr-siren { width: 44px; height: 44px; font-size: 1.05em; }
+.pr-root .pr-siren { left: calc(.6em + 52px); }
+.pr-root .pr-home { min-height: 44px; padding: .45em 1.1em; font-size: .85em; }
+.pr-root .btn.ghost, .pr-root .protoBtn, .pr-root .protos button { min-height: 44px; }
+.pr-root button:focus-visible { outline: 3px solid #FFC000; outline-offset: 2px; }
+.pr-root .pr-title .by { margin: 0 0 .5em; font-size: .92em; font-weight: 800; color: #FFE14A; text-shadow: 0 .1em .5em rgba(0, 0, 0, .8); }
+/* ── מסך הפתיחה: הלוגו מסתובב בתלת־ממד, ואז המסך נפתח מהמרכז החוצה ── */
+.pr-root .pr-splash { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: hidden; background: #041022; cursor: pointer; }
+.pr-root .sp-in { position: relative; width: min(56%, 15em); aspect-ratio: 1; perspective: 55em; opacity: 0; }
+.pr-root .sp-glow { position: absolute; inset: -38%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 59, 79, .5), rgba(255, 59, 79, 0)); opacity: 0; }
+.pr-root .sp-card { position: absolute; inset: 0; transform-style: preserve-3d; }
+.pr-root .sp-card img, .pr-root .sp-s { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border-radius: 19%; }
+.pr-root .sp-card img { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.pr-root .sp-f { transform: translateZ(.52em); }
+.pr-root .sp-b { transform: rotateY(180deg) translateZ(.52em); }
+.pr-root .sp-s { background: #0b1c40; border: .07em solid #1b3a78; transform: translateZ(calc(var(--z) * .12em)); }
+.pr-root .sp-iris { display: none; position: absolute; left: 50%; top: 50%; width: 0; aspect-ratio: 1; border-radius: 50%; border: .2em solid #ff6b7a; transform: translate(-50%, -50%); box-shadow: 0 0 0 300vmax #041022, 0 0 1.6em .3em rgba(255, 59, 79, .9), inset 0 0 1.6em .3em rgba(255, 59, 79, .8); }
+.pr-root .pr-splash.go .sp-in { animation: prSpShow .22s forwards; }
+.pr-root .pr-splash.go .sp-card { animation: prSpSpin 1.5s cubic-bezier(.2, .7, .2, 1) forwards; }
+.pr-root .pr-splash.go .sp-glow { animation: prSpGlow 1.5s ease-out forwards; }
+.pr-root .pr-splash.out { background: none; pointer-events: none; }
+.pr-root .pr-splash.out .sp-iris { display: block; animation: prSpIris .8s cubic-bezier(.55, .05, .3, 1) forwards; }
+.pr-root .pr-splash.out .sp-in { animation: prSpAway .38s ease-in forwards; }
+@keyframes prSpSpin { from { transform: rotateX(14deg) rotateY(-720deg) scale(.45); } to { transform: none; } }
+@keyframes prSpGlow { from { opacity: 0; transform: scale(.6); } 70% { opacity: .55; } to { opacity: 1; transform: none; } }
+@keyframes prSpAway { from { opacity: 1; } to { opacity: 0; transform: scale(1.5); } }
+@keyframes prSpIris { from { width: 0; } to { width: 280%; } }
+@keyframes prSpShow { to { opacity: 1; } }
+@keyframes prSpFade { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .pr-root .pr-splash.go .sp-card { animation: none; } .pr-root .pr-splash.go .sp-glow { animation: prSpShow .3s forwards; }
+  .pr-root .pr-splash.out { background: #041022; animation: prSpFade .4s forwards; }
+  .pr-root .pr-splash.out .sp-iris { display: none; } .pr-root .pr-splash.out .sp-in { animation: none; }
+}
+/* ── מסכי הפתיחה על כל המסך: רקע כהה אחיד וטקסט גדול וממורכז ── */
+.pr-root .pr-title { align-content: stretch; padding: 1.2em; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; background: linear-gradient(180deg, rgba(4, 4, 9, .84) 0%, rgba(4, 4, 9, .68) 45%, rgba(4, 4, 9, .92) 100%); }
+.pr-root .pr-title > div { display: flex; flex-direction: column; justify-content: center; min-height: 100%; }
+.pr-root .pr-title .head { margin: auto 0; padding: .6em 0 1em; text-align: center; }
+.pr-root .pr-title .hello { font-size: 1.25em; }
+.pr-root .pr-title .logo { font-size: 4.4em; margin: .05em 0 .1em; }
+.pr-root .pr-title .by { font-size: 1.15em; margin-bottom: .9em; }
+.pr-root .pr-title .sub { margin: 0; font-size: 1.12em; line-height: 1.5; color: #f4f4f5; }
+.pr-root .pr-title .dare { margin-bottom: 1.2em; text-align: start; }
+.pr-root .stepT { margin-bottom: .8em; font-size: 2.2em; text-align: center; }
+.pr-root .pr-title .levels { font-size: 1.06em; margin-bottom: 1.1em; }
+.pr-root .pr-title .levels button { padding: .8em .85em; }
+.pr-root .pr-title .tips { font-size: .82em; color: #c4c4cc; }
+/* ── כפתורי המשחק: אריח לבן עם קו שחור וצל קשיח, כמו הכרטיסים ── */
+.pr-root .gbtn { position: absolute; bottom: .7em; z-index: 3; display: grid; place-items: center; width: 46px; height: 46px; min-height: 0; padding: 0; font-size: 1em; color: #000; background: #fff; border: 3px solid #000; border-radius: 12px; box-shadow: 4px 4px 0 #000; cursor: pointer; transition: transform 90ms var(--ease-out), box-shadow 90ms var(--ease-out); }
+.pr-root .gbtn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.pr-root .gbtn svg { width: 26px; height: 26px; fill: currentColor; }
+.pr-root .gbtn .ln { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.pr-root .pr-mute { left: .7em; }
+.pr-root .pr-mute.off { background: #c9c9d1; }
+.pr-root .pr-siren { left: calc(.7em + 58px); }
+.pr-root .pr-siren .ray { opacity: 0; }
+.pr-root .pr-siren.on { color: #fff; background: var(--red); border-color: #000; box-shadow: 4px 4px 0 #000, 0 0 18px rgba(239, 35, 60, .8); }
+.pr-root .pr-siren.on .ray { opacity: 1; animation: prBlink .6s infinite; }
+.pr-root .pr-home { right: .7em; background: #FFE14A; }
+@media (prefers-reduced-motion: reduce) { .pr-root .pr-siren.on .ray { animation: none; } }

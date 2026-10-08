@@ -31,7 +31,7 @@ export default function ProtocolRunnerModal({ isOpen, onClose }: Props) {
             <Ambulance size={18} className="text-emt-red" />
           </div>
           <div className="min-w-0">
-            <p className="text-emt-light font-bold text-base leading-tight">ריצת פרוטוקול</p>
+            <p className="text-emt-light font-bold text-base leading-tight">שעת הזהב</p>
             <p className="text-emt-muted text-xs">תרגול פרוטוקולים</p>
           </div>
         </div>
