@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -67,6 +67,16 @@ type HubItem = {
 };
 
 const HUB_ITEMS: HubItem[] = [
+  {
+    id: 'golden-hour',
+    label: 'שעת הזהב',
+    subtitle: 'משחק · תרגול פרוטוקולים',
+    icon: Ambulance,
+    color: 'text-amber-300',
+    border: 'border-amber-400/40',
+    bg: 'bg-amber-400/10',
+    href: 'https://protocol-runner.vercel.app/?src=app',
+  },
   {
     id: 'hospital-load',
     label: 'עומסים בבתי חולים',
@@ -277,13 +287,15 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
+const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
 
 // v3: bumped so the new hospital-load tile lands in its intended top-right
 // slot for existing users too — loadHubOrder() otherwise appends any id
 // missing from a saved order to the end, not the front.
 const HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
+
+const NEW_ON_TOP = ['golden-hour'];
 
 function loadHubOrder(): string[] {
   try {
@@ -292,7 +304,8 @@ function loadHubOrder(): string[] {
       const parsed: string[] = JSON.parse(saved);
       const valid = parsed.filter(id => DEFAULT_HUB_ORDER.includes(id));
       const missing = DEFAULT_HUB_ORDER.filter(id => !valid.includes(id));
-      return [...valid, ...missing];
+      // כלי חדש שנוסף אחרי שהמשתמש כבר סידר את הרשימה: רוב הכלים נכנסים בסוף, ואלה שב־NEW_ON_TOP נכנסים בראש
+      return [...missing.filter(id => NEW_ON_TOP.includes(id)), ...valid, ...missing.filter(id => !NEW_ON_TOP.includes(id))];
     }
   } catch {}
   return DEFAULT_HUB_ORDER;
@@ -623,7 +636,7 @@ https://hovesh-plus.vercel.app/`;
                     target="_blank"
                     rel="noopener noreferrer"
                     className={sharedClass}
-                    onClick={() => trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                    onClick={() => id === 'golden-hour' ? trackInteraction('שעת הזהב · פתיחה מהאפליקציה', 'learning') : trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
                   >
                     {content}
                   </a>
