@@ -1,5 +1,13 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
+import LegalDocsModal from '../features/legal/LegalDocsModal';
+import type { LegalDocId } from '../features/legal/legalContent';
+
+const DOC_LINKS: { id: LegalDocId; label: string }[] = [
+  { id: 'terms', label: 'תנאי השימוש' },
+  { id: 'privacy', label: 'מדיניות הפרטיות' },
+  { id: 'accessibility', label: 'הצהרת הנגישות' },
+];
 
 interface Props {
   isOpen: boolean;
@@ -8,6 +16,7 @@ interface Props {
 
 export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
   const [checked, setChecked] = useState(false);
+  const [docOpen, setDocOpen] = useState<LegalDocId | null>(null);
 
   if (!isOpen) return null;
 
@@ -47,6 +56,23 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
             </p>
           </div>
 
+          {/* Legal documents — readable before accepting */}
+          <div className="text-right text-gray-700 dark:text-emt-light text-sm leading-relaxed">
+            <p>לפני האישור אפשר לקרוא את המסמכים המלאים:</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+              {DOC_LINKS.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setDocOpen(id)}
+                  className="py-2 text-blue-600 dark:text-blue-400 font-semibold underline underline-offset-2 active:opacity-70"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Checkbox */}
           <label className="flex items-start gap-3 cursor-pointer">
             <input
@@ -56,7 +82,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
               className="mt-1 h-5 w-5 shrink-0 accent-blue-500 cursor-pointer"
             />
             <span className="text-gray-800 dark:text-emt-light text-sm font-semibold leading-relaxed text-right">
-              קראתי, הבנתי ואני מאשר את תנאי השימוש.
+              קראתי, הבנתי ואני מאשר את ההצהרה, את תנאי השימוש ואת מדיניות הפרטיות.
             </span>
           </label>
         </div>
@@ -72,6 +98,12 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
           </button>
         </div>
       </div>
+
+      <LegalDocsModal
+        isOpen={docOpen !== null}
+        onClose={() => setDocOpen(null)}
+        initialDoc={docOpen ?? 'terms'}
+      />
     </div>
   );
 }

@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react';
-import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Scale, ChevronRight } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Scale, ChevronRight, FileText, ShieldCheck, Accessibility } from 'lucide-react';
+import LegalDocsModal from '../../legal/LegalDocsModal';
+import type { LegalDocId } from '../../legal/legalContent';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useSettingsStore } from '../../../store/settingsStore';
 import type { Theme, Language } from '../../../store/settingsStore';
@@ -12,6 +14,12 @@ interface Props {
 const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'he', label: 'עברית' },
   { value: 'en', label: 'English' },
+];
+
+const LEGAL_LINKS: { id: LegalDocId; label: string; Icon: typeof FileText }[] = [
+  { id: 'terms', label: 'תנאי שימוש', Icon: FileText },
+  { id: 'privacy', label: 'מדיניות פרטיות', Icon: ShieldCheck },
+  { id: 'accessibility', label: 'הצהרת נגישות', Icon: Accessibility },
 ];
 
 function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
@@ -45,6 +53,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const { theme, language, setTheme, setLanguage, hapticsEnabled, wakeLockEnabled, setHapticsEnabled, setWakeLockEnabled } =
     useSettingsStore();
+  const [docOpen, setDocOpen] = useState<LegalDocId | null>(null);
 
   if (!isOpen) return null;
 
@@ -191,6 +200,19 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
               <span className="text-gray-900 dark:text-emt-light font-medium text-sm flex-1 text-right">הצהרה משפטית</span>
               <ChevronRight size={16} className="text-gray-400 dark:text-emt-muted" />
             </button>
+            {LEGAL_LINKS.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setDocOpen(id)}
+                className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 dark:active:bg-emt-dark/50 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gray-400/10 flex items-center justify-center">
+                  <Icon size={18} className="text-gray-500 dark:text-emt-muted" />
+                </div>
+                <span className="text-gray-900 dark:text-emt-light font-medium text-sm flex-1 text-right">{label}</span>
+                <ChevronRight size={16} className="text-gray-400 dark:text-emt-muted" />
+              </button>
+            ))}
           </div>
         </section>
 
@@ -200,6 +222,12 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
         </p>
 
       </div>
+
+      <LegalDocsModal
+        isOpen={docOpen !== null}
+        onClose={() => setDocOpen(null)}
+        initialDoc={docOpen ?? 'terms'}
+      />
     </div>
   );
 }

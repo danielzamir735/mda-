@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { Heart } from 'lucide-react';
+import LegalDocsModal from '../../legal/LegalDocsModal';
+import type { LegalDocId } from '../../legal/legalContent';
 
 interface AuthCardProps {
   onGoogleSignIn: () => void;
@@ -6,6 +9,9 @@ interface AuthCardProps {
 }
 
 export default function AuthCard({ onGoogleSignIn, isLoading }: AuthCardProps) {
+  const [docOpen, setDocOpen] = useState<LegalDocId | null>(null);
+  const linkClass = 'underline underline-offset-2 font-semibold text-emt-light active:opacity-70';
+
   return (
     <div className="min-h-screen w-full bg-emt-dark flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8">
@@ -48,9 +54,22 @@ export default function AuthCard({ onGoogleSignIn, isLoading }: AuthCardProps) {
         </div>
 
         <p className="text-emt-muted text-xs text-center leading-relaxed">
-          בכניסה לאפליקציה אתה מסכים לתנאי השימוש ולמדיניות הפרטיות
+          בכניסה לאפליקציה אתה מסכים ל
+          <button type="button" onClick={() => setDocOpen('terms')} className={linkClass}>
+            תנאי השימוש
+          </button>{' '}
+          ול
+          <button type="button" onClick={() => setDocOpen('privacy')} className={linkClass}>
+            מדיניות הפרטיות
+          </button>
         </p>
       </div>
+
+      <LegalDocsModal
+        isOpen={docOpen !== null}
+        onClose={() => setDocOpen(null)}
+        initialDoc={docOpen ?? 'terms'}
+      />
     </div>
   );
 }
