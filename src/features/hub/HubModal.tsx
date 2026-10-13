@@ -121,7 +121,7 @@ const HUB_ITEMS: HubItem[] = [
   {
     id: 'medical-terms',
     label: 'מושגים רפואיים',
-    subtitle: 'קיצורים · הגייה · שינון',
+    subtitle: 'קיצורים · מילון · שינון',
     icon: GraduationCap,
     color: 'text-sky-400',
     border: 'border-sky-400/30',

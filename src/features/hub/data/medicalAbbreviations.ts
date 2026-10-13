@@ -55,6 +55,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
       { id: 'io',  abbr: 'IO',  he: 'מתן תוך-עצמי (לתוך מח העצם)',   phonetic: 'אָי אוֹ',           speech: 'I. O.' },
       { id: 'in',  abbr: 'IN',  he: 'מתן תוך-אפי',                   phonetic: 'אָי אֶן',           speech: 'I. N.' },
       { id: 'inh', abbr: 'INH', he: 'מתן בשאיפה (אינהלציה)',         phonetic: "אָי אֶן אֵייצ'",    speech: 'I. N. H.' },
+      { id: 'et',  abbr: 'ET',  he: 'מתן דרך הטובוס (תוך-קני)',      phonetic: 'אִי טִי',           speech: 'E. T.' },
     ],
   },
   {
@@ -67,6 +68,10 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
       { id: 'pp',  abbr: 'PP',  he: 'לחץ הדופק (הפרש בין סיסטולי לדיאסטולי)', phonetic: 'פִּי פִּי',       speech: 'P. P.' },
       { id: 'san', abbr: 'SAN', he: 'קוצב הלב הראשי (צומת סינוסי)',          phonetic: 'אֶס אֵי אֶן',     speech: 'S. A. N.' },
       { id: 'avn', abbr: 'AVN', he: 'קוצב הלב המשני (צומת פרוזדורי-חדרי)',   phonetic: 'אֵי וִי אֶן',     speech: 'A. V. N.' },
+      { id: 'rca', abbr: 'RCA', he: 'עורק כלילי ימני',                       phonetic: 'אָר סִי אֵי',     speech: 'R. C. A.' },
+      { id: 'lca', abbr: 'LCA', he: 'עורק כלילי שמאלי ראשי',                 phonetic: 'אֶל סִי אֵי',     speech: 'L. C. A.' },
+      { id: 'lad', abbr: 'LAD', he: 'עורק שמאלי יורד',                       phonetic: 'אֶל אֵי דִי',     speech: 'L. A. D.' },
+      { id: 'cx',  abbr: 'CX',  he: 'עורק סירקומפלקס',                       phonetic: 'סִי אֶקְס',       speech: 'C. X.' },
       { id: 'svc', abbr: 'SVC', he: 'וריד נבוב עליון',                       phonetic: 'אֶס וִי סִי',     speech: 'S. V. C.' },
       { id: 'ivc', abbr: 'IVC', he: 'וריד נבוב תחתון',                       phonetic: 'אָי וִי סִי',     speech: 'I. V. C.' },
       { id: 'crt', abbr: 'CRT', he: 'זמן מילוי קפילארי',                     phonetic: 'סִי אָר טִי',     speech: 'C. R. T.' },
@@ -98,6 +103,9 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
     bg: 'bg-purple-400/5',
     items: [
       { id: 'bbb',  abbr: 'BBB',  he: 'מחסום דם-מוח',                                   phonetic: 'בִּי בִּי בִּי',      speech: 'B. B. B.' },
+      { id: 'cns',  abbr: 'CNS',  he: 'מערכת העצבים המרכזית',                           phonetic: 'סִי אֶן אֶס',         speech: 'C. N. S.' },
+      { id: 'pns',  abbr: 'PNS',  he: 'מערכת העצבים ההיקפית',                           phonetic: 'פִּי אֶן אֶס',        speech: 'P. N. S.' },
+      { id: 'csf',  abbr: 'CSF',  he: 'נוזל המוח והשדרה',                               phonetic: 'סִי אֶס אֶף',         speech: 'C. S. F.' },
       { id: 'cva',  abbr: 'CVA',  he: 'שבץ מוחי',                                       phonetic: 'סִי וִי אֵי',         speech: 'C. V. A.' },
       { id: 'tia',  abbr: 'TIA',  he: 'שבץ איסכמי חולף',                                phonetic: 'טִי אָי אֵי',         speech: 'T. I. A.' },
       { id: 'cpss', abbr: 'CPSS', he: 'סרגל לאבחון מהיר של שבץ מוחי בשטח',              phonetic: 'סִי פִּי אֶס אֶס',    speech: 'C. P. S. S.' },
