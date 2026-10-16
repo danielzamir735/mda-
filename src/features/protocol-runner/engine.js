@@ -67,6 +67,7 @@ const TEMPLATE = `
       <button class="pr-studyBtn btn ghost">עיון בפרוטוקול לפני המשחק</button>
       <p class="tips">החלק ימינה או שמאלה כדי לבחור נתיב לפני הצומת. החלק למעלה כדי לזנק.</p>
       <button class="pr-startBtn btn" disabled>טוען…</button>
+      <button class="pr-roomBtn btn roomBtn">🏁 חדר עם חברים</button>
       <button class="pr-back1 btn ghost">חזרה</button>
     </div>
   </div>
@@ -80,6 +81,32 @@ const TEMPLATE = `
       <button class="pr-sheetBtn btn">הבנתי, ממשיכים</button>
     </div>
   </div>
+
+  <div class="pr-room overlay">
+    <div class="wrap">
+      <h2 class="stepT">חדר עם חברים</h2>
+      <p class="tips lead">משחקים ראש בראש: כולם מקבלים את אותם מטופלים באותו רגע. מנצח מי שמסיים את המשמרת הכי מדויק, ובשוויון — הכי מהר.</p>
+      <div class="pr-roomHome">
+        <label class="field"><span>שם</span><input class="pr-roomName" type="text" maxlength="24" autocomplete="given-name" placeholder="איך יקראו לך בחדר?"></label>
+        <button class="pr-roomCreate btn">פתיחת חדר חדש</button>
+        <p class="or">או הצטרפות לחדר של חבר</p>
+        <div class="joinrow"><input class="pr-roomCode code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="קוד"><button class="pr-roomJoin btn join">הצטרפות</button></div>
+      </div>
+      <div class="pr-roomLobby" hidden>
+        <p class="codeLbl">קוד החדר</p>
+        <div class="pr-roomCodeShow codeBig"></div>
+        <button class="pr-roomInvite btn share">הזמנת חברים בוואטסאפ</button>
+        <ul class="pr-roomPlayers players"></ul>
+        <p class="pr-roomInfo tips"></p>
+        <button class="pr-roomStart btn" disabled>מחכים לעוד שחקן…</button>
+      </div>
+      <p class="pr-roomErr tips err"></p>
+      <button class="pr-roomBack btn ghost">יציאה מהחדר</button>
+    </div>
+  </div>
+
+  <div class="pr-count count" hidden></div>
+  <div class="pr-rivals rivals" hidden></div>
 
   <div class="pr-pickList overlay">
     <div class="wrap">
@@ -106,6 +133,7 @@ const TEMPLATE = `
       <div class="pr-endStars stars"></div>
       <div class="pr-endScore big"></div>
       <div class="pr-endSmall small"></div>
+      <div class="pr-roomRes rank roomRes" hidden></div>
       <div class="pr-rank rank" hidden></div>
       <div class="pr-nudge nudge" hidden>
         <p class="pr-nudgeMsg"></p>
@@ -860,7 +888,7 @@ export function createProtocolRunner(root) {
   }
   function drawCalls() {
     if (mode === 'one') return shuffle(PROTOCOLS[chosen].patients.slice()).slice(0, CALLS).map(p => ({ k: chosen, p }));
-    const r = mode === 'daily' ? seeded('golden-hour-' + today()) : Math.random, keys = Object.keys(PROTOCOLS), out = [];
+    const r = mode === 'daily' ? seeded('golden-hour-' + today()) : mode === 'room' && room ? seeded('room-' + room.seed) : Math.random, keys = Object.keys(PROTOCOLS), out = [];
     while (out.length < CALLS) { const k = keys.splice(Math.floor(r() * keys.length), 1)[0], ps = PROTOCOLS[k].patients; out.push({ k, p: ps[Math.floor(r() * ps.length)] }); }
     return out;
   }
@@ -876,6 +904,7 @@ export function createProtocolRunner(root) {
     $('title').classList.remove('show'); $('end').classList.remove('show'); nextCall();
   }
   function showMenu() {
+    if (mode === 'room' && room && state !== 'title' && state !== 'done') roomProg({ won: false, accuracy: 0, pace: 0 });
     state = 'title'; $('study').classList.remove('show'); $('pickList').classList.remove('show'); ents = []; activeGate = null; score = 0; streak = 0; hearts = 3; calls = []; hideCard();
     $('sheet').classList.remove('show'); $('end').classList.remove('show'); $('title').classList.add('show'); useProto(chosen); step(player.name ? 1 : 0); hud(); sirenSync();
   }
@@ -966,7 +995,7 @@ export function createProtocolRunner(root) {
       $('sheetBtn').textContent = hearts > 0 ? 'הבנתי, ממשיכים' : 'לסיכום';
       $('sheet').classList.add('show');
     }
-    hud();
+    hud(); roomProg();
   }
   // ממשיכים לפי התרשים: צומת נוסף, יציאה לפרוטוקול אחר, או פינוי לבית החולים
   function proceed(key, dir, right) {
@@ -996,10 +1025,12 @@ export function createProtocolRunner(root) {
       return `<li class="${clean ? 'ok' : 'bad'}"><b>${clean ? '✓' : '✗'}</b><span><strong>${c.p.who}</strong> · ${PROTOCOLS[c.k].name}<br>${path}</span></li>`; }).join('');
     lastResult = { won, accuracy, pace: Math.max(.3, +pace.toFixed(2)), decisions: steps.length, score, day: today(), rank: 0, total: 0,
       grid: log.map(c => c.steps.map(s => s.ok)) };
-    shareFile = null; $('nudge').hidden = !won; $('nudgeMsg').textContent = won ? nudgeText() : ''; $('shareBtn').textContent = 'שתף לסטורי'; $('copyBtn').textContent = 'העתק קישור אתגר';
-    $('rank').innerHTML = ''; $('rank').hidden = !won;
+    const inRoom = mode === 'room' && !!room;
+    shareFile = null; $('nudge').hidden = !won || inRoom; $('nudgeMsg').textContent = won ? nudgeText() : ''; $('shareBtn').textContent = 'שתף לסטורי'; $('copyBtn').textContent = 'העתק קישור אתגר';
+    $('rank').innerHTML = ''; $('rank').hidden = !won || inRoom; $('roomRes').hidden = !inRoom; $('againBtn').textContent = inRoom ? 'חזרה לחדר' : 'שחק שוב';
     $('end').classList.add('show'); $('end').scrollTop = 0; hud();
-    if (won) { [523, 659, 784, 1047].forEach((f, k) => beep(f, .2, 'triangle', .07, k * .12)); prepShare(); ranking(); }
+    if (inRoom) roomProg({ won, accuracy, pace: lastResult.pace });
+    if (won) { [523, 659, 784, 1047].forEach((f, k) => beep(f, .2, 'triangle', .07, k * .12)); if (!inRoom) { prepShare(); ranking(); } }
   }
 
   // ── דירוג מול כל המשתתפים (Supabase). הדירוג: דיוק, ואז מהירות ההחלטה בצמתים ──
@@ -1107,6 +1138,127 @@ export function createProtocolRunner(root) {
     try { await navigator.clipboard.writeText(dareLink()); $('copyBtn').textContent = 'הקישור הועתק ✓'; } catch (err) { $('copyBtn').textContent = 'ההעתקה לא הצליחה'; }
   };
 
+
+  // ═════════ חדרים עם חברים: ערוץ זמן אמת של Supabase (נוכחות + שידור), בלי שרת ובלי טבלאות ═════════
+  // מי בחדר — presence. התחלה, התקדמות וסיום — broadcast. כולם מקבלים את אותו זרע ולכן את אותם מטופלים.
+  const ROOM_MAX = 8, myId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  let sbc = null, room = null, homeMode = mode, homeLevel = level;
+  async function sbClient() {
+    if (!sbc) {
+      const { createClient } = await import('@supabase/supabase-js');
+      // לקוח נפרד בלי סשן, כדי לא לגעת בהתחברות של האפליקציה
+      sbc = createClient(SB_URL, SB_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'pr-room-auth' } });
+    }
+    return sbc;
+  }
+  // המארח: מי שפתח את החדר; אם יצא — מי שנכנס הכי מוקדם
+  const roomPlayers = () => room ? Object.entries(room.ch.presenceState()).map(([id, metas]) => ({ id, ...metas[0] })).sort((a, b) => a.at - b.at) : [];
+  const roomHost = () => { const ps = roomPlayers(); return (ps.find(p => p.host) || ps[0] || {}).id; };
+  const roomOpen = which => { $('room').classList.add('show'); $('roomHome').hidden = which !== 'home'; $('roomLobby').hidden = which !== 'lobby'; };
+  function roomErr(msg) { $('roomErr').textContent = msg || ''; }
+
+  async function roomEnter(code, asHost) {
+    const name = ($('roomName').value.trim() || player.name).slice(0, 24);
+    if (!name) { roomErr('צריך שם כדי שהחברים יזהו אותך.'); $('roomName').focus(); return; }
+    if (!SB_URL || !SB_KEY) { roomErr('החדרים לא זמינים כרגע.'); return; }
+    player.name = name; store.set('pr-name', name); $('inName').value = name;
+    roomErr(asHost ? 'פותח חדר…' : 'מתחבר…'); await roomLeave();
+    let c; try { c = await sbClient(); } catch (err) { roomErr('אין חיבור. נסו שוב.'); return; }
+    const ch = c.channel('golden-room-' + code, { config: { broadcast: { self: true }, presence: { key: myId } } });
+    const r = room = { code, ch, asHost, seed: '', lvl: level, prog: new Map(), round: 0, joinedAt: Date.now() };
+    ch.on('presence', { event: 'sync' }, () => { if (room === r) roomSync(); })
+      .on('broadcast', { event: 'start' }, ({ payload }) => { if (room === r) roomStart(payload); })
+      .on('broadcast', { event: 'prog' }, ({ payload }) => { if (room === r && payload && payload.round === r.round) { r.prog.set(payload.id, payload); roomBoard(); } });
+    ch.subscribe(async status => {
+      if (room !== r) return;
+      if (status === 'SUBSCRIBED') {
+        await ch.track({ name, host: !!asHost, at: Date.now() });
+        roomErr(''); $('roomCodeShow').textContent = code; roomOpen('lobby'); roomSync();
+        // מי שמצטרף בודק אחרי רגע שיש מישהו בחדר ושיש בו מקום
+        // (הסנכרון יכול לקחת כמה שניות ברשת סלולרית, אז מוותרים רק אחרי שתי בדיקות)
+        const check = last => {
+          if (room !== r) return; const ps = roomPlayers();
+          if (ps.length <= 1) { if (!last) return setTimeout(() => check(true), 4000); roomLeave(); roomOpen('home'); roomErr(`לא נמצא חדר פתוח עם הקוד ${code}.`); }
+          else if (ps.findIndex(p => p.id === myId) >= ROOM_MAX) { roomLeave(); roomOpen('home'); roomErr('החדר מלא.'); }
+        };
+        if (!asHost) setTimeout(() => check(false), 2500);
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { roomLeave(); roomOpen('home'); roomErr('החיבור לחדר נכשל. בדקו את האינטרנט ונסו שוב.'); }
+    });
+  }
+  async function roomLeave() {
+    if (!room) return; const r = room; room = null;
+    try { await r.ch.untrack(); } catch (e) { /* כבר מנותק */ }
+    try { await sbc.removeChannel(r.ch); } catch (e) { /* כבר מנותק */ }
+    $('rivals').hidden = true;
+    if (mode === 'room') { mode = homeMode; level = homeLevel; drawModes(); drawLevels(); }
+  }
+  function roomSync() {
+    if (!room) return; const ps = roomPlayers(), host = roomHost(), meHost = host === myId;
+    $('roomPlayers').innerHTML = ps.slice(0, ROOM_MAX).map(p => `<li class="${p.id === myId ? 'me' : ''}"><span>${esc(p.name)}${p.id === myId ? ' (את/ה)' : ''}</span><b>${p.id === host ? 'מארח/ת' : ''}</b></li>`).join('');
+    $('roomStart').hidden = !meHost;
+    $('roomStart').disabled = ps.length < 2;
+    $('roomStart').textContent = ps.length < 2 ? 'מחכים לעוד שחקן…' : `יוצאים! (${Math.min(ps.length, ROOM_MAX)} שחקנים)`;
+    $('roomInfo').textContent = meHost ? `המשמרת תהיה ברמת ${LEVELS[level].name}. שלחו לחברים את הקוד או את הקישור.` : 'מחכים שהמארח/ת יתחיל/תתחיל את המשמרת.';
+    roomBoard();
+  }
+  function roomCreate() { roomEnter(String(1000 + Math.floor(Math.random() * 9000)), true); }
+  $('roomBtn').onclick = () => { $('roomName').value = player.name; roomOpen(room ? 'lobby' : 'home'); roomErr(''); };
+  $('roomCreate').onclick = roomCreate;
+  $('roomJoin').onclick = () => { const code = $('roomCode').value.replace(/\D/g, ''); if (code.length !== 4) { roomErr('הקוד הוא 4 ספרות.'); return; } roomEnter(code, false); };
+  $('roomCode').onkeydown = e => { if (e.key === 'Enter') $('roomJoin').click(); };
+  $('roomBack').onclick = async () => { $('room').classList.remove('show'); await roomLeave(); };
+  $('roomStart').onclick = () => {
+    if (!room || roomHost() !== myId || roomPlayers().length < 2) return;
+    room.ch.send({ type: 'broadcast', event: 'start', payload: { seed: Math.random().toString(36).slice(2, 10), level, round: room.round + 1 } });
+  };
+  $('roomInvite').onclick = () => { if (room) window.open('https://wa.me/?text=' + encodeURIComponent(`בוא/י לשחק נגדי ב"${GAME}" 🚑\nקוד חדר: ${room.code}\n${SHARE_URL}/?room=${room.code}`), '_blank', 'noopener'); };
+
+  // התחלה: כולם מקבלים את אותו זרע ואותה רמה, וספירה לאחור משותפת
+  function roomStart(p) {
+    if (!room || !p || typeof p.seed !== 'string' || ![0, 1, 2].includes(p.level)) return;
+    if (state !== 'title' && state !== 'done') return;   // מי שכבר באמצע משמרת לא נגרר
+    if (mode !== 'room') { homeMode = mode; homeLevel = level; }
+    room.seed = p.seed.slice(0, 12); room.round = p.round | 0; room.prog = new Map(); mode = 'room'; level = p.level;
+    ['room', 'study', 'pickList', 'end', 'sheet'].forEach(k => $(k).classList.remove('show'));
+    let n = 3; $('count').hidden = false; $('count').textContent = n; beep(440, .12, 'triangle');
+    const tick = () => { if (!room) { $('count').hidden = true; return; } if (--n > 0) { $('count').textContent = n; beep(440, .12, 'triangle'); setTimeout(tick, 1000); } else { $('count').hidden = true; beep(880, .2, 'triangle'); start(); roomProg(); } };
+    setTimeout(tick, 1000);
+  }
+  // התקדמות: נשלחת אחרי כל צומת ובסיום
+  function roomProg(fin) {
+    if (!room || mode !== 'room') return;
+    const steps = log.flatMap(c => c.steps), correct = steps.filter(s => s.ok).length;
+    const msg = { id: myId, name: player.name, round: room.round, correct, decisions: steps.length, hearts, call: Math.min(calls.length, callIdx + 1), done: !!fin, ...(fin || {}) };
+    room.prog.set(myId, msg); room.ch.send({ type: 'broadcast', event: 'prog', payload: msg }); roomBoard();
+  }
+  // דירוג החדר: מי שסיים את המשמרת לפני מי שנפסל, ואז דיוק ומהירות החלטה
+  function roomRank() {
+    const present = new Set(roomPlayers().map(p => p.id));
+    const rows = [...room.prog.values()].filter(r => present.has(r.id) || r.done);
+    const key = r => r.done ? (r.won ? 0 : 1) : 2;
+    return rows.sort((a, b) => key(a) - key(b) || (b.accuracy || 0) - (a.accuracy || 0) || (a.pace || 99) - (b.pace || 99) || b.correct - a.correct);
+  }
+  function roomBoard() {
+    if (!room || mode !== 'room') { $('rivals').hidden = true; $('roomRes').hidden = true; return; }
+    const rows = roomRank();
+    // בזמן המשחק: פס קטן עם היריבים
+    $('rivals').hidden = state === 'title' || state === 'done';
+    $('rivals').innerHTML = rows.filter(r => r.id !== myId).slice(0, 4).map(r => `<div class="${r.done ? (r.won ? 'fin' : 'out') : ''}"><span>${esc(r.name)}</span><b>${r.done ? (r.won ? '🏁' : '✗') : '✓' + r.correct}</b><i>${'♥'.repeat(Math.max(0, r.hearts))}</i></div>`).join('');
+    // במסך הסיום: טבלת החדר שמתעדכנת חי
+    if (state !== 'done') return;
+    const allDone = rows.length > 1 && rows.every(r => r.done), top = rows[0];
+    $('roomRes').hidden = false;
+    $('roomRes').innerHTML = `<h3>${allDone ? (top.id === myId && top.won ? '🏆 ניצחת!' : top.won ? `🏆 ${esc(top.name)} ניצח/ה` : 'כולם נפסלו') : 'תוצאות החדר'}</h3><ol>` +
+      rows.map((r, i) => `<li class="${r.id === myId ? 'me' : ''}"><span>${i + 1}. ${esc(r.name)}</span><b>${!r.done ? `במשמרת… קריאה ${r.call}/${CALLS}` : r.won ? `${r.accuracy}% · ${(+r.pace).toFixed(1)} ש׳` : 'נפסל/ה'}</b></li>`).join('') + '</ol>' +
+      (allDone ? '' : '<p>הטבלה מתעדכנת כשהחברים מסיימים.</p>');
+  }
+  function roomBack() { showMenu(); roomOpen('lobby'); roomSync(); }
+  // הגעה מקישור הזמנה: פותחים ישר את חלון החדר עם הקוד
+  try {
+    const rc = (new URLSearchParams(location.search).get('room') || '').replace(/\D/g, '');
+    if (rc.length === 4) { $('roomCode').value = rc; $('roomName').value = player.name; roomOpen('home'); roomErr(player.name ? '' : 'כתבו שם ולחצו "הצטרפות".'); }
+  } catch (e) { /* בלי קישור הזמנה */ }
+
   function doDash() { if (state === 'run' && activeGate && !dash) { dash = true; beep(990, .12, 'triangle', .05); } }
   function move(d) { if (state !== 'run' && state !== 'finish') return; const n = clamp(lane + d, 0, 2); if (n !== lane) { lane = n; beep(300 + n * 60, .04, 'sine', .04); } }
   const onKey = e => {
@@ -1114,7 +1266,7 @@ export function createProtocolRunner(root) {
     if (e.key === 'ArrowLeft' || e.code === 'KeyA') move(-1);
     else if (e.key === 'ArrowRight' || e.code === 'KeyD') move(1);
     else if (e.key === 'ArrowUp' || e.code === 'KeyW') doDash();
-    else if (e.key === ' ' || e.key === 'Enter') { if (e.target && e.target.closest && e.target.closest('button, a')) return; e.preventDefault(); if (state === 'run') doDash(); else if (state === 'title') { if (!$('step2').hidden) start(); } else if (state === 'explain') closeSheet(); else if (state === 'done') start(); }
+    else if (e.key === ' ' || e.key === 'Enter') { if (e.target && e.target.closest && e.target.closest('button, a')) return; e.preventDefault(); if (state === 'run') doDash(); else if (state === 'title') { if (!$('step2').hidden && !$('room').classList.contains('show')) start(); } else if (state === 'explain') closeSheet(); else if (state === 'done') start(); }
   };
   window.addEventListener('keydown', onKey);
   let pd = null;
@@ -1123,7 +1275,7 @@ export function createProtocolRunner(root) {
     if (!pd) return; const dx = e.clientX - pd.x, dy = e.clientY - pd.y, r = cv.getBoundingClientRect(); pd = null;
     if (dy < -30 && Math.abs(dy) > Math.abs(dx)) doDash(); else if (Math.abs(dx) > 24) move(dx > 0 ? 1 : -1); else move(e.clientX > r.left + r.width / 2 ? 1 : -1);
   });
-  $('startBtn').onclick = start; $('againBtn').onclick = start; $('menuBtn').onclick = showMenu; $('sheetBtn').onclick = closeSheet; $('home').onclick = showMenu;
+  $('startBtn').onclick = start; $('againBtn').onclick = () => (mode === 'room' && room ? roomBack() : start()); $('menuBtn').onclick = showMenu; $('sheetBtn').onclick = closeSheet; $('home').onclick = showMenu;
 
   function update(dt) {
     T += dt; vNow = 0; sirenSync();
@@ -1856,7 +2008,7 @@ export function createProtocolRunner(root) {
 
   return {
     destroy() {
-      splashT.forEach(clearTimeout);
+      splashT.forEach(clearTimeout); roomLeave();
       sirenOn = false; sirenSync();
       dead = true; cancelAnimationFrame(raf); ro.disconnect(); window.removeEventListener('keydown', onKey);
       gfx.dispose(); if (AC) AC.close().catch(() => {});

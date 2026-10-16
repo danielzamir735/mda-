@@ -242,3 +242,31 @@
 .pr-root .pr-siren.on .ray { opacity: 1; animation: prBlink .6s infinite; }
 .pr-root .pr-home { right: .7em; background: #FFE14A; }
 @media (prefers-reduced-motion: reduce) { .pr-root .pr-siren.on .ray { animation: none; } }
+/* ── חדר עם חברים ── */
+.pr-root .roomBtn { margin-top: .6em; color: #0a0a0a; background: #FFE14A; border: 3px solid #0a0a0a; border-radius: 0; box-shadow: 5px 5px 0 #0a0a0a; }
+.pr-root .roomBtn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #0a0a0a; }
+.pr-root .pr-room { z-index: 7; background: rgba(4, 4, 9, .96); overflow-y: auto; touch-action: pan-y; }
+.pr-root .pr-room .wrap { display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: 1.2em; }
+.pr-root .pr-room .lead { margin-bottom: 1.1em; font-size: .86em; }
+.pr-root .pr-room .or { margin: 1.1em 0 .5em; text-align: center; font-size: .85em; color: #c4c4cc; }
+.pr-root .joinrow { display: grid; grid-template-columns: 1fr 1.1fr; gap: .6em; }
+.pr-root .joinrow .code { min-width: 0; padding: .55em .7em; font: inherit; font-family: var(--display); font-size: 1.5em; letter-spacing: .3em; text-align: center; color: #fff; border-radius: .7em; background: rgba(20, 20, 30, .9); border: 1px solid var(--border); user-select: text; -webkit-user-select: text; touch-action: manipulation; direction: ltr; }
+.pr-root .joinrow .code:focus { outline: none; border-color: #FFC000; }
+.pr-root .btn.join { background: #5CE6F2; color: #0a0a0a; box-shadow: 0 .35em 0 #1f8f99; }
+.pr-root .codeLbl { margin: 0; text-align: center; font-size: .85em; color: #c4c4cc; }
+.pr-root .codeBig { margin: .1em auto .5em; padding: .05em .5em .15em; font-family: var(--display); font-size: 3.2em; letter-spacing: .18em; line-height: 1.1; color: #0a0a0a; background: #FFE14A; border: 4px solid #0a0a0a; box-shadow: 7px 7px 0 #0a0a0a; direction: ltr; }
+.pr-root .pr-room .btn.share { margin-bottom: .9em; }
+.pr-root .players { list-style: none; margin: 0 0 .7em; padding: 0; display: grid; gap: .35em; }
+.pr-root .players li { display: flex; justify-content: space-between; gap: .6em; padding: .55em .8em; border-radius: .7em; background: rgba(255, 255, 255, .07); font-weight: 700; }
+.pr-root .players li.me { background: rgba(255, 225, 74, .16); border: 1px solid rgba(255, 225, 74, .5); }
+.pr-root .players li b { color: #FFC000; font-size: .8em; }
+.pr-root .err { color: #fca5a5; min-height: 1.2em; margin: .6em 0 0; }
+.pr-root .count { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; font-family: var(--display); font-size: 9em; color: #FFE14A; text-shadow: 0 .06em 0 #0a0a0a, 0 0 .3em rgba(0, 0, 0, .6); background: rgba(4, 4, 9, .55); pointer-events: none; }
+.pr-root .count[hidden] { display: none !important; }
+.pr-root .rivals { position: absolute; left: .6em; bottom: 4.6em; z-index: 3; display: grid; gap: .3em; pointer-events: none; }
+.pr-root .rivals div { display: flex; align-items: center; gap: .45em; padding: .25em .55em; font-size: .78em; font-weight: 800; color: #0a0a0a; background: #fff; border: 2px solid #0a0a0a; box-shadow: 3px 3px 0 #0a0a0a; }
+.pr-root .rivals div.fin { background: #92D050; } .pr-root .rivals div.out { background: #d4d4d8; opacity: .8; }
+.pr-root .rivals span { max-width: 6.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-root .rivals i { font-style: normal; color: #EF233C; letter-spacing: -.1em; }
+.pr-root .roomRes li.me { outline: 3px solid #0a0a0a; }
+.pr-root .roomRes p { margin: .45em 0 0; font-size: .85em; }
