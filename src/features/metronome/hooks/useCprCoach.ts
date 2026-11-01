@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useMetronomeStore } from '../../../store/metronomeStore';
-import { useSettingsStore } from '../../../store/settingsStore';
 import { speakHebrew, warmUpVoices } from '../../../utils/tts';
 import { CYCLE_SEC, PREWARN_SEC, AMIO_BY_SHOCK, VOICE } from '../cprProtocol';
 
@@ -48,7 +47,6 @@ export function useCprCoach() {
       setNow(t);
       const start = useMetronomeStore.getState().cycleStartTime;
       if (start === null) return;
-      const alerts = useSettingsStore.getState().cprCycleAlertsEnabled;
       const elapsedSec = (t - start) / 1000;
 
       if (elapsedSec >= CYCLE_SEC) {
@@ -56,16 +54,14 @@ export function useCprCoach() {
         // keep the cadence from the start of CPR; cycles that passed in the background are logged too
         for (let i = 1; i <= cycles; i++) completeCycle(start + i * CYCLE_SEC * 1000);
         setRhythmPrompt(true);
-        if (alerts) {
-          speakHebrew(VOICE.cycle);
-          vibrate([300, 150, 300, 150, 300]);
-          setIsCycleFlashing(true);
-          setTimeout(() => setIsCycleFlashing(false), 1600);
-        }
+        speakHebrew(VOICE.cycle);
+        vibrate([300, 150, 300, 150, 300]);
+        setIsCycleFlashing(true);
+        setTimeout(() => setIsCycleFlashing(false), 1600);
         return;
       }
 
-      if (alerts && elapsedSec >= CYCLE_SEC - PREWARN_SEC && prewarnedFor.current !== start) {
+      if (elapsedSec >= CYCLE_SEC - PREWARN_SEC && prewarnedFor.current !== start) {
         prewarnedFor.current = start;
         speakHebrew(VOICE.prewarn);
         vibrate(150);

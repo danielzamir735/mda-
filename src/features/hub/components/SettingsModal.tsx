@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Scale, ChevronRight, FileText, ShieldCheck, Accessibility, Users } from 'lucide-react';
+import { X, Sun, Moon, Globe, Monitor, Vibrate, Trash2, Scale, ChevronRight, FileText, ShieldCheck, Accessibility } from 'lucide-react';
 import LegalDocsModal from '../../legal/LegalDocsModal';
 import type { LegalDocId } from '../../legal/legalContent';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
@@ -51,8 +51,8 @@ function SectionLabel({ children }: { children: ReactNode }) {
 
 export default function SettingsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
-  const { theme, language, setTheme, setLanguage, hapticsEnabled, wakeLockEnabled, setHapticsEnabled, setWakeLockEnabled,
-    cprCycleAlertsEnabled, setCprCycleAlertsEnabled } = useSettingsStore();
+  const { theme, language, setTheme, setLanguage, hapticsEnabled, wakeLockEnabled, setHapticsEnabled, setWakeLockEnabled } =
+    useSettingsStore();
   const [docOpen, setDocOpen] = useState<LegalDocId | null>(null);
 
   if (!isOpen) return null;
@@ -166,18 +166,6 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
                 <p className="text-gray-900 dark:text-emt-light font-medium text-sm">רטט בלחיצות</p>
               </div>
               <Toggle enabled={hapticsEnabled} onToggle={() => setHapticsEnabled(!hapticsEnabled)} />
-            </div>
-            <div className="flex items-center justify-between px-4 py-3.5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <Users size={18} className="text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-gray-900 dark:text-emt-light font-medium text-sm">התראת החלפת מעסה כל 2 דק'</p>
-                  <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">קול, רטט והבהוב במטרונום ההחייאה</p>
-                </div>
-              </div>
-              <Toggle enabled={cprCycleAlertsEnabled} onToggle={() => setCprCycleAlertsEnabled(!cprCycleAlertsEnabled)} />
             </div>
           </div>
         </section>

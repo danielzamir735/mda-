@@ -79,15 +79,6 @@ const HUB_ITEMS: HubItem[] = [
     href: 'https://protocol-runner.vercel.app/?src=app',
   },
   {
-    id: 'after-call',
-    label: 'אחרי קריאה קשה',
-    subtitle: 'נשימות · תחקיר אישי · תמיכה',
-    icon: HeartHandshake,
-    color: 'text-violet-300',
-    border: 'border-violet-400/35',
-    bg: 'bg-violet-400/10',
-  },
-  {
     id: 'hospital-load',
     label: 'עומסים בבתי חולים',
     icon: Gauge,
@@ -235,6 +226,15 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-sky-400/10',
   },
   {
+    id: 'after-call',
+    label: 'אחרי קריאה קשה',
+    subtitle: 'נשימות · תחקיר אישי · תמיכה',
+    icon: HeartHandshake,
+    color: 'text-violet-300',
+    border: 'border-violet-400/35',
+    bg: 'bg-violet-400/10',
+  },
+  {
     id: 'kit-standards',
     label: 'תקנים לתיקי כונן',
     icon: ClipboardList,
@@ -305,7 +305,7 @@ const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms',
 const HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
 
-const NEW_ON_TOP = ['golden-hour', 'after-call'];
+const NEW_ON_TOP = ['golden-hour'];
 
 function loadHubOrder(): string[] {
   try {
