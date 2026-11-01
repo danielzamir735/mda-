@@ -684,9 +684,7 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
           </button>
         </div>
 
-        <p className="text-center text-[0.68rem] text-gray-400 dark:text-slate-500 px-5 pt-3 pb-6">
-          {DISCLAIMER}
-        </p>
+        <div className="h-6 shrink-0" />
       </div>
 
       {/* rhythm check at the start and at the end of each cycle */}
