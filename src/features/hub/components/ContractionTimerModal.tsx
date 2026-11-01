@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Timer, History, X, Trash2, ChevronDown } from 'lucide-react';
+import { ChevronRight, Timer, History, X, Trash2, ChevronDown, Pencil, Undo2, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useContractionStore } from '../../../store/contractionStore';
-import type { ContractionSession } from '../../../store/contractionStore';
+import { useContractionStore, contractionStart } from '../../../store/contractionStore';
+import type { Contraction, ContractionSession } from '../../../store/contractionStore';
 import { trackEvent } from '../../../utils/analytics';
 
 // ── Audio feedback via Web Audio API (no file needed, silent on error) ─────
@@ -32,23 +32,77 @@ function fmt(sec: number): string {
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}ש'`;
 }
 
-/** Display the wall-clock time + date for a contraction (derived from its end timestamp) */
-function fmtTimestamp(endMs: number, durationSec: number): string {
-  const startMs = endMs - durationSec * 1000;
-  const d = new Date(startMs);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  return `${hh}:${mm}  ${day}/${month}`;
+/** Wall-clock HH:mm:ss */
+function fmtClock(ms: number): string {
+  const d = new Date(ms);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
+}
+
+function fmtHM(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function fmtDay(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+const TABLE_COLS = '1.6rem 1fr 1fr 0.8fr 0.8fr';
+
+/** Table of contractions: # · start · end · duration · interval (newest on top) */
+function ContractionTable({ contractions, activeStartMs, activeElapsed, bare = false }: {
+  contractions: Contraction[]; activeStartMs?: number | null; activeElapsed?: number; bare?: boolean;
+}) {
+  return (
+    <div
+      className={bare ? 'w-full' : 'w-full shrink-0 rounded-2xl overflow-hidden'}
+      style={bare ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : { border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.03)' }}
+    >
+      <div
+        className="grid px-3 py-2 text-[0.7rem] font-bold tracking-wider"
+        style={{ gridTemplateColumns: TABLE_COLS, color: 'rgba(255,255,255,0.35)', background: 'rgba(0,0,0,0.18)' }}
+      >
+        <span>#</span>
+        <span className="text-center">התחלה</span>
+        <span className="text-center">סיום</span>
+        <span className="text-center">משך</span>
+        <span className="text-center">מרווח</span>
+      </div>
+      {activeStartMs != null && (
+        <div className="grid items-center px-3 py-2.5" style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(239,35,60,0.08)' }}>
+          <span className="text-xs font-semibold text-red-300/70">{contractions.length + 1}</span>
+          <span className="text-center text-xs tabular-nums text-white/70">{fmtClock(activeStartMs)}</span>
+          <span className="text-center text-xs text-red-300 font-bold">בתהליך…</span>
+          <span className="text-center font-black text-sm text-red-300 tabular-nums">{fmt(activeElapsed ?? 0)}</span>
+          <span className="text-center text-xs text-white/30">—</span>
+        </div>
+      )}
+      {contractions.map((c, i) => (
+        <div
+          key={c.id}
+          className="grid items-center px-3 py-2.5"
+          style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        >
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>{contractions.length - i}</span>
+          <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.7)' }}>{fmtClock(contractionStart(c))}</span>
+          <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtClock(c.id)}</span>
+          <span className="text-center font-black text-sm text-green-400 tabular-nums">{fmt(c.duration)}</span>
+          <span className={`text-center font-black text-sm tabular-nums ${c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'}`}>
+            {c.interval !== null ? fmt(c.interval) : '—'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   const {
-    contractions, sessions, active, startMs,
-    startContraction, endContraction, deleteSession, reset,
+    contractions, sessions, active, startMs, currentLabel,
+    startContraction, endContraction, deleteSession, reset, setCurrentLabel, renameSession, restoreSession,
   } = useContractionStore();
 
   const [elapsed, setElapsed] = useState(() =>
@@ -175,7 +229,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          {contractions.length > 0 && (
+          {(contractions.length > 0 || sessions.length > 0) && (
             <>
               <button
                 onClick={() => setShowHistory(true)}
@@ -185,16 +239,19 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               >
                 <History size={18} className="text-purple-300" />
               </button>
-              <button
-                onClick={handleReset}
-                className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                style={{ background: 'rgba(239,35,60,0.12)', border: '1px solid rgba(239,35,60,0.35)', color: '#f87171' }}
-              >
-                איפוס
-              </button>
+              {contractions.length > 0 && (
+                <button
+                  onClick={handleReset}
+                  className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform"
+                  style={{ background: 'rgba(239,35,60,0.12)', border: '1px solid rgba(239,35,60,0.35)', color: '#f87171' }}
+                  aria-label="איפוס ושמירה להיסטוריה"
+                >
+                  איפוס
+                </button>
+              )}
             </>
           )}
-          {contractions.length === 0 && <div className="w-11" />}
+          {contractions.length === 0 && sessions.length === 0 && <div className="w-11" />}
         </div>
       </div>
 
@@ -238,7 +295,22 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
       </AnimatePresence>
 
       {/* ── Main Content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-between px-5 py-6 gap-5">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center px-5 py-5 gap-5">
+
+        {/* Mother name / nickname — optional */}
+        <label
+          className="w-full shrink-0 flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
+        >
+          <User size={16} className="text-purple-300/70 shrink-0" />
+          <input
+            value={currentLabel}
+            onChange={e => setCurrentLabel(e.target.value)}
+            placeholder="שם / כינוי יולדת (לא חובה)"
+            className="flex-1 bg-transparent text-white text-sm placeholder-white/30 focus:outline-none"
+            maxLength={40}
+          />
+        </label>
 
         {/* Instruction text */}
         <AnimatePresence mode="wait">
@@ -402,6 +474,11 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             </motion.p>
           )}
         </AnimatePresence>
+
+        {/* Live list of this mother's contractions */}
+        {(contractions.length > 0 || active) && (
+          <ContractionTable contractions={contractions} activeStartMs={active ? startMs : null} activeElapsed={elapsed} />
+        )}
       </div>
 
       {/* ── History Full-Screen Overlay ──────────────────────────────────── */}
@@ -457,7 +534,14 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     index={sessions.length - si}
                     isExpanded={expandedSession === session.id}
                     onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
-                    onDelete={() => deleteSession(session.id)}
+                    onDelete={() => { if (window.confirm('למחוק את הסשן הזה מההיסטוריה?')) deleteSession(session.id); }}
+                    onRename={(label) => renameSession(session.id, label)}
+                    onRestore={() => {
+                      if (active) { window.alert('יש ציר פעיל — סיים אותו קודם'); return; }
+                      restoreSession(session.id);
+                      setShowHistory(false);
+                      setExpandedSession(null);
+                    }}
                   />
                 ))}
               </AnimatePresence>
@@ -486,19 +570,27 @@ interface SessionCardProps {
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  onRename: (label: string) => void;
+  onRestore: () => void;
 }
 
-function SessionCard({ session, index, isExpanded, onToggle, onDelete }: SessionCardProps) {
-  const d = new Date(session.savedAt);
-  const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}  ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  const count = session.contractions.length;
+function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename, onRestore }: SessionCardProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(session.label ?? '');
+  const list = session.contractions;
+  const count = list.length;
   const avgDur = count
-    ? Math.round(session.contractions.reduce((s, c) => s + c.duration, 0) / count)
+    ? Math.round(list.reduce((s, c) => s + c.duration, 0) / count)
     : 0;
-  const withInterval = session.contractions.filter(c => c.interval !== null);
+  const withInterval = list.filter(c => c.interval !== null);
   const avgInt = withInterval.length
     ? Math.round(withInterval.reduce((s, c) => s + (c.interval ?? 0), 0) / withInterval.length)
     : null;
+  // newest first → first contraction is the last item
+  const firstStart = count ? contractionStart(list[count - 1]) : session.savedAt;
+  const lastEnd = count ? list[0].id : session.savedAt;
+
+  const saveLabel = () => { onRename(draft.trim()); setEditing(false); };
 
   return (
     <motion.div
@@ -521,33 +613,45 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete }: Session
         </div>
 
         {/* Info */}
-        <button onClick={onToggle} className="flex-1 flex flex-col items-start gap-0.5 text-right">
-          <span className="text-white/80 text-sm font-bold tabular-nums">{dateStr}</span>
-          <span className="text-white/40 text-xs">
-            {count} צירים · ממוצע {fmt(avgDur)}
-            {avgInt !== null && ` · מרווח ${fmt(avgInt)}`}
-          </span>
-        </button>
+        {editing ? (
+          <div className="flex-1 flex items-center gap-2">
+            <input
+              autoFocus
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') saveLabel(); }}
+              placeholder="שם / כינוי יולדת"
+              maxLength={40}
+              className="flex-1 min-w-0 rounded-xl bg-white/5 border border-white/15 px-3 py-1.5 text-white text-sm focus:outline-none"
+            />
+            <button onClick={saveLabel} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/30 text-purple-100">שמור</button>
+          </div>
+        ) : (
+          <button onClick={onToggle} className="flex-1 min-w-0 flex flex-col items-start gap-0.5 text-right">
+            <span className="text-white/90 text-sm font-bold truncate max-w-full">
+              {session.label || 'יולדת ללא שם'}
+            </span>
+            <span className="text-white/55 text-xs tabular-nums">
+              {fmtDay(firstStart)} · {fmtHM(firstStart)}–{fmtHM(lastEnd)}
+            </span>
+            <span className="text-white/40 text-xs">
+              {count} צירים · ממוצע {fmt(avgDur)}
+              {avgInt !== null && ` · מרווח ${fmt(avgInt)}`}
+            </span>
+          </button>
+        )}
 
         {/* Expand toggle */}
-        <button onClick={onToggle} className="p-1.5 rounded-full active:scale-90 transition-transform" aria-label="הרחב">
-          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={16} className="text-white/40" />
-          </motion.div>
-        </button>
-
-        {/* Delete session */}
-        <button
-          onClick={onDelete}
-          className="p-1.5 rounded-full active:scale-90 transition-all"
-          style={{ background: 'rgba(239,35,60,0.08)' }}
-          aria-label="מחק סשן"
-        >
-          <Trash2 size={14} className="text-red-400/60" />
-        </button>
+        {!editing && (
+          <button onClick={onToggle} className="p-1.5 rounded-full active:scale-90 transition-transform" aria-label="הרחב">
+            <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown size={16} className="text-white/40" />
+            </motion.div>
+          </button>
+        )}
       </div>
 
-      {/* Expanded contraction rows */}
+      {/* Expanded: actions + contraction rows */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -557,49 +661,33 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete }: Session
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            {/* Column headers */}
-            <div
-              className="grid px-4 py-2 text-xs font-bold tracking-wider"
-              style={{
-                gridTemplateColumns: '2rem 1fr 1fr 1fr',
-                color: 'rgba(255,255,255,0.3)',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(0,0,0,0.15)',
-              }}
-            >
-              <span>#</span>
-              <span className="text-center">שעה</span>
-              <span className="text-center">משך</span>
-              <span className="text-center">מרווח</span>
-            </div>
-
-            {session.contractions.map((c, i) => (
-              <div
-                key={c.id}
-                className="grid items-center px-4 py-2.5"
-                style={{
-                  gridTemplateColumns: '2rem 1fr 1fr 1fr',
-                  borderTop: '1px solid rgba(255,255,255,0.04)',
-                }}
+            <div className="flex gap-2 px-4 pb-3">
+              <button
+                onClick={onRestore}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform"
+                style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#86efac' }}
               >
-                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  {session.contractions.length - i}
-                </span>
-                <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  {fmtTimestamp(c.id, c.duration)}
-                </span>
-                <span className="text-center font-black text-sm text-green-400">
-                  {fmt(c.duration)}
-                </span>
-                <span
-                  className={`text-center font-black text-sm ${
-                    c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'
-                  }`}
-                >
-                  {c.interval !== null ? fmt(c.interval) : '—'}
-                </span>
-              </div>
-            ))}
+                <Undo2 size={14} />
+                המשך סשן זה
+              </button>
+              <button
+                onClick={() => { setDraft(session.label ?? ''); setEditing(true); }}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform"
+                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', color: '#c4b5fd' }}
+              >
+                <Pencil size={13} />
+                שם
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex items-center justify-center px-3 py-2 rounded-xl active:scale-95 transition-transform"
+                style={{ background: 'rgba(239,35,60,0.08)', border: '1px solid rgba(239,35,60,0.25)' }}
+                aria-label="מחק סשן"
+              >
+                <Trash2 size={14} className="text-red-400/70" />
+              </button>
+            </div>
+            <ContractionTable contractions={list} bare />
           </motion.div>
         )}
       </AnimatePresence>

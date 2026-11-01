@@ -7,6 +7,14 @@ export interface ShockLog {
   gap: string;      // MM:SS gap from previous shock, or '—' for first
 }
 
+export type CprEventKind = 'start' | 'cycle' | 'shock' | 'epi' | 'amio' | 'rhythm' | 'rosc' | 'ht' | 'end';
+
+export interface CprEvent {
+  at: number;        // Date.now() של האירוע
+  kind: CprEventKind;
+  label: string;     // תיאור בעברית לציר הזמן ולדו"ח
+}
+
 export interface VitalsLog {
   id: string;
   timestamp: string;
@@ -27,6 +35,8 @@ export interface VitalsLog {
   cprDuration?: string;      // for type === 'cpr'
   cprShocks?: number;        // for type === 'cpr'
   cprShockLogs?: ShockLog[]; // detailed shock timestamps
+  cprStartAt?: number;       // Date.now() at CPR start — base for the timeline
+  cprEvents?: CprEvent[];    // full CPR timeline (cycles, shocks, drugs, ROSC)
 }
 
 interface VitalsLogState {

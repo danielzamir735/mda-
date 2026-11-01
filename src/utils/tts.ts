@@ -23,6 +23,25 @@ export function speakEnglish(text: string) {
   }
 }
 
+// התראות קוליות בעברית (מאמן ההחייאה). בלי cancel() — התראה לא קוטעת את קודמתה,
+// והמטרונום (Web Audio) ממשיך לתקתק במקביל.
+export function speakHebrew(text: string) {
+  try {
+    if (!isTtsSupported()) return;
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'he-IL';
+    utterance.rate = 1;
+    utterance.volume = 1;
+    const voices = synth.getVoices();
+    const heVoice = voices.find((v) => v.lang === 'he-IL') ?? voices.find((v) => v.lang.startsWith('he') || v.lang.startsWith('iw'));
+    if (heVoice) utterance.voice = heVoice;
+    synth.speak(utterance);
+  } catch {
+    /* TTS לא זמין — נשארות הרטט וההבהוב */
+  }
+}
+
 // חלק מהדפדפנים טוענים קולות באיחור — קריאה מוקדמת מחממת את הרשימה
 export function warmUpVoices() {
   try {

@@ -39,6 +39,7 @@ import LanguageBridgeModal from '../translators/LanguageBridgeModal';
 import SoulDepartureModal from '../hub/components/SoulDepartureModal';
 import DailyPushModal from '../hub/components/DailyPushModal';
 import HospitalLoadModal from '../hub/components/HospitalLoadModal';
+import AfterCallModal from '../hub/components/AfterCallModal';
 
 export default function VitalsFeature() {
   const isMetronomePlaying = useMetronomeStore((s) => s.isPlaying);
@@ -86,6 +87,8 @@ export default function VitalsFeature() {
   const [soulDepartureOpen, setSoulDepartureOpen] = useState(false);
   const [dailyPushOpen, setDailyPushOpen] = useState(false);
   const [hospitalLoadOpen, setHospitalLoadOpen] = useState(false);
+  // 'hub' → back to the tools hub on close; 'cpr' → back to the CPR summary underneath
+  const [afterCallFrom, setAfterCallFrom] = useState<'hub' | 'cpr' | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem('hasSeenWelcome_v2')) {
@@ -170,7 +173,7 @@ export default function VitalsFeature() {
 
       </main>
 
-      {isMetronomePlaying && <CPRTimerOverlay />}
+      {isMetronomePlaying && <CPRTimerOverlay onOpenAfterCall={() => setAfterCallFrom('cpr')} />}
 
       <BottomNav
         onGalleryOpen={() => { trackInteraction('גלריה', 'navigation'); setGalleryOpen(true); }}
@@ -239,6 +242,7 @@ export default function VitalsFeature() {
         onSoulDepartureOpen={() => setSoulDepartureOpen(true)}
         onDailyPushOpen={() => setDailyPushOpen(true)}
         onHospitalLoadOpen={() => setHospitalLoadOpen(true)}
+        onAfterCallOpen={() => setAfterCallFrom('hub')}
       />
 
       <AmbulanceChecklistModal
@@ -288,6 +292,11 @@ export default function VitalsFeature() {
       <SoulDepartureModal isOpen={soulDepartureOpen} onClose={() => { setSoulDepartureOpen(false); setHubOpen(true); }} />
       <DailyPushModal isOpen={dailyPushOpen} onClose={() => { setDailyPushOpen(false); setHubOpen(true); }} />
       <HospitalLoadModal isOpen={hospitalLoadOpen} onClose={() => { setHospitalLoadOpen(false); setHubOpen(true); }} />
+      <AfterCallModal
+        isOpen={afterCallFrom !== null}
+        onClose={() => { if (afterCallFrom === 'hub') setHubOpen(true); setAfterCallFrom(null); }}
+        onOpenBreathing={afterCallFrom === 'hub' ? () => { setAfterCallFrom(null); setBreathingOpen(true); } : undefined}
+      />
     </div>
   );
 }

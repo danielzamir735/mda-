@@ -15,6 +15,7 @@ interface SettingsState {
   language: Language;
   hapticsEnabled: boolean;
   wakeLockEnabled: boolean;
+  cprCycleAlertsEnabled: boolean;
   hasSeenLatestUpdate: boolean;
   bgColor: string;
   fontSize: number;
@@ -24,6 +25,7 @@ interface SettingsState {
   setLanguage: (l: Language) => void;
   setHapticsEnabled: (v: boolean) => void;
   setWakeLockEnabled: (v: boolean) => void;
+  setCprCycleAlertsEnabled: (v: boolean) => void;
   setHasSeenLatestUpdate: (v: boolean) => void;
   setBgColor: (v: string) => void;
   setFontSize: (v: number) => void;
@@ -38,6 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'he',
       hapticsEnabled: true,
       wakeLockEnabled: false,
+      cprCycleAlertsEnabled: true,
       hasSeenLatestUpdate: false,
       bgColor: '',
       fontSize: 16,
@@ -47,6 +50,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (l) => set({ language: l }),
       setHapticsEnabled: (v) => set({ hapticsEnabled: v }),
       setWakeLockEnabled: (v) => set({ wakeLockEnabled: v }),
+      setCprCycleAlertsEnabled: (v) => set({ cprCycleAlertsEnabled: v }),
       setHasSeenLatestUpdate: (v) => set({ hasSeenLatestUpdate: v }),
       setBgColor: (v) => set({ bgColor: v }),
       setFontSize: (v) => set({ fontSize: v }),

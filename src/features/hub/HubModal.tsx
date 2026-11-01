@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance, HeartHandshake } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -53,6 +53,7 @@ interface Props {
   onSoulDepartureOpen: () => void;
   onDailyPushOpen: () => void;
   onHospitalLoadOpen: () => void;
+  onAfterCallOpen: () => void;
 }
 
 type HubItem = {
@@ -76,6 +77,15 @@ const HUB_ITEMS: HubItem[] = [
     border: 'border-amber-400/40',
     bg: 'bg-amber-400/10',
     href: 'https://protocol-runner.vercel.app/?src=app',
+  },
+  {
+    id: 'after-call',
+    label: 'אחרי קריאה קשה',
+    subtitle: 'נשימות · תחקיר אישי · תמיכה',
+    icon: HeartHandshake,
+    color: 'text-violet-300',
+    border: 'border-violet-400/35',
+    bg: 'bg-violet-400/10',
   },
   {
     id: 'hospital-load',
@@ -287,7 +297,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load']);
+const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call']);
 
 // v3: bumped so the new hospital-load tile lands in its intended top-right
 // slot for existing users too — loadHubOrder() otherwise appends any id
@@ -295,7 +305,7 @@ const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms',
 const HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
 
-const NEW_ON_TOP = ['golden-hour'];
+const NEW_ON_TOP = ['golden-hour', 'after-call'];
 
 function loadHubOrder(): string[] {
   try {
@@ -360,6 +370,7 @@ export default function HubModal({
   onSoulDepartureOpen,
   onDailyPushOpen,
   onHospitalLoadOpen,
+  onAfterCallOpen,
 }: Props) {
   const [showSimulators, setShowSimulators] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
@@ -430,6 +441,7 @@ export default function HubModal({
     'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
     'daily-push':                 ['פוש יומי',                'utility'],
     'hospital-load':              ['עומסים בבתי חולים',        'emergency_info'],
+    'after-call':                 ['אחרי קריאה קשה',           'wellness'],
   };
 
   const handleItemClick = (id: string) => {
@@ -477,6 +489,7 @@ https://hovesh-plus.vercel.app/`;
     if (id === 'soul-departure') onSoulDepartureOpen();
     if (id === 'daily-push') onDailyPushOpen();
     if (id === 'hospital-load') onHospitalLoadOpen();
+    if (id === 'after-call') onAfterCallOpen();
     if (id === 'simulators') setShowSimulators(true);
     if (id === 'whatsapp-community') setShowWhatsAppCommunity(true);
     if (id === 'install-app') { onClose(); setTimeout(openFullModal, 150); }

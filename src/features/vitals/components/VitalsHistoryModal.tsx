@@ -6,11 +6,14 @@ import type { VitalsLog } from '../../../store/vitalsLogStore';
 import { useTranslation } from '../../../hooks/useTranslation';
 import EditVitalsModal from './EditVitalsModal';
 import AddVitalsModal from './AddVitalsModal';
+import { CprTimeline } from '../../metronome/CPRTimerOverlay';
 
 function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void }) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const hasShocks = (log.cprShockLogs?.length ?? 0) > 0;
+  const hasTimeline = (log.cprEvents?.length ?? 0) > 0 && log.cprStartAt !== undefined;
+  const canExpand = hasShocks || hasTimeline;
 
   return (
     <div
@@ -27,7 +30,7 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
           <p className="text-gray-500 dark:text-emt-muted text-xs">· {log.timestamp}</p>
         </div>
         <div className="flex items-center gap-1">
-          {hasShocks && (
+          {canExpand && (
             <button
               onClick={() => setExpanded((v) => !v)}
               className="p-1.5 text-yellow-400/60 hover:text-yellow-400 transition-colors"
@@ -89,6 +92,13 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {expanded && hasTimeline && (
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.18)' }}>
+          <p className="text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">ציר זמן</p>
+          <CprTimeline events={log.cprEvents!} startAt={log.cprStartAt!} />
         </div>
       )}
     </div>
