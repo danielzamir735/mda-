@@ -70,6 +70,10 @@ function AppInner() {
     const html = document.documentElement;
     if (theme === 'dark') html.classList.add('dark');
     else html.classList.remove('dark');
+    // Browser / OS status bar colour follows the theme too.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#09090B' : '#F9FAFB');
   }, [theme]);
 
   useEffect(() => {

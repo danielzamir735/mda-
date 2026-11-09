@@ -7,8 +7,12 @@
       (function () {
         try {
           var s = localStorage.getItem('emt-settings');
-          var theme = s ? JSON.parse(s).state.theme : 'dark';
-          if (theme !== 'light') document.documentElement.classList.add('dark');
+          var state = s ? JSON.parse(s).state : {};
+          if (state.theme !== 'light') document.documentElement.classList.add('dark');
+          if (state.language === 'en') {
+            document.documentElement.setAttribute('lang', 'en');
+            document.documentElement.setAttribute('dir', 'ltr');
+          }
         } catch (_) {
           document.documentElement.classList.add('dark');
         }
@@ -28,13 +32,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="חובש+" />
+    <!-- Pre-CSS background so the first paint already matches the theme -->
+    <style>
+      html { background-color: #F9FAFB; }
+      html.dark { background-color: #09090B; }
+      .boot-spin { border: 3px solid rgba(0,0,0,0.12); border-top-color: #111827; }
+      html.dark .boot-spin { border-color: rgba(255,255,255,0.15); border-top-color: #fff; }
+    </style>
   </head>
-  <body style="background-color:#09090B;margin:0;padding:0;">
+  <body style="margin:0;padding:0;">
     <div id="root">
-      <div data-boot-splash style="min-height:100dvh;background-color:#09090B;display:flex;align-items:center;justify-content:center;">
+      <div data-boot-splash style="min-height:100dvh;display:flex;align-items:center;justify-content:center;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
           <img src="/pwa-192x192.png" alt="" width="72" height="72" style="border-radius:20px;opacity:0.9;" />
-          <div style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.15);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          <div class="boot-spin" style="width:32px;height:32px;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
         </div>
       </div>
     </div>
