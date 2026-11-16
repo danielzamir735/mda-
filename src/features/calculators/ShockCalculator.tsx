@@ -3,6 +3,7 @@ import { X, Activity, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { trackInteraction, trackEvent } from '../../utils/analytics';
+import { useTranslation, translate } from '../../i18n';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -61,15 +62,15 @@ interface InputRowProps {
 function InputRow({ label, value, onChange, placeholder = '0', max = 300 }: InputRowProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-gray-500 dark:text-emt-muted text-sm font-semibold">{label}</label>
+      <label className="text-fg-muted text-sm font-semibold">{label}</label>
       <input
         type="number"
         inputMode="numeric"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-emt-border
-                   bg-gray-50 dark:bg-emt-dark text-gray-900 dark:text-emt-light font-bold text-lg
-                   focus:outline-none focus:border-red-400/60 transition-colors text-right"
+        className="w-full px-4 py-3 rounded-xl border border-line
+                   bg-page text-fg font-bold text-lg
+                   focus:outline-none focus:border-red-400/60 transition-colors text-start"
         placeholder={placeholder}
         min="0"
         max={max}
@@ -82,13 +83,14 @@ function InputRow({ label, value, onChange, placeholder = '0', max = 300 }: Inpu
 
 export default function ShockCalculator({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
 
   const [hr,  setHr]  = useState('');
   const [sbp, setSbp] = useState('');
   const [dbp, setDbp] = useState('');
 
   useEffect(() => {
-    if (isOpen) trackInteraction('מחשבון הלם ופרפוזיה', 'calculators');
+    if (isOpen) trackInteraction(translate('shockCalcTitle', undefined, 'he'), 'calculators');
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -112,14 +114,14 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page">
 
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2 min-w-0">
           <Activity size={20} className="text-red-400 shrink-0" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl truncate">
-            מחשבון הלם ופרפוזיה
+          <h2 className="text-fg font-bold text-xl truncate">
+            {t('shockCalcTitle')}
           </h2>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -128,17 +130,17 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30
                        bg-red-500/10 text-red-500 text-sm font-semibold
                        hover:bg-red-500/20 active:scale-95 transition-all"
-            aria-label="אפס נתונים"
+            aria-label={t('shockResetData')}
           >
             <RotateCcw size={14} />
-            <span>אפס</span>
+            <span>{t('reset')}</span>
           </button>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted"
-            aria-label="סגור"
+                       text-fg-muted"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
@@ -149,11 +151,11 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-8">
 
         {/* Inputs */}
-        <section className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 flex flex-col gap-4">
-          <p className="text-gray-900 dark:text-emt-light font-bold text-base">נתוני מטופל</p>
-          <InputRow label="דופק (פעימות/דקה)"          value={hr}  onChange={setHr}  max={300} />
-          <InputRow label="לחץ דם סיסטולי (mmHg)"       value={sbp} onChange={setSbp} max={300} />
-          <InputRow label="לחץ דם דיאסטולי (mmHg)"      value={dbp} onChange={setDbp} max={200} />
+        <section className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-4">
+          <p className="text-fg font-bold text-base">{t('shockPatientData')}</p>
+          <InputRow label={t('shockHrLabel')} value={hr}  onChange={setHr}  max={300} />
+          <InputRow label={t('shockSbpLabel')} value={sbp} onChange={setSbp} max={300} />
+          <InputRow label={t('shockDbpLabel')} value={dbp} onChange={setDbp} max={200} />
         </section>
 
         {/* Shock Index card */}
@@ -163,16 +165,16 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
           className={[
             'rounded-2xl border p-4 transition-colors duration-300',
             siCritical
-              ? 'border-red-500/50 bg-slate-950/50 backdrop-blur-xl'
-              : 'border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray',
+              ? 'border-red-500/50 bg-red-500/5 dark:bg-red-500/10'
+              : 'border-line bg-surface',
           ].join(' ')}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className={`font-bold text-base transition-colors duration-300 ${siCritical ? 'text-red-400' : 'text-gray-900 dark:text-emt-light'}`}>
-                מדד הלם (Shock Index)
+              <p className={`font-bold text-base transition-colors duration-300 ${siCritical ? 'text-red-600 dark:text-red-400' : 'text-fg'}`}>
+                {t('shockIndexTitle')}
               </p>
-              <p className="text-gray-400 dark:text-emt-muted text-xs">דופק ÷ לחץ דם סיסטולי</p>
+              <p className="text-fg-muted text-xs">{t('shockIndexFormula')}</p>
               <AnimatePresence>
                 {siCritical && (
                   <motion.div
@@ -184,8 +186,8 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
                     className="mt-2 overflow-hidden"
                   >
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1
-                                     rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                      ⚠ חשד גבוה להלם
+                                     rounded-full bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30">
+                      {t('shockHighSuspicion')}
                     </span>
                   </motion.div>
                 )}
@@ -193,13 +195,13 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             </div>
             <div className="shrink-0 flex flex-col items-end">
               <span
-                className={`font-black tabular-nums leading-none transition-colors duration-300 ${siCritical ? 'text-red-400' : 'text-gray-900 dark:text-emt-light'}`}
+                className={`font-black tabular-nums leading-none transition-colors duration-300 ${siCritical ? 'text-red-600 dark:text-red-400' : 'text-fg'}`}
                 style={{ fontSize: 'clamp(2.2rem, 10vw, 3rem)' }}
               >
                 <RollingNumber value={si} decimals={2} />
               </span>
-              <span className="text-gray-400 dark:text-emt-muted text-xs font-semibold mt-0.5">
-                תקין &lt; 0.9
+              <span className="text-fg-muted text-xs font-semibold mt-0.5">
+                {t('shockNormalLt09')}
               </span>
             </div>
           </div>
@@ -212,16 +214,16 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
           className={[
             'rounded-2xl border p-4 transition-colors duration-300',
             mapCritical
-              ? 'border-orange-500/50 bg-slate-950/50 backdrop-blur-xl'
-              : 'border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray',
+              ? 'border-orange-500/50 bg-orange-500/5 dark:bg-orange-500/10'
+              : 'border-line bg-surface',
           ].join(' ')}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className={`font-bold text-base transition-colors duration-300 ${mapCritical ? 'text-orange-400' : 'text-gray-900 dark:text-emt-light'}`}>
-                לחץ עורקי ממוצע (MAP)
+              <p className={`font-bold text-base transition-colors duration-300 ${mapCritical ? 'text-orange-600 dark:text-orange-400' : 'text-fg'}`}>
+                {t('shockMapTitle')}
               </p>
-              <p className="text-gray-400 dark:text-emt-muted text-xs">DBP + (SBP − DBP) ÷ 3</p>
+              <p className="text-fg-muted text-xs">DBP + (SBP − DBP) ÷ 3</p>
               <AnimatePresence>
                 {mapCritical && (
                   <motion.div
@@ -233,8 +235,8 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
                     className="mt-2 overflow-hidden"
                   >
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1
-                                     rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                      ⚠ סיכון פרפוזיה
+                                     rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30">
+                      {t('shockPerfusionRisk')}
                     </span>
                   </motion.div>
                 )}
@@ -243,42 +245,42 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             <div className="shrink-0 flex flex-col items-end">
               <div className="flex items-end gap-1">
                 <span
-                  className={`font-black tabular-nums leading-none transition-colors duration-300 ${mapCritical ? 'text-orange-400' : 'text-gray-900 dark:text-emt-light'}`}
+                  className={`font-black tabular-nums leading-none transition-colors duration-300 ${mapCritical ? 'text-orange-600 dark:text-orange-400' : 'text-fg'}`}
                   style={{ fontSize: 'clamp(2.2rem, 10vw, 3rem)' }}
                 >
                   <RollingNumber value={hasInput ? map : 0} decimals={0} />
                 </span>
-                <span className="text-gray-400 dark:text-emt-muted text-sm font-semibold mb-1">mmHg</span>
+                <span className="text-fg-muted text-sm font-semibold mb-1">mmHg</span>
               </div>
-              <span className="text-gray-400 dark:text-emt-muted text-xs font-semibold mt-0.5">
-                תקין ≥ 65
+              <span className="text-fg-muted text-xs font-semibold mt-0.5">
+                {t('shockNormalGe65')}
               </span>
             </div>
           </div>
         </motion.section>
 
         {/* Clinical reference */}
-        <section className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4">
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-bold mb-3 uppercase tracking-wide">
-            עזר קליני
+        <section className="rounded-2xl border border-line bg-surface p-4">
+          <p className="text-fg-muted text-xs font-bold mb-3 uppercase tracking-wide">
+            {t('shockClinicalRef')}
           </p>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
-              <span className="text-gray-400 dark:text-emt-muted text-xs">SI נורמלי</span>
-              <span className="text-gray-700 dark:text-emt-light text-xs font-bold">0.5 – 0.7</span>
+              <span className="text-fg-muted text-xs">{t('shockSiNormal')}</span>
+              <span className="text-fg text-xs font-bold">0.5 – 0.7</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-400 dark:text-emt-muted text-xs">SI ≥ 0.9</span>
-              <span className="text-red-400 text-xs font-bold">חשד להלם</span>
+              <span className="text-fg-muted text-xs">SI ≥ 0.9</span>
+              <span className="text-red-600 dark:text-red-400 text-xs font-bold">{t('shockSuspected')}</span>
             </div>
-            <div className="w-full h-px bg-gray-100 dark:bg-emt-border" />
+            <div className="w-full h-px bg-line" />
             <div className="flex justify-between items-center">
-              <span className="text-gray-400 dark:text-emt-muted text-xs">MAP נורמלי</span>
-              <span className="text-gray-700 dark:text-emt-light text-xs font-bold">70 – 100 mmHg</span>
+              <span className="text-fg-muted text-xs">{t('shockMapNormal')}</span>
+              <span className="text-fg text-xs font-bold">70 – 100 mmHg</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-400 dark:text-emt-muted text-xs">MAP &lt; 65 mmHg</span>
-              <span className="text-orange-400 text-xs font-bold">סיכון לאיסכמיה</span>
+              <span className="text-fg-muted text-xs">MAP &lt; 65 mmHg</span>
+              <span className="text-orange-600 dark:text-orange-400 text-xs font-bold">{t('shockIschemiaRisk')}</span>
             </div>
           </div>
         </section>
