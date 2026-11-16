@@ -10,6 +10,7 @@ import { trackEvent } from '../../../utils/analytics';
 import HapticButton from '../../../components/HapticButton';
 import { supabase } from '../../../lib/supabase';
 import { DIAGNOSIS_POOL } from '../data/activeDiagnosesPool';
+import { useTranslation, useLanguage, translate } from '../../../i18n';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -188,21 +189,22 @@ function getEffectiveProfile(): { name: string; city: string; isPermanent: boole
 // Normalization strips spaces/punctuation/quotes and folds final letters, so
 // tricks like "איחוד  הצלה", "מ.ד.א", "מד״א", "א-י-ח-ו-ד" are all caught.
 
+// i18n-ok: name-filter data, not interface text
 const FINAL_LETTER_MAP: Record<string, string> = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
 
 function normalizeForBlockCheck(s: string): string {
   return s
     .toLowerCase()
-    .replace(/[ךםןףץ]/g, (c) => FINAL_LETTER_MAP[c])
-    .replace(/[^א-תa-z0-9]/g, '');
+    .replace(/[ךםןףץ]/g, (c) => FINAL_LETTER_MAP[c]) // i18n-ok: name-filter data, not interface text
+    .replace(/[^א-תa-z0-9]/g, ''); // i18n-ok: name-filter data, not interface text
 }
 
 // Checked as substrings of the fully-normalized input
 const BLOCKED_NAME_SUBSTRINGS = [
   // איחוד הצלה — עברית
-  'איחודהצלה', 'איחודוהצלה', 'איחוד', 'הצלה',
+  'איחודהצלה', 'איחודוהצלה', 'איחוד', 'הצלה', // i18n-ok: name-filter data, not interface text
   // מגן דוד אדום — עברית
-  'מגנדודאדומ', 'מגנדוד', 'דודאדומ',
+  'מגנדודאדומ', 'מגנדוד', 'דודאדומ', // i18n-ok: name-filter data, not interface text
   // English variants
   'hatzal', 'hatzol', 'hatsal', 'hatsol', 'ichud', 'ihud',
   'magendavid', 'davidadom', 'unitedrescue',
@@ -210,7 +212,7 @@ const BLOCKED_NAME_SUBSTRINGS = [
 
 // Checked as exact match of the whole normalized input or of a single word
 const BLOCKED_NAME_EXACT = [
-  'מדא', 'אא', 'איא', 'mda', 'mada', 'uh', 'aa',
+  'מדא', 'אא', 'איא', 'mda', 'mada', 'uh', 'aa', // i18n-ok: name-filter data, not interface text
 ];
 
 function isBlockedName(input: string): boolean {
@@ -221,12 +223,12 @@ function isBlockedName(input: string): boolean {
   // Two word-split passes: by any separator ("מ ד א") and by whitespace only,
   // so punctuation inside a token is stripped rather than splitting it (מד"א → מדא)
   const words = [
-    ...input.split(/[^א-תa-zA-Z0-9]+/),
+    ...input.split(/[^א-תa-zA-Z0-9]+/), // i18n-ok: name-filter data, not interface text
     ...input.split(/\s+/),
   ].map(normalizeForBlockCheck).filter(Boolean);
   // Also test tokens with a common Hebrew prefix letter stripped (ממד"א, במד"א...)
   const withPrefixStripped = words.flatMap((w) =>
-    w.length > 3 && 'מבלהוכש'.includes(w[0]) ? [w, w.slice(1)] : [w],
+    w.length > 3 && 'מבלהוכש'.includes(w[0]) ? [w, w.slice(1)] : [w], // i18n-ok: name-filter data, not interface text
   );
   return withPrefixStripped.some((w) => BLOCKED_NAME_EXACT.includes(w));
 }
@@ -254,7 +256,7 @@ async function upsertCompetitionEntry(
 }
 
 const CATEGORY_LABELS: Record<ClinicalCategory, string> = { bls: 'BLS', als: 'ALS' };
-const CATEGORY_FULL: Record<ClinicalCategory, string> = { bls: 'החייאה בסיסית', als: 'החייאה מתקדמת' };
+const CATEGORY_FULL = { bls: 'dcBlsFull', als: 'dcAlsFull' } as const;
 
 // Deterministic "active diagnoses" question — no story, no AI call. Real medical
 // records (per reference chart) list diagnoses as a plain abbreviated list; the user
@@ -345,6 +347,7 @@ function buildActiveDxQuestion(): ActiveDxQ {
 
   const explanation =
     shown.map((e) => `${e.abbr} = ${e.he}`).join(' | ') +
+    // i18n-ok: question content stays Hebrew (like the server questions)
     `. שימו לב במיוחד ל-${todayEntry.abbr} (${todayEntry.en}) — ${todayEntry.he}.`;
 
   const diagnosisMeanings: Record<string, string> = {};
@@ -353,6 +356,7 @@ function buildActiveDxQuestion(): ActiveDxQ {
   return {
     diagnoses: shown.map((e) => e.abbr),
     diagnosis_meanings: diagnosisMeanings,
+    // i18n-ok: question content stays Hebrew (like the server questions)
     question: 'אילו אבחנות פעילות רשומות למעלה — ומה משמעותן, לפי הסדר?',
     options,
     correct_index: correctIndex,
@@ -490,7 +494,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
   // "clinical_explanation"), normalised below. But if 2.5-flash alone is out
   // of quota (its RPD limit is far lower than 2.0-flash's), don't hard-fail
   // this block — fall back to the full model chain like every other block.
-  type RawClinical = ClinicalQuestion & { explanation?: string; הסבר_קליני?: string };
+  type RawClinical = ClinicalQuestion & { explanation?: string; הסבר_קליני?: string }; // i18n-ok: JSON key the model may emit
   let raw: RawClinical;
   try {
     raw = await callGemini<RawClinical>(cat, 'gemini-2.5-flash');
@@ -499,7 +503,7 @@ async function generateClinical(cat: ClinicalCategory): Promise<ClinicalQuestion
   }
   // Normalise alternate key names that weaker models sometimes emit
   if (!raw.clinical_explanation) {
-    const alt = raw.explanation ?? (raw as unknown as Record<string, unknown>)['הסבר_קליני'] as string | undefined;
+    const alt = raw.explanation ?? (raw as unknown as Record<string, unknown>)['הסבר_קליני'] as string | undefined; // i18n-ok: JSON key the model may emit
     if (alt) (raw as ClinicalQuestion).clinical_explanation = alt;
   }
   if (
@@ -676,9 +680,9 @@ async function fetchGlobalStats(category: QuizCategory, correctIndex: number | n
 }
 
 async function shareChallengeResult(score: number): Promise<void> {
-  const text = `סיימתי את האתגר היומי של 'חובש +' עם ניקוד ${score}/8! 🏆`;
+  const text = translate('dcShareText', { score });
   const url = typeof window !== 'undefined' ? window.location.origin : '';
-  const shareData: ShareData = { title: 'חובש +', text, url };
+  const shareData: ShareData = { title: translate('dcAppName'), text, url };
   try {
     if (navigator.share && navigator.canShare?.(shareData)) { await navigator.share(shareData); return; }
   } catch { /* fall through */ }
@@ -706,7 +710,6 @@ const expandedVariants = {
 
 // ─── HEBREW_LETTERS ───────────────────────────────────────────────────────────
 
-const HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד'];
 
 // ─── MCQ Options ──────────────────────────────────────────────────────────────
 
@@ -716,8 +719,8 @@ function MCQOptions({
   answeredIdx,
   onAnswer,
   stats,
-  accentCorrect = 'border-green-400/50 bg-green-500/10 text-green-200',
-  accentWrong = 'border-red-400/50 bg-red-500/10 text-red-200',
+  accentCorrect = 'border-green-400/50 bg-green-500/10 text-green-700 dark:text-green-200',
+  accentWrong = 'border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200',
 }: {
   options: string[];
   correctIndex: number;
@@ -727,10 +730,11 @@ function MCQOptions({
   accentCorrect?: string;
   accentWrong?: string;
 }) {
+  const t = useTranslation();
   const isAnswered = answeredIdx !== null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" dir="rtl">
       {options.map((option, idx) => {
         const isCorrect = idx === correctIndex;
         const isSelected = answeredIdx === idx;
@@ -739,11 +743,11 @@ function MCQOptions({
           : null;
         const chosenPct = rawPct !== null && rawPct > 0 ? rawPct : null;
 
-        let cls = 'border-white/8 bg-white/3 text-emt-light hover:bg-white/7 hover:border-white/14 active:scale-[0.98]';
+        let cls = 'border-fg/[0.08] bg-fg/[0.03] text-fg hover:bg-fg/[0.07] hover:border-fg/[0.14] active:scale-[0.98]';
         if (isAnswered) {
           if (isCorrect) cls = accentCorrect;
           else if (isSelected) cls = accentWrong;
-          else cls = 'border-sky-400/30 bg-sky-500/10 text-sky-200/80';
+          else cls = 'border-sky-400/30 bg-sky-500/10 text-sky-700/80 dark:text-sky-200/80';
         }
         const fillColor = isCorrect ? 'bg-green-500/20' : isSelected ? 'bg-red-500/20' : 'bg-sky-500/15';
 
@@ -767,12 +771,12 @@ function MCQOptions({
             )}
             <div className="relative z-10 flex items-center gap-3 w-full">
               <span className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-sm font-black border transition-colors ${
-                isAnswered && isCorrect ? 'bg-green-500/35 border-green-400/60 text-green-200'
-                : isAnswered && isSelected ? 'bg-red-500/35 border-red-400/60 text-red-200'
-                : isAnswered ? 'bg-sky-500/20 border-sky-400/35 text-sky-200/80'
-                : 'bg-white/8 border-white/18 text-white/55'
+                isAnswered && isCorrect ? 'bg-green-500/35 border-green-400/60 text-green-700 dark:text-green-200'
+                : isAnswered && isSelected ? 'bg-red-500/35 border-red-400/60 text-red-700 dark:text-red-200'
+                : isAnswered ? 'bg-sky-500/20 border-sky-400/35 text-sky-700/80 dark:text-sky-200/80'
+                : 'bg-fg/[0.08] border-fg/[0.18] text-fg/55'
               }`}>
-                {HEBREW_LETTERS[idx]}
+                {t('dcOptionLetters').split(',')[idx]}
               </span>
               <span className="flex-1 text-[15px] font-semibold leading-snug break-words min-w-0 text-right">
                 {option}
@@ -783,13 +787,13 @@ function MCQOptions({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 + idx * 0.06 }}
-                    className={`text-xs font-black tabular-nums ${isCorrect ? 'text-green-300' : isSelected ? 'text-red-300' : 'text-sky-300'}`}
+                    className={`text-xs font-black tabular-nums ${isCorrect ? 'text-green-700 dark:text-green-300' : isSelected ? 'text-red-700 dark:text-red-300' : 'text-sky-700 dark:text-sky-300'}`}
                   >
                     {chosenPct}%
                   </motion.span>
                 )}
-                {isAnswered && isCorrect && <CheckCircle size={16} className="text-green-400" />}
-                {isAnswered && isSelected && !isCorrect && <XCircle size={16} className="text-red-400" />}
+                {isAnswered && isCorrect && <CheckCircle size={16} className="text-green-600 dark:text-green-400" />}
+                {isAnswered && isSelected && !isCorrect && <XCircle size={16} className="text-red-600 dark:text-red-400" />}
               </div>
             </div>
           </HapticButton>
@@ -807,48 +811,50 @@ function ExplanationModal({ explanation, category, isCorrect, onClose }: {
   isCorrect: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const accentBorder = category === 'bls' ? 'border-blue-500/30' : 'border-red-500/30';
-  const accentBg = category === 'bls' ? 'from-blue-900/20' : 'from-red-900/20';
+  const accentBg = category === 'bls' ? 'from-blue-100 dark:from-blue-900/20' : 'from-red-100 dark:from-red-900/20';
 
   return (
     <motion.div
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(10px)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(10px)' }} // theme-ok: modal scrim is dark in both modes
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      dir="rtl"
+      dir={dir}
     >
       <motion.div
-        className="w-full max-w-md rounded-3xl bg-emt-dark border border-emt-border overflow-hidden flex flex-col"
+        className="w-full max-w-md rounded-3xl bg-page border border-line overflow-hidden flex flex-col"
         initial={{ opacity: 0, scale: 0.92, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       >
-        <div className="shrink-0 flex items-center justify-between px-3.5 py-2.5 border-b border-emt-border">
+        <div className="shrink-0 flex items-center justify-between px-3.5 py-2.5 border-b border-line">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
-              <Brain size={15} className="text-amber-400" />
+              <Brain size={15} className="text-amber-700 dark:text-amber-400" />
             </div>
-            <h2 className="text-amber-300 font-black text-base leading-none">הסבר קליני</h2>
+            <h2 className="text-amber-800 dark:text-amber-300 font-black text-base leading-none">{t('dcClinicalExplanation')}</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light active:scale-90 transition" aria-label="סגור">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface border border-line flex items-center justify-center text-fg-muted hover:text-fg active:scale-90 transition" aria-label={t('dcClose')}>
             <X size={16} />
           </button>
         </div>
         <div className="p-3.5 flex flex-col gap-2.5">
-          <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black self-center ${isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-300'}`}>
+          <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black self-center ${isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-700 dark:text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-300'}`}>
             {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
-            <span>{isCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}</span>
+            <span>{isCorrect ? t('dcCorrectAnswer') : t('dcWrongAnswer')}</span>
           </div>
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-            className={`rounded-2xl bg-gradient-to-b ${accentBg} to-emt-dark border ${accentBorder} p-3.5`}
+            className={`rounded-2xl bg-gradient-to-b ${accentBg} to-page border ${accentBorder} p-3.5`}
           >
-            <p className="text-emt-light text-[14px] leading-[1.65] font-medium text-right">{explanation}</p>
+            <p className="text-fg text-[14px] leading-[1.65] font-medium text-right" dir="rtl">{explanation}</p>
           </motion.div>
-          <HapticButton onClick={onClose} hapticPattern={10} pressScale={0.96} className="w-full py-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-sm">
-            הבנתי ✓
+          <HapticButton onClick={onClose} hapticPattern={10} pressScale={0.96} className="w-full py-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-800 dark:text-amber-300 font-black text-sm">
+            {t('dcGotIt')}
           </HapticButton>
         </div>
       </motion.div>
@@ -864,36 +870,38 @@ function SimpleExplanationModal({ explanation, isCorrect, accentColor = 'purple'
   accentColor?: 'purple' | 'orange' | 'green';
   onClose: () => void;
 }) {
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const borderColor =
-    accentColor === 'purple' ? 'border-purple-500/30 from-purple-900/20' :
-    accentColor === 'orange' ? 'border-orange-500/30 from-orange-900/20' :
-    'border-green-500/30 from-green-900/20';
+    accentColor === 'purple' ? 'border-purple-500/30 from-purple-100 dark:from-purple-900/20' :
+    accentColor === 'orange' ? 'border-orange-500/30 from-orange-100 dark:from-orange-900/20' :
+    'border-green-500/30 from-green-100 dark:from-green-900/20';
 
   return (
     <motion.div
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(10px)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(10px)' }} // theme-ok: modal scrim is dark in both modes
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      dir="rtl"
+      dir={dir}
     >
       <motion.div
-        className="w-full max-w-md rounded-3xl bg-emt-dark border border-emt-border overflow-hidden"
+        className="w-full max-w-md rounded-3xl bg-page border border-line overflow-hidden"
         initial={{ opacity: 0, scale: 0.92, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       >
         <div className="p-4 flex flex-col gap-3">
-          <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black self-center ${isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-300'}`}>
+          <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black self-center ${isCorrect ? 'bg-green-500/15 border-green-500/40 text-green-700 dark:text-green-300' : 'bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-300'}`}>
             {isCorrect ? <CheckCircle size={13} /> : <XCircle size={13} />}
-            <span>{isCorrect ? 'נכון!' : 'שגוי'}</span>
+            <span>{isCorrect ? t('dcCorrectShort') : t('dcWrongShort')}</span>
           </div>
-          <div className={`rounded-2xl bg-gradient-to-b ${borderColor} to-emt-dark border p-3.5`}>
-            <p className="text-emt-light text-[14px] leading-[1.65] font-medium text-right">{explanation}</p>
+          <div className={`rounded-2xl bg-gradient-to-b ${borderColor} to-page border p-3.5`}>
+            <p className="text-fg text-[14px] leading-[1.65] font-medium text-right" dir="rtl">{explanation}</p>
           </div>
-          <HapticButton onClick={onClose} hapticPattern={10} pressScale={0.96} className="w-full py-3 rounded-2xl bg-white/8 border border-white/15 text-emt-light font-black text-sm">
-            הבנתי ✓
+          <HapticButton onClick={onClose} hapticPattern={10} pressScale={0.96} className="w-full py-3 rounded-2xl bg-fg/[0.08] border border-fg/15 text-fg font-black text-sm">
+            {t('dcGotIt')}
           </HapticButton>
         </div>
       </motion.div>
@@ -908,16 +916,18 @@ function SuccessScreen({ score, streak, onClose }: {
   streak: number;
   onClose: () => void;
 }) {
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const [shared, setShared] = useState(false);
 
   return (
     <motion.div
       className="fixed inset-0 z-[85] flex flex-col items-center justify-center p-6"
-      style={{ backgroundColor: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(16px)' }}
+      style={{ backgroundColor: 'rgb(var(--page) / 0.92)', backdropFilter: 'blur(16px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      dir="rtl"
+      dir={dir}
     >
       <motion.div
         className="w-full max-w-sm flex flex-col items-center gap-5"
@@ -935,7 +945,7 @@ function SuccessScreen({ score, streak, onClose }: {
             >
               <Star
                 size={28}
-                className={i < score ? 'text-amber-400 fill-amber-400' : 'text-emt-border fill-transparent'}
+                className={i < score ? 'text-amber-700 dark:text-amber-400 fill-amber-400' : 'text-fg-subtle fill-transparent'}
               />
             </motion.div>
           ))}
@@ -947,10 +957,10 @@ function SuccessScreen({ score, streak, onClose }: {
           transition={{ delay: 0.55 }}
           className="text-center"
         >
-          <p className="text-emt-light font-black text-2xl leading-tight">
-            {score === 8 ? '🏆 מושלם! כל הכבוד!' : score >= 6 ? '⭐ כמעט מושלם!' : score >= 4 ? '💪 מצוין!' : score >= 2 ? '👍 לא רע!' : '📚 המשך ללמוד!'}
+          <p className="text-fg font-black text-2xl leading-tight">
+            {t(score === 8 ? 'dcScorePerfect' : score >= 6 ? 'dcScoreAlmost' : score >= 4 ? 'dcScoreGreat' : score >= 2 ? 'dcScoreNotBad' : 'dcScoreKeepLearning')}
           </p>
-          <p className="text-emt-muted text-sm mt-1.5">ניקוד: {score}/8</p>
+          <p className="text-fg-muted text-sm mt-1.5">{t('dcScore', { score })}</p>
         </motion.div>
 
         {streak > 0 && (
@@ -960,10 +970,10 @@ function SuccessScreen({ score, streak, onClose }: {
             transition={{ delay: 0.65 }}
             className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/15 border border-orange-500/30"
           >
-            <Flame size={22} className="text-orange-400 shrink-0" />
+            <Flame size={22} className="text-orange-700 dark:text-orange-400 shrink-0" />
             <div>
-              <p className="text-orange-300 font-black text-lg leading-none">{streak} ימים ברצף</p>
-              <p className="text-orange-400/60 text-xs mt-0.5">המשך את הרצף מחר!</p>
+              <p className="text-orange-800 dark:text-orange-300 font-black text-lg leading-none">{t('dcStreakDays', { count: streak })}</p>
+              <p className="text-orange-700/60 dark:text-orange-400/60 text-xs mt-0.5">{t('dcStreakTomorrow')}</p>
             </div>
           </motion.div>
         )}
@@ -982,18 +992,18 @@ function SuccessScreen({ score, streak, onClose }: {
             }}
             hapticPattern={15}
             pressScale={0.96}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-400/35 py-3 text-emerald-200 font-bold text-base"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-400/35 py-3 text-emerald-700 dark:text-emerald-200 font-bold text-base"
           >
             <Share2 size={16} />
-            {shared ? 'הועתק! ✓' : 'שתף הישג'}
+            {shared ? t('dcCopied') : t('dcShareAchievement')}
           </HapticButton>
           <HapticButton
             onClick={onClose}
             hapticPattern={10}
             pressScale={0.96}
-            className="w-full py-3 rounded-2xl bg-white/8 border border-white/15 text-emt-light font-bold text-base"
+            className="w-full py-3 rounded-2xl bg-fg/[0.08] border border-fg/15 text-fg font-bold text-base"
           >
-            סגור
+            {t('dcClose')}
           </HapticButton>
         </motion.div>
       </motion.div>
@@ -1032,12 +1042,14 @@ function GridCard({
   participantCount?: number;
   onClick: () => void;
 }) {
+  const t = useTranslation();
+  const { lang } = useLanguage();
   const borderClass = isAnswered
     ? (isCorrect ? 'border-green-400/70' : 'border-red-500/45')
     : config.neonBorder;
 
   const cardBg = isAnswered
-    ? (isCorrect ? 'bg-gradient-to-b from-green-950/55 to-slate-950' : 'bg-gradient-to-b from-red-950/40 to-slate-950')
+    ? (isCorrect ? 'bg-gradient-to-b from-green-100 dark:from-green-950/55 to-page' : 'bg-gradient-to-b from-red-100 dark:from-red-950/40 to-page')
     : config.cardBg;
 
   const glowStyle = isAnswered
@@ -1062,9 +1074,9 @@ function GridCard({
       )}
 
       {/* Completion badge */}
-      <div className="absolute top-3 right-3 z-10">
+      <div className="absolute top-3 end-3 z-10">
         {status === 'loading' && (
-          <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-fg/15 border-t-fg/60 animate-spin" />
         )}
         {isAnswered && (
           <motion.div
@@ -1073,8 +1085,8 @@ function GridCard({
             className={`w-7 h-7 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/40 border-2 border-green-400/80' : 'bg-red-500/30 border-2 border-red-400/65'}`}
           >
             {isCorrect
-              ? <CheckCircle size={14} className="text-green-200" />
-              : <XCircle size={14} className="text-red-300" />}
+              ? <CheckCircle size={14} className="text-green-700 dark:text-green-200" />
+              : <XCircle size={14} className="text-red-700 dark:text-red-300" />}
           </motion.div>
         )}
       </div>
@@ -1090,21 +1102,21 @@ function GridCard({
       </motion.div>
 
       {/* Title */}
-      <p className="relative z-10 text-white font-black text-[16px] leading-snug px-4 text-center">
+      <p className="relative z-10 text-fg font-black text-[16px] leading-snug px-4 text-center">
         {config.blockTitle}
       </p>
 
       {!isAnswered && status === 'ready' && participantCount !== undefined && participantCount > 0 && (
         <div className="absolute bottom-3 z-10 flex items-center gap-1">
-          <Users size={9} className="text-white/25" />
-          <span className="text-white/25 text-[9px] font-semibold tabular-nums">{participantCount.toLocaleString('he-IL')}</span>
+          <Users size={9} className="text-fg/25" />
+          <span className="text-fg/25 text-[9px] font-semibold tabular-nums">{participantCount.toLocaleString(lang === 'en' ? 'en-US' : 'he-IL')}</span>
         </div>
       )}
       {!isAnswered && status === 'ready' && (participantCount === undefined || participantCount === 0) && (
-        <p className="absolute bottom-4 z-10 text-white/20 text-[10px] font-semibold tracking-wide">הקש לשחק</p>
+        <p className="absolute bottom-4 z-10 text-fg/20 text-[10px] font-semibold tracking-wide">{t('dcTapToPlay')}</p>
       )}
       {!isAnswered && status === 'error' && (
-        <p className="absolute bottom-4 z-10 text-red-400/60 text-[10px] font-semibold">שגיאה — נסה שוב</p>
+        <p className="absolute bottom-4 z-10 text-red-600/60 dark:text-red-400/60 text-[10px] font-semibold">{t('dcErrorTryAgain')}</p>
       )}
     </motion.button>
   );
@@ -1119,6 +1131,9 @@ interface Props {
 
 export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
+  const { lang, dir } = useLanguage();
+  const locale = lang === 'en' ? 'en-US' : 'he-IL';
 
   // Navigation
   const [activeBlock, setActiveBlock] = useState<BlockId | null>(null);
@@ -1238,107 +1253,107 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     A: {
       neonBorder: clinicalCategory === 'als' ? 'border-red-500/55' : 'border-amber-500/50',
       glowColor: clinicalCategory === 'als' ? '0 0 32px rgba(239,68,68,0.22)' : '0 0 28px rgba(245,158,11,0.20)',
-      cardBg: clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-950/50 to-slate-950' : 'bg-gradient-to-b from-amber-950/50 to-slate-950',
+      cardBg: clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-100 dark:from-red-950/50 to-page' : 'bg-gradient-to-b from-amber-100 dark:from-amber-950/50 to-page',
       topGlow: clinicalCategory === 'als'
         ? 'radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.7) 0%, transparent 70%)'
         : 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.7) 0%, transparent 70%)',
       iconGlow: clinicalCategory === 'als' ? '0 0 22px rgba(239,68,68,0.4)' : '0 0 22px rgba(245,158,11,0.4)',
-      labelColor: clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400',
-      icon: <Zap size={20} className={clinicalCategory === 'als' ? 'text-red-400' : 'text-amber-400'} />,
+      labelColor: clinicalCategory === 'als' ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-400',
+      icon: <Zap size={20} className={clinicalCategory === 'als' ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'} />,
       iconBg: clinicalCategory === 'als' ? 'bg-red-400/20' : 'bg-amber-400/20',
       iconBorder: clinicalCategory === 'als' ? 'border-red-400/35' : 'border-amber-400/35',
-      blockTitle: 'שאלה קלינית',
+      blockTitle: t('dcBlockClinical'),
       emoji: clinicalCategory === 'als' ? '⚡' : '🫀',
     },
     B: {
       neonBorder: 'border-emerald-500/55',
       glowColor: '0 0 30px rgba(16,185,129,0.22)',
-      cardBg: 'bg-gradient-to-b from-emerald-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-emerald-100 dark:from-emerald-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(16,185,129,0.4)',
-      labelColor: 'text-emerald-400',
-      icon: <Pill size={20} className="text-emerald-400" />,
+      labelColor: 'text-emerald-600 dark:text-emerald-400',
+      icon: <Pill size={20} className="text-emerald-600 dark:text-emerald-400" />,
       iconBg: 'bg-emerald-400/20',
       iconBorder: 'border-emerald-400/35',
-      blockTitle: 'תרופת היום',
+      blockTitle: t('dcBlockMed'),
       emoji: '💊',
     },
     C: {
       neonBorder: 'border-teal-500/55',
       glowColor: '0 0 30px rgba(20,184,166,0.22)',
-      cardBg: 'bg-gradient-to-b from-teal-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-teal-100 dark:from-teal-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(20,184,166,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(20,184,166,0.4)',
-      labelColor: 'text-teal-400',
-      icon: <Wrench size={20} className="text-teal-400" />,
+      labelColor: 'text-teal-600 dark:text-teal-400',
+      icon: <Wrench size={20} className="text-teal-600 dark:text-teal-400" />,
       iconBg: 'bg-teal-400/20',
       iconBorder: 'border-teal-400/35',
-      blockTitle: 'אומנות האלתור',
+      blockTitle: t('dcBlockImprovised'),
       emoji: '🛠️',
     },
     D: {
       neonBorder: 'border-orange-500/55',
       glowColor: '0 0 30px rgba(249,115,22,0.22)',
-      cardBg: 'bg-gradient-to-b from-orange-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-orange-100 dark:from-orange-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(249,115,22,0.4)',
-      labelColor: 'text-orange-400',
-      icon: <OctagonAlert size={20} className="text-orange-400" />,
+      labelColor: 'text-orange-700 dark:text-orange-400',
+      icon: <OctagonAlert size={20} className="text-orange-700 dark:text-orange-400" />,
       iconBg: 'bg-orange-400/20',
       iconBorder: 'border-orange-400/35',
-      blockTitle: 'נורת אזהרה',
+      blockTitle: t('dcBlockRedFlag'),
       emoji: '🚨',
     },
     E: {
       neonBorder: 'border-rose-500/55',
       glowColor: '0 0 30px rgba(244,63,94,0.22)',
-      cardBg: 'bg-gradient-to-b from-rose-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-rose-100 dark:from-rose-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(244,63,94,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(244,63,94,0.4)',
-      labelColor: 'text-rose-400',
-      icon: <Search size={20} className="text-rose-400" />,
+      labelColor: 'text-rose-600 dark:text-rose-400',
+      icon: <Search size={20} className="text-rose-600 dark:text-rose-400" />,
       iconBg: 'bg-rose-400/20',
       iconBorder: 'border-rose-400/35',
-      blockTitle: 'הפוסל במומו',
+      blockTitle: t('dcBlockSpotError'),
       emoji: '🔎',
     },
     F: {
       neonBorder: 'border-indigo-500/55',
       glowColor: '0 0 30px rgba(99,102,241,0.22)',
-      cardBg: 'bg-gradient-to-b from-indigo-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-indigo-100 dark:from-indigo-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(99,102,241,0.4)',
-      labelColor: 'text-indigo-400',
-      icon: <Stethoscope size={20} className="text-indigo-400" />,
+      labelColor: 'text-indigo-600 dark:text-indigo-400',
+      icon: <Stethoscope size={20} className="text-indigo-600 dark:text-indigo-400" />,
       iconBg: 'bg-indigo-400/20',
       iconBorder: 'border-indigo-400/35',
-      blockTitle: 'תיק התרופות',
+      blockTitle: t('dcBlockMedBag'),
       emoji: '🩺',
     },
     G: {
       neonBorder: 'border-cyan-500/55',
       glowColor: '0 0 30px rgba(34,211,238,0.22)',
-      cardBg: 'bg-gradient-to-b from-cyan-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-cyan-100 dark:from-cyan-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(34,211,238,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(34,211,238,0.4)',
-      labelColor: 'text-cyan-400',
-      icon: <ClipboardList size={20} className="text-cyan-400" />,
+      labelColor: 'text-cyan-600 dark:text-cyan-400',
+      icon: <ClipboardList size={20} className="text-cyan-600 dark:text-cyan-400" />,
       iconBg: 'bg-cyan-400/20',
       iconBorder: 'border-cyan-400/35',
-      blockTitle: 'אבחנות פעילות',
+      blockTitle: t('dcBlockActiveDx'),
       emoji: '📋',
     },
     H: {
       neonBorder: 'border-violet-500/55',
       glowColor: '0 0 30px rgba(167,139,250,0.22)',
-      cardBg: 'bg-gradient-to-b from-violet-950/50 to-slate-950',
+      cardBg: 'bg-gradient-to-b from-violet-100 dark:from-violet-950/50 to-page',
       topGlow: 'radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.7) 0%, transparent 70%)',
       iconGlow: '0 0 22px rgba(167,139,250,0.4)',
-      labelColor: 'text-violet-400',
-      icon: <BookOpen size={20} className="text-violet-400" />,
+      labelColor: 'text-violet-600 dark:text-violet-400',
+      icon: <BookOpen size={20} className="text-violet-600 dark:text-violet-400" />,
       iconBg: 'bg-violet-400/20',
       iconBorder: 'border-violet-400/35',
-      blockTitle: 'מושגים',
+      blockTitle: t('dcBlockConcept'),
       emoji: '🧠',
     },
   };
@@ -1759,11 +1774,11 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (!name) return;
     const city = competitionJoinCity.trim();
     if (isBlockedName(name)) {
-      setCompetitionJoinError('שם לא תקין — יש להזין שם אישי, לא שם ארגון');
+      setCompetitionJoinError(t('dcInvalidName'));
       return;
     }
     if (city && isBlockedName(city)) {
-      setCompetitionJoinError('עיר לא תקינה — יש להזין שם עיר, לא שם ארגון');
+      setCompetitionJoinError(t('dcInvalidCity'));
       return;
     }
     setCompetitionJoinError(null);
@@ -1778,7 +1793,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     }
     setCompetitionProfile(profile);
     setShowCompetitionJoin(false);
-  }, [competitionJoinName, competitionJoinCity, rememberProfile]);
+  }, [competitionJoinName, competitionJoinCity, rememberProfile, t]);
 
   const openEditProfile = useCallback(() => {
     const effective = getEffectiveProfile();
@@ -2040,12 +2055,12 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     const isCorrect = blockIsCorrect(blockId);
 
     return (
-      <div className="ios-safe-header shrink-0 flex items-center gap-3 px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center gap-3 px-4 py-3 border-b border-line">
         <HapticButton
           onClick={() => setActiveBlock(null)}
           hapticPattern={8}
           pressScale={0.9}
-          className="w-9 h-9 rounded-xl bg-emt-gray border border-emt-border flex items-center justify-center text-emt-muted hover:text-emt-light transition-colors shrink-0"
+          className="w-9 h-9 rounded-xl bg-surface border border-line flex items-center justify-center text-fg-muted hover:text-fg transition-colors shrink-0"
         >
           <ChevronLeft size={18} />
         </HapticButton>
@@ -2053,17 +2068,17 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           {cfg.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-emt-light font-black text-[15px] leading-tight truncate">{cfg.blockTitle}</p>
+          <p className="text-fg font-black text-[15px] leading-tight truncate">{cfg.blockTitle}</p>
         </div>
         {isAnswered && (
           isCorrect
-            ? <CheckCircle size={18} className="text-green-400 shrink-0" />
-            : <XCircle size={18} className="text-red-400 shrink-0" />
+            ? <CheckCircle size={18} className="text-green-600 dark:text-green-400 shrink-0" />
+            : <XCircle size={18} className="text-red-600 dark:text-red-400 shrink-0" />
         )}
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center active:scale-90 transition-transform text-emt-muted hover:text-emt-light shrink-0"
-          aria-label="סגור"
+          className="w-9 h-9 rounded-full bg-surface border border-line flex items-center justify-center active:scale-90 transition-transform text-fg-muted hover:text-fg shrink-0"
+          aria-label={t('dcClose')}
         >
           <X size={18} />
         </button>
@@ -2076,7 +2091,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     <div className="flex flex-col gap-5">
       {!clinicalCategory && (
         <div className="flex flex-col gap-4">
-          <p className="text-emt-muted text-sm font-semibold text-center">בחר קטגוריה לשאלה של היום</p>
+          <p className="text-fg-muted text-sm font-semibold text-center">{t('dcPickCategory')}</p>
           <div className="flex gap-3">
             {(['bls', 'als'] as ClinicalCategory[]).map((cat) => (
               <HapticButton
@@ -2086,13 +2101,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 pressScale={0.94}
                 className={`flex-1 py-6 rounded-2xl border flex flex-col items-center gap-1.5 ${
                   cat === 'bls'
-                    ? 'bg-blue-500/10 border-blue-500/25 text-blue-300 hover:bg-blue-500/20'
-                    : 'bg-red-500/10 border-red-500/25 text-red-300 hover:bg-red-500/20'
+                    ? 'bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20'
+                    : 'bg-red-500/10 border-red-500/25 text-red-700 dark:text-red-300 hover:bg-red-500/20'
                 }`}
               >
                 <span className="text-3xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
                 <span className="text-2xl font-black leading-none">{CATEGORY_LABELS[cat]}</span>
-                <span className="text-[11px] font-semibold opacity-55">{CATEGORY_FULL[cat]}</span>
+                <span className="text-[11px] font-semibold opacity-55">{t(CATEGORY_FULL[cat])}</span>
               </HapticButton>
             ))}
           </div>
@@ -2101,18 +2116,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
       {clinicalCategory && clinicalStatus === 'loading' && (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר שאלה...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-fg/50 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcGeneratingQuestion')}</p>
         </div>
       )}
 
       {clinicalCategory && clinicalStatus === 'error' && (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינת השאלה</p>
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcQuestionLoadError')}</p>
           <HapticButton onClick={() => loadClinicalCategory(clinicalCategory)} hapticPattern={10} pressScale={0.95}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       )}
@@ -2128,24 +2143,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 className={`flex-1 py-3.5 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${
                   clinicalCategory === cat
                     ? cat === 'bls'
-                      ? 'bg-blue-500/20 border-blue-500/60 text-blue-300 shadow-[0_0_16px_rgba(59,130,246,0.25)]'
-                      : 'bg-red-500/20 border-red-500/60 text-red-300 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
-                    : 'bg-white/5 border-white/15 text-emt-muted hover:bg-white/10'
+                      ? 'bg-blue-500/20 border-blue-500/60 text-blue-700 dark:text-blue-300 shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+                      : 'bg-red-500/20 border-red-500/60 text-red-700 dark:text-red-300 shadow-[0_0_16px_rgba(239,68,68,0.25)]'
+                    : 'bg-fg/5 border-fg/15 text-fg-muted hover:bg-fg/10'
                 }`}
               >
                 <span className="text-2xl leading-none">{cat === 'bls' ? '🫀' : '⚡'}</span>
                 <span className="text-base font-black leading-none">{CATEGORY_LABELS[cat]}</span>
-                <span className="text-[10px] font-semibold opacity-60">{CATEGORY_FULL[cat]}</span>
+                <span className="text-[10px] font-semibold opacity-60">{t(CATEGORY_FULL[cat])}</span>
               </button>
             ))}
           </div>
 
           {/* Live participants */}
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">{isStatsOffline ? 'מתחבר...' : 'משתתפים:'}</span>
+          <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+            <Users size={11} className="text-fg-muted shrink-0" />
+            <span className="text-[10px] text-fg-muted font-semibold">{isStatsOffline ? t('dcConnecting') : t('dcParticipants')}</span>
             <motion.span key={clinicalParticipantCount} initial={{ scale: 0.9, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
-              className="text-[11px] font-black text-emt-light tabular-nums">{clinicalParticipantCount.toLocaleString('he-IL')}
+              className="text-[11px] font-black text-fg tabular-nums">{clinicalParticipantCount.toLocaleString(locale)}
             </motion.span>
             {!isStatsOffline && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
           </div>
@@ -2160,15 +2175,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               }`}
             >
               {clinicalAnsweredIdx === clinicalQuestion.correct_index
-                ? <CheckCircle size={20} className="text-green-400 shrink-0" />
-                : <XCircle size={20} className="text-red-400 shrink-0" />}
+                ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" />
+                : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
               <div className="flex-1">
-                <span className={`font-black text-base ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-                  {clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'תשובה נכונה!' : 'תשובה שגויה'}
+                <span className={`font-black text-base ${clinicalAnsweredIdx === clinicalQuestion.correct_index ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                  {clinicalAnsweredIdx === clinicalQuestion.correct_index ? t('dcCorrectAnswer') : t('dcWrongAnswer')}
                 </span>
                 {clinicalTimeTaken !== null && (
-                  <div className="flex items-center gap-1 mt-0.5 text-emt-muted/55 text-[10px]">
-                    <Clock size={9} /><span>ענית תוך {clinicalTimeTaken} שניות</span>
+                  <div className="flex items-center gap-1 mt-0.5 text-fg-muted/55 text-[10px]">
+                    <Clock size={9} /><span>{t('dcAnsweredIn', { seconds: clinicalTimeTaken })}</span>
                   </div>
                 )}
               </div>
@@ -2180,21 +2195,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             <div className="flex items-center gap-3 rounded-2xl bg-orange-500/8 border border-orange-400/20 px-4 py-3">
               <span className="text-lg shrink-0">⚠️</span>
               <div>
-                <span className="text-orange-300/90 text-sm font-bold">שאלות טריקיות — מקרי קיצון</span>
-                <span className="block text-orange-200/50 text-xs mt-0.5">קרא היטב את כל התשובות לפני שתענה</span>
+                <span className="text-orange-800/90 dark:text-orange-300/90 text-sm font-bold">{t('dcTrickyTitle')}</span>
+                <span className="block text-orange-800/50 dark:text-orange-200/50 text-xs mt-0.5">{t('dcTrickyHint')}</span>
               </div>
             </div>
           )}
 
           {/* Question — accent-colored card */}
           <div
-            className={`rounded-3xl border p-5 ${clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-950/40 to-slate-950/60 border-red-400/30' : 'bg-gradient-to-b from-amber-950/40 to-slate-950/60 border-amber-400/30'}`}
+            className={`rounded-3xl border p-5 ${clinicalCategory === 'als' ? 'bg-gradient-to-b from-red-100 dark:from-red-950/40 to-page/60 border-red-400/30' : 'bg-gradient-to-b from-amber-100 dark:from-amber-950/40 to-page/60 border-amber-400/30'}`}
           >
-            <p className="text-white font-black text-[17px] leading-[1.55] text-center">{clinicalQuestion.question}</p>
+            <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{clinicalQuestion.question}</p>
           </div>
 
           {/* Divider */}
-          <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+          <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
           <MCQOptions
             options={clinicalQuestion.options}
@@ -2207,8 +2222,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           {clinicalIsAnswered && !showClinicalExpl && (
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <HapticButton onClick={() => setShowClinicalExpl(true)} hapticPattern={10} pressScale={0.96}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-3.5 text-amber-300 font-bold text-sm">
-                <Brain size={15} />הצג הסבר
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-400/15 border border-amber-400/35 px-4 py-3.5 text-amber-800 dark:text-amber-300 font-bold text-sm">
+                <Brain size={15} />{t('dcShowExplanation')}
               </HapticButton>
             </motion.div>
           )}
@@ -2222,21 +2237,21 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (medStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-green-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תרופת היום...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-green-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcGeneratingMed')}</p>
         </div>
       );
     }
     if (medStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
           <HapticButton
             onClick={() => { setMedStatus('loading'); setMedData(null); fetchOrCreateBlock<MedOfDay>('med_v4', generateMed).then(med => { setMedData(med); saveCache(CACHE_KEYS.med, med); setMedStatus('ready'); }).catch(() => setMedStatus('error')); }}
             hapticPattern={10} pressScale={0.95}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/15 border border-emerald-400/30 text-emerald-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/15 border border-emerald-400/30 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2248,19 +2263,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     return (
       <div className="flex flex-col gap-5">
         {/* Drug header — name + class + description */}
-        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/55 to-slate-950 border border-emerald-500/35 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-emerald-100 dark:from-emerald-950/55 to-page border border-emerald-500/35 p-5"
           style={{ boxShadow: '0 0 28px rgba(16,185,129,0.14)' }}>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-11 h-11 rounded-xl bg-emerald-400/20 border border-emerald-400/35 flex items-center justify-center shrink-0"
               style={{ boxShadow: '0 0 16px rgba(16,185,129,0.3)' }}>
-              <Pill size={20} className="text-emerald-400" />
+              <Pill size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-emerald-200 font-black text-xl leading-tight">
+              <span className="text-emerald-700 dark:text-emerald-200 font-black text-xl leading-tight" dir="rtl">
                 {medData.name_he ?? medData.name.replace(/\s*\(.*\)/, '').trim()}
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-emerald-300/80 text-[13px] font-semibold leading-tight">
+                <span className="text-emerald-700/80 dark:text-emerald-300/80 text-[13px] font-semibold leading-tight">
                   {medData.name_en ?? (medData.name.match(/\(([^)]+)\)/)?.[1] ?? '')}
                 </span>
                 <button
@@ -2273,28 +2288,28 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                     window.speechSynthesis.speak(utter);
                   }}
                   className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-400/15 border border-emerald-400/30 hover:bg-emerald-400/25 active:scale-90 transition-all shrink-0"
-                  aria-label="הגה את שם התרופה"
+                  aria-label={t('dcPronounceMed')}
                 >
-                  <Volume2 size={12} className="text-emerald-400" />
+                  <Volume2 size={12} className="text-emerald-600 dark:text-emerald-400" />
                 </button>
               </div>
-              <p className="text-emerald-400/70 text-[11px] font-semibold mt-0.5 leading-tight">{medData.drug_class}</p>
+              <p className="text-emerald-600/70 dark:text-emerald-400/70 text-[11px] font-semibold mt-0.5 leading-tight" dir="rtl">{medData.drug_class}</p>
             </div>
           </div>
           {medData.description && (
             <>
               <div className="h-px bg-emerald-500/20 mb-3" />
-              <p className="text-white/85 text-[14px] font-medium leading-relaxed">{medData.description}</p>
+              <p className="text-fg/85 text-[14px] font-medium leading-relaxed" dir="rtl">{medData.description}</p>
             </>
           )}
         </div>
 
         {/* Participant count */}
         {blockParticipants['B'] !== undefined && blockParticipants['B'] > 0 && (
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
-            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['B'] ?? 0).toLocaleString('he-IL')}</span>
+          <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+            <Users size={11} className="text-fg-muted shrink-0" />
+            <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
+            <span className="text-[11px] font-black text-fg tabular-nums">{(blockParticipants['B'] ?? 0).toLocaleString(locale)}</span>
           </div>
         )}
 
@@ -2306,19 +2321,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               medCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'
             }`}
           >
-            {medCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${medCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {medCorrect ? 'תשובה נכונה!' : 'תשובה שגויה'}
+            {medCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${medCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {medCorrect ? t('dcCorrectAnswer') : t('dcWrongAnswer')}
             </span>
           </motion.div>
         )}
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-emerald-950/40 to-slate-950/60 border border-emerald-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{medData.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-emerald-100 dark:from-emerald-950/40 to-page/60 border border-emerald-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{medData.question}</p>
         </div>
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={medData.options}
@@ -2326,8 +2341,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={medAnsweredIdx}
           onAnswer={handleMedAnswer}
           stats={medStats}
-          accentCorrect="border-emerald-400/55 bg-emerald-500/12 text-emerald-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-emerald-400/55 bg-emerald-500/12 text-emerald-700 dark:text-emerald-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {/* Clinical pearl + emergency note — distinct framed cards */}
@@ -2340,22 +2355,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             <div className="rounded-2xl overflow-hidden border border-emerald-500/40"
               style={{ boxShadow: '0 0 20px rgba(16,185,129,0.12)' }}>
               <div className="bg-emerald-500/20 px-4 py-2.5 flex items-center gap-2 border-b border-emerald-500/25">
-                <Brain size={14} className="text-emerald-300 shrink-0" />
-                <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">דגש קליני</p>
+                <Brain size={14} className="text-emerald-700 dark:text-emerald-300 shrink-0" />
+                <p className="text-emerald-700 dark:text-emerald-200 text-xs font-black uppercase tracking-widest">{t('dcClinicalPearl')}</p>
               </div>
-              <div className="bg-emerald-950/30 px-4 py-3.5">
-                <p className="text-white/90 text-[14px] leading-relaxed font-medium">{medData.clinical_pearl}</p>
+              <div className="bg-emerald-100/70 dark:bg-emerald-950/30 px-4 py-3.5">
+                <p className="text-fg/90 text-[14px] leading-relaxed font-medium" dir="rtl">{medData.clinical_pearl}</p>
               </div>
             </div>
             {/* Emergency note card */}
             <div className="rounded-2xl overflow-hidden border border-amber-500/40"
               style={{ boxShadow: '0 0 20px rgba(245,158,11,0.12)' }}>
               <div className="bg-amber-500/20 px-4 py-2.5 flex items-center gap-2 border-b border-amber-500/25">
-                <AlertTriangle size={14} className="text-amber-300 shrink-0" />
-                <p className="text-amber-200 text-xs font-black uppercase tracking-widest">אזהרה</p>
+                <AlertTriangle size={14} className="text-amber-800 dark:text-amber-300 shrink-0" />
+                <p className="text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest">{t('dcWarning')}</p>
               </div>
-              <div className="bg-amber-950/25 px-4 py-3.5">
-                <p className="text-white/90 text-[14px] leading-relaxed font-medium">{medData.emergency_note}</p>
+              <div className="bg-amber-100/70 dark:bg-amber-950/25 px-4 py-3.5">
+                <p className="text-fg/90 text-[14px] leading-relaxed font-medium" dir="rtl">{medData.emergency_note}</p>
               </div>
             </div>
           </motion.div>
@@ -2369,18 +2384,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (improvStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-teal-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-teal-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcGeneratingScenario')}</p>
         </div>
       );
     }
     if (improvStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setImprovStatus('loading'); fetchOrCreateBlock<ImprovisedQ>('improvised', generateImprovised).then(q => { setImprovQuestion(q); saveCache(CACHE_KEYS.improvised, q); setImprovStatus('ready'); }).catch(() => setImprovStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-teal-400/15 border border-teal-400/30 text-teal-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setImprovStatus('loading'); fetchOrCreateBlock<ImprovisedQ>('improvised', generateImprovised).then(q => { setImprovQuestion(q); saveCache(CACHE_KEYS.improvised, q); setImprovStatus('ready'); }).catch(() => setImprovStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-teal-400/15 border border-teal-400/30 text-teal-700 dark:text-teal-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2393,46 +2408,46 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-teal-500/8 border border-teal-400/20">
-          <Wrench size={14} className="text-teal-400 shrink-0" />
-          <p className="text-teal-300/80 text-[13px] font-semibold leading-snug">אתה בשטח ללא תיק — חשוב יצירתי ובחר את הפתרון הטוב ביותר עם מה שיש.</p>
+          <Wrench size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
+          <p className="text-teal-700/80 dark:text-teal-300/80 text-[13px] font-semibold leading-snug">{t('dcImprovIntro')}</p>
         </div>
 
         {/* Participant count */}
         {blockParticipants['C'] !== undefined && blockParticipants['C'] > 0 && (
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
-            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['C'] ?? 0).toLocaleString('he-IL')}</span>
+          <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+            <Users size={11} className="text-fg-muted shrink-0" />
+            <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
+            <span className="text-[11px] font-black text-fg tabular-nums">{(blockParticipants['C'] ?? 0).toLocaleString(locale)}</span>
           </div>
         )}
 
         {/* Scenario card */}
-        <div className="rounded-3xl bg-gradient-to-b from-teal-950/50 to-slate-950 border border-teal-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-teal-100 dark:from-teal-950/50 to-page border border-teal-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(20,184,166,0.12)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <Wrench size={14} className="text-teal-400 shrink-0" />
-            <p className="text-teal-400 text-[11px] font-black uppercase tracking-widest">אומנות האלתור</p>
+            <Wrench size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
+            <p className="text-teal-600 dark:text-teal-400 text-[11px] font-black uppercase tracking-widest">{t('dcBlockImprovised')}</p>
           </div>
-          <p className="text-white/90 text-[15px] leading-[1.65] font-medium">{improvQuestion.scenario}</p>
+          <p className="text-fg/90 text-[15px] leading-[1.65] font-medium" dir="rtl">{improvQuestion.scenario}</p>
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-teal-950/40 to-slate-950/60 border border-teal-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{improvQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-teal-100 dark:from-teal-950/40 to-page/60 border border-teal-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{improvQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {improvIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${improvCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {improvCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${improvCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {improvCorrect ? 'פתרון נכון!' : 'לא הפתרון האופטימלי'}
+            {improvCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${improvCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {improvCorrect ? t('dcImprovCorrect') : t('dcImprovWrong')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={improvQuestion.options}
@@ -2440,15 +2455,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={improvAnsweredIdx}
           onAnswer={handleImprovAnswer}
           stats={improvStats}
-          accentCorrect="border-teal-400/55 bg-teal-500/12 text-teal-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-teal-400/55 bg-teal-500/12 text-teal-700 dark:text-teal-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {improvIsAnswered && !showImprovExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowImprovExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-teal-400/15 border border-teal-400/35 py-3.5 text-teal-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-teal-400/15 border border-teal-400/35 py-3.5 text-teal-700 dark:text-teal-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -2461,18 +2476,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (redStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-orange-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">טוען מקרה...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-orange-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcLoadingCase')}</p>
         </div>
       );
     }
     if (redStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setRedStatus('loading'); setRedQuestion(null); fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag).then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); }).catch(() => setRedStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-400/15 border border-orange-400/30 text-orange-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setRedStatus('loading'); setRedQuestion(null); fetchOrCreateBlock<RedFlagQ>('red_flag', generateRedFlag).then(q => { setRedQuestion(q); saveCache(CACHE_KEYS.red_flag, q); setRedStatus('ready'); }).catch(() => setRedStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-400/15 border border-orange-400/30 text-orange-800 dark:text-orange-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2483,40 +2498,40 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Participant count */}
         {blockParticipants['D'] !== undefined && blockParticipants['D'] > 0 && (
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
-            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['D'] ?? 0).toLocaleString('he-IL')}</span>
+          <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+            <Users size={11} className="text-fg-muted shrink-0" />
+            <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
+            <span className="text-[11px] font-black text-fg tabular-nums">{(blockParticipants['D'] ?? 0).toLocaleString(locale)}</span>
           </div>
         )}
 
         {/* Scenario card */}
-        <div className="rounded-3xl bg-gradient-to-b from-orange-950/50 to-slate-950 border border-orange-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-orange-100 dark:from-orange-950/50 to-page border border-orange-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(249,115,22,0.12)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <OctagonAlert size={14} className="text-orange-400 shrink-0" />
-            <p className="text-orange-400 text-[11px] font-black uppercase tracking-widest">מקרה חירום</p>
+            <OctagonAlert size={14} className="text-orange-700 dark:text-orange-400 shrink-0" />
+            <p className="text-orange-700 dark:text-orange-400 text-[11px] font-black uppercase tracking-widest">{t('dcEmergencyCase')}</p>
           </div>
-          <p className="text-white/90 text-[15px] leading-[1.65] font-medium">{redQuestion.scenario}</p>
+          <p className="text-fg/90 text-[15px] leading-[1.65] font-medium" dir="rtl">{redQuestion.scenario}</p>
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-orange-950/40 to-slate-950/60 border border-orange-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{redQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-orange-100 dark:from-orange-950/40 to-page/60 border border-orange-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{redQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {redIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${redAnsweredIdx === redQuestion.correct_index ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${redAnsweredIdx === redQuestion.correct_index ? 'text-green-300' : 'text-red-300'}`}>
-              {redAnsweredIdx === redQuestion.correct_index ? 'זיהית נכון!' : 'שגוי'}
+            {redAnsweredIdx === redQuestion.correct_index ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${redAnsweredIdx === redQuestion.correct_index ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {redAnsweredIdx === redQuestion.correct_index ? t('dcRedFlagCorrect') : t('dcWrongShort')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={redQuestion.options}
@@ -2524,15 +2539,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={redAnsweredIdx}
           onAnswer={handleRedAnswer}
           stats={redStats}
-          accentCorrect="border-orange-400/55 bg-orange-500/12 text-orange-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-orange-400/55 bg-orange-500/12 text-orange-800 dark:text-orange-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {redIsAnswered && !showRedExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowRedExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-3.5 text-orange-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר קליני
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-400/15 border border-orange-400/35 py-3.5 text-orange-800 dark:text-orange-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowClinicalExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -2545,18 +2560,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (spotStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-rose-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תרחיש...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-rose-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcGeneratingScenario')}</p>
         </div>
       );
     }
     if (spotStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setSpotStatus('loading'); fetchOrCreateBlock<SpotErrorQ>('spot_error', generateSpotError).then(q => { setSpotQuestion(q); saveCache(CACHE_KEYS.spot_error, q); setSpotStatus('ready'); }).catch(() => setSpotStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-400/15 border border-rose-400/30 text-rose-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setSpotStatus('loading'); fetchOrCreateBlock<SpotErrorQ>('spot_error', generateSpotError).then(q => { setSpotQuestion(q); saveCache(CACHE_KEYS.spot_error, q); setSpotStatus('ready'); }).catch(() => setSpotStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-400/15 border border-rose-400/30 text-rose-700 dark:text-rose-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2569,48 +2584,48 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-rose-500/8 border border-rose-400/20">
-          <Search size={14} className="text-rose-400 shrink-0" />
-          <p className="text-rose-300/80 text-[13px] font-semibold leading-snug">קרא את התרחיש — טעות מקצועית אחת מוסתרת בנרטיב. זהה אותה מבין 4 אפשרויות.</p>
+          <Search size={14} className="text-rose-600 dark:text-rose-400 shrink-0" />
+          <p className="text-rose-700/80 dark:text-rose-300/80 text-[13px] font-semibold leading-snug">{t('dcSpotIntro')}</p>
         </div>
 
         {/* Participant count */}
         {blockParticipants['E'] !== undefined && blockParticipants['E'] > 0 && (
-          <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-            <Users size={11} className="text-emt-muted shrink-0" />
-            <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
-            <span className="text-[11px] font-black text-emt-light tabular-nums">{(blockParticipants['E'] ?? 0).toLocaleString('he-IL')}</span>
+          <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+            <Users size={11} className="text-fg-muted shrink-0" />
+            <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
+            <span className="text-[11px] font-black text-fg tabular-nums">{(blockParticipants['E'] ?? 0).toLocaleString(locale)}</span>
           </div>
         )}
 
         {/* Scenario card */}
-        <div className="rounded-3xl bg-gradient-to-b from-rose-950/50 to-slate-950 border border-rose-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-rose-100 dark:from-rose-950/50 to-page border border-rose-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(244,63,94,0.12)' }}>
           {spotQuestion.dispatch_opener ? (
             <>
-              <p className="text-rose-200/90 text-[14px] font-semibold leading-relaxed mb-3">{spotQuestion.dispatch_opener}</p>
+              <p className="text-rose-700/90 dark:text-rose-200/90 text-[14px] font-semibold leading-relaxed mb-3" dir="rtl">{spotQuestion.dispatch_opener}</p>
               <div className="h-px bg-rose-500/20 mb-3" />
             </>
           ) : null}
-          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{spotQuestion.scenario}</p>
+          <p className="text-fg/90 text-[14px] leading-[1.65] font-medium" dir="rtl">{spotQuestion.scenario}</p>
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-rose-950/40 to-slate-950/60 border border-rose-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{spotQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-rose-100 dark:from-rose-950/40 to-page/60 border border-rose-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{spotQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {spotIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${spotCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {spotCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${spotCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {spotCorrect ? 'מצאת את הטעות!' : 'לא בדיוק — ראה הסבר'}
+            {spotCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${spotCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {spotCorrect ? t('dcSpotCorrect') : t('dcNotQuiteSeeExplanation')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={spotQuestion.options}
@@ -2618,15 +2633,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={spotAnsweredIdx}
           onAnswer={handleSpotAnswer}
           stats={spotStats}
-          accentCorrect="border-rose-400/55 bg-rose-500/12 text-rose-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-rose-400/55 bg-rose-500/12 text-rose-700 dark:text-rose-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {spotIsAnswered && !showSpotExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowSpotExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-400/15 border border-rose-400/35 py-3.5 text-rose-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר קליני
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-400/15 border border-rose-400/35 py-3.5 text-rose-700 dark:text-rose-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowClinicalExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -2639,18 +2654,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (medBagStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-indigo-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">מייצר תיק תרופות...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-indigo-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcGeneratingMedBag')}</p>
         </div>
       );
     }
     if (medBagStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setMedBagStatus('loading'); fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag).then(q => { setMedBagQuestion(q); saveCache(CACHE_KEYS.med_bag, q); setMedBagStatus('ready'); }).catch(() => setMedBagStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-400/15 border border-indigo-400/30 text-indigo-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setMedBagStatus('loading'); fetchOrCreateBlock<MedBagQ>('med_bag', generateMedBag).then(q => { setMedBagQuestion(q); saveCache(CACHE_KEYS.med_bag, q); setMedBagStatus('ready'); }).catch(() => setMedBagStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-400/15 border border-indigo-400/30 text-indigo-700 dark:text-indigo-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2663,36 +2678,36 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-indigo-500/8 border border-indigo-400/20">
-          <Stethoscope size={14} className="text-indigo-400 shrink-0" />
-          <p className="text-indigo-300/80 text-[13px] font-semibold leading-snug">קרא את הסיטואציה ואת תרופות המטופל — ואז זהה את הסכנה הקריטית.</p>
+          <Stethoscope size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <p className="text-indigo-700/80 dark:text-indigo-300/80 text-[13px] font-semibold leading-snug">{t('dcMedBagIntro')}</p>
         </div>
 
         {/* Participant count — always show at least PARTICIPANT_BASE */}
-        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-          <Users size={11} className="text-emt-muted shrink-0" />
-          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+        <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+          <Users size={11} className="text-fg-muted shrink-0" />
+          <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
           <motion.span
             key={blockParticipants['F'] ?? getParticipantBase()}
             initial={{ scale: 0.9, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-[11px] font-black text-emt-light tabular-nums"
+            className="text-[11px] font-black text-fg tabular-nums"
           >
-            {(blockParticipants['F'] ?? getParticipantBase()).toLocaleString('he-IL')}
+            {(blockParticipants['F'] ?? getParticipantBase()).toLocaleString(locale)}
           </motion.span>
         </div>
 
         {/* Situation card */}
-        <div className="rounded-3xl bg-gradient-to-b from-indigo-950/50 to-slate-950 border border-indigo-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-indigo-100 dark:from-indigo-950/50 to-page border border-indigo-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(99,102,241,0.12)' }}>
-          <p className="text-indigo-200/70 text-[11px] font-black uppercase tracking-widest mb-2">הסיטואציה</p>
-          <p className="text-white/90 text-[14px] leading-[1.65] font-medium">{medBagQuestion.situation}</p>
+          <p className="text-indigo-700/70 dark:text-indigo-200/70 text-[11px] font-black uppercase tracking-widest mb-2">{t('dcSituation')}</p>
+          <p className="text-fg/90 text-[14px] leading-[1.65] font-medium" dir="rtl">{medBagQuestion.situation}</p>
         </div>
 
         {/* Medications card */}
-        <div className="rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-white/12 p-5">
+        <div className="rounded-3xl bg-gradient-to-b from-surface-2 to-page border border-fg/[0.12] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-white/50 text-[11px] font-black uppercase tracking-widest">תרופות שנמצאו על השולחן</p>
-            <span className="text-indigo-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+            <p className="text-fg/50 text-[11px] font-black uppercase tracking-widest">{t('dcMedsOnTable')}</p>
+            <span className="text-indigo-600/60 dark:text-indigo-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />{t('dcTapForDetails')}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {medBagQuestion.medications.map((med, i) => (
@@ -2701,8 +2716,8 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 onClick={() => setActiveMedPopup(activeMedPopup === med ? null : med)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all active:scale-95 ${activeMedPopup === med ? 'bg-indigo-500/30 border-indigo-400/60' : 'bg-indigo-500/15 border-indigo-400/30'}`}
               >
-                <Pill size={12} className="text-indigo-300 shrink-0" />
-                <span className="text-indigo-200 text-[13px] font-bold">{med}</span>
+                <Pill size={12} className="text-indigo-700 dark:text-indigo-300 shrink-0" />
+                <span className="text-indigo-700 dark:text-indigo-200 text-[13px] font-bold">{med}</span>
               </button>
             ))}
           </div>
@@ -2716,15 +2731,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 transition={{ duration: 0.2 }}
                 className="mt-3 overflow-hidden"
               >
-                <div className="rounded-2xl bg-indigo-950/70 border border-indigo-400/25 px-4 py-3">
+                <div className="rounded-2xl bg-indigo-100/70 dark:bg-indigo-950/70 border border-indigo-400/25 px-4 py-3">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <Pill size={11} className="text-indigo-300 shrink-0" />
-                    <span className="text-indigo-200 text-[12px] font-black">{activeMedPopup}</span>
+                    <Pill size={11} className="text-indigo-700 dark:text-indigo-300 shrink-0" />
+                    <span className="text-indigo-700 dark:text-indigo-200 text-[12px] font-black">{activeMedPopup}</span>
                   </div>
                   {medBagQuestion.med_descriptions?.[activeMedPopup] ? (
-                    <p className="text-white/70 text-[12px] leading-relaxed">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
+                    <p className="text-fg/70 text-[12px] leading-relaxed" dir="rtl">{medBagQuestion.med_descriptions[activeMedPopup]}</p>
                   ) : (
-                    <p className="text-white/35 text-[11px] leading-relaxed">התיאור יופיע עם השאלה הבאה</p>
+                    <p className="text-fg/35 text-[11px] leading-relaxed">{t('dcDescriptionLater')}</p>
                   )}
                 </div>
               </motion.div>
@@ -2733,22 +2748,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-indigo-950/40 to-slate-950/60 border border-indigo-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{medBagQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-indigo-100 dark:from-indigo-950/40 to-page/60 border border-indigo-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{medBagQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {medBagIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${medBagCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {medBagCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${medBagCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {medBagCorrect ? 'זיהוי מדויק!' : 'לא בדיוק — ראה הסבר'}
+            {medBagCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${medBagCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {medBagCorrect ? t('dcMedBagCorrect') : t('dcNotQuiteSeeExplanation')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— מה הסכנה הקריטית? —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcCriticalDanger')}</p>
 
         <MCQOptions
           options={medBagQuestion.options}
@@ -2756,15 +2771,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={medBagAnsweredIdx}
           onAnswer={handleMedBagAnswer}
           stats={medBagStats}
-          accentCorrect="border-indigo-400/55 bg-indigo-500/12 text-indigo-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-indigo-400/55 bg-indigo-500/12 text-indigo-700 dark:text-indigo-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {medBagIsAnswered && !showMedBagExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowMedBagExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-400/15 border border-indigo-400/35 py-3.5 text-indigo-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-400/15 border border-indigo-400/35 py-3.5 text-indigo-700 dark:text-indigo-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -2777,18 +2792,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (activeDxStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-cyan-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">טוען אבחנות...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-cyan-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcLoadingDiagnoses')}</p>
         </div>
       );
     }
     if (activeDxStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setActiveDxStatus('loading'); fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx).then(q => { setActiveDxQuestion(q); saveCache(CACHE_KEYS.active_dx, q); setActiveDxStatus('ready'); }).catch(() => setActiveDxStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setActiveDxStatus('loading'); fetchOrCreateBlock<ActiveDxQ>('active_dx', generateActiveDx).then(q => { setActiveDxQuestion(q); saveCache(CACHE_KEYS.active_dx, q); setActiveDxStatus('ready'); }).catch(() => setActiveDxStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-400/15 border border-cyan-400/30 text-cyan-700 dark:text-cyan-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2801,41 +2816,41 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-cyan-500/8 border border-cyan-400/20">
-          <ClipboardList size={14} className="text-cyan-400 shrink-0" />
-          <p className="text-cyan-300/80 text-[13px] font-semibold leading-snug">בתיק הרפואי של המטופל רשומות ההבחנות הפעילות הבאות — התאם אותן, לפי הסדר, למשמעותן הנכונה.</p>
+          <ClipboardList size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
+          <p className="text-cyan-700/80 dark:text-cyan-300/80 text-[13px] font-semibold leading-snug">{t('dcActiveDxIntro')}</p>
         </div>
 
         {/* Participant count — always show at least PARTICIPANT_BASE */}
-        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-          <Users size={11} className="text-emt-muted shrink-0" />
-          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+        <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+          <Users size={11} className="text-fg-muted shrink-0" />
+          <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
           <motion.span
             key={blockParticipants['G'] ?? getParticipantBase()}
             initial={{ scale: 0.9, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-[11px] font-black text-emt-light tabular-nums"
+            className="text-[11px] font-black text-fg tabular-nums"
           >
-            {(blockParticipants['G'] ?? getParticipantBase()).toLocaleString('he-IL')}
+            {(blockParticipants['G'] ?? getParticipantBase()).toLocaleString(locale)}
           </motion.span>
         </div>
 
         {/* Active diagnoses list — plain, like a real medical record printout.
             Tap a term to see its meaning (helps you read/decode the abbreviations). */}
-        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/50 to-slate-950 border border-cyan-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-100 dark:from-cyan-950/50 to-page border border-cyan-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(34,211,238,0.12)' }}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-cyan-200/70 text-[11px] font-black uppercase tracking-widest">הבחנות פעילות</p>
-            <span className="text-cyan-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />לחץ לפרטים</span>
+            <p className="text-cyan-700/70 dark:text-cyan-200/70 text-[11px] font-black uppercase tracking-widest">{t('dcActiveDxList')}</p>
+            <span className="text-cyan-600/60 dark:text-cyan-400/60 text-[10px] font-semibold flex items-center gap-1"><Info size={9} />{t('dcTapForDetails')}</span>
           </div>
           <ul className="flex flex-col gap-1.5">
             {activeDxQuestion.diagnoses.map((dx, i) => (
               <li key={i}>
                 <button
                   onClick={() => setActiveDxPopup(activeDxPopup === dx ? null : dx)}
-                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition-all active:scale-[0.99] ${activeDxPopup === dx ? 'bg-cyan-500/20 border-cyan-400/50' : 'border-transparent hover:bg-white/5'}`}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition-all active:scale-[0.99] ${activeDxPopup === dx ? 'bg-cyan-500/20 border-cyan-400/50' : 'border-transparent hover:bg-fg/5'}`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                  <span className="text-white/90 text-[15px] font-bold tracking-wide" dir="ltr">{dx}</span>
+                  <span className="text-fg/90 text-[15px] font-bold tracking-wide" dir="ltr">{dx}</span>
                 </button>
                 <AnimatePresence>
                   {activeDxPopup === dx && (
@@ -2846,7 +2861,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <p className="text-cyan-200/90 text-[13px] leading-relaxed px-4 pt-1 pb-2">
+                      <p className="text-cyan-700/90 dark:text-cyan-200/90 text-[13px] leading-relaxed px-4 pt-1 pb-2" dir="rtl">
                         {activeDxQuestion.diagnosis_meanings?.[dx] ?? ''}
                       </p>
                     </motion.div>
@@ -2858,22 +2873,22 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-cyan-950/40 to-slate-950/60 border border-cyan-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{activeDxQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-cyan-100 dark:from-cyan-950/40 to-page/60 border border-cyan-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{activeDxQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {activeDxIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${activeDxCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {activeDxCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${activeDxCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {activeDxCorrect ? 'תשובה נכונה!' : 'לא בדיוק — ראה הסבר'}
+            {activeDxCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${activeDxCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {activeDxCorrect ? t('dcCorrectAnswer') : t('dcNotQuiteSeeExplanation')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={activeDxQuestion.options}
@@ -2881,15 +2896,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={activeDxAnsweredIdx}
           onAnswer={handleActiveDxAnswer}
           stats={activeDxStats}
-          accentCorrect="border-cyan-400/55 bg-cyan-500/12 text-cyan-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-cyan-400/55 bg-cyan-500/12 text-cyan-700 dark:text-cyan-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {activeDxIsAnswered && !showActiveDxExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowActiveDxExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 border border-cyan-400/35 py-3.5 text-cyan-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-cyan-400/15 border border-cyan-400/35 py-3.5 text-cyan-700 dark:text-cyan-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -2902,18 +2917,18 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
     if (conceptStatus === 'loading') {
       return (
         <div className="flex flex-col items-center gap-3 py-10">
-          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-violet-400/60 animate-spin" />
-          <p className="text-emt-muted text-xs font-semibold">טוען מושג...</p>
+          <div className="w-10 h-10 rounded-full border-2 border-fg/10 border-t-violet-400/60 animate-spin" />
+          <p className="text-fg-muted text-xs font-semibold">{t('dcLoadingConcept')}</p>
         </div>
       );
     }
     if (conceptStatus === 'error') {
       return (
         <div className="flex flex-col items-center gap-3 py-8">
-          <XCircle size={28} className="text-red-400" />
-          <p className="text-emt-muted text-xs text-center">שגיאה בטעינה</p>
-          <HapticButton onClick={() => { setConceptStatus('loading'); fetchOrCreateBlock<ConceptQ>('concept', generateConcept).then(q => { setConceptQuestion(q); saveCache(CACHE_KEYS.concept, q); setConceptStatus('ready'); }).catch(() => setConceptStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-violet-400/15 border border-violet-400/30 text-violet-300 font-bold text-xs">
-            <RefreshCw size={13} />נסה שוב
+          <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <p className="text-fg-muted text-xs text-center">{t('dcLoadError')}</p>
+          <HapticButton onClick={() => { setConceptStatus('loading'); fetchOrCreateBlock<ConceptQ>('concept', generateConcept).then(q => { setConceptQuestion(q); saveCache(CACHE_KEYS.concept, q); setConceptStatus('ready'); }).catch(() => setConceptStatus('error')); }} hapticPattern={10} pressScale={0.95} className="flex items-center gap-2 px-4 py-2 rounded-full bg-violet-400/15 border border-violet-400/30 text-violet-700 dark:text-violet-300 font-bold text-xs">
+            <RefreshCw size={13} />{t('dcTryAgain')}
           </HapticButton>
         </div>
       );
@@ -2926,48 +2941,48 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
       <div className="flex flex-col gap-5">
         {/* Game explanation */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-violet-500/8 border border-violet-400/20">
-          <BookOpen size={14} className="text-violet-400 shrink-0" />
-          <p className="text-violet-300/80 text-[13px] font-semibold leading-snug">טריוויה יומית באנטומיה ובמינוח רפואי — בדוק את הידע הבסיסי שלך.</p>
+          <BookOpen size={14} className="text-violet-600 dark:text-violet-400 shrink-0" />
+          <p className="text-violet-700/80 dark:text-violet-300/80 text-[13px] font-semibold leading-snug">{t('dcConceptIntro')}</p>
         </div>
 
         {/* Participant count */}
-        <div className="self-center flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3.5 py-1.5">
-          <Users size={11} className="text-emt-muted shrink-0" />
-          <span className="text-[10px] text-emt-muted font-semibold">משתתפים:</span>
+        <div className="self-center flex items-center gap-2 rounded-full bg-fg/5 border border-fg/10 px-3.5 py-1.5">
+          <Users size={11} className="text-fg-muted shrink-0" />
+          <span className="text-[10px] text-fg-muted font-semibold">{t('dcParticipants')}</span>
           <motion.span
             key={blockParticipants['H'] ?? getParticipantBase()}
             initial={{ scale: 0.9, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-[11px] font-black text-emt-light tabular-nums"
+            className="text-[11px] font-black text-fg tabular-nums"
           >
-            {(blockParticipants['H'] ?? getParticipantBase()).toLocaleString('he-IL')}
+            {(blockParticipants['H'] ?? getParticipantBase()).toLocaleString(locale)}
           </motion.span>
         </div>
 
         {/* Topic card */}
-        <div className="rounded-3xl bg-gradient-to-b from-violet-950/50 to-slate-950 border border-violet-500/30 p-5"
+        <div className="rounded-3xl bg-gradient-to-b from-violet-100 dark:from-violet-950/50 to-page border border-violet-500/30 p-5"
           style={{ boxShadow: '0 0 26px rgba(167,139,250,0.12)' }}>
-          <p className="text-violet-200/70 text-[11px] font-black uppercase tracking-widest mb-2">מושג היום</p>
-          <p className="text-white/90 text-[16px] leading-[1.5] font-black text-center">{conceptQuestion.topic}</p>
+          <p className="text-violet-700/70 dark:text-violet-200/70 text-[11px] font-black uppercase tracking-widest mb-2">{t('dcConceptOfDay')}</p>
+          <p className="text-fg/90 text-[16px] leading-[1.5] font-black text-center" dir="rtl">{conceptQuestion.topic}</p>
         </div>
 
         {/* Question */}
-        <div className="rounded-3xl bg-gradient-to-b from-violet-950/40 to-slate-950/60 border border-violet-400/30 p-5">
-          <p className="text-white font-black text-[17px] leading-[1.55] text-center">{conceptQuestion.question}</p>
+        <div className="rounded-3xl bg-gradient-to-b from-violet-100 dark:from-violet-950/40 to-page/60 border border-violet-400/30 p-5">
+          <p className="text-fg font-black text-[17px] leading-[1.55] text-center" dir="rtl">{conceptQuestion.question}</p>
         </div>
 
         {/* Result banner */}
         {conceptIsAnswered && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border ${conceptCorrect ? 'bg-green-500/15 border-green-500/35' : 'bg-red-500/12 border-red-500/30'}`}>
-            {conceptCorrect ? <CheckCircle size={20} className="text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-400 shrink-0" />}
-            <span className={`font-black text-base ${conceptCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {conceptCorrect ? 'תשובה נכונה!' : 'לא בדיוק — ראה הסבר'}
+            {conceptCorrect ? <CheckCircle size={20} className="text-green-600 dark:text-green-400 shrink-0" /> : <XCircle size={20} className="text-red-600 dark:text-red-400 shrink-0" />}
+            <span className={`font-black text-base ${conceptCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+              {conceptCorrect ? t('dcCorrectAnswer') : t('dcNotQuiteSeeExplanation')}
             </span>
           </motion.div>
         )}
 
-        <p className="text-center text-white/25 text-[11px] font-semibold tracking-widest uppercase">— בחר תשובה —</p>
+        <p className="text-center text-fg/25 text-[11px] font-semibold tracking-widest uppercase">{t('dcChooseAnswer')}</p>
 
         <MCQOptions
           options={conceptQuestion.options}
@@ -2975,15 +2990,15 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
           answeredIdx={conceptAnsweredIdx}
           onAnswer={handleConceptAnswer}
           stats={conceptStats}
-          accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-100"
-          accentWrong="border-red-400/50 bg-red-500/10 text-red-200"
+          accentCorrect="border-violet-400/55 bg-violet-500/12 text-violet-700 dark:text-violet-100"
+          accentWrong="border-red-400/50 bg-red-500/10 text-red-700 dark:text-red-200"
         />
 
         {conceptIsAnswered && !showConceptExpl && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <HapticButton onClick={() => setShowConceptExpl(true)} hapticPattern={10} pressScale={0.96}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-violet-400/15 border border-violet-400/35 py-3.5 text-violet-300 font-bold text-sm">
-              <Brain size={14} />הצג הסבר
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-violet-400/15 border border-violet-400/35 py-3.5 text-violet-700 dark:text-violet-300 font-bold text-sm">
+              <Brain size={14} />{t('dcShowExplanation')}
             </HapticButton>
           </motion.div>
         )}
@@ -3028,27 +3043,27 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden" dir="rtl">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page overflow-hidden" dir={dir}>
 
       {/* ── Header ── only when on grid overview */}
-      {activeBlock === null && <div className="ios-safe-header shrink-0 border-b border-emt-border">
+      {activeBlock === null && <div className="ios-safe-header shrink-0 border-b border-line">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center">
-              <Trophy size={18} className="text-amber-400" />
+              <Trophy size={18} className="text-amber-700 dark:text-amber-400" />
             </div>
             <div>
-              <h2 className="text-emt-light font-black text-lg leading-none">אתגר יומי</h2>
-              <p className="text-emt-muted text-[11px] mt-0.5">
-                {new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <h2 className="text-fg font-black text-lg leading-none">{t('dcTitle')}</h2>
+              <p className="text-fg-muted text-[11px] mt-0.5">
+                {new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border flex items-center justify-center active:scale-90 transition-transform text-emt-muted hover:text-emt-light"
-              aria-label="סגור"
+              className="w-10 h-10 rounded-full bg-surface border border-line flex items-center justify-center active:scale-90 transition-transform text-fg-muted hover:text-fg"
+              aria-label={t('dcClose')}
             >
               <X size={20} />
             </button>
@@ -3070,7 +3085,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
               {/* Sweeping light beam */}
               <div className="absolute inset-y-0 w-12"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgb(var(--fg) / 0.06), transparent)',
                   animation: 'podium-beam 4.5s ease-in-out infinite',
                 }}
               />
@@ -3092,19 +3107,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[1] ? (
                   <>
                     <span className="text-xl leading-none">🥈</span>
-                    <span className="text-emt-light font-black text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[1].display_name}</span>
-                    {leaderboard[1].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[1].city}</span> : <span className="h-3" />}
-                    <span className="text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/{leaderboard[1].answers_count}</span>
+                    <span className="text-fg font-black text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[1].display_name}</span>
+                    {leaderboard[1].city ? <span className="text-fg-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[1].city}</span> : <span className="h-3" />}
+                    <span className="text-slate-500 dark:text-slate-300 text-[10px] font-bold leading-none">{leaderboard[1].correct_answers}/{leaderboard[1].answers_count}</span>
                   </>
                 ) : (
                   <>
                     <span className="text-xl leading-none opacity-20">🥈</span>
-                    <span className="text-emt-border/40 text-[10px]">—</span>
+                    <span className="text-fg-subtle/40 text-[10px]">—</span>
                   </>
                 )}
               </div>
-              <div className={`h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-500/25 border border-slate-400/30' : 'bg-white/3 border border-white/8'}`}>
-                <span className={`text-base font-black ${leaderboard[1] ? 'text-slate-300' : 'text-white/15'}`}>2</span>
+              <div className={`h-10 rounded-t-xl flex items-center justify-center ${leaderboard[1] ? 'bg-slate-400/25 dark:bg-slate-500/25 border border-slate-400/30 dark:border-slate-400/30' : 'bg-fg/[0.03] border border-fg/[0.08]'}`}>
+                <span className={`text-base font-black ${leaderboard[1] ? 'text-slate-500 dark:text-slate-300' : 'text-fg/15'}`}>2</span>
               </div>
             </div>
 
@@ -3114,19 +3129,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[0] ? (
                   <>
                     <span className="text-2xl leading-none">🥇</span>
-                    <span className="text-emt-light font-black text-[10px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[0].display_name}</span>
-                    {leaderboard[0].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[0].city}</span> : <span className="h-3" />}
-                    <span className="text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/{leaderboard[0].answers_count}</span>
+                    <span className="text-fg font-black text-[10px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[0].display_name}</span>
+                    {leaderboard[0].city ? <span className="text-fg-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[0].city}</span> : <span className="h-3" />}
+                    <span className="text-amber-700 dark:text-amber-400 text-[11px] font-black leading-none">{leaderboard[0].correct_answers}/{leaderboard[0].answers_count}</span>
                   </>
                 ) : (
                   <>
                     <span className="text-2xl leading-none opacity-20">🥇</span>
-                    <span className="text-emt-border/40 text-[10px]">—</span>
+                    <span className="text-fg-subtle/40 text-[10px]">—</span>
                   </>
                 )}
               </div>
-              <div className={`h-16 rounded-t-xl flex items-center justify-center ${leaderboard[0] ? 'bg-amber-400/18 border border-amber-400/35 shadow-[0_0_18px_rgba(251,191,36,0.14)]' : 'bg-white/3 border border-white/8'}`}>
-                <span className={`text-2xl font-black ${leaderboard[0] ? 'text-amber-400' : 'text-white/15'}`}>1</span>
+              <div className={`h-16 rounded-t-xl flex items-center justify-center ${leaderboard[0] ? 'bg-amber-400/18 border border-amber-400/35 shadow-[0_0_18px_rgba(251,191,36,0.14)]' : 'bg-fg/[0.03] border border-fg/[0.08]'}`}>
+                <span className={`text-2xl font-black ${leaderboard[0] ? 'text-amber-700 dark:text-amber-400' : 'text-fg/15'}`}>1</span>
               </div>
             </div>
 
@@ -3136,19 +3151,19 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 {leaderboard[2] ? (
                   <>
                     <span className="text-lg leading-none">🥉</span>
-                    <span className="text-emt-light font-bold text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[2].display_name}</span>
-                    {leaderboard[2].city ? <span className="text-emt-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[2].city}</span> : <span className="h-3" />}
-                    <span className="text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/{leaderboard[2].answers_count}</span>
+                    <span className="text-fg font-bold text-[9px] text-center leading-tight w-full px-1 break-words whitespace-normal">{leaderboard[2].display_name}</span>
+                    {leaderboard[2].city ? <span className="text-fg-muted text-[9px] leading-none break-words whitespace-normal w-full text-center">{leaderboard[2].city}</span> : <span className="h-3" />}
+                    <span className="text-orange-800 dark:text-orange-300 text-[10px] font-bold leading-none">{leaderboard[2].correct_answers}/{leaderboard[2].answers_count}</span>
                   </>
                 ) : (
                   <>
                     <span className="text-lg leading-none opacity-20">🥉</span>
-                    <span className="text-emt-border/40 text-[10px]">—</span>
+                    <span className="text-fg-subtle/40 text-[10px]">—</span>
                   </>
                 )}
               </div>
-              <div className={`h-10 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-white/3 border border-white/8'}`}>
-                <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-400' : 'text-white/15'}`}>3</span>
+              <div className={`h-10 rounded-t-xl flex items-center justify-center ${leaderboard[2] ? 'bg-orange-400/15 border border-orange-400/25' : 'bg-fg/[0.03] border border-fg/[0.08]'}`}>
+                <span className={`text-base font-black ${leaderboard[2] ? 'text-orange-700 dark:text-orange-400' : 'text-fg/15'}`}>3</span>
               </div>
             </div>
 
@@ -3159,24 +3174,24 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             {competitionProfile ? (
               <button
                 onClick={openEditProfile}
-                className="flex items-center gap-1.5 text-emt-muted/70 text-xs font-semibold hover:text-emt-light transition-colors py-1.5 px-3 rounded-xl hover:bg-white/6 active:scale-95"
+                className="flex items-center gap-1.5 text-fg-muted/70 text-xs font-semibold hover:text-fg transition-colors py-1.5 px-3 rounded-xl hover:bg-fg/[0.06] active:scale-95"
               >
                 <span>✏️</span>
-                <span>משתתף: {competitionProfile.name}{competitionProfile.city ? ` · ${competitionProfile.city}` : ''}</span>
+                <span>{t('dcParticipant', { name: competitionProfile.name + (competitionProfile.city ? ` · ${competitionProfile.city}` : '') })}</span>
               </button>
             ) : !isCompetitionOptedOut() ? (
               <button
                 onClick={() => setShowCompetitionJoin(true)}
-                className="flex items-center gap-1.5 text-amber-400/60 text-xs font-semibold hover:text-amber-400/90 transition-colors py-1.5 px-3 rounded-xl hover:bg-amber-400/8 active:scale-95"
+                className="flex items-center gap-1.5 text-amber-700/60 dark:text-amber-400/60 text-xs font-semibold hover:text-amber-700/90 dark:hover:text-amber-400/90 transition-colors py-1.5 px-3 rounded-xl hover:bg-amber-400/8 active:scale-95"
               >
                 <Trophy size={11} />
-                <span>הצטרף לתחרות</span>
+                <span>{t('dcJoinCompetition')}</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowCompetitionJoin(true)}
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-emt-muted/35 hover:text-emt-muted/70 hover:bg-white/6 active:scale-90 transition-all"
-                title="הצטרף לתחרות"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-fg-muted/35 hover:text-fg-muted/70 hover:bg-fg/[0.06] active:scale-90 transition-all"
+                title={t('dcJoinCompetition')}
               >
                 <Pencil size={11} />
               </button>
@@ -3186,7 +3201,7 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
 
         {/* Streak strip — 7 day dots */}
         {(() => {
-          const dayLabels = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+          const dayLabels = t('dcDayLabels').split(',');
           const days = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
             d.setDate(d.getDate() - (6 - i));
@@ -3209,13 +3224,13 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                           done
                             ? 'bg-orange-500 text-white'
                             : isToday
-                            ? 'border border-orange-400/50 bg-orange-400/10 text-orange-400/60'
-                            : 'bg-white/6 text-transparent',
+                            ? 'border border-orange-400/50 bg-orange-400/10 text-orange-700/60 dark:text-orange-400/60'
+                            : 'bg-fg/[0.06] text-transparent',
                         ].join(' ')}
                       >
                         {done ? '✓' : isToday ? '◦' : ''}
                       </motion.div>
-                      <span className={`text-[8px] font-semibold leading-none ${isToday ? 'text-orange-300/80' : done ? 'text-orange-400/50' : 'text-emt-border'}`}>
+                      <span className={`text-[8px] font-semibold leading-none ${isToday ? 'text-orange-800/80 dark:text-orange-300/80' : done ? 'text-orange-700/50 dark:text-orange-400/50' : 'text-fg-subtle'}`}>
                         {label}
                       </span>
                     </div>
@@ -3223,9 +3238,9 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 })}
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <Flame size={13} className={currentStreak > 0 ? 'text-orange-400' : 'text-emt-border'} />
-                <span className={`font-black text-xs ${currentStreak > 0 ? 'text-orange-300' : 'text-emt-border'}`}>
-                  {currentStreak} ימים ברצף
+                <Flame size={13} className={currentStreak > 0 ? 'text-orange-700 dark:text-orange-400' : 'text-fg-subtle'} />
+                <span className={`font-black text-xs ${currentStreak > 0 ? 'text-orange-800 dark:text-orange-300' : 'text-fg-subtle'}`}>
+                  {t('dcStreakDays', { count: currentStreak })}
                 </span>
               </div>
             </div>
@@ -3291,16 +3306,16 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="shrink-0 px-4 pb-6 pt-2 border-t border-emt-border"
+                  className="shrink-0 px-4 pb-6 pt-2 border-t border-line"
                 >
                   <HapticButton
                     onClick={() => setActiveBlock(null)}
                     hapticPattern={10}
                     pressScale={0.97}
-                    className="w-full py-3 rounded-2xl bg-white/6 border border-white/12 text-emt-muted font-bold text-sm flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-2xl bg-fg/[0.06] border border-fg/[0.12] text-fg-muted font-bold text-sm flex items-center justify-center gap-2"
                   >
                     <ChevronLeft size={16} />
-                    חזרה לרשימת האתגרים
+                    {t('dcBackToList')}
                   </HapticButton>
                 </motion.div>
               )}
@@ -3388,31 +3403,31 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-sm flex items-center justify-center p-6"
-            dir="rtl"
+            className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-sm flex items-center justify-center p-6" // theme-ok: modal scrim
+            dir={dir}
           >
             <motion.div
               initial={{ scale: 0.88, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0, y: 10 }}
               transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-              className="bg-emt-dark border border-amber-400/25 rounded-3xl p-6 w-full max-w-sm shadow-[0_0_60px_rgba(251,191,36,0.12)]"
+              className="bg-page border border-amber-400/25 rounded-3xl p-6 w-full max-w-sm shadow-[0_0_60px_rgba(251,191,36,0.12)]"
             >
               <div className="flex flex-col items-center gap-5">
                 <div className="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center shadow-[0_0_24px_rgba(251,191,36,0.2)]">
-                  <Trophy size={30} className="text-amber-400" />
+                  <Trophy size={30} className="text-amber-700 dark:text-amber-400" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-emt-light font-black text-xl leading-tight">
-                    {competitionProfile ? 'עריכת פרטים' : 'תחרות היומית'}
+                  <h3 className="text-fg font-black text-xl leading-tight">
+                    {competitionProfile ? t('dcEditDetails') : t('dcDailyCompetition')}
                   </h3>
                   {!competitionProfile && (
                     <>
-                      <p className="text-emt-light/80 text-base font-semibold mt-2 leading-snug">
-                        התמודד מול שאר המשיבים
+                      <p className="text-fg/80 text-base font-semibold mt-2 leading-snug">
+                        {t('dcCompeteHeadline')}
                       </p>
-                      <p className="text-emt-muted text-sm mt-1 leading-relaxed">
-                        מי ענה הכי הרבה תשובות נכונות והכי מהר?
+                      <p className="text-fg-muted text-sm mt-1 leading-relaxed">
+                        {t('dcCompeteSub')}
                       </p>
                     </>
                   )}
@@ -3420,28 +3435,26 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                 <div className="flex flex-col gap-3 w-full">
                   <input
                     type="text"
-                    placeholder="שם *"
+                    placeholder={t('dcNamePlaceholder')}
                     value={competitionJoinName}
                     onChange={e => { setCompetitionJoinName(e.target.value); setCompetitionJoinError(null); }}
-                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
-                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
-                    dir="rtl"
+                    className="w-full border border-fg/[0.12] rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 bg-fg/[0.08] text-fg placeholder:text-fg-subtle transition-colors"
+                    dir="auto"
                     autoComplete="off"
                   />
                   <input
                     type="text"
-                    placeholder="עיר (אופציונלי)"
+                    placeholder={t('dcCityPlaceholder')}
                     value={competitionJoinCity}
                     onChange={e => { setCompetitionJoinCity(e.target.value); setCompetitionJoinError(null); }}
-                    className="w-full border border-white/12 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 transition-colors"
-                    style={{ colorScheme: 'dark', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white' }}
-                    dir="rtl"
+                    className="w-full border border-fg/[0.12] rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-amber-400/50 bg-fg/[0.08] text-fg placeholder:text-fg-subtle transition-colors"
+                    dir="auto"
                     autoComplete="off"
                     onKeyDown={e => e.key === 'Enter' && handleJoinCompetition()}
                   />
 
                   {competitionJoinError && (
-                    <p className="text-red-400 text-sm font-bold text-right leading-snug" role="alert">
+                    <p className="text-red-600 dark:text-red-400 text-sm font-bold text-start leading-snug" role="alert">
                       {competitionJoinError}
                     </p>
                   )}
@@ -3449,14 +3462,14 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   {/* Remember me checkbox */}
                   <button
                     onClick={() => setRememberProfile(p => !p)}
-                    className="flex items-center gap-3 w-full py-2 text-right"
+                    className="flex items-center gap-3 w-full py-2 text-start"
                   >
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${rememberProfile ? 'bg-amber-400 border-amber-400' : 'bg-transparent border-white/30'}`}>
-                      {rememberProfile && <span className="text-black text-xs font-black leading-none">✓</span>}
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${rememberProfile ? 'bg-amber-400 border-amber-400' : 'bg-transparent border-fg/30'}`}>
+                      {rememberProfile && <span className="text-amber-950 text-xs font-black leading-none">✓</span>}
                     </div>
-                    <div className="text-right flex-1">
-                      <p className="text-emt-light text-sm font-semibold leading-tight">זכור אותי</p>
-                      <p className="text-emt-muted text-xs mt-0.5">השם ייטען אוטומטית בכל יום</p>
+                    <div className="text-start flex-1">
+                      <p className="text-fg text-sm font-semibold leading-tight">{t('dcRememberMe')}</p>
+                      <p className="text-fg-muted text-xs mt-0.5">{t('dcRememberMeHint')}</p>
                     </div>
                   </button>
                 </div>
@@ -3465,28 +3478,28 @@ export default function DailyChallengeModal({ isOpen, onClose }: Props) {
                   hapticPattern={15}
                   pressScale={0.96}
                   disabled={!competitionJoinName.trim()}
-                  className="w-full py-4 rounded-2xl bg-amber-400 text-black font-black text-base transition-opacity disabled:opacity-35"
+                  className="w-full py-4 rounded-2xl bg-amber-400 text-amber-950 font-black text-base transition-opacity disabled:opacity-35"
                 >
-                  {competitionProfile ? 'שמור שינויים' : 'השתתף בתחרות! 🏆'}
+                  {competitionProfile ? t('dcSaveChanges') : t('dcJoinCta')}
                 </HapticButton>
                 <div className="flex items-center gap-4 -mt-1">
                   <button
                     onClick={() => setShowCompetitionJoin(false)}
-                    className="text-emt-muted text-sm font-semibold hover:text-emt-light transition-colors py-1"
+                    className="text-fg-muted text-sm font-semibold hover:text-fg transition-colors py-1"
                   >
-                    ביטול
+                    {t('dcCancel')}
                   </button>
                   {!competitionProfile && (
                     <>
-                      <span className="text-emt-border text-xs">|</span>
+                      <span className="text-fg-subtle text-xs">|</span>
                       <button
                         onClick={() => {
                           localStorage.setItem(COMPETITION_OPT_OUT_KEY, 'true');
                           setShowCompetitionJoin(false);
                         }}
-                        className="text-emt-muted/60 text-sm font-semibold hover:text-emt-muted transition-colors py-1"
+                        className="text-fg-muted/60 text-sm font-semibold hover:text-fg-muted transition-colors py-1"
                       >
-                        אל תציג שוב
+                        {t('dcDontShowAgain')}
                       </button>
                     </>
                   )}
