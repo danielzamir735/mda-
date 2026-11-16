@@ -1,46 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, BookOpen, Brain } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
 import { trackInteraction, trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage, type TranslationKey } from '../../../i18n';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const HEADERS = ['מדד', 'מבוגר', 'ילד', 'תינוק'];
+const HEADERS: TranslationKey[] = ['calcVitalsColVital', 'calcAdult', 'calcChild', 'calcInfant'];
 
-const ROWS = [
-  { label: 'נשימה (לדקה)',       adult: '12–20',  child: '18–30',  infant: '24–40'  },
-  { label: 'דופק (לדקה)',         adult: '60–100', child: '60–140', infant: '100–190'},
-  { label: 'לחץ דם סיסטולי',     adult: '90–140', child: '90–110', infant: '60–90'  },
-  { label: 'לחץ דם דיאסטולי',    adult: '60–90',  child: '50–80',  infant: '40–60'  },
-  { label: 'לחץ דופק',           adult: '30–60',  child: '30–60',  infant: '30–60'  },
-  { label: 'סוכר (mg/dL)',        adult: '60–110', child: '60–110', infant: '60–110' },
+const ROWS: { label: TranslationKey; adult: string; child: string; infant: string }[] = [
+  { label: 'calcVitalsRr', adult: '12–20',  child: '18–30',  infant: '24–40'  },
+  { label: 'calcVitalsHr', adult: '60–100', child: '60–140', infant: '100–190'},
+  { label: 'calcVitalsSbp', adult: '90–140', child: '90–110', infant: '60–90'  },
+  { label: 'calcVitalsDbp', adult: '60–90',  child: '50–80',  infant: '40–60'  },
+  { label: 'calcVitalsPp', adult: '30–60',  child: '30–60',  infant: '30–60'  },
+  { label: 'calcVitalsGlucose', adult: '60–110', child: '60–110', infant: '60–110' },
 ];
 
-const FLASHCARD_DATA: FlashcardItem[] = ROWS.flatMap((row) => [
-  {
-    front: `${row.label} — מבוגר`,
-    back: row.adult,
-  },
-  {
-    front: `${row.label} — ילד`,
-    back: row.child,
-  },
-  {
-    front: `${row.label} — תינוק`,
-    back: row.infant,
-  },
-]);
 
 export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
   const [trainerOpen, setTrainerOpen] = useState(false);
+  const t = useTranslation();
+  const { dir } = useLanguage();
+  const FLASHCARD_DATA: FlashcardItem[] = useMemo(() => ROWS.flatMap((row) => [
+    { front: t('calcVitalsCardFront', { label: t(row.label), group: t('calcAdult') }), back: row.adult },
+    { front: t('calcVitalsCardFront', { label: t(row.label), group: t('calcChild') }), back: row.child },
+    { front: t('calcVitalsCardFront', { label: t(row.label), group: t('calcInfant') }), back: row.infant },
+  ]), [t]);
   useModalBackHandler(isOpen, onClose);
 
   useEffect(() => {
-    if (isOpen) trackInteraction('טבלת מדדים', 'reference');
+    if (isOpen) trackInteraction('טבלת מדדים', 'reference'); // i18n-ok: analytics label, kept stable
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -52,21 +46,21 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
             <BookOpen size={22} className="text-blue-400" />
-            <h2 className="text-fg font-bold text-xl">טבלת מדדים</h2>
+            <h2 className="text-fg font-bold text-xl">{t('calcVitalsTitle')}</h2>
           </div>
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
                        text-fg-muted hover:text-fg"
-            aria-label="סגור"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4" dir="rtl">
+        <div className="flex-1 overflow-y-auto p-4">
 
           {/* ── Flashcard Trainer Trigger ── */}
           <button
@@ -79,10 +73,10 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
               <Brain size={20} className="text-purple-400" />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-purple-200 font-bold text-base leading-tight">התחל אימון שינון</span>
-              <span className="text-purple-300/50 text-xs mt-0.5">{FLASHCARD_DATA.length} כרטיסיות · מדדים לפי גיל</span>
+              <span className="text-purple-700 dark:text-purple-200 font-bold text-base leading-tight">{t('calcVitalsTrainer')}</span>
+              <span className="text-purple-600/70 dark:text-purple-300/50 text-xs mt-0.5">{t('calcVitalsTrainerSub', { n: FLASHCARD_DATA.length })}</span>
             </div>
-            <div className="mr-auto text-purple-400/40 text-lg">←</div>
+            <div className="ms-auto text-purple-400/60 text-lg">{dir === 'rtl' ? '←' : '→'}</div>
           </button>
 
           {/* Table */}
@@ -91,8 +85,8 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
             {/* Column headers */}
             <div className="grid grid-cols-4 bg-blue-600 dark:bg-blue-900 border-b-2 border-blue-700 dark:border-blue-800">
               {HEADERS.map((h) => (
-                <div key={h} className="px-3 py-4 text-base font-black text-white text-center">
-                  {h}
+                <div key={h} className="px-3 py-4 text-base font-black text-white text-center bg-blue-600 dark:bg-blue-900">
+                  {t(h)}
                 </div>
               ))}
             </div>
@@ -110,8 +104,8 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                 ].join(' ')}
               >
                 {/* Vital name cell */}
-                <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-right flex items-center border-l border-line bg-blue-50/60 dark:bg-blue-950/30">
-                  {row.label}
+                <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-start flex items-center border-e border-line bg-blue-50/60 dark:bg-blue-950/30">
+                  {t(row.label)}
                 </div>
 
                 {/* Value cells */}
@@ -121,7 +115,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                     className={[
                       'px-3 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
                       'text-fg',
-                      j < 2 ? 'border-l border-line' : '',
+                      j < 2 ? 'border-e border-line' : '',
                     ].join(' ')}
                   >
                     {val}
@@ -132,7 +126,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
           </div>
 
           <p className="text-xs text-fg-subtle text-center mt-4 leading-relaxed">
-            * ערכי ייחוס בלבד — אין להחליף שיקול דעת קליני
+            {t('calcVitalsDisclaimer')}
           </p>
         </div>
       </div>

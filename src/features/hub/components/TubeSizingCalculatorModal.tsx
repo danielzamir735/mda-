@@ -191,6 +191,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
                   onClick={() => { setAgeUnit(u); setCalculated(false); }}
                   className={`py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${
                     ageUnit === u
+                      // theme-ok: white text on the selected sky button
                       ? 'bg-sky-400 text-white border-sky-400 shadow-sm'
                       : 'bg-surface text-fg-muted border-line'
                   }`}
@@ -233,6 +234,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
           <button
             onClick={handleCalculate}
             disabled={!displayWeight || displayWeight <= 0}
+            // theme-ok: white text on the sky button
             className="w-full rounded-xl bg-sky-400 text-white font-bold text-base py-3 mt-1
                        active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                        shadow-md shadow-sky-400/25"

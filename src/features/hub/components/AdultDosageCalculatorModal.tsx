@@ -169,6 +169,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
           <button
             onClick={handleCalculate}
             disabled={!weightNum}
+            // theme-ok: white text on the orange button
             className="w-full rounded-xl bg-orange-400 text-white font-bold text-base py-3 mt-1
                        active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                        shadow-md shadow-orange-400/25"
@@ -203,7 +204,8 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
                   onClick={() => handleScenarioChange(i)}
                   className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
                     ${i === ADULT_SCENARIOS.length - 1 && ADULT_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
-                    ${i === activeScenario // theme-ok: white text on the scenario's solid colour
+                    ${i === activeScenario
+                      // theme-ok: white text on the scenario's solid colour
                       ? `${solidBg[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
                       : `bg-surface ${s.color} ${s.borderColor}`
                     }

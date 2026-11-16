@@ -11,33 +11,29 @@ export type AdultPartId = BodyPartId;
 
 export interface AdultPartDef {
   id: BodyPartId;
-  label: string;
   percentage: number;
 }
 
 // Adult Rule of Nines — front/back split. Each surface counts independently.
 export const ADULT_PARTS: AdultPartDef[] = [
-  { id: 'head_front',      label: 'ראש קדמי',     percentage: 4.5 },
-  { id: 'head_back',       label: 'ראש אחורי',    percentage: 4.5 },
-  { id: 'torso_front',     label: 'גוף קדמי',     percentage: 18  },
-  { id: 'torso_back',      label: 'גב',           percentage: 18  },
-  { id: 'right_arm_front', label: "יד י' קדמי",   percentage: 4.5 },
-  { id: 'right_arm_back',  label: "יד י' אחורי",  percentage: 4.5 },
-  { id: 'left_arm_front',  label: "יד ש' קדמי",   percentage: 4.5 },
-  { id: 'left_arm_back',   label: "יד ש' אחורי",  percentage: 4.5 },
-  { id: 'right_leg_front', label: "רגל י' קדמי",  percentage: 9   },
-  { id: 'right_leg_back',  label: "רגל י' אחורי", percentage: 9   },
-  { id: 'left_leg_front',  label: "רגל ש' קדמי",  percentage: 9   },
-  { id: 'left_leg_back',   label: "רגל ש' אחורי", percentage: 9   },
-  { id: 'perineum',        label: 'פרינאום',      percentage: 1   },
+  { id: 'head_front',      percentage: 4.5 },
+  { id: 'head_back',       percentage: 4.5 },
+  { id: 'torso_front',     percentage: 18  },
+  { id: 'torso_back',      percentage: 18  },
+  { id: 'right_arm_front', percentage: 4.5 },
+  { id: 'right_arm_back',  percentage: 4.5 },
+  { id: 'left_arm_front',  percentage: 4.5 },
+  { id: 'left_arm_back',   percentage: 4.5 },
+  { id: 'right_leg_front', percentage: 9   },
+  { id: 'right_leg_back',  percentage: 9   },
+  { id: 'left_leg_front',  percentage: 9   },
+  { id: 'left_leg_back',   percentage: 9   },
+  { id: 'perineum',        percentage: 1   },
 ];
 
 export const ADULT_PART_LOOKUP: Record<BodyPartId, AdultPartDef> =
   ADULT_PARTS.reduce((acc, p) => { acc[p.id] = p; return acc; }, {} as Record<BodyPartId, AdultPartDef>);
 
-const LABELS: Record<string, string> = ADULT_PARTS.reduce((acc, p) => {
-  acc[p.id] = p.label; return acc;
-}, {} as Record<string, string>);
 
 interface AdultBodyDiagramProps {
   selected: Set<string>;
@@ -58,9 +54,9 @@ export default function AdultBodyDiagram({ selected, onToggle, onReset }: AdultB
     >
       <BodyDiagramShell>
         <div className="relative flex items-start justify-center gap-3 sm:gap-6">
-          <Silhouette side="front" selected={sel} onToggle={onToggle} labelLookup={LABELS} />
+          <Silhouette side="front" selected={sel} onToggle={onToggle} />
           <div className="self-stretch w-px bg-gradient-to-b from-transparent via-line-strong to-transparent" />
-          <Silhouette side="back"  selected={sel} onToggle={onToggle} labelLookup={LABELS} />
+          <Silhouette side="back"  selected={sel} onToggle={onToggle} />
         </div>
 
         <PerineumResetBar

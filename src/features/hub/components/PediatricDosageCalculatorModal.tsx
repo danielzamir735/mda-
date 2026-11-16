@@ -263,7 +263,8 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
                   onClick={() => handleScenarioChange(i)}
                   className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
                     ${i === PEDIATRIC_SCENARIOS.length - 1 && PEDIATRIC_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
-                    ${i === activeScenario // theme-ok: white text on the scenario's solid colour
+                    ${i === activeScenario
+                      // theme-ok: white text on the scenario's solid colour
                       ? `${SCENARIO_SOLID[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
                       : `bg-surface ${s.color} ${s.borderColor}`
                     }
