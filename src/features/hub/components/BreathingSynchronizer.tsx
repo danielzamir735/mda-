@@ -4,6 +4,7 @@ import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { trackInteraction } from '../../../utils/analytics';
 import ChildCalmScreen from './ChildCalmScreen';
+import { useTranslation } from '../../../i18n';
 
 type Phase = 'idle' | 'inhale' | 'exhale';
 type Mode = 'choose' | 'breathing' | 'calm';
@@ -15,12 +16,14 @@ const BUBBLES = [
   { size: 18, left:  4, dur: 13, delay:  0, color: 'rgba(255,182,193,0.38)' },
   { size: 32, left: 12, dur: 20, delay:  3, color: 'rgba(186,156,255,0.35)' },
   { size: 14, left: 20, dur: 11, delay:  7, color: 'rgba(100,240,255,0.32)' },
+  // theme-ok: always-dark calm screen / illustration colours
   { size: 48, left: 28, dur: 26, delay:  1, color: 'rgba(255,236,100,0.25)' },
   { size: 22, left: 36, dur: 16, delay:  5, color: 'rgba(255,182,193,0.40)' },
   { size: 12, left: 44, dur:  9, delay: 10, color: 'rgba(186,156,255,0.38)' },
   { size: 38, left: 52, dur: 18, delay:  4, color: 'rgba(100,240,255,0.28)' },
   { size: 16, left: 60, dur: 12, delay:  8, color: 'rgba(255,200,150,0.30)' },
   { size: 55, left: 68, dur: 28, delay:  2, color: 'rgba(186,156,255,0.25)' },
+  // theme-ok: always-dark calm screen / illustration colours
   { size: 20, left: 76, dur: 14, delay:  6, color: 'rgba(255,236,100,0.28)' },
   { size: 28, left: 84, dur: 17, delay: 11, color: 'rgba(100,240,255,0.35)' },
   { size: 10, left: 92, dur:  8, delay:  9, color: 'rgba(255,182,193,0.42)' },
@@ -29,6 +32,7 @@ const BUBBLES = [
   { size: 15, left: 35, dur: 10, delay: 15, color: 'rgba(186,156,255,0.40)' },
   { size: 30, left: 50, dur: 24, delay:  2, color: 'rgba(255,182,193,0.30)' },
   { size: 45, left: 65, dur: 30, delay:  7, color: 'rgba(100,240,255,0.22)' },
+  // theme-ok: always-dark calm screen / illustration colours
   { size: 11, left: 78, dur:  7, delay: 12, color: 'rgba(255,236,100,0.35)' },
   { size: 35, left: 88, dur: 21, delay:  4, color: 'rgba(160,230,180,0.28)' },
   { size: 19, left: 25, dur: 15, delay: 18, color: 'rgba(255,200,150,0.38)' },
@@ -43,6 +47,7 @@ function FlowerSVG({ active }: { active: boolean }) {
         opacity: active ? 1 : 0, transition: 'opacity 1s ease-in-out' }}>
       <defs>
         <radialGradient id="fl-pg" cx="50%" cy="25%" r="75%">
+          {/* theme-ok: always-dark calm screen / illustration colours */}
           <stop offset="0%" stopColor="#CFFAFE" />
           <stop offset="100%" stopColor="#22D3EE" />
         </radialGradient>
@@ -63,8 +68,10 @@ function FlowerSVG({ active }: { active: boolean }) {
         ))}
         {PETAL_ANGLES.map(a => (
           <ellipse key={`h${a}`} cx={97} cy={60} rx={5} ry={12}
+            // theme-ok: always-dark calm screen / illustration colours
             fill="white" opacity={0.18} transform={`rotate(${a},100,100)`} />
         ))}
+        {/* theme-ok: always-dark calm screen / illustration colours */}
         <circle cx={100} cy={100} r={19} fill="#E0F7FA" />
         <circle cx={100} cy={100} r={10} fill="#06B6D4" />
       </g>
@@ -85,11 +92,13 @@ function CandleSVG({ active }: { active: boolean }) {
         opacity: active ? 1 : 0, transition: 'opacity 1s ease-in-out' }}>
       <defs>
         <radialGradient id="cn-flame" cx="50%" cy="20%" r="65%">
+          {/* theme-ok: always-dark calm screen / illustration colours */}
           <stop offset="0%" stopColor="#FFFDE7" />
           <stop offset="35%" stopColor="#FFCA28" />
           <stop offset="100%" stopColor="#E65100" />
         </radialGradient>
         <radialGradient id="cn-body" cx="30%" cy="15%" r="85%">
+          {/* theme-ok: always-dark calm screen / illustration colours */}
           <stop offset="0%" stopColor="#F5EFE6" />
           <stop offset="100%" stopColor="#C9A87C" />
         </radialGradient>
@@ -115,6 +124,7 @@ function CandleSVG({ active }: { active: boolean }) {
         <path d="M100 58 C91 74 84 92 86 107 C88 118 112 118 114 107 C116 92 109 74 100 58Z"
           fill="url(#cn-flame)" />
         <path d="M100 78 C96 88 93 100 95 108 C97 114 103 114 105 108 C107 100 104 88 100 78Z"
+          // theme-ok: always-dark calm screen / illustration colours
           fill="#FFFDE7" opacity={0.72} />
       </g>
     </svg>
@@ -124,7 +134,9 @@ function CandleSVG({ active }: { active: boolean }) {
 // ─── Main component ────────────────────────────────────────────────────────
 interface Props { isOpen: boolean; onClose: () => void; }
 
+// theme-ok for the whole screen: a calm night-sky breathing screen, dark on purpose in both modes.
 export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [mode, setMode]           = useState<Mode>('choose');
   const [running, setRunning]     = useState(false);
   const [phase, setPhase]         = useState<Phase>('idle');
@@ -140,8 +152,8 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
     if (phase === 'idle') { setPhase('inhale'); return; }
     const ms   = phase === 'inhale' ? 4000 : 6000;
     const next: Phase = phase === 'inhale' ? 'exhale' : 'inhale';
-    const t = setTimeout(() => setPhase(next), ms);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setPhase(next), ms);
+    return () => clearTimeout(timer);
   }, [running, phase]);
 
   // Reset on close + release wake lock
@@ -169,7 +181,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
   const handleStart = async () => {
     setRunning(true);
-    trackInteraction('מסנכרן נשימות', 'wellness');
+    trackInteraction('מסנכרן נשימות', 'wellness'); // i18n-ok: fixed analytics label
     try {
       wakeLockRef.current = await navigator.wakeLock.request('screen');
     } catch { /* wake lock not supported or denied — silently ignore */ }
@@ -204,9 +216,9 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
     setIsPlaying(p => !p);
   };
 
-  const label     = phase === 'inhale' ? 'להריח פרח...' : phase === 'exhale' ? 'לכבות נר...' : 'לחץ התחל';
+  const label     = phase === 'inhale' ? t('brInhale') : phase === 'exhale' ? t('brExhale') : t('brPressStart');
   const glowColor = phase === 'inhale' ? 'rgba(34,211,238,0.7)' : phase === 'exhale' ? 'rgba(253,186,116,0.7)' : 'none';
-  const cycleHint = phase === 'idle' ? '4 שניות שאיפה · 6 שניות נשיפה' : '';
+  const cycleHint = phase === 'idle' ? t('brCycleHint') : '';
 
   return (
     <div className="fixed inset-0 z-[65] flex flex-col overflow-hidden">
@@ -238,7 +250,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           position: absolute;
           bottom: -80px;
           border-radius: 50%;
-          border: 1px solid rgba(255,255,255,0.15);
+          border: 1px solid rgba(255,255,255,0.15); /* theme-ok: always-dark calm screen / illustration colours */
           animation: bs-float linear infinite;
           pointer-events: none;
         }
@@ -267,18 +279,18 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
         }
         .bs-start-btn {
           transition: box-shadow 0.3s ease, transform 0.15s ease, background-color 0.2s ease;
-          box-shadow: 0 8px 32px rgba(14,165,233,0.45), 0 2px 8px rgba(0,0,0,0.3);
+          box-shadow: 0 8px 32px rgba(14,165,233,0.45), 0 2px 8px rgba(0,0,0,0.3); /* theme-ok: always-dark calm screen / illustration colours */
         }
         .bs-start-btn:hover {
-          box-shadow: 0 12px 40px rgba(14,165,233,0.60), 0 4px 12px rgba(0,0,0,0.35);
+          box-shadow: 0 12px 40px rgba(14,165,233,0.60), 0 4px 12px rgba(0,0,0,0.35); /* theme-ok: always-dark calm screen / illustration colours */
         }
         .bs-stop-btn {
           transition: box-shadow 0.3s ease, transform 0.15s ease, background-color 0.2s ease;
-          box-shadow: 0 4px 20px rgba(255,255,255,0.08);
+          box-shadow: 0 4px 20px rgba(255,255,255,0.08); /* theme-ok: always-dark calm screen / illustration colours */
         }
         .bs-stop-btn:hover {
-          box-shadow: 0 6px 28px rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.15);
+          box-shadow: 0 6px 28px rgba(255,255,255,0.14); /* theme-ok: always-dark calm screen / illustration colours */
+          background: rgba(255,255,255,0.15); /* theme-ok: always-dark calm screen / illustration colours */
         }
       `}</style>
 
@@ -290,6 +302,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
               width: b.size,
               height: b.size,
               left: `${b.left}%`,
+              // theme-ok: always-dark calm screen / illustration colours
               background: `radial-gradient(circle at 32% 32%, ${b.color}, rgba(0,0,0,0))`,
               filter: 'blur(2px)',
               animationDuration: `${b.dur}s`,
@@ -302,18 +315,19 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
       <div className="relative z-10 flex flex-col h-full">
 
         {/* Header */}
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3
-                        border-b border-white/10 backdrop-blur-sm bg-black/10">
+        {/* theme-ok: always-dark calm screen */}
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/10 backdrop-blur-sm bg-black/10">
           <div className="flex items-center gap-2">
             <Wind size={20} className="text-sky-300" />
-            <h2 className="text-white font-bold text-xl">{mode === 'choose' ? 'נשימות והרגעה' : 'מסנכרן נשימות'}</h2>
+            {/* theme-ok: always-dark calm screen */}
+            <h2 className="text-white font-bold text-xl">{mode === 'choose' ? t('brChooseTitle') : t('brBreathingTitle')}</h2>
           </div>
           <HapticButton
             onClick={() => { handleStop(); if (mode === 'choose') onClose(); else setMode('choose'); }}
             pressScale={0.88}
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/20
-                       flex items-center justify-center text-white/70 hover:text-white"
-            aria-label={mode === 'choose' ? 'סגור' : 'חזרה לבחירה'}
+            // theme-ok: always-dark calm screen
+            className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white/70 hover:text-white"
+            aria-label={mode === 'choose' ? t('close') : t('brBackToChoice')}
           >
             <X size={20} />
           </HapticButton>
@@ -322,24 +336,28 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
         {mode === 'choose' && (
           <div className="flex-1 flex flex-col justify-center gap-4 px-6">
             {[
-              { id: 'breathing' as const, icon: Wind,     title: 'מסנכרן נשימות',   sub: 'שאיפה 4 שנ׳ · נשיפה 6 שנ׳',           tint: 'text-sky-300',   ring: 'border-sky-300/30' },
-              { id: 'calm' as const,      icon: Sparkles, title: 'מסך הרגעה לילד', sub: 'בועות וחיות שמגיבות למגע', tint: 'text-amber-300', ring: 'border-amber-300/30' },
+              { id: 'breathing' as const, icon: Wind,     title: t('brBreathingTitle'), sub: t('brBreathingSub'),           tint: 'text-sky-300',   ring: 'border-sky-300/30' },
+              { id: 'calm' as const,      icon: Sparkles, title: t('brCalmTitle'), sub: t('brCalmSub'), tint: 'text-amber-300', ring: 'border-amber-300/30' },
             ].map(({ id, icon: Icon, title, sub, tint, ring }) => (
               <HapticButton
                 key={id}
                 onClick={() => setMode(id)}
                 pressScale={0.97}
-                className={`w-full flex items-center gap-4 rounded-3xl px-5 py-6 text-right
-                            bg-white/10 border ${ring} backdrop-blur-sm`}
+                // theme-ok: always-dark calm screen
+                className={`w-full flex items-center gap-4 rounded-3xl px-5 py-6 text-start bg-white/10 border ${ring} backdrop-blur-sm`}
               >
+                {/* theme-ok: always-dark calm screen */}
                 <span className={`shrink-0 w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center ${tint}`}>
                   <Icon size={30} />
                 </span>
                 <span className="flex-1 flex flex-col gap-1">
+                  {/* theme-ok: always-dark calm screen */}
                   <span className="text-white font-black text-2xl leading-tight">{title}</span>
+                  {/* theme-ok: always-dark calm screen */}
                   <span className="text-white/55 text-sm leading-snug">{sub}</span>
                 </span>
-                <ChevronLeft size={22} className="shrink-0 text-white/40" />
+                {/* theme-ok: always-dark calm screen */}
+                <ChevronLeft size={22} className="shrink-0 text-white/40 ltr:rotate-180" />
               </HapticButton>
             ))}
           </div>
@@ -351,10 +369,12 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
 
           {/* Phase text — massive */}
           <div className="text-center flex flex-col items-center justify-end gap-1">
+            {/* theme-ok: always-dark calm screen */}
             <p className={`text-6xl font-black leading-tight tracking-tight${phase !== 'idle' ? ' bs-text-grad' : ' text-white'}`}
               style={{
                 opacity: phase === 'idle' ? 0.25 : 1,
                 transition: 'opacity 0.6s ease-in-out',
+                // theme-ok: always-dark calm screen
                 textShadow: phase !== 'idle' ? `0 0 48px ${glowColor}, 0 2px 8px rgba(0,0,0,0.5)` : 'none',
               }}>
               {label}
@@ -369,10 +389,11 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
           </div>
 
           {/* Hint */}
+          {/* theme-ok: always-dark calm screen */}
           <p className="text-white/30 text-sm font-medium tracking-wide min-h-[1.25rem] text-center">
             {cycleHint}
-            {phase === 'inhale' && <span style={{ color: '#67E8F9', opacity: 0.6 }}>4 שניות שאיפה</span>}
-            {phase === 'exhale' && <span style={{ color: '#FCD34D', opacity: 0.6 }}>6 שניות נשיפה</span>}
+            {phase === 'inhale' && <span style={{ color: '#67E8F9', opacity: 0.6 }}>{t('brInhaleHint')}</span>}
+            {phase === 'exhale' && <span style={{ color: '#FCD34D', opacity: 0.6 }}>{t('brExhaleHint')}</span>}
           </p>
         </div>
 
@@ -384,19 +405,18 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
             <HapticButton
               onClick={handleStart}
               pressScale={0.96}
-              className="bs-start-btn flex-1 py-4 rounded-full bg-sky-500 hover:bg-sky-400
-                         text-white font-black text-2xl"
+              className="bs-start-btn flex-1 py-4 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-black text-2xl"
             >
-              התחל
+              {t('start')}
             </HapticButton>
           ) : (
             <HapticButton
               onClick={handleStop}
               pressScale={0.96}
-              className="bs-stop-btn flex-1 py-4 rounded-full bg-white/10 border border-white/25
-                         text-white font-black text-2xl"
+              // theme-ok: always-dark calm screen
+              className="bs-stop-btn flex-1 py-4 rounded-full bg-white/10 border border-white/25 text-white font-black text-2xl"
             >
-              עצור
+              {t('stop')}
             </HapticButton>
           )}
 
@@ -409,7 +429,7 @@ export default function BreathingSynchronizer({ isOpen, onClose }: Props) {
                         border transition-all duration-300 shrink-0
                         ${isPlaying
                           ? 'bg-violet-500/25 border-violet-400/50 text-violet-200 shadow-lg shadow-violet-500/20'
-                          : 'bg-white/8  border-white/20  text-white/45'}`}
+                          : 'bg-white/8  border-white/20  text-white/45'}`} // theme-ok: always-dark calm screen
           >
             {isPlaying
               ? <Volume2 size={22} className="text-violet-300" />

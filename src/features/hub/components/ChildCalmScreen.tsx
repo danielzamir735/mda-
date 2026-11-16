@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { useHaptics } from '../../../hooks/useHaptics';
 import { trackInteraction } from '../../../utils/analytics';
+import { useTranslation } from '../../../i18n';
 
 const ANIMALS = ['🐶', '🐱', '🐰', '🐸', '🦊', '🐼', '🐥', '🐠', '🐢', '🦋', '🐞', '🦄'];
 const SPARKS  = ['⭐', '✨', '💛', '🌟', '💜', '💙'];
@@ -37,7 +38,9 @@ function makeBubble(id: number, prefill = false): Bubble {
 
 interface Props { onBack: () => void; }
 
+// theme-ok for the whole screen: a calm night-sky play screen for a child, dark on purpose in both modes.
 export default function ChildCalmScreen({ onBack }: Props) {
+  const t = useTranslation();
   const nextId = useRef(BUBBLE_COUNT);
   const [bubbles, setBubbles] = useState<Bubble[]>(() =>
     Array.from({ length: BUBBLE_COUNT }, (_, i) => makeBubble(i, true)));
@@ -51,7 +54,7 @@ export default function ChildCalmScreen({ onBack }: Props) {
 
   // Keep the screen awake while the child is holding the phone
   useEffect(() => {
-    trackInteraction('מסך הרגעה לילד', 'wellness');
+    trackInteraction('מסך הרגעה לילד', 'wellness'); // i18n-ok: fixed analytics label
     let lock: WakeLockSentinel | null = null;
     navigator.wakeLock?.request('screen').then(l => { lock = l; }).catch(() => {});
     return () => {
@@ -148,7 +151,7 @@ export default function ChildCalmScreen({ onBack }: Props) {
           100% { background-position: 0%   50%; }
         }
         .cc-bg {
-          background: linear-gradient(135deg, #1e1b4b, #1e3a8a, #0e7490, #4c1d95, #1e1b4b);
+          background: linear-gradient(135deg, #1e1b4b, #1e3a8a, #0e7490, #4c1d95, #1e1b4b); /* theme-ok: always-dark play screen */
           background-size: 400% 400%;
           animation: cc-bg 24s ease infinite;
         }
@@ -171,8 +174,8 @@ export default function ChildCalmScreen({ onBack }: Props) {
           width: 100%; height: 100%;
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          border: 2px solid rgba(255,255,255,0.45);
-          box-shadow: inset -6px -8px 18px rgba(255,255,255,0.18), 0 0 22px rgba(255,255,255,0.12);
+          border: 2px solid rgba(255,255,255,0.45); /* theme-ok: bubble glass */
+          box-shadow: inset -6px -8px 18px rgba(255,255,255,0.18), 0 0 22px rgba(255,255,255,0.12); /* theme-ok: bubble glass */
           animation: cc-sway 4s ease-in-out infinite;
         }
         @keyframes cc-spark {
@@ -188,6 +191,9 @@ export default function ChildCalmScreen({ onBack }: Props) {
         .cc-hold-ring {
           transform: scaleX(0);
           transform-origin: right;
+        }
+        [dir="ltr"] .cc-hold-ring {
+          transform-origin: left;
         }
         .cc-hold-ring.cc-holding {
           transform: scaleX(1);
@@ -214,6 +220,7 @@ export default function ChildCalmScreen({ onBack }: Props) {
           <div
             className="cc-bubble-inner"
             style={{
+              // theme-ok: bubble glass highlight
               background: `radial-gradient(circle at 30% 28%, rgba(255,255,255,0.75), ${b.color} 45%, rgba(255,255,255,0.08))`,
               fontSize: b.size * 0.5,
             }}
@@ -241,13 +248,14 @@ export default function ChildCalmScreen({ onBack }: Props) {
       >
         <button
           onClick={() => setSoundOn(s => !s)}
-          className="w-11 h-11 rounded-full bg-white/10 border border-white/20
-                     flex items-center justify-center text-white/70"
-          aria-label={soundOn ? 'השתק צלילים' : 'הפעל צלילים'}
+          // theme-ok: always-dark play screen
+          className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white/70"
+          aria-label={soundOn ? t('calmMute') : t('calmUnmute')}
         >
           {soundOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>
 
+        {/* theme-ok: always-dark play screen */}
         <div className="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white font-black text-xl"
           aria-live="polite">
           ⭐ {popped}
@@ -260,13 +268,14 @@ export default function ChildCalmScreen({ onBack }: Props) {
           onPointerCancel={cancelHold}
           // Keyboard / assistive tech activation has no pointer events
           onClick={e => { if (e.detail === 0) onBack(); }}
-          className="relative overflow-hidden h-11 px-3 rounded-full bg-white/10 border border-white/20
-                     flex items-center gap-1.5 text-white/70 text-xs font-semibold"
-          aria-label="יציאה — לחיצה ארוכה"
+          // theme-ok: always-dark play screen
+          className="relative overflow-hidden h-11 px-3 rounded-full bg-white/10 border border-white/20 flex items-center gap-1.5 text-white/70 text-xs font-semibold"
+          aria-label={t('calmExitAria')}
         >
+          {/* theme-ok: always-dark play screen */}
           <span className={`cc-hold-ring absolute inset-0 bg-white/25${holding ? ' cc-holding' : ''}`} />
           <X size={18} className="relative" />
-          <span className="relative">לחיצה ארוכה</span>
+          <span className="relative">{t('calmLongPress')}</span>
         </button>
       </div>
     </div>
