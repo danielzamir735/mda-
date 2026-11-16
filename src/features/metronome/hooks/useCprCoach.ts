@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useMetronomeStore } from '../../../store/metronomeStore';
-import { speakHebrew, warmUpVoices } from '../../../utils/tts';
+import { speakAlert, warmUpVoices } from '../../../utils/tts';
+import { translate } from '../../../i18n';
+import { useSettingsStore } from '../../../store/settingsStore';
 import { CYCLE_SEC, PREWARN_SEC, AMIO_BY_SHOCK, VOICE } from '../cprProtocol';
 
 const AMIO_STEPS = Object.keys(AMIO_BY_SHOCK).map(Number).sort((a, b) => a - b);
@@ -8,7 +10,9 @@ const AMIO_STEPS = Object.keys(AMIO_BY_SHOCK).map(Number).sort((a, b) => a - b);
 /** The next amiodarone dose by protocol order, or null once every dose was given */
 export function nextAmioDose(amioCount: number) {
   const shock = AMIO_STEPS[amioCount];
-  return shock !== undefined ? { afterShock: shock, ...AMIO_BY_SHOCK[shock] } : null;
+  if (shock === undefined) return null;
+  const { doseKey, withEpi } = AMIO_BY_SHOCK[shock];
+  return { afterShock: shock, dose: translate(doseKey), withEpi };
 }
 
 export interface CoachReminder { key: string; text: string; }
@@ -28,6 +32,7 @@ export function useCprCoach() {
     completeCycle,
   } = useMetronomeStore();
 
+  useSettingsStore((s) => s.language); // re-render so reminder text follows a language change
   const [now, setNow] = useState(() => Date.now());
   const [isCycleFlashing, setIsCycleFlashing] = useState(false);
   const [rhythmPrompt, setRhythmPrompt] = useState(false);
@@ -54,7 +59,7 @@ export function useCprCoach() {
         // keep the cadence from the start of CPR; cycles that passed in the background are logged too
         for (let i = 1; i <= cycles; i++) completeCycle(start + i * CYCLE_SEC * 1000);
         setRhythmPrompt(true);
-        speakHebrew(VOICE.cycle);
+        speakAlert(VOICE.cycle());
         vibrate([300, 150, 300, 150, 300]);
         setIsCycleFlashing(true);
         setTimeout(() => setIsCycleFlashing(false), 1600);
@@ -63,7 +68,7 @@ export function useCprCoach() {
 
       if (elapsedSec >= CYCLE_SEC - PREWARN_SEC && prewarnedFor.current !== start) {
         prewarnedFor.current = start;
-        speakHebrew(VOICE.prewarn);
+        speakAlert(VOICE.prewarn());
         vibrate(150);
       }
     };
@@ -78,7 +83,7 @@ export function useCprCoach() {
   useEffect(() => {
     if (!isPlaying || !epiDue || lastEpiTime === null || epiAnnouncedFor.current === lastEpiTime) return;
     epiAnnouncedFor.current = lastEpiTime;
-    speakHebrew(VOICE.epiDue);
+    speakAlert(VOICE.epiDue());
     vibrate([200, 100, 200]);
   }, [epiDue, isPlaying, lastEpiTime]);
 
@@ -90,7 +95,7 @@ export function useCprCoach() {
       reminder = { key: `amio-${next.afterShock}`, text: VOICE.amio(next.dose, next.withEpi) };
     }
   } else if (rhythm === 'nonShockable' && epiCount === 0) {
-    reminder = { key: 'epi-now', text: VOICE.epiNow };
+    reminder = { key: 'epi-now', text: VOICE.epiNow() };
   }
   if (reminder && dismissed.includes(reminder.key)) reminder = null;
 
@@ -99,7 +104,7 @@ export function useCprCoach() {
   useEffect(() => {
     if (!isPlaying || !reminderKey || !reminderText || spokenReminders.current.has(reminderKey)) return;
     spokenReminders.current.add(reminderKey);
-    speakHebrew(reminderText);
+    speakAlert(reminderText);
     vibrate([200, 100, 200]);
   }, [reminderKey, reminderText, isPlaying]);
 

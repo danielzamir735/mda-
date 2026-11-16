@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useVitalsLogStore, type ShockLog, type CprEvent, type CprEventKind } from './vitalsLogStore';
-import { EPI_INTERVAL_SEC, EPI_DOSE, H_AND_T, RHYTHM_LABELS } from '../features/metronome/cprProtocol';
+import { EPI_INTERVAL_SEC, epiDose, H_AND_T, RHYTHM_LABEL_KEYS } from '../features/metronome/cprProtocol';
+import { translate } from '../i18n';
 
 export const BPM_VALUES = [100, 110, 120] as const;
 export type BpmValue = typeof BPM_VALUES[number];
@@ -78,7 +79,7 @@ function freshSession(now: number) {
     epiCount: 0,
     amioCount: 0,
     htStatus: {},
-    events: [ev('start', 'תחילת החייאה', now)],
+    events: [ev('start', translate('cprEvStart'), now)],
   };
 }
 
@@ -137,42 +138,43 @@ export const useMetronomeStore = create<MetronomeStore>()(
         set((prev) => ({
           shockLogs: [...prev.shockLogs, shock],
           lastShockTimestamp: now,
-          events: [...prev.events, ev('shock', `שוק ${prev.shockLogs.length + 1}`, now)],
+          events: [...prev.events, ev('shock', translate('cprEvShock', { n: prev.shockLogs.length + 1 }), now)],
         }));
       },
       setRhythm: (r) =>
-        set((prev) => ({ rhythm: r, events: [...prev.events, ev('rhythm', `קצב: ${RHYTHM_LABELS[r]}`)] })),
+        set((prev) => ({ rhythm: r, events: [...prev.events, ev('rhythm', translate('cprEvRhythm', { rhythm: translate(RHYTHM_LABEL_KEYS[r]) }))] })),
       completeCycle: (nextStart) =>
         set((prev) => {
           const at = nextStart ?? Date.now();
           return {
             cycleCount: prev.cycleCount + 1,
             cycleStartTime: at,
-            events: [...prev.events, ev('cycle', `סוף מחזור ${prev.cycleCount + 1} · החלפת מעסה ובדיקת קצב`, at)],
+            events: [...prev.events, ev('cycle', translate('cprEvCycleEnd', { n: prev.cycleCount + 1 }), at)],
           };
         }),
       resetCycle: () =>
-        set((prev) => ({ cycleStartTime: Date.now(), events: [...prev.events, ev('cycle', `איפוס ידני של מחזור ${prev.cycleCount + 1}`)] })),
+        set((prev) => ({ cycleStartTime: Date.now(), events: [...prev.events, ev('cycle', translate('cprEvCycleReset', { n: prev.cycleCount + 1 }))] })),
       giveEpi: () =>
         set((prev) => {
           const now = Date.now();
           return {
             lastEpiTime: now,
             epiCount: prev.epiCount + 1,
-            events: [...prev.events, ev('epi', `${EPI_DOSE} (מנה ${prev.epiCount + 1})`, now)],
+            events: [...prev.events, ev('epi', translate('cprEvEpi', { dose: epiDose(), n: prev.epiCount + 1 }), now)],
           };
         }),
       giveAmio: (dose) =>
         set((prev) => ({ amioCount: prev.amioCount + 1, events: [...prev.events, ev('amio', dose)] })),
       markRosc: () =>
-        set((prev) => ({ events: [...prev.events, ev('rosc', 'ROSC — חזרת דופק')] })),
+        set((prev) => ({ events: [...prev.events, ev('rosc', translate('cprEvRosc'))] })),
       toggleHT: (id) =>
         set((prev) => {
           const on = !prev.htStatus[id];
-          const label = H_AND_T.find((h) => h.id === id)?.label ?? id;
+          const key = H_AND_T.find((h) => h.id === id)?.labelKey;
+          const label = key ? translate(key) : id;
           return {
             htStatus: { ...prev.htStatus, [id]: on },
-            events: [...prev.events, ev('ht', on ? `נשלל/טופל: ${label}` : `בוטל סימון: ${label}`)],
+            events: [...prev.events, ev('ht', translate(on ? 'cprEvHtOn' : 'cprEvHtOff', { label }))],
           };
         }),
       setEpiInterval: (sec) => set({ epiIntervalSec: sec }),
@@ -195,7 +197,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
             cprShocks: state.shockLogs.length,
             cprShockLogs: state.shockLogs,
             cprStartAt: state.cprStartTime,
-            cprEvents: [...state.events, ev('end', 'סיום החייאה', end)],
+            cprEvents: [...state.events, ev('end', translate('cprEvEnd'), end)],
           });
         }
         set({
