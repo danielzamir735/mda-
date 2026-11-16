@@ -68,7 +68,7 @@ export default function ChildBodyDiagram({ selected, onToggle, onReset }: ChildB
       <BodyDiagramShell>
         <div className="relative flex items-start justify-center gap-3 sm:gap-6">
           <Silhouette side="front" selected={sel} onToggle={onToggle} labelLookup={LABELS} scale={CHILD_SCALE} childProportions />
-          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-emt-border to-transparent" />
+          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-line-strong to-transparent" />
           <Silhouette side="back"  selected={sel} onToggle={onToggle} labelLookup={LABELS} scale={CHILD_SCALE} childProportions />
         </div>
 

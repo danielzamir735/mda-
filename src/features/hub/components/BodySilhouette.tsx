@@ -124,7 +124,7 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-emt-muted">
+      <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-fg-muted">
         {side === 'front' ? 'קדמי' : 'אחורי'}
       </p>
 
@@ -233,7 +233,7 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
           'px-3 py-2 rounded-xl border font-bold text-sm transition-colors active:scale-95',
           selectedPerineum
             ? 'border-emt-red/50 bg-emt-red/10 text-emt-red'
-            : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted',
+            : 'border-line bg-surface-2 text-fg-muted',
         ].join(' ')}
       >
         איבר מין <span className="text-xs opacity-60">(1%)</span>
@@ -242,7 +242,7 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
       <button
         type="button"
         onClick={onReset}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted font-bold text-sm active:scale-95 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-line bg-surface-2 text-fg-muted font-bold text-sm active:scale-95 transition-colors"
       >
         <RotateCcw size={14} />
         נקה הכל

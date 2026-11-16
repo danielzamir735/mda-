@@ -47,18 +47,18 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+      <div className="fixed inset-0 z-[70] flex flex-col bg-page">
         {/* Header */}
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
             <BookOpen size={22} className="text-blue-400" />
-            <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">טבלת מדדים</h2>
+            <h2 className="text-fg font-bold text-xl">טבלת מדדים</h2>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+                       text-fg-muted hover:text-fg"
             aria-label="סגור"
           >
             <X size={20} />
@@ -86,7 +86,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
           </button>
 
           {/* Table */}
-          <div className="w-full rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
+          <div className="w-full rounded-2xl border border-line overflow-hidden">
 
             {/* Column headers */}
             <div className="grid grid-cols-4 bg-blue-600 dark:bg-blue-900 border-b-2 border-blue-700 dark:border-blue-800">
@@ -104,13 +104,13 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                 className={[
                   'grid grid-cols-4 items-stretch',
                   i % 2 === 0
-                    ? 'bg-white dark:bg-emt-dark'
+                    ? 'bg-surface'
                     : 'bg-blue-50 dark:bg-blue-950/40',
-                  i < ROWS.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : '',
+                  i < ROWS.length - 1 ? 'border-b border-line' : '',
                 ].join(' ')}
               >
                 {/* Vital name cell */}
-                <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-right flex items-center border-l border-gray-200 dark:border-emt-border bg-blue-50/60 dark:bg-blue-950/30">
+                <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-right flex items-center border-l border-line bg-blue-50/60 dark:bg-blue-950/30">
                   {row.label}
                 </div>
 
@@ -120,8 +120,8 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                     key={j}
                     className={[
                       'px-3 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
-                      'text-gray-800 dark:text-emt-light',
-                      j < 2 ? 'border-l border-gray-200 dark:border-emt-border' : '',
+                      'text-fg',
+                      j < 2 ? 'border-l border-line' : '',
                     ].join(' ')}
                   >
                     {val}
@@ -131,7 +131,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
             ))}
           </div>
 
-          <p className="text-xs text-gray-400 dark:text-emt-border text-center mt-4 leading-relaxed">
+          <p className="text-xs text-fg-subtle text-center mt-4 leading-relaxed">
             * ערכי ייחוס בלבד — אין להחליף שיקול דעת קליני
           </p>
         </div>

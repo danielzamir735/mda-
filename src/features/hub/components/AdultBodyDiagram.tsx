@@ -59,7 +59,7 @@ export default function AdultBodyDiagram({ selected, onToggle, onReset }: AdultB
       <BodyDiagramShell>
         <div className="relative flex items-start justify-center gap-3 sm:gap-6">
           <Silhouette side="front" selected={sel} onToggle={onToggle} labelLookup={LABELS} />
-          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-emt-border to-transparent" />
+          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-line-strong to-transparent" />
           <Silhouette side="back"  selected={sel} onToggle={onToggle} labelLookup={LABELS} />
         </div>
 
