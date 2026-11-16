@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Trash2, Images, Download, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useCameraStore } from '../../store/cameraStore';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface Props {
 
 export default function GalleryModal({ isOpen, onClose }: Props) {
   const { photos, removePhoto } = useCameraStore();
+  const t = useTranslation();
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
 
   // Close fullscreen on back, then close gallery on a second back press.
@@ -40,28 +42,28 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
   return (
     <>
       {/* ── Gallery grid ── */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-emt-dark">
+      <div className="fixed inset-0 z-50 flex flex-col bg-page">
         {/* Header */}
         <div className="ios-safe-header flex items-center justify-between px-4 py-4
-                        border-b border-emt-border shrink-0">
+                        border-b border-line shrink-0">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-emt-gray border border-emt-border
+            className="w-9 h-9 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center
-                       text-emt-muted hover:text-emt-light active:scale-90 transition-all"
-            aria-label="סגור"
+                       text-fg-muted hover:text-fg active:scale-90 transition-all"
+            aria-label={t('close')}
           >
             <X size={18} />
           </button>
-          <h2 className="text-emt-light font-black text-lg">תמונות</h2>
+          <h2 className="text-fg font-black text-lg">{t('photos')}</h2>
           <div className="w-9" />
         </div>
 
         {/* Content */}
         {photos.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-emt-border">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-fg-subtle">
             <Images size={52} strokeWidth={1.2} />
-            <p className="text-sm text-emt-muted">אין תמונות שמורות</p>
+            <p className="text-sm text-fg-muted">{t('homeGalleryEmpty')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 p-3 overflow-y-auto flex-1">
@@ -72,29 +74,27 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               >
                 <div
                   className="relative rounded-2xl overflow-hidden aspect-[4/3]
-                             bg-emt-gray border border-emt-border cursor-pointer
+                             bg-surface-2 border border-line cursor-pointer
                              active:scale-95 transition-transform duration-150"
                   onClick={() => setFullscreenIndex(i)}
                 >
                   <img
                     src={photo.dataUrl}
-                    alt={`תמונה ${i + 1}`}
+                    alt={t('homeGalleryPhotoN', { n: i + 1 })}
                     className="w-full h-full object-cover"
                   />
                   {/* Delete button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); removePhoto(i); }}
-                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full
-                               bg-black/60 border border-white/20
-                               flex items-center justify-center text-white
-                               active:scale-90 transition-transform"
-                    aria-label={`מחק תמונה ${i + 1}`}
+                    // theme-ok: dark button over the photo in both modes
+                    className="absolute top-1.5 end-1.5 w-7 h-7 rounded-full bg-black/60 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+                    aria-label={t('homeGalleryDeletePhotoN', { n: i + 1 })}
                   >
                     <Trash2 size={13} />
                   </button>
                 </div>
                 {/* Timestamp */}
-                <p className="text-emt-muted text-[0.65rem] font-medium text-center px-1 leading-tight">
+                <p className="text-fg-muted text-[0.65rem] font-medium text-center px-1 leading-tight">
                   {photo.timestamp}
                 </p>
               </div>
@@ -105,24 +105,28 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
 
       {/* ── Fullscreen photo viewer ── */}
       {fullscreenIndex !== null && photos[fullscreenIndex] && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+        <div
+          // theme-ok: the photo viewer stays dark in both modes
+          className="fixed inset-0 z-[60] flex flex-col bg-black"
+        >
           {/* Top bar */}
-          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3
-                          bg-black/80 border-b border-white/10">
+          {/* theme-ok: the photo viewer stays dark in both modes */}
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 bg-black/80 border-b border-white/10">
             <button
               onClick={() => setFullscreenIndex(null)}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20
-                         flex items-center justify-center text-white
-                         active:scale-90 transition-transform"
-              aria-label="חזור לגלריה"
+              // theme-ok: the photo viewer stays dark in both modes
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+              aria-label={t('homeGalleryBack')}
             >
               <X size={20} />
             </button>
 
             <div className="flex flex-col items-center gap-0.5">
+              {/* theme-ok: the photo viewer stays dark in both modes */}
               <span className="text-white/60 text-sm font-medium">
                 {fullscreenIndex + 1} / {photos.length}
               </span>
+              {/* theme-ok: the photo viewer stays dark in both modes */}
               <span className="text-white/40 text-xs">
                 {photos[fullscreenIndex].timestamp}
               </span>
@@ -130,14 +134,12 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
 
             <button
               onClick={() => handleSave(photos[fullscreenIndex].dataUrl)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl
-                         bg-emt-green border border-green-600
-                         text-white font-bold text-sm
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emt-green border border-green-600 text-white font-bold text-sm
                          active:scale-95 transition-transform"
-              aria-label="שמור לגלריה"
+              aria-label={t('homeGallerySave')}
             >
               <Download size={16} />
-              שמור לגלריה
+              {t('homeGallerySave')}
             </button>
           </div>
 
@@ -145,7 +147,7 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
           <div className="flex-1 flex items-center justify-center relative overflow-hidden">
             <img
               src={photos[fullscreenIndex].dataUrl}
-              alt={`תמונה ${fullscreenIndex + 1}`}
+              alt={t('homeGalleryPhotoN', { n: fullscreenIndex + 1 })}
               className="max-w-full max-h-full object-contain"
             />
 
@@ -153,29 +155,26 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
               <>
                 <button
                   onClick={goPrev}
-                  className="absolute right-2 top-1/2 -translate-y-1/2
-                             w-10 h-10 rounded-full bg-black/60 border border-white/20
-                             flex items-center justify-center text-white
-                             active:scale-90 transition-transform"
-                  aria-label="תמונה קודמת"
+                  // theme-ok: the photo viewer stays dark in both modes
+                  className="absolute start-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+                  aria-label={t('homeGalleryPrev')}
                 >
-                  <ChevronRight size={22} />
+                  <ChevronRight size={22} className="ltr:rotate-180" />
                 </button>
                 <button
                   onClick={goNext}
-                  className="absolute left-2 top-1/2 -translate-y-1/2
-                             w-10 h-10 rounded-full bg-black/60 border border-white/20
-                             flex items-center justify-center text-white
-                             active:scale-90 transition-transform"
-                  aria-label="תמונה הבאה"
+                  // theme-ok: the photo viewer stays dark in both modes
+                  className="absolute end-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+                  aria-label={t('homeGalleryNext')}
                 >
-                  <ChevronLeft size={22} />
+                  <ChevronLeft size={22} className="ltr:rotate-180" />
                 </button>
               </>
             )}
           </div>
 
           {/* Bottom bar — delete */}
+          {/* theme-ok: the photo viewer stays dark in both modes */}
           <div className="shrink-0 flex justify-center px-4 py-4 bg-black/80 border-t border-white/10">
             <button
               onClick={() => {
@@ -190,10 +189,10 @@ export default function GalleryModal({ isOpen, onClose }: Props) {
                          bg-red-600/20 border border-red-500/40
                          text-red-400 font-bold text-sm
                          active:scale-95 transition-transform"
-              aria-label="מחק תמונה"
+              aria-label={t('homeGalleryDeletePhoto')}
             >
               <Trash2 size={16} />
-              מחק תמונה
+              {t('homeGalleryDeletePhoto')}
             </button>
           </div>
         </div>

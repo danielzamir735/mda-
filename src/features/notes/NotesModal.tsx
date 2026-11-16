@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Plus, ChevronRight, Trash2, Folder, FolderPlus, Pencil, Check } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { useNotesStore } from '../../store/notesStore';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   } = useNotesStore();
 
   const [view, setView] = useState<'folders' | 'notes'>('folders');
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // null = כללי
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // null = general
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
@@ -95,8 +95,8 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   const folderOf = (n: { folderId?: string | null }) => n.folderId ?? null;
   const notesInFolder = (fid: string | null) => notes.filter((n) => folderOf(n) === fid);
   const activeFolderName = activeFolderId === null
-    ? 'כללי'
-    : folders.find((f) => f.id === activeFolderId)?.name ?? 'כללי';
+    ? t('generalGroup')
+    : folders.find((f) => f.id === activeFolderId)?.name ?? t('generalGroup');
 
   const openFolder = (fid: string | null) => {
     setActiveFolderId(fid);
@@ -155,39 +155,40 @@ export default function NotesModal({ isOpen, onClose }: Props) {
 
   const renderFolderPrompt = () => (
     <div
+      // theme-ok: modal backdrop dims the page in both modes
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={() => setFolderPrompt(null)}
     >
       <div
-        className="bg-white dark:bg-emt-gray w-full max-w-xs rounded-2xl border border-gray-200 dark:border-emt-border p-4"
+        className="bg-surface w-full max-w-xs rounded-2xl border border-line p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-3">
-          {folderPrompt?.mode === 'create' ? 'קבוצה חדשה' : 'שינוי שם קבוצה'}
+        <p className="text-fg font-bold text-base mb-3">
+          {folderPrompt?.mode === 'create' ? t('homeNotesNewFolder') : t('homeNotesRenameFolder')}
         </p>
         <input
-          className="w-full bg-gray-50 dark:bg-emt-dark border border-gray-200 dark:border-emt-border rounded-xl px-3 py-2.5
-                     text-gray-900 dark:text-emt-light text-sm focus:outline-none focus:border-blue-400"
-          placeholder="שם הקבוצה"
+          className="w-full bg-page border border-line rounded-xl px-3 py-2.5
+                     text-fg text-sm focus:outline-none focus:border-blue-400"
+          placeholder={t('homeNotesFolderName')}
           value={folderDraft}
           onChange={(e) => setFolderDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submitFolderPrompt(); }}
-          dir="rtl"
+          dir="auto"
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
         <div className="flex gap-2 mt-3">
           <button
             onClick={() => setFolderPrompt(null)}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted font-bold text-sm active:scale-95 transition-transform"
+            className="flex-1 py-2.5 rounded-xl border border-line text-fg-muted font-bold text-sm active:scale-95 transition-transform"
           >
-            ביטול
+            {t('cancel')}
           </button>
           <button
             onClick={submitFolderPrompt}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm active:scale-95 transition-transform"
           >
-            {folderPrompt?.mode === 'create' ? 'צור' : 'שמור'}
+            {folderPrompt?.mode === 'create' ? t('homeNotesCreate') : t('save')}
           </button>
         </div>
       </div>
@@ -197,19 +198,19 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   /* ═══════════════ Note edit view ═══════════════ */
   if (editingId !== null) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark">
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="fixed inset-0 z-50 flex flex-col bg-page">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <button
             onClick={() => setEditingId(null)}
-            className="flex items-center gap-1 text-blue-400 font-bold text-sm active:opacity-70"
+            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold text-sm active:opacity-70"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} className="ltr:rotate-180" />
             {activeFolderName}
           </button>
           <button
             onClick={handleDelete}
             className="w-9 h-9 flex items-center justify-center rounded-full
-                       bg-red-600/20 border border-red-500/30 text-red-400 active:scale-90 transition-transform"
+                       bg-red-600/15 border border-red-500/30 text-red-600 dark:text-red-400 active:scale-90 transition-transform"
             aria-label={t('deleteNote')}
           >
             <Trash2 size={16} />
@@ -220,36 +221,36 @@ export default function NotesModal({ isOpen, onClose }: Props) {
         <button
           onClick={() => setMovePickerOpen(true)}
           className="shrink-0 self-start mx-4 mt-2.5 flex items-center gap-1.5 rounded-full
-                     bg-blue-500/10 border border-blue-400/30 text-blue-400 text-xs font-bold px-3 py-1.5 active:scale-95 transition-transform"
+                     bg-blue-500/10 border border-blue-400/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1.5 active:scale-95 transition-transform"
         >
           <Folder size={13} />
           {editingNote?.folderId
-            ? folders.find((f) => f.id === editingNote.folderId)?.name ?? 'כללי'
-            : 'כללי'}
+            ? folders.find((f) => f.id === editingNote.folderId)?.name ?? t('generalGroup')
+            : t('generalGroup')}
         </button>
 
         <input
-          className="shrink-0 bg-transparent text-gray-900 dark:text-emt-light font-bold text-xl px-4 py-3
-                     border-b border-gray-200 dark:border-emt-border focus:outline-none placeholder:text-gray-400 dark:placeholder:text-emt-muted"
+          className="shrink-0 bg-transparent text-fg font-bold text-xl px-4 py-3
+                     border-b border-line focus:outline-none placeholder:text-fg-subtle"
           placeholder={t('titlePlaceholder')}
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          dir="rtl"
+          dir="auto"
         />
 
         <textarea
-          className="flex-1 bg-gray-50 dark:bg-[#09090B] text-gray-900 dark:text-emt-light text-base leading-relaxed
-                     p-4 resize-none focus:outline-none placeholder:text-gray-300 dark:placeholder:text-emt-border"
+          className="flex-1 bg-page text-fg text-base leading-relaxed
+                     p-4 resize-none focus:outline-none placeholder:text-fg-subtle"
           placeholder={t('writeHere')}
           value={content}
           onChange={(e) => handleContentChange(e.target.value)}
-          dir="rtl"
+          dir="auto"
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
 
         {/* Explicit save action — visibly confirms the save, then returns to the list */}
-        <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)] border-t border-gray-200 dark:border-emt-border">
+        <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)] border-t border-line">
           <button
             onClick={handleSaveAndClose}
             disabled={justSaved}
@@ -257,35 +258,36 @@ export default function NotesModal({ isOpen, onClose }: Props) {
               justSaved ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
             }`}
           >
-            {justSaved ? (<><Check size={18} /> נשמר</>) : 'שמור'}
+            {justSaved ? (<><Check size={18} /> {t('homeNotesSaved')}</>) : t('save')}
           </button>
         </div>
 
         {/* Move-to-folder picker */}
         {movePickerOpen && (
           <div
+            // theme-ok: modal backdrop dims the page in both modes
             className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
             onClick={() => setMovePickerOpen(false)}
           >
             <div
-              className="bg-white dark:bg-emt-gray w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl border border-gray-200 dark:border-emt-border p-4 pb-[max(env(safe-area-inset-bottom),1rem)] max-h-[70vh] overflow-y-auto"
+              className="bg-surface w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl border border-line p-4 pb-[max(env(safe-area-inset-bottom),1rem)] max-h-[70vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-gray-900 dark:text-emt-light font-bold text-base mb-3">העברה לקבוצה</p>
+              <p className="text-fg font-bold text-base mb-3">{t('homeNotesMoveToFolder')}</p>
               <div className="flex flex-col gap-1.5">
-                {[{ id: null as string | null, name: 'כללי' }, ...folders.map((f) => ({ id: f.id as string | null, name: f.name }))].map((f) => {
+                {[{ id: null as string | null, name: t('generalGroup') }, ...folders.map((f) => ({ id: f.id as string | null, name: f.name }))].map((f) => {
                   const selected = (editingNote?.folderId ?? null) === f.id;
                   return (
                     <button
                       key={f.id ?? GENERAL_ID}
                       onClick={() => { if (editingId) moveNote(editingId, f.id); setMovePickerOpen(false); }}
-                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-right border transition-colors ${
+                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-start border transition-colors ${
                         selected
                           ? 'border-blue-400/50 bg-blue-400/10'
-                          : 'border-gray-200 dark:border-emt-border bg-gray-50 dark:bg-emt-dark'
+                          : 'border-line bg-page'
                       }`}
                     >
-                      <span className="text-sm font-medium text-gray-900 dark:text-emt-light flex items-center gap-2">
+                      <span className="text-sm font-medium text-fg flex items-center gap-2">
                         <Folder size={14} className="text-blue-400" />
                         {f.name}
                       </span>
@@ -305,22 +307,22 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   if (view === 'notes') {
     const sorted = [...notesInFolder(activeFolderId)].sort((a, b) => b.updatedAt - a.updatedAt);
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark">
-        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="fixed inset-0 z-50 flex flex-col bg-page">
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <button
             onClick={() => { setView('folders'); setActiveFolderId(null); }}
-            className="flex items-center gap-1 text-blue-400 font-bold text-sm active:opacity-70"
+            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold text-sm active:opacity-70"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} className="ltr:rotate-180" />
             {t('notes')}
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-gray-900 dark:text-emt-light font-bold text-lg truncate">{activeFolderName}</h2>
+            <h2 className="text-fg font-bold text-lg truncate">{activeFolderName}</h2>
             {activeFolderId !== null && (
               <button
                 onClick={() => { setFolderDraft(activeFolderName); setFolderPrompt({ mode: 'rename', id: activeFolderId }); }}
-                className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted active:scale-90 transition-transform"
-                aria-label="שנה שם קבוצה"
+                className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface-2 border border-line text-fg-muted active:scale-90 transition-transform"
+                aria-label={t('homeNotesRenameFolder')}
               >
                 <Pencil size={14} />
               </button>
@@ -330,7 +332,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto p-4 pb-24">
           {sorted.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-500 dark:text-emt-muted">
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-fg-muted">
               <p className="text-sm">{t('noNotesYet')}</p>
               <p className="text-xs opacity-60">{t('tapPlusToCreate')}</p>
             </div>
@@ -340,13 +342,13 @@ export default function NotesModal({ isOpen, onClose }: Props) {
                 <button
                   key={note.id}
                   onClick={() => openNote(note.id)}
-                  className="flex flex-col items-start p-3 rounded-2xl border border-gray-200 dark:border-emt-border
-                             bg-gray-100 dark:bg-emt-gray text-right active:scale-95 transition-transform min-h-[100px]"
+                  className="flex flex-col items-start p-3 rounded-2xl border border-line
+                             bg-surface-2 text-start active:scale-95 transition-transform min-h-[100px]"
                 >
-                  <p className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight mb-1.5 line-clamp-2 w-full">
+                  <p className="text-fg font-bold text-sm leading-tight mb-1.5 line-clamp-2 w-full">
                     {note.title || t('untitled')}
                   </p>
-                  <p className="text-gray-500 dark:text-emt-muted text-xs leading-relaxed line-clamp-3 w-full">
+                  <p className="text-fg-muted text-xs leading-relaxed line-clamp-3 w-full">
                     {note.content || t('empty')}
                   </p>
                 </button>
@@ -355,7 +357,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
           )}
         </div>
 
-        <div className="absolute bottom-6 left-6">
+        <div className="absolute bottom-6 end-6">
           <button
             onClick={createNote}
             className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-900/40
@@ -376,14 +378,14 @@ export default function NotesModal({ isOpen, onClose }: Props) {
   const folderList = [...folders].sort((a, b) => a.createdAt - b.createdAt);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-emt-dark">
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
-        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('notes')}</h2>
+    <div className="fixed inset-0 z-50 flex flex-col bg-page">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
+        <h2 className="text-fg font-bold text-xl">{t('notes')}</h2>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+                     text-fg-muted hover:text-fg"
           aria-label={t('close')}
         >
           <X size={20} />
@@ -392,16 +394,16 @@ export default function NotesModal({ isOpen, onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto p-4 pb-24">
         <div className="grid grid-cols-2 gap-3">
-          {/* כללי bucket — always present */}
+          {/* General bucket — always present */}
           <button
             onClick={() => openFolder(null)}
             className="flex flex-col items-start justify-between p-4 rounded-2xl border border-blue-400/25
-                       bg-blue-400/5 dark:bg-blue-400/10 text-right active:scale-95 transition-transform min-h-[104px]"
+                       bg-blue-400/5 dark:bg-blue-400/10 text-start active:scale-95 transition-transform min-h-[104px]"
           >
             <Folder size={22} className="text-blue-400" />
             <div className="w-full">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight">כללי</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{generalCount} פתקים</p>
+              <p className="text-fg font-bold text-sm leading-tight">{t('generalGroup')}</p>
+              <p className="text-fg-muted text-xs mt-0.5">{t('homeNotesCount', { count: generalCount })}</p>
             </div>
           </button>
 
@@ -410,26 +412,26 @@ export default function NotesModal({ isOpen, onClose }: Props) {
             return (
               <div
                 key={f.id}
-                className="relative flex flex-col items-start justify-between p-4 rounded-2xl border border-gray-200 dark:border-emt-border
-                           bg-gray-100 dark:bg-emt-gray min-h-[104px]"
+                className="relative flex flex-col items-start justify-between p-4 rounded-2xl border border-line
+                           bg-surface-2 min-h-[104px]"
               >
                 <button
                   onClick={() => openFolder(f.id)}
                   className="absolute inset-0 rounded-2xl active:scale-95 transition-transform"
                   aria-label={f.name}
                 />
-                <Folder size={22} className="text-amber-400 pointer-events-none" />
+                <Folder size={22} className="text-amber-500 dark:text-amber-400 pointer-events-none" />
                 <div className="w-full pointer-events-none">
-                  <p className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight line-clamp-2">{f.name}</p>
-                  <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{count} פתקים</p>
+                  <p className="text-fg font-bold text-sm leading-tight line-clamp-2">{f.name}</p>
+                  <p className="text-fg-muted text-xs mt-0.5">{t('homeNotesCount', { count })}</p>
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm(`למחוק את הקבוצה "${f.name}"? הפתקים שבתוכה יעברו ל"כללי".`)) deleteFolder(f.id);
+                    if (confirm(t('homeNotesDeleteFolderConfirm', { name: f.name }))) deleteFolder(f.id);
                   }}
-                  className="absolute top-2 left-2 w-7 h-7 flex items-center justify-center rounded-full
-                             bg-white/70 dark:bg-black/40 text-red-400 active:scale-90 transition-transform"
-                  aria-label="מחק קבוצה"
+                  className="absolute top-2 end-2 w-7 h-7 flex items-center justify-center rounded-full
+                             bg-surface/70 text-red-500 dark:text-red-400 active:scale-90 transition-transform"
+                  aria-label={t('homeNotesDeleteFolder')}
                 >
                   <Trash2 size={13} />
                 </button>
@@ -439,14 +441,14 @@ export default function NotesModal({ isOpen, onClose }: Props) {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-6">
+      <div className="absolute bottom-6 end-6">
         <button
           onClick={() => { setFolderDraft(''); setFolderPrompt({ mode: 'create' }); }}
           className="h-14 px-5 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-900/40
                      flex items-center gap-2 active:scale-90 transition-transform font-bold text-sm"
         >
           <FolderPlus size={20} />
-          קבוצה חדשה
+          {t('homeNotesNewFolder')}
         </button>
       </div>
 

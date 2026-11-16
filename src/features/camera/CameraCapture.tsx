@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { X, RotateCcw, Check } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   onClose: () => void;
@@ -17,6 +18,7 @@ const VIDEO_CONSTRAINTS: MediaStreamConstraints = {
 };
 
 export default function CameraCapture({ onClose, onPhoto }: Props) {
+  const t = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
@@ -41,8 +43,8 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
           videoRef.current.onloadedmetadata = () => setReady(true);
         }
       })
-      .catch(() => setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.'));
-  }, []);
+      .catch(() => setError(t('homeCameraNoAccess')));
+  }, [t]);
 
   useEffect(() => {
     let mounted = true;
@@ -56,7 +58,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
           videoRef.current.onloadedmetadata = () => setReady(true);
         }
       })
-      .catch(() => setError('לא ניתן לגשת למצלמה. אנא אשר הרשאה.'));
+      .catch(() => setError(t('homeCameraNoAccess')));
 
     return () => {
       mounted = false;
@@ -94,7 +96,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
       stopStream();
       setCapturedUrl(dataUrl);
     } catch {
-      setError('שגיאה בצילום. אנא נסה שוב.');
+      setError(t('homeCameraCaptureError'));
     } finally {
       setCapturing(false);
     }
@@ -115,39 +117,38 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   if (capturedUrl) {
     return (
       <div
+        // theme-ok: camera screen stays dark in both modes
         className="fixed inset-0 z-[60] bg-black"
         style={{ height: '100dvh' }}
       >
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
-                     bg-black/60 backdrop-blur-sm border border-white/20
-                     flex items-center justify-center text-white
-                     active:scale-90 transition-transform"
-          aria-label="סגור מצלמה"
+          // theme-ok: camera screen stays dark in both modes
+          className="absolute top-4 end-4 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+          aria-label={t('homeCameraClose')}
         >
           <X size={20} />
         </button>
 
         <img
           src={capturedUrl}
-          alt="תמונה שצולמה"
+          alt={t('homeCameraCapturedAlt')}
           className="absolute inset-0 w-full h-full object-contain"
           style={{ bottom: '120px' }}
         />
 
         <div
-          className="absolute bottom-0 left-0 right-0 flex gap-4 justify-center items-center bg-black"
+          // theme-ok: camera screen stays dark in both modes
+          className="absolute bottom-0 inset-x-0 flex gap-4 justify-center items-center bg-black"
           style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)', paddingTop: '20px', minHeight: '100px' }}
         >
           <button
             onClick={retake}
-            className="flex items-center gap-2 px-6 py-3 rounded-full
-                       border border-white/40 text-white text-base font-medium
-                       active:scale-95 transition-transform"
+            // theme-ok: camera screen stays dark in both modes
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/40 text-white text-base font-medium active:scale-95 transition-transform"
           >
             <RotateCcw size={18} />
-            צלם מחדש
+            {t('homeCameraRetake')}
           </button>
           <button
             onClick={usePhoto}
@@ -156,7 +157,7 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
                        active:scale-95 transition-transform"
           >
             <Check size={18} strokeWidth={3} />
-            אישור
+            {t('ok')}
           </button>
         </div>
       </div>
@@ -166,22 +167,22 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
   // ── Camera / viewfinder mode ──────────────────────────────────
   return (
     <div
+      // theme-ok: camera screen stays dark in both modes
       className="fixed inset-0 z-[60] bg-black"
       style={{ height: '100dvh' }}
     >
       <button
         onClick={handleClose}
-        className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full
-                   bg-black/60 backdrop-blur-sm border border-white/20
-                   flex items-center justify-center text-white
-                   active:scale-90 transition-transform"
-        aria-label="סגור מצלמה"
+        // theme-ok: camera screen stays dark in both modes
+        className="absolute top-4 end-4 z-10 w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white active:scale-90 transition-transform"
+        aria-label={t('homeCameraClose')}
       >
         <X size={20} />
       </button>
 
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center px-8">
+          {/* theme-ok: camera screen stays dark in both modes */}
           <p className="text-white text-center text-base">{error}</p>
         </div>
       ) : (
@@ -198,16 +199,17 @@ export default function CameraCapture({ onClose, onPhoto }: Props) {
         <button
           onClick={capture}
           disabled={!ready || !!error || capturing}
-          className="w-20 h-20 rounded-full border-4 border-white
-                     flex items-center justify-center
+          // theme-ok: camera screen stays dark in both modes
+          className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center
                      transition-all duration-150
                      disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
+            // theme-ok: camera screen stays dark in both modes
             background: capturing ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)',
             backdropFilter: 'blur(4px)',
             transform: capturing ? 'scale(0.88)' : undefined,
           }}
-          aria-label="צלם תמונה"
+          aria-label={t('homeCameraShoot')}
         />
       </div>
     </div>
