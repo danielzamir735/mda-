@@ -23,6 +23,7 @@ export default function UpdateAnnouncementModal() {
 
   return (
     <div
+      // theme-ok: the dim backdrop behind a pop-up stays dark in both modes
       className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
       onClick={handleDismiss}
     >
@@ -83,8 +84,7 @@ export default function UpdateAnnouncementModal() {
         {/* CTA */}
         <button
           onClick={handleDismiss}
-          className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95
-                     text-white font-bold text-lg transition-all duration-150 shadow-lg shadow-emerald-900/30"
+          className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-lg transition-all duration-150 shadow-lg shadow-emerald-900/30"
         >
           {t('obGotItThanks')}
         </button>

@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
   MoreVertical, CheckCircle, ExternalLink, ListChecks,
-  PlusCircle, ChevronRight, Download, Smartphone, Apple, AlertTriangle,
+  PlusCircle, ChevronRight, ChevronLeft, Download, Smartphone, Apple, AlertTriangle,
   X, ShieldPlus, Activity, CheckCircle2,
 } from 'lucide-react';
 import { usePwaInstall } from './PwaInstallContext';
+import { useTranslation, useLanguage } from '../../i18n';
 
 type Tab = 'android' | 'ios';
 
 /* ── Premium EMS app icon ── */
 const AppIcon = () => (
   <div className="relative flex items-center justify-center">
+    {/* theme-ok: white icon on the blue badge */}
     <ShieldPlus className="w-9 h-9 text-white drop-shadow-lg" strokeWidth={1.5} />
     <Activity
-      className="absolute bottom-0 right-0 w-4 h-4 text-blue-200 opacity-90"
+      className="absolute bottom-0 end-0 w-4 h-4 text-blue-200 opacity-90"
       strokeWidth={2}
     />
   </div>
@@ -24,18 +26,18 @@ function StepCard({
   index, icon, title, desc,
 }: { index: number; icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/8">
+    <div className="flex items-start gap-3 p-4 rounded-2xl bg-fg/5 border border-fg/10">
       <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-xs
                        font-bold flex items-center justify-center mt-0.5">
         {index}
       </span>
       <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30
-                      flex items-center justify-center text-blue-400 mt-0.5">
+                      flex items-center justify-center text-blue-600 dark:text-blue-400 mt-0.5">
         {icon}
       </div>
-      <div className="flex-1 text-right">
-        <p className="text-white font-semibold text-sm leading-snug">{title}</p>
-        <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{desc}</p>
+      <div className="flex-1 text-start">
+        <p className="text-fg font-semibold text-sm leading-snug">{title}</p>
+        <p className="text-fg-muted text-xs mt-0.5 leading-relaxed">{desc}</p>
       </div>
     </div>
   );
@@ -49,21 +51,22 @@ function AndroidContent({
   installPromptEvent: ReturnType<typeof usePwaInstall>['installPromptEvent'];
   onInstall: () => Promise<void>;
 }) {
+  const t = useTranslation();
   const manualSteps = [
     {
       icon: <MoreVertical className="w-4 h-4 rotate-90" />,
-      title: 'פתח את התפריט',
-      desc: 'לחץ על סמל שלוש הנקודות (⋮) בפינה העליונה של הדפדפן.',
+      title: t('obInstOpenMenu'),
+      desc: t('obInstOpenMenuDesc'),
     },
     {
       icon: <Download className="w-4 h-4" />,
-      title: 'בחר בהתקנה',
-      desc: "חפש ולחץ על 'התקנת אפליקציה' או 'הוסף למסך הבית'.",
+      title: t('obInstChoose'),
+      desc: t('obInstChooseDesc'),
     },
     {
       icon: <CheckCircle className="w-4 h-4" />,
-      title: 'אשר את ההתקנה',
-      desc: "בחלון שנפתח, לחץ על 'התקן'.",
+      title: t('obInstConfirm'),
+      desc: t('obInstConfirmDesc'),
     },
   ];
 
@@ -73,27 +76,26 @@ function AndroidContent({
       <div className="flex flex-col gap-4">
         {/* Status banner */}
         <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/30">
-          <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
-          <div className="flex-1 text-right">
-            <p className="text-green-300 font-bold text-sm">מכין התקנה...</p>
-            <p className="text-green-400/80 text-xs mt-0.5">ההתקנה מוכנה! לחץ על הכפתור למטה</p>
+          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <div className="flex-1 text-start">
+            <p className="text-green-700 dark:text-green-300 font-bold text-sm">{t('obInstPreparing')}</p>
+            <p className="text-green-600 dark:text-green-400/80 text-xs mt-0.5">{t('obInstReady')}</p>
           </div>
         </div>
 
         {/* One-tap install button — massive and prominent */}
         <button
           onClick={onInstall}
-          className="w-full py-6 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600
-                     text-white font-extrabold text-xl shadow-2xl shadow-blue-500/50
+          className="w-full py-6 rounded-2xl bg-gradient-to-l from-blue-500 to-blue-600 text-white font-extrabold text-xl shadow-2xl shadow-blue-500/50
                      active:scale-95 transition-all duration-200 hover:from-blue-400 hover:to-blue-500
                      flex items-center justify-center gap-3 border border-blue-400/30"
         >
           <Download className="w-7 h-7" />
-          התקנה מהירה ⚡
+          {t('obInstQuick')}
         </button>
 
-        <p className="text-slate-500 text-xs text-center">
-          הדפדפן יציג חלון אישור — לחץ "התקן" לסיום
+        <p className="text-fg-muted text-xs text-center">
+          {t('obInstBrowserPrompt')}
         </p>
       </div>
     );
@@ -102,10 +104,10 @@ function AndroidContent({
   /* ── Native prompt unavailable — manual steps only ── */
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-        <p className="text-slate-300 text-sm font-semibold text-right">התקנה ידנית</p>
-        <p className="text-slate-400 text-xs mt-1 text-right leading-relaxed">
-          עקוב אחר השלבים הבאים כדי להוסיף את האפליקציה למסך הבית שלך.
+      <div className="rounded-2xl bg-fg/5 border border-fg/10 px-4 py-3">
+        <p className="text-fg/85 text-sm font-semibold text-start">{t('obInstManual')}</p>
+        <p className="text-fg-muted text-xs mt-1 text-start leading-relaxed">
+          {t('obInstManualDesc')}
         </p>
       </div>
 
@@ -118,30 +120,31 @@ function AndroidContent({
 
 /* ── iOS tab content ── */
 function IosContent() {
+  const t = useTranslation();
   const steps = [
     {
       icon: <ExternalLink className="w-4 h-4" />,
-      title: 'כפתור השיתוף',
-      desc: 'לחץ על כפתור השיתוף (ריבוע עם חץ) בתחתית המסך.',
+      title: t('obInstShare'),
+      desc: t('obInstShareDesc'),
     },
     {
       icon: <ListChecks className="w-4 h-4" />,
-      title: 'הוסף למסך הבית',
-      desc: "גלול בתפריט למטה עד שתמצא את האפשרות 'הוסף למסך הבית' (Add to Home Screen).",
+      title: t('obInstAddHome'),
+      desc: t('obInstAddHomeDesc'),
     },
     {
       icon: <PlusCircle className="w-4 h-4" />,
-      title: 'סיום',
-      desc: "לחץ על הוסף (Add) בפינה העליונה.",
+      title: t('obInstFinish'),
+      desc: t('obInstFinishDesc'),
     },
   ];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl bg-amber-500/15 border border-amber-500/35 px-4 py-3 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="text-amber-300 text-sm font-medium leading-snug text-right">
-          שים לב: ההתקנה אפשרית רק דרך דפדפן Safari.
+        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <p className="text-amber-800 dark:text-amber-300 text-sm font-medium leading-snug text-start">
+          {t('obInstSafariOnly')}
         </p>
       </div>
 
@@ -155,6 +158,9 @@ function IosContent() {
 /* ── Main modal ── */
 export default function FullInstallModal() {
   const { showFullModal, closeFullModal, installPromptEvent, isIOS } = usePwaInstall();
+  const t = useTranslation();
+  const { isEn } = useLanguage();
+  const BackIcon = isEn ? ChevronLeft : ChevronRight;
   const [tab, setTab] = useState<Tab>(isIOS ? 'ios' : 'android');
 
   useEffect(() => {
@@ -184,11 +190,8 @@ export default function FullInstallModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[99999] bg-slate-950 flex flex-col overflow-y-auto"
-      style={{ direction: 'rtl' }}
+      className="fixed inset-0 z-[99999] bg-page flex flex-col overflow-y-auto"
     >
-      {/* Midnight-blue gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#080b1c] via-[#0a0e22] to-[#060816]" />
       {/* Glow accents */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -202,8 +205,8 @@ export default function FullInstallModal() {
       {/* X close button — top-left */}
       <button
         onClick={closeFullModal}
-        className="absolute top-4 left-4 p-2 text-slate-400 hover:text-white transition-colors z-10"
-        aria-label="סגור"
+        className="absolute top-4 end-4 p-2 text-fg-muted hover:text-fg transition-colors z-10"
+        aria-label={t('close')}
       >
         <X size={24} />
       </button>
@@ -219,16 +222,16 @@ export default function FullInstallModal() {
             <AppIcon />
           </div>
           <div className="text-center">
-            <h1 className="text-white font-extrabold text-2xl tracking-tight">התקן את חובש+</h1>
-            <p className="text-slate-400 text-sm mt-1">גישה מהירה · עבודה במצב לא מקוון</p>
+            <h1 className="text-fg font-extrabold text-2xl tracking-tight">{t('obInstTitle')}</h1>
+            <p className="text-fg-muted text-sm mt-1">{t('obInstSubtitle')}</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex rounded-2xl bg-white/6 border border-white/8 p-1 gap-1">
+        <div className="flex rounded-2xl bg-fg/5 border border-fg/10 p-1 gap-1">
           {([
-            { id: 'android' as Tab, label: 'אנדרואיד', Icon: Smartphone },
-            { id: 'ios' as Tab, label: 'אייפון (iOS)', Icon: Apple },
+            { id: 'android' as Tab, label: t('obInstAndroid'), Icon: Smartphone },
+            { id: 'ios' as Tab, label: t('obInstIos'), Icon: Apple },
           ]).map(({ id, label, Icon }) => (
             <button
               key={id}
@@ -237,7 +240,7 @@ export default function FullInstallModal() {
                           flex items-center justify-center gap-2 ${
                 tab === id
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-fg-muted hover:text-fg'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -258,12 +261,12 @@ export default function FullInstallModal() {
         {/* Back button footer */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeFullModal(); }}
-          className="w-full py-4 rounded-2xl border border-white/12 text-slate-300
-                     hover:text-white hover:bg-white/6 active:scale-95 transition-all duration-200
+          className="w-full py-4 rounded-2xl border border-fg/15 text-fg/85
+                     hover:text-fg hover:bg-fg/5 active:scale-95 transition-all duration-200
                      flex items-center justify-center gap-2 font-semibold text-base mt-2"
         >
-          <ChevronRight className="w-5 h-5" />
-          חזור אחורה
+          <BackIcon className="w-5 h-5" />
+          {t('obInstBack')}
         </button>
       </div>
     </div>

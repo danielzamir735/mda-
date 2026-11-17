@@ -14,7 +14,7 @@ export default function WhatsNewModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-end justify-center p-4 sm:items-center">
-      {/* Backdrop */}
+      {/* Backdrop – theme-ok: stays dark in both modes */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
       {/* Card */}

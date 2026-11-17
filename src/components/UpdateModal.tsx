@@ -17,6 +17,7 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
   };
 
   return (
+    // theme-ok: the dim backdrop behind a pop-up stays dark in both modes
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-[90%] max-w-md bg-surface shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
         {/* Icon */}

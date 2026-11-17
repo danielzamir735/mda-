@@ -2,18 +2,20 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { Heart, X, CheckCircle, HandHeart, Server, Zap, Lock, Copy, Check } from 'lucide-react';
 import { trackInteraction } from '../utils/analytics';
+import { useTranslation, type TranslationKey } from '../i18n';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
-const REASONS = [
-  { icon: Server,  color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'שרתים', desc: 'זמינות 24/7 גם בלחץ' },
-  { icon: Zap,     color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'פיתוח', desc: 'יכולות חדשות כל הזמן' },
-  { icon: Lock,    color: 'text-white/30',  bg: 'bg-white/5',  border: 'border-white/10', title: 'חינמי', desc: 'נגיש לכל חובש' },
+const REASONS: { icon: typeof Server; title: TranslationKey; desc: TranslationKey }[] = [
+  { icon: Server, title: 'obSupServers', desc: 'obSupServersDesc' },
+  { icon: Zap,    title: 'obSupDev',     desc: 'obSupDevDesc' },
+  { icon: Lock,   title: 'obSupFree',    desc: 'obSupFreeDesc' },
 ];
 
 const BIT_PHONE = '0549322310';
 
 export default function SupportModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [donationDone, setDonationDone] = useState(false);
   const [bitCopied, setBitCopied] = useState(false);
   const [showBitSheet, setShowBitSheet] = useState(false);
@@ -47,9 +49,8 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.28 }}
-          className="fixed inset-0 z-[60] h-[100dvh] flex flex-col backdrop-blur-xl"
-          style={{ background: 'radial-gradient(ellipse at top center, rgba(110, 8, 28, 0.94) 0%, rgba(8, 10, 35, 0.97) 65%)' }}
-          dir="rtl"
+          className="fixed inset-0 z-[60] h-[100dvh] flex flex-col bg-page"
+          style={{ background: 'radial-gradient(ellipse at top center, rgb(225 29 72 / 0.28) 0%, rgb(var(--page)) 65%)' }}
         >
           <style>{`
             @keyframes shineBtn {
@@ -64,10 +65,10 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           <div className="ios-safe-header flex justify-start px-4 pt-4 shrink-0">
             <button
               onClick={onClose}
-              className="p-2.5 rounded-full bg-white/10 active:bg-white/20 transition-colors"
-              aria-label="סגור"
+              className="p-2.5 rounded-full bg-fg/10 active:bg-fg/20 transition-colors"
+              aria-label={t('close')}
             >
-              <X size={20} className="text-white" />
+              <X size={20} className="text-fg" />
             </button>
           </div>
 
@@ -83,8 +84,8 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               >
                 <Heart size={62} fill="currentColor" />
               </motion.div>
-              <h1 className="text-3xl font-black text-white text-center leading-tight">
-                לא עוצרים את הפיתוח של חובש<span className="text-rose-400">+</span>
+              <h1 className="text-3xl font-black text-fg text-center leading-tight">
+                {t('obSupTitle')}<span className="text-rose-500 dark:text-rose-400">+</span>
               </h1>
             </div>
 
@@ -93,14 +94,14 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12, duration: 0.4 }}
-              className="text-center text-lg leading-tight text-white/60"
+              className="text-center text-lg leading-tight text-fg-muted"
             >
-              מעל{' '}
-              <span className="text-emerald-300 font-black tabular-nums">
+              {t('obSupCountBefore')}{' '}
+              <span className="text-emerald-600 dark:text-emerald-300 font-black tabular-nums">
                 {displayCount.toLocaleString('en-US')}
               </span>
-              <span className="text-emerald-300 font-bold">+</span>{' '}
-              חובשים כבר משתמשים באפליקציה
+              <span className="text-emerald-600 dark:text-emerald-300 font-bold">+</span>{' '}
+              {t('obSupCountAfter')}
             </motion.p>
 
             {/* 3 reason cards */}
@@ -110,17 +111,17 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               transition={{ delay: 0.2 }}
               className="w-full max-w-sm grid grid-cols-3 gap-2.5"
             >
-              {REASONS.map(({ icon: Icon, color, bg, border, title, desc }, i) => (
+              {REASONS.map(({ icon: Icon, title, desc }, i) => (
                 <motion.div
                   key={title}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.22 + i * 0.08 }}
-                  className={`rounded-2xl border ${border} ${bg} flex flex-col items-center gap-1.5 py-4 px-2`}
+                  className="rounded-2xl border border-fg/10 bg-fg/5 flex flex-col items-center gap-1.5 py-4 px-2"
                 >
-                  <Icon size={18} className={color} />
-                  <span className="text-white font-bold text-sm">{title}</span>
-                  <span className="text-white/50 text-[11px] text-center leading-tight">{desc}</span>
+                  <Icon size={18} className="text-fg/40" />
+                  <span className="text-fg font-bold text-sm">{t(title)}</span>
+                  <span className="text-fg/60 text-[11px] text-center leading-tight">{t(desc)}</span>
                 </motion.div>
               ))}
             </motion.div>
@@ -132,8 +133,8 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               transition={{ delay: 0.38 }}
               className="text-center space-y-2 max-w-xs"
             >
-              <p className="text-white/80 text-base leading-relaxed">
-                חובש+ היא אפליקציה ללא מטרות רווח, שנבנתה בהתנדבות עבור הקהילה. כדי שנוכל להמשיך להחזיק את השרתים באוויר, לתחזק את המערכת ולהוסיף עוד יכולות מקצועיות שישרתו אתכם בשטח, אנחנו זקוקים לתמיכה שלכם. כל עלויות הפיתוח והתחזוקה ממומנות כרגע באופן פרטי, וכל תרומה קטנה עוזרת לנו להבטיח שהאפליקציה תישאר חופשית, מעודכנת וזמינה לכולם ברגע האמת.
+              <p className="text-fg/80 text-base leading-relaxed">
+                {t('obSupBody')}
               </p>
             </motion.div>
 
@@ -145,33 +146,34 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               className="w-full max-w-sm flex flex-col items-center gap-3"
             >
               <ShinyButton
-                label="אני רוצה לתמוך בהמשך הפיתוח"
-                sublabel="תרומה חד-פעמית דרך PayBox"
+                label={t('obSupDonate')}
+                sublabel={t('obSupDonateSub')}
                 gradient="from-rose-500 via-rose-600 to-pink-700"
                 done={donationDone}
+                doneLabel={t('obSupDone')}
                 icon={<HandHeart size={20} />}
                 onClick={() => {
                   if (navigator.vibrate) navigator.vibrate(50);
-                  trackInteraction('תרומה', 'support');
+                  trackInteraction('תרומה', 'support'); // i18n-ok: analytics event name
                   setDonationDone(true);
                   window.open('https://links.payboxapp.com/ikLxTdoky1b', '_blank');
                 }}
               />
               <ShinyButton
-                label="תרומה דרך ביט"
+                label={t('obSupBit')}
                 sublabel={`${BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}`}
                 gradient="from-violet-600 via-purple-600 to-indigo-700"
                 done={false}
                 icon={<span className="text-xl leading-none">₪</span>}
                 onClick={async () => {
                   if (navigator.vibrate) navigator.vibrate(50);
-                  trackInteraction('תרומה ביט', 'support');
+                  trackInteraction('תרומה ביט', 'support'); // i18n-ok: analytics event name
                   setBitCopied(false);
                   setShowBitSheet(true);
                 }}
               />
-              <p className="text-white/30 text-xs text-center">
-                כל תרומה, גם הקטנה ביותר, עוזרת לנו להמשיך לפתח ולשמור על האפליקציה חופשית לכולם.
+              <p className="text-fg/50 text-xs text-center">
+                {t('obSupFinePrint')}
               </p>
             </motion.div>
 
@@ -185,25 +187,23 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-                className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl px-6 pt-6 pb-10"
-                style={{
-                  background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
-                  borderTop: '1px solid rgba(167,139,250,0.35)',
-                }}
+                className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl px-6 pt-6 pb-10 bg-surface border-t border-violet-400/40 shadow-2xl"
+                style={{ backgroundImage: 'linear-gradient(160deg, rgb(124 58 237 / 0.18) 0%, transparent 60%)' }}
               >
                 {/* Handle */}
-                <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
+                <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-fg/20" />
 
                 <button
                   onClick={() => setShowBitSheet(false)}
-                  className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                  className="absolute top-5 end-5 w-8 h-8 rounded-full bg-fg/10 flex items-center justify-center"
+                  aria-label={t('close')}
                 >
-                  <X size={16} className="text-white/70" />
+                  <X size={16} className="text-fg/70" />
                 </button>
 
-                <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
-                <p className="text-violet-300 text-sm text-center mb-4">
-                  תרמו למספר הזה:
+                <h2 className="text-fg font-bold text-xl text-center mb-1">{t('obSupBitTitle')}</h2>
+                <p className="text-violet-600 dark:text-violet-300 text-sm text-center mb-4">
+                  {t('obSupBitTo')}
                 </p>
 
                 {/* Phone number block */}
@@ -211,7 +211,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
                   style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
                 >
-                  <span className="text-white font-black text-2xl tracking-widest shrink-0" dir="ltr">
+                  <span className="text-fg font-black text-2xl tracking-widest shrink-0" dir="ltr">
                     {BIT_PHONE.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}
                   </span>
                   <button
@@ -223,31 +223,31 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                       setShowCopyThankYou(true);
                       setTimeout(() => setShowCopyThankYou(false), 4500);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
-                    style={{
-                      background: bitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
-                      color: bitCopied ? '#86efac' : '#c4b5fd',
-                      border: `1px solid ${bitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
-                    }}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${
+                      bitCopied
+                        ? 'bg-green-500/20 border-green-500/40 text-green-700 dark:text-green-300'
+                        : 'bg-violet-500/25 border-violet-400/40 text-violet-700 dark:text-violet-300'
+                    }`}
                   >
                     {bitCopied ? <Check size={15} /> : <Copy size={15} />}
-                    {bitCopied ? 'הועתק!' : 'העתק'}
+                    {bitCopied ? t('obSupCopied') : t('copy')}
                   </button>
                 </div>
 
                 <button
                   onClick={() => { window.location.href = 'bit://'; }}
+                  // theme-ok: white text on the violet gradient button
                   className="w-full py-3.5 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform mb-4"
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
                     boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
                   }}
                 >
-                  פתח ביט
+                  {t('obSupOpenBit')}
                 </button>
 
-                <p className="text-white/40 text-xs text-center leading-relaxed">
-                  כל סכום עוזר מאוד ❤️
+                <p className="text-fg/50 text-xs text-center leading-relaxed">
+                  {t('obSupEveryAmount')}
                 </p>
               </motion.div>
             )}
@@ -268,10 +268,10 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   backdropFilter: 'blur(12px)',
                 }}
               >
-                <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
-                  תודה רבה לך על התרומה 🙏<br />
-                  תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
-                  <span className="text-green-400/80 font-normal text-xs">זה אומר לנו המון ❤️</span>
+                <p className="text-green-700 dark:text-green-300 font-semibold text-sm leading-relaxed">
+                  {t('obSupThank1')}<br />
+                  {t('obSupThank2')}<br />
+                  <span className="text-green-600/80 dark:text-green-400/80 font-normal text-xs">{t('obSupThank3')}</span>
                 </p>
               </motion.div>
             )}
@@ -282,9 +282,10 @@ export default function SupportModal({ isOpen, onClose }: Props) {
   );
 }
 
-function ShinyButton({ label, sublabel, gradient, done, icon, onClick }: {
+function ShinyButton({ label, sublabel, doneLabel, gradient, done, icon, onClick }: {
   label: string;
   sublabel?: string;
+  doneLabel?: string;
   gradient: string;
   done: boolean;
   icon?: React.ReactNode;
@@ -297,6 +298,7 @@ function ShinyButton({ label, sublabel, gradient, done, icon, onClick }: {
       className={`relative w-full py-4 px-5 rounded-2xl font-bold text-white overflow-hidden bg-gradient-to-l ${gradient} shadow-xl active:brightness-90 transition-[filter]`}
     >
       <span
+        // theme-ok: white shine sweeping across the coloured button
         className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent"
         style={{ animation: 'shineBtn 3s ease-in-out infinite' }}
       />
@@ -305,7 +307,7 @@ function ShinyButton({ label, sublabel, gradient, done, icon, onClick }: {
           <motion.span key="done" initial={{ scale: 0 }} animate={{ scale: 1 }}
             className="flex items-center justify-center gap-2 relative z-10"
           >
-            <CheckCircle size={22} /> <span>תודה! אתה שותף ❤️</span>
+            <CheckCircle size={22} /> <span>{doneLabel}</span>
           </motion.span>
         ) : (
           <motion.span key="label" exit={{ opacity: 0 }} className="relative z-10 flex flex-col items-center gap-0.5">
@@ -314,6 +316,7 @@ function ShinyButton({ label, sublabel, gradient, done, icon, onClick }: {
               {label}
             </span>
             {sublabel && (
+              // theme-ok: on the coloured gradient button
               <span className="text-white/70 text-sm font-medium">{sublabel}</span>
             )}
           </motion.span>
