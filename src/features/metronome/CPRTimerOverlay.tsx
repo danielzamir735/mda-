@@ -120,7 +120,7 @@ function ShockTable({ logs, t }: { logs: ShockLog[]; t: (k: Parameters<ReturnTyp
           <span className="font-black text-amber-400">{i + 1}</span>
           <span className="text-fg">{shock.time}</span>
           <span className="text-fg-muted">{shock.elapsed}</span>
-          <span className="text-fg-subtle">{shock.gap !== '—' ? `+${shock.gap}` : '—'}</span>
+          <span className="text-fg-subtle"><bdi dir="ltr">{shock.gap !== '—' ? `+${shock.gap}` : '—'}</bdi></span>
         </div>
       ))}
     </div>
@@ -334,7 +334,7 @@ function HtSheet({ status, onToggle, onClose }: { status: Record<string, boolean
                     >
                       {done && <Check size={13} className="text-white" strokeWidth={3} />}{/* theme-ok: white tick on solid green box */}
                     </span>
-                    <span className={done ? '' : 'text-fg'}>{t(h.labelKey)}</span>
+                    <span className={`min-w-0 [overflow-wrap:anywhere] ${done ? '' : 'text-fg'}`}>{t(h.labelKey)}</span>
                   </button>
                 );
               })}
