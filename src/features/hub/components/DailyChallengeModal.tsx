@@ -1062,7 +1062,7 @@ function GridCard({
       whileHover={{ scale: 1.04, transition: { duration: 0.15 } }}
       whileTap={{ scale: 0.94 }}
       onClick={onClick}
-      className={`relative w-full h-full flex flex-col items-center justify-center gap-5 rounded-3xl border backdrop-blur-xl overflow-hidden ${borderClass} ${cardBg}`}
+      className={`relative w-full h-full flex flex-col items-center justify-center gap-2 pb-6 rounded-3xl border backdrop-blur-xl overflow-hidden ${borderClass} ${cardBg}`}
       style={glowStyle}
     >
       {/* Colored radial top glow */}
@@ -1093,16 +1093,16 @@ function GridCard({
 
       {/* Icon */}
       <motion.div
-        className={`relative z-10 w-[70px] h-[70px] rounded-[20px] flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
+        className={`relative z-10 w-[60px] h-[60px] rounded-[18px] flex items-center justify-center ${config.iconBg} border ${config.iconBorder}`}
         style={{ boxShadow: isAnswered && isCorrect ? '0 0 32px rgba(34,197,94,0.45)' : config.iconGlow }}
         animate={isAnswered && isCorrect ? { scale: [1, 1.12, 1] } : {}}
         transition={{ duration: 0.48, delay: 0.1 }}
       >
-        <span className="text-[34px] leading-none">{config.emoji}</span>
+        <span className="text-[30px] leading-none">{config.emoji}</span>
       </motion.div>
 
       {/* Title */}
-      <p className="relative z-10 text-fg font-black text-[16px] leading-snug px-4 text-center">
+      <p className="relative z-10 text-fg font-black text-[15px] leading-tight px-3 text-center">
         {config.blockTitle}
       </p>
 
@@ -1113,10 +1113,10 @@ function GridCard({
         </div>
       )}
       {!isAnswered && status === 'ready' && (participantCount === undefined || participantCount === 0) && (
-        <p className="absolute bottom-4 z-10 text-fg/20 text-[10px] font-semibold tracking-wide">{t('dcTapToPlay')}</p>
+        <p className="absolute bottom-3 z-10 text-fg/20 text-[10px] font-semibold tracking-wide">{t('dcTapToPlay')}</p>
       )}
       {!isAnswered && status === 'error' && (
-        <p className="absolute bottom-4 z-10 text-red-600/60 dark:text-red-400/60 text-[10px] font-semibold">{t('dcErrorTryAgain')}</p>
+        <p className="absolute bottom-3 z-10 text-red-600/60 dark:text-red-400/60 text-[10px] font-semibold">{t('dcErrorTryAgain')}</p>
       )}
     </motion.button>
   );

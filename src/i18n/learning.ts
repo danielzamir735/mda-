@@ -128,7 +128,7 @@ export default defineDict({
     dcBlockRedFlag: 'Red flag',
     dcBlockSpotError: 'Spot the error',
     dcBlockMedBag: 'Medication bag',
-    dcBlockActiveDx: 'Active diagnoses',
+    dcBlockActiveDx: 'Active Dx',
     dcBlockConcept: 'Concepts',
     dcBlsFull: 'Basic life support',
     dcAlsFull: 'Advanced life support',
