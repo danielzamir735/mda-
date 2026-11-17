@@ -3,11 +3,12 @@ import { X, Languages, Volume2, ArrowRight, ExternalLink, Brain, Captions, Chevr
 import HapticButton from '../../../components/HapticButton';
 import {
   PHRASES, CATEGORIES, LANG_FLAGS, LANG_DIR, LANG_GT,
-  type Lang,
+  type Lang, type Phrase,
 } from '../data/medicalTranslationsData';
 import { trackEvent, trackInteraction } from '../../../utils/analytics';
 import FlashcardTrainer from '../../../components/FlashcardTrainer';
 import BigTextScreen from './BigTextScreen';
+import { useTranslation, useLanguage, translate, type TranslationKey } from '../../../i18n';
 
 interface Props { isOpen: boolean; onClose: () => void; initialLang?: Lang; }
 
@@ -21,18 +22,35 @@ const TTS_LANGS: Record<string, string> = {
   am: 'am-ET',
 };
 
-// Task 4: Hebrew names for the language selection grid
-const LANG_LABELS_HE: Record<Lang, string> = {
-  en: 'אנגלית',
-  ru: 'רוסית',
-  ar: 'ערבית',
-  fr: 'צרפתית',
-  am: 'אמהרית',
+// Names of the patient's language, in the EMT's interface language
+const LANG_LABEL_KEYS: Record<Lang, TranslationKey> = {
+  en: 'mtLangEn',
+  ru: 'mtLangRu',
+  ar: 'mtLangAr',
+  fr: 'mtLangFr',
+  am: 'mtLangAm',
 };
 
+// The phrase data keeps its Hebrew category names; these map them to interface labels.
+const ALL_CATEGORY = CATEGORIES[0];
+const CATEGORY_KEYS: Record<string, TranslationKey> = {
+  'הכל': 'all', // i18n-ok: category id from the data file
+  'כאב': 'mtCatPain', // i18n-ok: category id from the data file
+  'נשימה': 'mtCatBreathing', // i18n-ok: category id from the data file
+  'רקע': 'mtCatHistory', // i18n-ok: category id from the data file
+  'כללי': 'mtCatGeneral', // i18n-ok: category id from the data file
+  'נשים': 'mtCatWomen', // i18n-ok: category id from the data file
+  'טראומה': 'mtCatTrauma', // i18n-ok: category id from the data file
+  'עצבי': 'mtCatNeuro', // i18n-ok: category id from the data file
+  'בטן': 'mtCatAbdomen', // i18n-ok: category id from the data file
+};
+const categoryLabel = (cat: string) => (CATEGORY_KEYS[cat] ? translate(CATEGORY_KEYS[cat]) : cat);
+
 export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }: Props) {
+  const t = useTranslation();
+  const { isEn } = useLanguage();
   const [selectedLang, setSelectedLang] = useState<Lang | null>(initialLang ?? null);
-  const [category, setCategory] = useState('הכל');
+  const [category, setCategory] = useState(ALL_CATEGORY);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [trainerOpen, setTrainerOpen] = useState(false);
   const [bigTextOpen, setBigTextOpen] = useState(false);
@@ -49,9 +67,12 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   bigTextRef.current = bigTextOpen;
   onCloseRef.current = onClose;
 
+  /** The phrase in the EMT's own language (the patient-facing text is phrase[activeLang]). */
+  const emtText = (p: Phrase) => (isEn ? p.en : p.he);
+
   const speakText = (text: string, langCode: string) => {
     if (!('speechSynthesis' in window)) {
-      alert('מנוע דיבור אינו נתמך במכשיר זה');
+      alert(t('mtNoTts'));
       return;
     }
     window.speechSynthesis.cancel();
@@ -71,7 +92,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   const handleClose = () => {
     window.speechSynthesis.cancel();
     setSelectedLang(null);
-    setCategory('הכל');
+    setCategory(ALL_CATEGORY);
     setExpanded(null);
     setBigTextOpen(false);
     onClose();
@@ -103,7 +124,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
       } else if (selectedLangRef.current !== null) {
         // Phrase list → back to language list
         setSelectedLang(null);
-        setCategory('הכל');
+        setCategory(ALL_CATEGORY);
       } else {
         // Language list → close modal
         onCloseRef.current();
@@ -146,29 +167,29 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   if (!isOpen) return null;
   if (bigTextOpen) return <BigTextScreen onBack={() => setBigTextOpen(false)} />;
 
-  const filtered = category === 'הכל' ? PHRASES : PHRASES.filter(p => p.category === category);
+  const filtered = category === ALL_CATEGORY ? PHRASES : PHRASES.filter(p => p.category === category);
   const expandedPhrase = PHRASES.find(p => p.id === expanded);
 
   const buildFlashcards = (lang: Lang) =>
-    PHRASES.map(p => ({ front: p.he, back: p[lang] }));
+    PHRASES.map(p => ({ front: emtText(p), back: p[lang] }));
 
 
   /* ── STEP 1: Language Selection ── */
   if (selectedLang === null) {
     return (
-      <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
+      <div className="fixed inset-0 z-[99999] flex flex-col bg-page">
         {/* Header */}
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <Languages size={20} className="text-orange-400" />
-            <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרגום רפואי</h2>
+            <Languages size={20} className="text-orange-500 dark:text-orange-400" />
+            <h2 className="text-fg font-bold text-xl">{t('mtTitle')}</h2>
           </div>
           <HapticButton
             onClick={handleClose}
             pressScale={0.88}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                       flex items-center justify-center text-gray-500 dark:text-emt-muted"
-            aria-label="סגור"
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
+                       flex items-center justify-center text-fg-muted"
+            aria-label={t('close')}
           >
             <X size={20} />
           </HapticButton>
@@ -176,8 +197,8 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
 
         {/* Language Grid */}
         <div className="flex-1 overflow-y-auto flex flex-col items-center px-6 pb-8 pt-4 gap-4">
-          <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest">
-            בחר שפה
+          <p className="text-fg-muted text-sm font-bold uppercase tracking-widest">
+            {t('mtChooseLang')}
           </p>
           <div className="w-full grid grid-cols-1 gap-3">
             {ALL_LANGS.map(l => (
@@ -185,18 +206,17 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
                 key={l}
                 pressScale={0.95}
                 onClick={() => {
-                  trackEvent('translation_started', { source_lang: 'he', target_lang: l });
-                  trackInteraction('תרגום רפואי', 'translation');
+                  trackEvent('translation_started', { source_lang: isEn ? 'en' : 'he', target_lang: l });
+                  trackInteraction('תרגום רפואי', 'translation'); // i18n-ok: fixed analytics label
                   setSelectedLang(l);
                 }}
-                className="w-full py-5 px-6 rounded-2xl border-2 border-gray-200 dark:border-emt-border
-                           bg-white dark:bg-emt-gray flex items-center gap-4
+                className="w-full py-5 px-6 rounded-2xl border-2 border-line
+                           bg-surface flex items-center gap-4
                            active:border-orange-400/60 active:bg-orange-400/10"
               >
                 <span className="text-4xl">{LANG_FLAGS[l]}</span>
-                {/* Task 4: Hebrew language names */}
-                <span className="text-gray-900 dark:text-white font-bold text-2xl">
-                  {LANG_LABELS_HE[l]}
+                <span className="text-fg font-bold text-2xl">
+                  {t(LANG_LABEL_KEYS[l])}
                 </span>
               </HapticButton>
             ))}
@@ -204,24 +224,24 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
           </div>
 
           {/* Big-text captions for hard-of-hearing patients */}
-          <p className="text-gray-400 dark:text-emt-muted text-sm font-bold uppercase tracking-widest mt-2">
-            מטופל כבד שמיעה
+          <p className="text-fg-muted text-sm font-bold uppercase tracking-widest mt-2">
+            {t('mtHardOfHearing')}
           </p>
           <HapticButton
             pressScale={0.95}
             onClick={() => {
-              trackInteraction('כתוביות למטופל', 'translation');
+              trackInteraction('כתוביות למטופל', 'translation'); // i18n-ok: fixed analytics label
               setBigTextOpen(true);
             }}
             className="w-full py-5 px-6 rounded-2xl border-2 border-orange-400/40
-                       bg-orange-400/10 flex items-center gap-4 text-right"
+                       bg-orange-400/10 flex items-center gap-4 text-start"
           >
-            <Captions size={36} className="shrink-0 text-orange-400" />
+            <Captions size={36} className="shrink-0 text-orange-500 dark:text-orange-400" />
             <span className="flex-1 flex flex-col gap-0.5">
-              <span className="text-gray-900 dark:text-white font-bold text-2xl leading-tight">כתוביות למטופל</span>
-              <span className="text-gray-500 dark:text-emt-muted text-sm leading-snug">מקלידים או מדברים, והמטופל קורא באותיות גדולות</span>
+              <span className="text-fg font-bold text-2xl leading-tight">{t('btTitle')}</span>
+              <span className="text-fg-muted text-sm leading-snug">{t('mtCaptionsSub')}</span>
             </span>
-            <ChevronLeft size={22} className="shrink-0 text-gray-400" />
+            <ChevronLeft size={22} className="shrink-0 text-fg-subtle ltr:rotate-180" />
           </HapticButton>
         </div>
 
@@ -233,33 +253,32 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
   const activeLang = selectedLang as Lang;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[99999] flex flex-col bg-page">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <HapticButton
           pressScale={0.9}
-          onClick={() => { setSelectedLang(null); setCategory('הכל'); }}
-          className="flex items-center gap-1.5 text-orange-400 font-bold text-sm"
-          aria-label="חזור לשפות"
+          onClick={() => { setSelectedLang(null); setCategory(ALL_CATEGORY); }}
+          className="flex items-center gap-1.5 text-orange-500 dark:text-orange-400 font-bold text-sm"
+          aria-label={t('mtBackToLangs')}
         >
-          <ArrowRight size={16} />
-          חזור לשפות
+          <ArrowRight size={16} className="ltr:rotate-180" />
+          {t('mtBackToLangs')}
         </HapticButton>
 
         <div className="flex items-center gap-2">
           <span className="text-lg">{LANG_FLAGS[activeLang]}</span>
-          {/* Task 4: Hebrew name in the phrase list header too */}
-          <span className="text-gray-900 dark:text-emt-light font-bold text-base">
-            {LANG_LABELS_HE[activeLang]}
+          <span className="text-fg font-bold text-base">
+            {t(LANG_LABEL_KEYS[activeLang])}
           </span>
         </div>
 
         <HapticButton
           onClick={handleClose}
           pressScale={0.88}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
-                     flex items-center justify-center text-gray-500 dark:text-emt-muted"
-          aria-label="סגור"
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
+                     flex items-center justify-center text-fg-muted"
+          aria-label={t('close')}
         >
           <X size={20} />
         </HapticButton>
@@ -275,11 +294,11 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             className={[
               'shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors',
               category === cat
-                ? 'bg-orange-400/20 border-orange-400/50 text-orange-400'
-                : 'bg-gray-100 dark:bg-emt-gray border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted',
+                ? 'bg-orange-400/20 border-orange-400/50 text-orange-600 dark:text-orange-400'
+                : 'bg-surface-2 border-line text-fg-muted',
             ].join(' ')}
           >
-            {cat}
+            {categoryLabel(cat)}
           </HapticButton>
         ))}
       </div>
@@ -295,13 +314,13 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
                      backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
         >
           <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center shrink-0">
-            <Brain size={20} className="text-orange-400" />
+            <Brain size={20} className="text-orange-500 dark:text-orange-400" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-orange-200 font-bold text-base leading-tight">אימון שינון — ביטויים רפואיים</span>
-            <span className="text-orange-300/50 text-xs mt-0.5">{PHRASES.length} כרטיסיות · עברית → {LANG_FLAGS[activeLang]}</span>
+            <span className="text-orange-800 dark:text-orange-200 font-bold text-base leading-tight">{t('mtTrainer')}</span>
+            <span className="text-orange-700/70 dark:text-orange-300/50 text-xs mt-0.5">{t('mtTrainerCount', { n: PHRASES.length, flag: LANG_FLAGS[activeLang] })}</span>
           </div>
-          <div className="mr-auto text-orange-400/40 text-lg">←</div>
+          <div className="ms-auto text-orange-500/60 dark:text-orange-400/40 text-lg ltr:rotate-180">←</div>
         </HapticButton>
 
         {filtered.map(phrase => (
@@ -309,18 +328,18 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             key={phrase.id}
             pressScale={0.97}
             onClick={() => { setExpanded(phrase.id); speakText(phrase[activeLang], activeLang); }}
-            className="w-full text-right rounded-2xl border border-gray-200 dark:border-emt-border
-                       bg-white dark:bg-emt-gray p-4 flex items-center justify-between gap-3"
+            className="w-full text-start rounded-2xl border border-line
+                       bg-surface p-4 flex items-center justify-between gap-3"
           >
-            <div className="flex-1 min-w-0 text-right">
-              {/* Hebrew — primary large text */}
-              <p dir="rtl" className="text-gray-900 dark:text-white font-bold text-xl leading-snug">
-                {phrase.he}
+            <div className="flex-1 min-w-0 text-start">
+              {/* EMT's language — primary large text */}
+              <p dir={isEn ? 'ltr' : 'rtl'} className="text-fg font-bold text-xl leading-snug">
+                {emtText(phrase)}
               </p>
-              {/* Translated — smaller subtitle */}
+              {/* Patient's language — smaller subtitle (does not follow the interface language) */}
               <p
                 dir={LANG_DIR[activeLang]}
-                className="text-gray-400 dark:text-emt-muted text-sm mt-1 leading-snug"
+                className="text-fg-muted text-sm mt-1 leading-snug"
               >
                 {phrase[activeLang]}
               </p>
@@ -329,8 +348,8 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
               pressScale={0.85}
               onClick={e => { e.stopPropagation(); speakText(phrase[activeLang], activeLang); }}
               className="shrink-0 w-10 h-10 rounded-full bg-orange-400/20 border border-orange-400/40
-                         flex items-center justify-center text-orange-400"
-              aria-label="השמע"
+                         flex items-center justify-center text-orange-600 dark:text-orange-400"
+              aria-label={t('mtSpeak')}
             >
               <Volume2 size={17} />
             </HapticButton>
@@ -342,18 +361,18 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
       {expandedPhrase && (
         <div
           className="fixed inset-0 z-[80] flex flex-col items-center justify-center
-                     bg-emt-dark/95 backdrop-blur-sm p-8"
+                     bg-page/95 backdrop-blur-sm p-8"
           onClick={handleCloseExpanded}
         >
           <div className="flex items-center gap-2 mb-6">
             <span className="text-2xl">{LANG_FLAGS[activeLang]}</span>
-            <p className="text-orange-400 text-sm font-bold uppercase tracking-widest">
-              {LANG_LABELS_HE[activeLang]}
+            <p className="text-orange-600 dark:text-orange-400 text-sm font-bold uppercase tracking-widest">
+              {t(LANG_LABEL_KEYS[activeLang])}
             </p>
           </div>
           <p
             dir={LANG_DIR[activeLang]}
-            className="text-white font-bold text-4xl text-center leading-relaxed mb-8"
+            className="text-fg font-bold text-4xl text-center leading-relaxed mb-8"
           >
             {expandedPhrase[activeLang]}
           </p>
@@ -361,15 +380,15 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             pressScale={0.9}
             onClick={e => { e.stopPropagation(); speakText(expandedPhrase[activeLang], activeLang); }}
             className="mb-8 px-6 py-3 rounded-2xl bg-orange-400/20 border border-orange-400/50
-                       flex items-center gap-2 text-orange-400 font-bold text-base"
-            aria-label="השמע"
+                       flex items-center gap-2 text-orange-600 dark:text-orange-400 font-bold text-base"
+            aria-label={t('mtSpeak')}
           >
             <Volume2 size={20} />
-            השמע
+            {t('mtSpeak')}
           </HapticButton>
-          <div className="w-full h-px bg-emt-border mb-6" />
-          <p dir="rtl" className="text-emt-muted text-lg text-center font-semibold">
-            {expandedPhrase.he}
+          <div className="w-full h-px bg-line mb-6" />
+          <p dir={isEn ? 'ltr' : 'rtl'} className="text-fg-muted text-lg text-center font-semibold">
+            {emtText(expandedPhrase)}
           </p>
           {/* Patient response — open Google Translate with patient's language pre-selected */}
           <HapticButton
@@ -378,20 +397,20 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
               e.stopPropagation();
               const gtLang = LANG_GT[activeLang];
               window.open(
-                `https://translate.google.com/?sl=${gtLang}&tl=he&op=translate`,
+                `https://translate.google.com/?sl=${gtLang}&tl=${isEn ? 'en' : 'he'}&op=translate`,
                 '_blank',
               );
             }}
-            className="mt-8 flex items-center gap-2 bg-slate-800 border border-slate-600
-                       hover:bg-slate-700 text-white px-6 py-4 rounded-full shadow-2xl
+            className="mt-8 flex items-center gap-2 bg-surface-3 border border-line-strong
+                       hover:bg-surface-2 text-fg px-6 py-4 rounded-full shadow-2xl
                        transition-all text-lg font-medium"
-            aria-label="תרגם תשובת מטופל"
+            aria-label={t('mtPatientReplyAria')}
           >
             <ExternalLink size={20} />
-            תרגום תשובת מטופל ← עברית
+            {t('mtPatientReply')}
           </HapticButton>
           {/* Task 3: Enlarged 'click to close' text */}
-          <p className="text-xl md:text-2xl font-bold py-6 text-slate-300 mt-4">לחץ לסגירה</p>
+          <p className="text-xl md:text-2xl font-bold py-6 text-fg-muted mt-4">{t('mtTapToClose')}</p>
         </div>
       )}
 
