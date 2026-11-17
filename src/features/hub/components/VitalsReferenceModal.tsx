@@ -104,7 +104,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                 ].join(' ')}
               >
                 {/* Vital name cell */}
-                <div className="px-4 py-4 text-base font-black text-blue-700 dark:text-blue-300 text-start flex items-center border-e border-line bg-blue-50/60 dark:bg-blue-950/30">
+                <div className="px-2.5 py-4 text-sm font-black text-blue-700 dark:text-blue-300 text-start flex items-center border-e border-line bg-blue-50/60 dark:bg-blue-950/30">
                   {t(row.label)}
                 </div>
 
@@ -112,8 +112,9 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                 {[row.adult, row.child, row.infant].map((val, j) => (
                   <div
                     key={j}
+                    dir="ltr"
                     className={[
-                      'px-3 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
+                      'px-1 py-4 text-lg tabular-nums font-semibold text-center flex items-center justify-center',
                       'text-fg',
                       j < 2 ? 'border-e border-line' : '',
                     ].join(' ')}

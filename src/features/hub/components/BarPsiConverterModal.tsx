@@ -59,7 +59,7 @@ export default function BarPsiConverterModal({ isOpen, onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
         <div className="rounded-2xl border border-emt-green/30 bg-emt-green/5 p-3 text-center">
-          <p className="text-emt-green font-bold text-sm">1 Bar = 15 PSI</p>
+          <p className="text-emt-green font-bold text-sm" dir="ltr">1 Bar = 15 PSI</p>
         </div>
 
         <div className="flex flex-col gap-4">

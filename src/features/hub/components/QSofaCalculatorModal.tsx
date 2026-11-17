@@ -51,8 +51,8 @@ const SEV: Record<SevKey, { label: TranslationKey; badge: string; score: string;
   },
   moderate: {
     label: 'calcQsofaSevModerate',
-    badge: 'bg-emt-yellow/20 text-emt-yellow',
-    score: 'text-emt-yellow',
+    badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow',
+    score: 'text-amber-600 dark:text-emt-yellow',
     bar: 'bg-emt-yellow/8',
     barBorder: 'border-emt-yellow/30',
     description: 'calcQsofaDescModerate',
@@ -218,12 +218,12 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
           <div className="flex flex-col gap-1.5">
             {[
               { range: '0', label: t('calcQsofaSevLow'), color: 'text-emt-green' },
-              { range: '1', label: t('calcQsofaRowModerate'), color: 'text-emt-yellow' },
+              { range: '1', label: t('calcQsofaRowModerate'), color: 'text-amber-600 dark:text-emt-yellow' },
               { range: '2–3', label: t('calcQsofaRowHigh'), color: 'text-emt-red' },
             ].map(r => (
               <div key={r.range} className="flex items-center justify-between">
                 <span className={`font-bold text-sm ${r.color}`}>{r.label}</span>
-                <span className={`text-xs font-black px-2 py-0.5 rounded-full bg-surface-2 ${r.color}`}>{r.range}</span>
+                <span dir="ltr" className={`text-xs font-black px-2 py-0.5 rounded-full bg-surface-2 ${r.color}`}>{r.range}</span>
               </div>
             ))}
           </div>

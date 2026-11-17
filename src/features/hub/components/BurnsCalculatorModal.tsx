@@ -66,8 +66,8 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const totalDisplay = Number.isInteger(total) ? String(total) : total.toFixed(1);
 
   const severity = total === 0 ? null : total < 10 ? t('calcBurnsSevMinor') : total < 25 ? t('calcBurnsSevModerate') : t('calcBurnsSevSevere');
-  const sevColor  = total < 10 ? 'text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
-  const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-400' : 'bg-emt-red/20 text-emt-red';
+  const sevColor  = total < 10 ? 'text-amber-600 dark:text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
+  const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-400' : 'bg-emt-red/20 text-emt-red';
 
   const handleShare = () => {
     if (!navigator.share) return;

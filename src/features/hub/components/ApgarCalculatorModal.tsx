@@ -38,7 +38,7 @@ type SevKey = 'red' | 'yellow' | 'green';
 
 const SEV_STYLES: Record<SevKey, { badge: string; score: string; card: string; label: TranslationKey }> = {
   red:    { badge: 'bg-emt-red/20 text-emt-red',       score: 'text-emt-red',    card: 'border-emt-red/30 bg-emt-red/5',    label: 'calcApgarSevRed' },
-  yellow: { badge: 'bg-emt-yellow/20 text-emt-yellow', score: 'text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5', label: 'calcApgarSevYellow' },
+  yellow: { badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow', score: 'text-amber-600 dark:text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5', label: 'calcApgarSevYellow' },
   green:  { badge: 'bg-emt-green/20 text-emt-green',   score: 'text-emt-green',  card: 'border-emt-green/30 bg-emt-green/5',  label: 'calcApgarSevGreen' },
 };
 

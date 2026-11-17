@@ -201,7 +201,7 @@ export default defineDict({
     calcEstimatedSuffix: ' (est.)',
     calcEnterAgeWeightHint: 'Enter age and weight for accurate dosing',
     calcCalculateDoses: 'Calculate doses',
-    calcChooseScenario: 'Choose a scenario',
+    calcChooseScenario: 'Scenario',
     calcResetValues: 'Reset values',
     calcAdult: 'Adult',
     calcChild: 'Child',
@@ -285,7 +285,7 @@ export default defineDict({
     calcPart_left_leg_back: 'Left leg (back)',
 
     // GCS
-    calcGcsTitle: 'Glasgow Coma Scale (GCS)',
+    calcGcsTitle: 'GCS Calculator',
     calcGcsEyes: 'Eyes (E)',
     calcGcsVerbal: 'Verbal (V)',
     calcGcsMotor: 'Motor (M)',
