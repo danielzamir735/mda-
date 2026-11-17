@@ -76,7 +76,7 @@ export default defineDict({
     learnEmptyDesc: 'כשתלמד מושג חדש — תרופה, קיצור, מחלה — הוסף אותו כאן ותוכל לחזור אליו ולהתאמן עליו.',
     learnAddFirstConcept: 'הוסף מושג ראשון',
     learnCategories: 'קטגוריות',
-    learnNotesOne: 'פתק {n}',
+    learnNotesOne: '{n} פתק',
     learnNotesMany: '{n} פתקים',
     learnUncategorized: 'פתקים ללא קטגוריה',
     learnSavedOne: 'מושג אחד נשמר',

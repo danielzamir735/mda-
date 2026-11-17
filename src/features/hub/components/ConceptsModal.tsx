@@ -198,8 +198,8 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-fg font-black text-[15px] leading-snug">{concept.term}</p>
-            <p className="text-fg-muted text-[13px] leading-relaxed mt-1.5 whitespace-pre-wrap">{concept.definition}</p>
+            <p dir="auto" className="text-fg font-black text-[15px] leading-snug">{concept.term}</p>
+            <p dir="auto" className="text-fg-muted text-[13px] leading-relaxed mt-1.5 whitespace-pre-wrap">{concept.definition}</p>
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
             <HapticButton
@@ -299,7 +299,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             </HapticButton>
           ) : (
             <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-purple-300" />
+              <Sparkles size={18} className="text-purple-600 dark:text-purple-300" />
             </div>
           )}
 
@@ -581,7 +581,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                     onChange={(e) => setCategoryNameInput(e.target.value)}
                     placeholder={t('learnCategoryNamePh')}
                     className="w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
-                    style={{ WebkitTextFillColor: 'rgb(var(--fg))' }}
                     dir="auto"
                     autoFocus
                     onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -613,7 +612,6 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                     onChange={(e) => setTerm(e.target.value)}
                     placeholder={t('learnConceptNamePh')}
                     className="w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
-                    style={{ WebkitTextFillColor: 'rgb(var(--fg))' }}
                     dir="auto"
                     autoFocus
                     onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
@@ -661,7 +659,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                     onChange={(e) => setDefinition(e.target.value)}
                     placeholder={t('learnDefinitionPh')}
                     className="flex-1 w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[14px] leading-relaxed focus:outline-none focus:border-purple-400/60 resize-none transition-colors"
-                    style={{ minHeight: '140px', WebkitTextFillColor: 'rgb(var(--fg))' }}
+                    style={{ minHeight: '140px' }}
                     dir="auto"
                   />
                 </div>
