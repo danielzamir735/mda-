@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "entrance-finder",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4300", "--directory", "prototypes/entrance-finder"],
+      "port": 4300
+    },
+    {
       "name": "medic-app-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview", "--", "--port", "4173"],
