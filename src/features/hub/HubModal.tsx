@@ -1,4 +1,4 @@
-import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance, HeartHandshake } from 'lucide-react';
+import { X, Calculator, BookOpen, Settings, Stethoscope, MessageSquare, MapPin, Pill, Building2, Share2, ClipboardList, Download, Languages, Skull, Accessibility, Wind, ScanSearch, Users, HeartPulse, ExternalLink, Brain, Trophy, Star, Rocket, Sparkles, Copy, Check, GripVertical, Pencil, GraduationCap, Bell, Gauge, Ambulance, HeartHandshake, MapPinned } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
@@ -12,6 +12,7 @@ import { trackInteraction } from '../../utils/analytics';
 import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
 import MedicalAbbreviationsModal from './components/MedicalAbbreviationsModal';
+import AddressFinderModal from './components/AddressFinderModal';
 
 const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
   { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
@@ -69,14 +70,13 @@ type HubItem = {
 
 const HUB_ITEMS: HubItem[] = [
   {
-    id: 'golden-hour',
-    label: 'שעת הזהב',
-    subtitle: 'משחק · תרגול פרוטוקולים',
-    icon: Ambulance,
-    color: 'text-amber-300',
-    border: 'border-amber-400/40',
-    bg: 'bg-amber-400/10',
-    href: 'https://protocol-runner.vercel.app/?src=app',
+    id: 'address-finder',
+    label: 'איתור כתובת מהיר',
+    subtitle: 'הבניין מסומן על המפה',
+    icon: MapPinned,
+    color: 'text-rose-400',
+    border: 'border-rose-400/40',
+    bg: 'bg-rose-400/10',
   },
   {
     id: 'hospital-load',
@@ -288,6 +288,16 @@ const HUB_ITEMS: HubItem[] = [
     bg: 'bg-pink-400/10',
   },
   {
+    id: 'golden-hour',
+    label: 'שעת הזהב',
+    subtitle: 'משחק · תרגול פרוטוקולים',
+    icon: Ambulance,
+    color: 'text-amber-300',
+    border: 'border-amber-400/40',
+    bg: 'bg-amber-400/10',
+    href: 'https://protocol-runner.vercel.app/?src=app',
+  },
+  {
     id: 'campaign',
     label: 'חובש + עולה לחנויות!',
     icon: Rocket,
@@ -297,7 +307,7 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call']);
+const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call']);
 
 // v3: bumped so the new hospital-load tile lands in its intended top-right
 // slot for existing users too — loadHubOrder() otherwise appends any id
@@ -305,7 +315,9 @@ const ENABLED = new Set(['golden-hour', 'campaign', 'concepts', 'medical-terms',
 const HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
 
-const NEW_ON_TOP = ['golden-hour'];
+const NEW_ON_TOP = ['address-finder'];
+// tools moved down once for users who already have a saved order (golden hour gave its top spot to the address finder)
+const DEMOTED_ONCE: { key: string; ids: string[] } = { key: 'hub_demoted_v1', ids: ['golden-hour'] };
 
 function loadHubOrder(): string[] {
   try {
@@ -313,10 +325,18 @@ function loadHubOrder(): string[] {
     if (saved) {
       const parsed: string[] = JSON.parse(saved);
       const valid = parsed.filter(id => DEFAULT_HUB_ORDER.includes(id));
-      const missing = DEFAULT_HUB_ORDER.filter(id => !valid.includes(id));
+      let valid2 = valid;
+      if (!localStorage.getItem(DEMOTED_ONCE.key)) {
+        const moved = valid.filter(id => DEMOTED_ONCE.ids.includes(id));
+        valid2 = [...valid.filter(id => !DEMOTED_ONCE.ids.includes(id)), ...moved];
+        localStorage.setItem(DEMOTED_ONCE.key, '1');
+        localStorage.setItem(HUB_STORAGE_KEY, JSON.stringify(valid2));
+      }
+      const missing = DEFAULT_HUB_ORDER.filter(id => !valid2.includes(id));
       // כלי חדש שנוסף אחרי שהמשתמש כבר סידר את הרשימה: רוב הכלים נכנסים בסוף, ואלה שב־NEW_ON_TOP נכנסים בראש
-      return [...missing.filter(id => NEW_ON_TOP.includes(id)), ...valid, ...missing.filter(id => !NEW_ON_TOP.includes(id))];
+      return [...missing.filter(id => NEW_ON_TOP.includes(id)), ...valid2, ...missing.filter(id => !NEW_ON_TOP.includes(id))];
     }
+    else localStorage.setItem(DEMOTED_ONCE.key, '1'); // a fresh order already has them in place
   } catch {}
   return DEFAULT_HUB_ORDER;
 }
@@ -373,6 +393,7 @@ export default function HubModal({
   onAfterCallOpen,
 }: Props) {
   const [showSimulators, setShowSimulators] = useState(false);
+  const [showAddressFinder, setShowAddressFinder] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -408,7 +429,7 @@ export default function HubModal({
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
-    if (!isOpen) setShowSimulators(false);
+    if (!isOpen) { setShowSimulators(false); setShowAddressFinder(false); }
   }, [isOpen]);
 
   useModalBackHandler(isOpen, onClose);
@@ -448,6 +469,7 @@ export default function HubModal({
     const tracking = HUB_TRACKING[id];
     if (tracking) trackInteraction(tracking[0], tracking[1]);
 
+    if (id === 'address-finder') { trackInteraction('איתור כתובת מהיר · פתיחה', 'emergency_info'); setShowAddressFinder(true); return; }
     if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
     if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
     if (id === 'medical-terms') { setShowMedicalTerms(true); return; }
@@ -627,6 +649,11 @@ https://hovesh-plus.vercel.app/`;
                   <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
                   {subtitle && (
                     <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
+                  )}
+                  {id === 'address-finder' && (
+                    <span className="absolute top-0 left-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                      בטא
+                    </span>
                   )}
                   {id === 'install-app' && (
                     <span className="text-xs text-slate-400 text-center leading-tight">
@@ -1286,6 +1313,9 @@ https://hovesh-plus.vercel.app/`;
         </div>
       )}
 
+
+      {/* Address finder (beta) */}
+      {showAddressFinder && <AddressFinderModal isOpen onClose={() => setShowAddressFinder(false)} />}
 
       {/* Concepts Modal */}
       <ConceptsModal isOpen={showConcepts} onClose={() => setShowConcepts(false)} />
