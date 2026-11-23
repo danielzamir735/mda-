@@ -39,10 +39,20 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
   const [picked, setPicked] = useState<AddressResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [mapLoading, setMapLoading] = useState(false);
   const [message, setMessage] = useState('');
   const sugTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sugAbort = useRef<AbortController | null>(null);
   useEffect(() => () => { clearTimeout(sugTimer.current); sugAbort.current?.abort(); }, []);
+  // the map page says when its first map tiles are drawn; until then a loading screen covers the white page
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin === new URL(MAP_URL).origin && e.data?.type === 'entrance-finder-ready') setMapLoading(false);
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
   // the explanation shows only the first time (the modal is mounted only while open)
   const [showIntro, setShowIntro] = useState(() => {
     try { return localStorage.getItem(INTRO_KEY) !== '1'; } catch { return true; }
@@ -58,6 +68,8 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
   // back: map → address screen → tools
   useModalBackHandler(isOpen, onClose);
   useModalBackHandler(mapQuery !== null, () => setMapQuery(null));
+
+  const typing = focused || query.trim().length > 0 || suggestions.length > 0;
 
   const label = (r: AddressResult) => {
     const num = r.housenumber || r.qNum;
@@ -85,6 +97,8 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
     inputRef.current?.blur();
     setSuggestions([]);
     trackInteraction('איתור כתובת מהיר · חיפוש', 'emergency_info');
+    setMapLoading(true);
+    setTimeout(() => setMapLoading(false), 15000); // never keep the loading screen forever
     setMapQuery(mapLink(MAP_URL, r));
   };
 
@@ -133,40 +147,71 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
       </div>
 
       {mapQuery !== null ? (
-        <iframe
-          key={mapQuery}
-          title="מפת איתור כתובת"
-          src={mapQuery}
-          allow="geolocation; accelerometer; gyroscope; magnetometer"
-          className="flex-1 w-full border-0 bg-white"
-        />
+        <div className="relative flex-1 flex">
+          <iframe
+            key={mapQuery}
+            title="מפת איתור כתובת"
+            src={mapQuery}
+            allow="geolocation; accelerometer; gyroscope; magnetometer"
+            className="flex-1 w-full border-0 bg-white"
+          />
+          {/* the first open downloads the map page, which can take a few seconds */}
+          {mapLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-emt-dark" role="status">
+              <Loader2 size={34} className="animate-spin text-rose-400" />
+              <p className="text-gray-600 dark:text-emt-muted font-semibold">טוען את המפה…</p>
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="flex-1 overflow-y-auto px-5 pt-10 pb-10 flex flex-col items-center">
-          <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center border border-rose-400/35 mb-6"
-            style={{ background: 'linear-gradient(135deg, rgba(251,113,133,0.20) 0%, rgba(225,29,72,0.10) 100%)', boxShadow: '0 0 40px rgba(244,63,94,0.18)' }}
-          >
-            <MapPinned size={40} className="text-rose-400" />
-          </div>
-          <h1 className="text-gray-900 dark:text-emt-light font-bold text-2xl text-center leading-snug max-w-sm">
-            ברוכים הבאים לשירות איתור כתובת מהיר מבית חובש +
-          </h1>
-          <p className="text-gray-500 dark:text-emt-muted text-base text-center mt-3 mb-7">אנא הזן את שם הכתובת</p>
+        // while typing, the welcome text folds away so the field, search button and suggestions
+        // sit at the top of the screen, above the phone keyboard
+        <div className={`flex-1 overflow-y-auto px-5 flex flex-col items-center ${typing ? 'pt-4 pb-4' : 'pt-10 pb-10'}`}>
+          {!typing && (
+            <>
+              <div
+                className="w-20 h-20 rounded-3xl flex items-center justify-center border border-rose-400/35 mb-6"
+                style={{ background: 'linear-gradient(135deg, rgba(251,113,133,0.20) 0%, rgba(225,29,72,0.10) 100%)', boxShadow: '0 0 40px rgba(244,63,94,0.18)' }}
+              >
+                <MapPinned size={40} className="text-rose-400" />
+              </div>
+              <h1 className="text-gray-900 dark:text-emt-light font-bold text-2xl text-center leading-snug max-w-sm">
+                ברוכים הבאים לשירות איתור כתובת מהיר מבית חובש +
+              </h1>
+              <p className="text-gray-500 dark:text-emt-muted text-base text-center mt-3 mb-7">אנא הזן את שם הכתובת</p>
+            </>
+          )}
 
-          <form onSubmit={search} className="w-full max-w-md flex flex-col gap-3" role="search">
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={e => onType(e.target.value)}
-              type="text"
-              inputMode="search"
-              enterKeyHint="search"
-              lang="he"
-              autoComplete="off"
-              placeholder="רחוב, מספר בית ועיר"
-              aria-label="כתובת ועיר"
-              className="w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-4 py-4 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25"
-            />
+          <form onSubmit={search} className="w-full max-w-md flex flex-col gap-2.5" role="search">
+            <div className="flex items-stretch gap-2">
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => onType(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                type="text"
+                inputMode="search"
+                enterKeyHint="search"
+                lang="he"
+                autoComplete="off"
+                placeholder="רחוב, מספר בית ועיר"
+                aria-label="כתובת ועיר"
+                className="flex-1 min-w-0 rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-4 py-3.5 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25"
+              />
+              {/* the search button sits next to the field, so the keyboard never hides it */}
+              <HapticButton
+                type="submit"
+                pressScale={0.94}
+                disabled={busy}
+                onPointerDown={e => e.preventDefault()}
+                className="shrink-0 flex items-center justify-center gap-1.5 px-4 rounded-2xl text-white font-bold text-base disabled:opacity-80"
+                style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', boxShadow: '0 4px 18px rgba(225,29,72,0.35)' }}
+              >
+                {busy ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+                חיפוש
+              </HapticButton>
+            </div>
             {message && <p className="text-sm font-semibold text-rose-400 px-1">{message}</p>}
             {suggestions.length > 0 && (
               <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden" role="listbox" aria-label="הצעות כתובת">
@@ -176,8 +221,9 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                     type="button"
                     role="option"
                     aria-selected={false}
+                    onPointerDown={e => e.preventDefault()}
                     onClick={() => choose(r)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-right border-t first:border-t-0 border-gray-100 dark:border-emt-border active:bg-rose-400/10"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-right border-t first:border-t-0 border-gray-100 dark:border-emt-border active:bg-rose-400/10"
                   >
                     <MapPin size={18} className="text-rose-400 shrink-0" />
                     <span className="min-w-0">
@@ -188,72 +234,67 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                 ))}
               </div>
             )}
-            <HapticButton
-              type="submit"
-              pressScale={0.96}
-              disabled={busy}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-white font-bold text-lg disabled:opacity-80"
-              style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', boxShadow: '0 4px 24px rgba(225,29,72,0.35)' }}
-            >
-              {busy ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
-              {busy ? 'מחפש…' : 'חיפוש'}
-            </HapticButton>
           </form>
 
-          <p className="text-gray-400 dark:text-emt-muted text-xs text-center mt-6 max-w-xs leading-relaxed">
-            השירות בניסוי. המידע מגיע ממפה פתוחה ועלול להיות חסר, אז בקריאה דחופה כדאי לאמת גם מול המוקד.
-          </p>
+          {!typing && (
+            <p className="text-gray-400 dark:text-emt-muted text-xs text-center mt-6 max-w-xs leading-relaxed">
+              השירות בניסוי. המידע מגיע ממפה פתוחה ועלול להיות חסר, אז בקריאה דחופה כדאי לאמת גם מול המוקד.
+            </p>
+          )}
         </div>
       )}
 
-      {/* First-time explanation */}
+      {/* First-time explanation: a full screen of its own */}
       <AnimatePresence>
         {showIntro && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[70] bg-black/55"
-              onClick={closeIntro}
-            />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 24, stiffness: 280 }}
-              className="fixed inset-x-0 bottom-0 z-[71] max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-white dark:bg-emt-dark border-t border-gray-200 dark:border-emt-border px-5 pt-4"
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}
-              role="dialog"
-              aria-label="מה זה איתור כתובת מהיר"
-            >
-              <div className="mx-auto mb-3 w-10 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">איתור כתובת מהיר</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 260 }}
+            className="fixed inset-0 z-[71] flex flex-col overflow-hidden bg-gray-50 dark:bg-emt-dark"
+            style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+            role="dialog"
+            aria-label="מה זה איתור כתובת מהיר"
+          >
+            <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-rose-500/10 blur-3xl" />
+            <div className="relative flex-1 overflow-y-auto px-5 pt-8 flex flex-col">
+              <div
+                className="mx-auto w-24 h-24 rounded-3xl flex items-center justify-center border border-rose-400/35 mb-5"
+                style={{ background: 'linear-gradient(135deg, rgba(251,113,133,0.22) 0%, rgba(225,29,72,0.10) 100%)', boxShadow: '0 0 48px rgba(244,63,94,0.22)' }}
+              >
+                <MapPinned size={50} className="text-rose-400" />
+              </div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <h2 className="text-gray-900 dark:text-emt-light font-extrabold text-3xl leading-tight">איתור כתובת מהיר</h2>
                 <BetaTag />
               </div>
-              <p className="text-gray-500 dark:text-emt-muted text-sm text-center mb-4">
+              <p className="text-gray-500 dark:text-emt-muted text-base text-center mb-6 leading-relaxed">
                 לכתובות שקשה למצוא: מתחמים, בניינים פנימיים וכניסות מאחור
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3 pb-2">
                 {BENEFITS.map(({ icon: Icon, title, desc }) => (
-                  <div key={title} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-rose-400/12 border border-rose-400/30">
-                      <Icon size={20} className="text-rose-400" />
+                  <div key={title} className="flex items-center gap-4 rounded-2xl px-4 py-3.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-rose-400/12 border border-rose-400/30">
+                      <Icon size={24} className="text-rose-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-gray-900 dark:text-emt-light font-bold text-sm leading-tight">{title}</p>
-                      <p className="text-gray-500 dark:text-emt-muted text-xs leading-relaxed mt-0.5">{desc}</p>
+                      <p className="text-gray-900 dark:text-emt-light font-bold text-base leading-tight">{title}</p>
+                      <p className="text-gray-500 dark:text-emt-muted text-sm leading-relaxed mt-1">{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="relative px-5 pt-4">
               <HapticButton
                 onClick={closeIntro}
                 pressScale={0.96}
-                className="w-full mt-4 py-3.5 rounded-2xl text-white font-bold text-lg"
-                style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}
+                className="w-full py-4 rounded-2xl text-white font-bold text-xl"
+                style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', boxShadow: '0 4px 28px rgba(225,29,72,0.4)' }}
               >
                 הבנתי, בוא נתחיל
               </HapticButton>
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

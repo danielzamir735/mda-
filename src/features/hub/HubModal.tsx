@@ -72,7 +72,6 @@ const HUB_ITEMS: HubItem[] = [
   {
     id: 'address-finder',
     label: 'איתור כתובת מהיר',
-    subtitle: 'הבניין מסומן על המפה',
     icon: MapPinned,
     color: 'text-rose-400',
     border: 'border-rose-400/40',
@@ -641,6 +640,7 @@ https://hovesh-plus.vercel.app/`;
                 'rounded-2xl border', border, bg,
                 'h-36 transition-transform px-2',
                 enabled ? 'active:scale-95 cursor-pointer' : 'opacity-60 cursor-not-allowed',
+                id === 'address-finder' ? 'relative overflow-hidden' : '',
               ].join(' ');
 
               const content = (
@@ -651,7 +651,12 @@ https://hovesh-plus.vercel.app/`;
                     <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
                   )}
                   {id === 'address-finder' && (
-                    <span className="absolute top-0 left-0 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                    // diagonal "beta" ribbon across the top-left corner of the tile
+                    <span
+                      aria-label="בטא"
+                      className="pointer-events-none absolute top-[14px] -left-[30px] w-[110px] -rotate-45 text-center text-[11px] font-extrabold tracking-wider py-[3px] text-amber-950"
+                      style={{ background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)', boxShadow: '0 2px 8px rgba(245,158,11,0.45)' }}
+                    >
                       בטא
                     </span>
                   )}

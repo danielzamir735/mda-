@@ -611,7 +611,12 @@ map.on('click', () => { $('suggest').hidden = true; });
   const sp = new URLSearchParams(location.search);
   // inside the app: the app already asked for the address, so the map shows no search bar of its own
   const embed = sp.get('embed') === '1';
-  if (embed) document.body.classList.add('embed');
+  if (embed){
+    document.body.classList.add('embed');
+    // tell the app the map is drawn, so it can drop its loading screen
+    const ready = () => { try { window.parent.postMessage({type:'entrance-finder-ready'}, '*'); } catch(e){} };
+    plain.once('load', ready); setTimeout(ready, 12000);
+  }
   const ll = (sp.get('ll')||'').split(',').map(Number);
   if (ll.length === 2 && ll.every(Number.isFinite)){
     const q = sp.get('q') || '';
