@@ -191,9 +191,6 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                   <MapPin size={30} className="text-white" strokeWidth={2.4} />
                 </span>
               </div>
-              <span className="relative text-xs font-bold text-rose-500 dark:text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-full px-3 py-1 mb-3">
-                ברוכים הבאים · מבית חובש +
-              </span>
               <h1 className="relative text-gray-900 dark:text-emt-light font-extrabold text-[28px] text-center leading-tight">
                 לאיזו כתובת מגיעים?
               </h1>
