@@ -90,9 +90,17 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
     }, 300);
   };
 
+  // tapping a suggestion opens the map straight away: no second tap on "חיפוש"
   const choose = (r: AddressResult) => {
     clearTimeout(sugTimer.current); sugAbort.current?.abort();
-    setPicked(r); setQuery(label(r)); setSuggestions([]); setMessage('');
+    setPicked(r); setQuery(label(r)); setMessage('');
+    open(r);
+  };
+
+  const clear = () => {
+    clearTimeout(sugTimer.current); sugAbort.current?.abort();
+    setQuery(''); setPicked(null); setSuggestions([]); setMessage('');
+    inputRef.current?.focus();
   };
 
   const open = (r: AddressResult) => {
@@ -168,39 +176,67 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
       ) : (
         // while typing, the welcome text folds away so the field, search button and suggestions
         // sit at the top of the screen, above the phone keyboard
-        <div className={`flex-1 overflow-y-auto px-5 flex flex-col items-center ${typing ? 'pt-4 pb-4' : 'pt-10 pb-10'}`}>
+        <div className={`relative flex-1 overflow-y-auto px-5 flex flex-col items-center ${typing ? 'pt-4 pb-4' : 'pt-12 pb-10'}`}>
           {!typing && (
             <>
-              <div
-                className="w-20 h-20 rounded-3xl flex items-center justify-center border border-rose-400/35 mb-6"
-                style={{ background: 'linear-gradient(135deg, rgba(251,113,133,0.20) 0%, rgba(225,29,72,0.10) 100%)', boxShadow: '0 0 40px rgba(244,63,94,0.18)' }}
-              >
-                <MapPinned size={40} className="text-rose-400" />
+              <div className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[28rem] h-80 rounded-full bg-rose-500/10 blur-3xl" />
+              {/* a pin with a slow ring around it, like a location being found */}
+              <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full border border-rose-400/25 motion-safe:animate-ping [animation-duration:2.6s]" />
+                <span className="absolute inset-2 rounded-full border border-rose-400/30" />
+                <span
+                  className="relative w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)', boxShadow: '0 8px 30px rgba(225,29,72,0.40)' }}
+                >
+                  <MapPin size={30} className="text-white" strokeWidth={2.4} />
+                </span>
               </div>
-              <h1 className="text-gray-900 dark:text-emt-light font-bold text-2xl text-center leading-snug max-w-sm">
-                ברוכים הבאים לשירות איתור כתובת מהיר מבית חובש +
+              <span className="relative text-xs font-bold text-rose-500 dark:text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-full px-3 py-1 mb-3">
+                ברוכים הבאים · מבית חובש +
+              </span>
+              <h1 className="relative text-gray-900 dark:text-emt-light font-extrabold text-[28px] text-center leading-tight">
+                לאיזו כתובת מגיעים?
               </h1>
-              <p className="text-gray-500 dark:text-emt-muted text-base text-center mt-3 mb-7">אנא הזן את שם הכתובת</p>
+              <p className="relative text-gray-500 dark:text-emt-muted text-base text-center mt-2 mb-7 max-w-xs leading-relaxed">
+                כתבו רחוב, מספר בית ועיר, והבניין יסומן לכם על המפה
+              </p>
             </>
           )}
 
-          <form onSubmit={search} className="w-full max-w-md flex flex-col gap-2.5" role="search">
+          <form onSubmit={search} className="relative w-full max-w-md flex flex-col gap-2.5" role="search">
             <div className="flex items-stretch gap-2">
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => onType(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                type="text"
-                inputMode="search"
-                enterKeyHint="search"
-                lang="he"
-                autoComplete="off"
-                placeholder="רחוב, מספר בית ועיר"
-                aria-label="כתובת ועיר"
-                className="flex-1 min-w-0 rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray px-4 py-3.5 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25"
-              />
+              <div className="relative flex-1 min-w-0">
+                <MapPin size={20} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-rose-400" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={e => onType(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  type="text"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  lang="he"
+                  autoComplete="off"
+                  placeholder="רחוב, מספר בית ועיר"
+                  aria-label="כתובת ועיר"
+                  className={`w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray pr-10 ${query ? 'pl-11' : 'pl-3'} py-3.5 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25`}
+                />
+                {/* clears the whole field in one tap */}
+                {query && (
+                  <button
+                    type="button"
+                    onPointerDown={e => e.preventDefault()}
+                    onClick={clear}
+                    aria-label="מחיקת הכתובת"
+                    className="absolute left-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-gray-400 dark:text-emt-muted active:bg-gray-100 dark:active:bg-white/10"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/15 flex items-center justify-center">
+                      <X size={15} strokeWidth={2.6} className="text-gray-600 dark:text-emt-light" />
+                    </span>
+                  </button>
+                )}
+              </div>
               {/* the search button sits next to the field, so the keyboard never hides it */}
               <HapticButton
                 type="submit"
@@ -231,6 +267,10 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                     <span className="min-w-0">
                       <span className="block font-bold text-gray-900 dark:text-emt-light truncate">{r.line1}</span>
                       {r.line2 && <span className="block text-xs text-gray-500 dark:text-emt-muted">{r.line2}</span>}
+                      {/* the map knows the street but not the number typed: say so before the tap */}
+                      {!r.exact && r.qNum && !r.housenumber && (
+                        <span className="block text-xs font-semibold text-amber-600 dark:text-amber-300">מספר {r.qNum} לא רשום במפה, יסומן הרחוב</span>
+                      )}
                     </span>
                   </button>
                 ))}
