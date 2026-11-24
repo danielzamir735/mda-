@@ -18,7 +18,7 @@
   color-scheme:light;
 }
 /* ===== design: technical instrument look ===== */
-.fab .lbl{display:block;font-size:10.5px;font-weight:700;line-height:1;margin-top:3px;letter-spacing:0}
+.fab .lbl{display:block;font-size:10.5px;font-weight:700;line-height:1.05;margin-top:3px;letter-spacing:0;text-align:center;max-width:52px}
 .fab{flex-direction:column}
 /* pro: technical instrument look. IBM Plex Sans Hebrew, flat panels, square keys, navy number plates */
 [data-theme=pro]{--font:"IBM Plex Sans Hebrew",system-ui,sans-serif; --accent:#1d4ed8; --brand:#c81e1e; --line:#cbd5e1;
@@ -242,7 +242,7 @@ const hour = new Date().getHours();
 let night = hour >= 19 || hour < 6;          // by the clock until the user picks; the moon button switches at any moment
 try { const saved = localStorage.getItem('ef-night'); if (saved !== null) night = saved === '1'; } catch(e){}
 const qp = new URLSearchParams(location.search); if (qp.has('night')) night = qp.get('night') === '1'; // ?night=1 or ?night=0 to try either
-let threeD = false, satOn = false; // top-down by default; the "תלת ממד" button tilts it
+let threeD = true, satOn = false; // 3D by default; the button switches to "תצוגה רגילה" (flat, from above) and back
 const PITCH = 50;
 const EMBED = new URLSearchParams(location.search).get('embed') === '1';
 if (EMBED) document.body.classList.add('embed');
@@ -255,7 +255,7 @@ const T = THEMES[themeName];
 try { maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.min.js', true); } catch(e){}
 const map = new maplibregl.Map({
   container:'map', style: night ? STYLES.night : STYLES.day, center:[34.85, 31.95], zoom:8,
-  pitch:0, maxPitch:0, attributionControl:{compact:true, // flat until the "תלת ממד" button is on
+  pitch:0, maxPitch:65, attributionControl:{compact:true,
     customAttribution:'כתובות © HERE · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
 });
 window.__map = map; // debugging handle
@@ -493,29 +493,42 @@ async function nominatim(q){
     return {lat:+x.lat, lng:+x.lon, line1, line2:[a.city||a.town||a.village||a.suburb].filter(Boolean).join(', '), street, housenumber:a.house_number||''}; });
 }
 const hasHebrew = s => /[֐-׿]/.test(s);
+// a lone letter after the number is a house letter when it is א-ו or more words follow; "5 י" is the city being typed
 function typedNum(qt){
   for (let i = 0; i < qt.length; i++){
     if (/^\d+[א-ת]$/.test(qt[i])) return qt[i];
-    if (/^\d+$/.test(qt[i])) return /^[א-ת]$/.test(qt[i+1] || '') ? qt[i] + qt[i+1] : qt[i];
+    if (/^\d+$/.test(qt[i])){ const nx = qt[i+1] || ''; return /^[א-ו]$/.test(nx) || (/^[א-ת]$/.test(nx) && qt[i+2]) ? qt[i] + nx : qt[i]; }
   }
   return '';
 }
+const NOISE = new Set(['רחוב','רח','שדרות','שד']);
 const toks = s => String(s||'').replace(/[,.\-"'״׳]/g,' ').split(/\s+/).filter(Boolean);
 function rankResults(q, res){
-  const qt = toks(q), qNum = typedNum(qt);
+  const qt = toks(q).filter(t => !NOISE.has(t)), qNum = typedNum(qt), last = qt[qt.length-1] || '';
+  const numAt = qt.findIndex(t => /^\d/.test(t));
+  const typedStreet = (numAt > 0 ? qt.slice(0, numAt) : numAt < 0 ? qt : []).filter(t => !/\d/.test(t));
   const seen = new Set();
   return res.filter(r => hasHebrew(r.line1 + r.line2))
     .map(r => { const l1 = toks(r.line1), l2 = toks(r.line2); let s = 0;
       for (const t of qt){ if (l1.includes(t)) s += 1; if (l2.includes(t)) s += 3; }
       if (qNum && nn(r.housenumber) === nn(qNum)) s += 1;
+      const st = toks(r.street).filter(t => !/\d/.test(t) && !NOISE.has(t));
+      if (st.length && typedStreet.length){
+        if (st.every(t => qt.includes(t))) s += 2;
+        else if (!typedStreet.every((t, i) => st[i] === t || (i === typedStreet.length-1 && (st[i] || '').startsWith(t)))) s -= 4;
+      }
+      if (last && !/\d/.test(last) && !l2.includes(last) && l2.some(t => t.startsWith(last))) s += 2;
       r.exact = !qNum || nn(r.housenumber) === nn(qNum); r.qNum = qNum; return {r, s}; })
     .sort((a,b) => b.s - a.s).map(x => x.r)
     .filter(r => { const k = r.line1 + '|' + r.line2; if (seen.has(k)) return false; seen.add(k); return true; })
     .slice(0, 7);
 }
 async function geocode(q, withNominatim){
-  const [a, b] = await Promise.all([photon(q).catch(() => []), withNominatim ? nominatim(q).catch(() => []) : []]);
-  return rankResults(q, [...b, ...a]);
+  // a half-typed city after the number also searches without it; the ranking then prefers the city it starts
+  const t = toks(q), i = t.findIndex(x => /^\d/.test(x));
+  const q2 = i >= 0 && t.length > i + 1 && !/\d/.test(t[t.length-1]) ? t.slice(0, -1).join(' ') : null;
+  const [a, b, c] = await Promise.all([photon(q).catch(() => []), withNominatim ? nominatim(q).catch(() => []) : [], q2 ? photon(q2).catch(() => []) : []]);
+  return rankResults(q, [...b, ...a, ...c]);
 }
 
 // ---------- OpenStreetMap data around a point: buildings, numbers, paths, entrances, landmarks ----------
@@ -603,7 +616,7 @@ const CITIES = [
     numLayer:10, numWhere: n => `BldNum='${n}'`,
     num: a => ({num: String(a.BldNum || '').trim(), letter: String(a.BLDG_LETTE || '').trim(), street: a.StreetName1}),
     bldLayer:30, byNumber:true, bldWhere: n => `BLDG_NUM=${n}`,
-    bld: a => ({street: a.StreetName1, floors: a.NUM_FLOORS, apts: a.NUM_APTS_C, h: a.NUM_FLOORS ? a.NUM_FLOORS * 3.1 : 7}) },
+    bld: a => ({street: a.StreetName1, num: a.BLDG_NUM, name: String(a.BLDG_CH || '').trim(), floors: a.NUM_FLOORS, apts: a.NUM_APTS_C, h: a.NUM_FLOORS ? a.NUM_FLOORS * 3.1 : 7}) },
   { id:'tlv', name:'עיריית תל אביב-יפו', box:[32.02, 34.73, 32.15, 34.86],
     url:'https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer',
     numLayer:527, numWhere: n => `ms_bayit=${n}`,
@@ -659,9 +672,23 @@ async function cityBuildings(city, t){
   if (city.byNumber){
     const polys = await cityQuery(city, city.bldLayer, t, 0.004, city.bldWhere(base));
     if (!polys) return null;
-    cands = polys.filter(f => same(city.bld(f.attributes).street))
-      .map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []}))
-      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400);
+    // a building listed without a street name counts only when the typed street's number sign is on it;
+    // otherwise any "5" nearby with no street would pass for עזרא 5
+    const onIt = pts => signs.some(s => inPoly(s.p, pts) || wallDist(s.p, pts) < 12);
+    cands = polys.map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []}))
+      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400)
+      .filter(c => String(c.street || '').trim() ? same(c.street) : onIt(c.pts));
+    // the city lists some entrances only as a sign, inside a building listed under another address
+    // (עזרא 5 is a door of ישיבת קמיניץ, יחזקאל 24): the building that holds the sign is the one
+    const mine = signs.filter(s => !letter || s.letter === letter), use = mine.length ? mine : signs;
+    if (!cands.length && use.length){
+      const near = await cityQuery(city, city.bldLayer, use[0].p, 0.0005);
+      const all = (near || []).map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []})).filter(c => c.pts.length > 2);
+      for (const s of use){
+        const c = all.find(c => inPoly(s.p, c.pts)) || all.filter(c => wallDist(s.p, c.pts) < 12).sort((a, b) => wallDist(s.p, a.pts) - wallDist(s.p, b.pts))[0];
+        if (c && !cands.includes(c)){ c.via = true; cands.push(c); }
+      }
+    }
   } else {
     if (!signs.length) return null;
     const box = signs.reduce((b, s) => ({lat: b.lat + s.p.lat / signs.length, lng: b.lng + s.p.lng / signs.length}), {lat:0, lng:0});
@@ -695,7 +722,7 @@ function doorEl(label){
   el.innerHTML = `<b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4h10v17"/><path d="M3 21h18"/><circle cx="13" cy="12.5" r=".6" fill="#fff"/></svg></b>${label ? `<i>${esc(label)}</i>` : ''}`;
   return el;
 }
-const floorsTxt = b => [b.floors ? `${b.floors} קומות` : '', b.apts ? `${b.apts} דירות` : ''].filter(Boolean).join(' · ');
+const floorsTxt = b => [b.floors ? (+b.floors === 1 ? 'קומה אחת' : `${b.floors} קומות`) : '', b.apts ? (+b.apts === 1 ? 'דירה אחת' : `${b.apts} דירות`) : ''].filter(Boolean).join(' · ');
 function showTarget(blds, num, notes){
   clearMarkers();
   redBlds = blds;
@@ -721,8 +748,10 @@ function showTarget(blds, num, notes){
 function showCity(t, m){
   const shown = m.picked ? [m.picked] : m.cands, n = shown.length;
   const sure = m.picked || (n === 1 && !m.letter);
+  const via = shown.length === 1 && shown[0].via ? shown[0] : null;
   showTarget(shown, sure ? t.num : m.base,
-    m.picked ? ''
+    via ? `הכניסה ${t.num} שייכת לבניין ${via.name ? via.name + ', ' : ''}${via.street || ''} ${via.num || ''}`.replace(/\s+/g, ' ').trim()
+    : m.picked ? ''
     : m.letter && n > 1 ? `${n} בניינים במספר ${m.base}. ${t.num} הוא אחד מהם, לוודא לפי השלט`
     : m.letter ? `${t.num} לא רשום. מסומן ${m.base}, לוודא לפי השלט`
     : n > 1 ? `${n} בניינים במספר ${m.base}, לוודא לפי השלט` : '');
@@ -947,8 +976,17 @@ map.on('rotate', () => {
 $('locBtn').onclick = () => { askCompass(); follow = true; startWatch(); startHeading(); if (me || target) frame(true); else toast('מחפש את המיקום שלך…'); };
 $('northBtn').onclick = () => { stopHeading(); applied = null; map.easeTo({bearing:0, duration:400}); };
 $('zoomOutBtn').onclick = () => { follow = false; map.easeTo({zoom: map.getZoom() - 2, duration:400}); };
+const CUBE = '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>';
+const FLAT = '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>';
+function tdButton(){
+  const b = $('tdBtn');
+  b.querySelector('svg').innerHTML = threeD ? FLAT : CUBE;
+  b.querySelector('.lbl').textContent = threeD ? 'תצוגה רגילה' : 'תלת ממד';
+  b.setAttribute('aria-label', threeD ? 'מעבר לתצוגה רגילה, מלמעלה' : 'מעבר לתצוגת תלת ממד'); b.title = b.getAttribute('aria-label');
+}
+tdButton();
 $('tdBtn').onclick = () => {
-  threeD = !threeD; $('tdBtn').classList.toggle('on', threeD);
+  threeD = !threeD; tdButton();
   if (threeD) map.setMaxPitch(65);
   map.easeTo({pitch: threeD ? PITCH : 0, duration:500});
   if (!threeD) setTimeout(() => map.setMaxPitch(0), 520); // flat again, and two fingers cannot tilt it by accident

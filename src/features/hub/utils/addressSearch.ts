@@ -17,13 +17,19 @@ const IL_BBOX = '34.2,29.4,35.95,33.4';
 const hasHebrew = (s: string) => /[֐-׿]/.test(s);
 const nn = (s: string) => String(s ?? '').replace(/[\s'"׳״]/g, '');
 // the house number as typed, letter included even when written apart: "49 א", "49א" and "49-א" all give "49א"
+// A lone letter right after the number is a house letter when it is one of א-ו, or when more words follow it.
+// "5 י" at the end is the first letter of the city being typed (ירושלים), not house 5י.
 function typedNum(qt: string[]): string {
   for (let i = 0; i < qt.length; i++) {
     if (/^\d+[א-ת]$/.test(qt[i])) return qt[i];
-    if (/^\d+$/.test(qt[i])) return /^[א-ת]$/.test(qt[i + 1] || '') ? qt[i] + qt[i + 1] : qt[i];
+    if (/^\d+$/.test(qt[i])) {
+      const nx = qt[i + 1] || '';
+      return /^[א-ו]$/.test(nx) || (/^[א-ת]$/.test(nx) && qt[i + 2]) ? qt[i] + nx : qt[i];
+    }
   }
   return '';
 }
+const NOISE = new Set(['רחוב', 'רח', 'שדרות', 'שד']);
 const toks = (s: string) => String(s || '').replace(/[,.\-"'״׳]/g, ' ').split(/\s+/).filter(Boolean);
 
 type Raw = Omit<AddressResult, 'exact' | 'qNum'>;
@@ -55,15 +61,27 @@ async function nominatim(q: string): Promise<Raw[]> {
   });
 }
 
-// the city the user typed counts three times as much as a matching street word; keep the typed house number
+// the city the user typed counts three times as much as a matching street word; keep the typed house number.
+// The street must be the one typed, whole: "עזרא" ranks above "אבן עזרא", which only contains it.
 function rank(q: string, res: Raw[]): AddressResult[] {
-  const qt = toks(q), qNum = typedNum(qt);
+  const qt = toks(q).filter(t => !NOISE.has(t)), qNum = typedNum(qt);
+  const last = qt[qt.length - 1] || '';
+  const numAt = qt.findIndex(t => /^\d/.test(t));
+  const typedStreet = (numAt > 0 ? qt.slice(0, numAt) : numAt < 0 ? qt : []).filter(t => !/\d/.test(t));
   const seen = new Set<string>();
   return res.filter(r => hasHebrew(r.line1 + r.line2))
     .map(r => {
       const l1 = toks(r.line1), l2 = toks(r.line2); let s = 0;
       for (const t of qt) { if (l1.includes(t)) s += 1; if (l2.includes(t)) s += 3; }
       if (qNum && nn(r.housenumber) === nn(qNum)) s += 1;
+      // the street as typed: whole (+2), being completed ("עזרא" → "עזרא הסופר", 0), or a different street that only contains the word (-4)
+      const st = toks(r.street).filter(t => !/\d/.test(t) && !NOISE.has(t));
+      if (st.length && typedStreet.length) {
+        if (st.every(t => qt.includes(t))) s += 2;
+        else if (!typedStreet.every((t, i) => st[i] === t || (i === typedStreet.length - 1 && (st[i] || '').startsWith(t)))) s -= 4;
+      }
+      // the city still being typed: "ירו" already points to ירושלים
+      if (last && !/\d/.test(last) && !l2.includes(last) && l2.some(t => t.startsWith(last))) s += 2;
       return { r: { ...r, exact: !qNum || nn(r.housenumber) === nn(qNum), qNum }, s };
     })
     .sort((a, b) => b.s - a.s).map(x => x.r)
@@ -71,8 +89,18 @@ function rank(q: string, res: Raw[]): AddressResult[] {
     .slice(0, 6);
 }
 
+// a city half typed after the number ("עזרא 5 י") confuses the search, so it also runs without that last word;
+// the ranking then prefers the city that starts with it
+function withoutPartialCity(q: string): string | null {
+  const t = toks(q);
+  const i = t.findIndex(x => /^\d/.test(x));
+  return i >= 0 && t.length > i + 1 && !/\d/.test(t[t.length - 1]) ? t.slice(0, -1).join(' ') : null;
+}
+
 export async function suggestAddresses(q: string, signal?: AbortSignal): Promise<AddressResult[]> {
-  return rank(q, await photon(q, signal).catch(() => []));
+  const q2 = withoutPartialCity(q);
+  const [a, b] = await Promise.all([photon(q, signal).catch(() => []), q2 ? photon(q2, signal).catch(() => []) : []]);
+  return rank(q, [...a, ...b]);
 }
 
 export async function lookupAddress(q: string): Promise<AddressResult[]> {
