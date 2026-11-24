@@ -649,7 +649,6 @@ function LanguageRequestForm() {
           autoFocus
           disabled={status === 'sending'}
           className="flex-1 rounded-xl px-3 py-2 text-sm bg-surface border border-line text-fg placeholder-fg-subtle focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
-          dir="auto"
         />
         <button
           onClick={handleSend}
@@ -1024,7 +1023,7 @@ function RegisterForm({
         <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbFullName')}</label>
         <input
           type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-          placeholder={t('lbFullNamePlaceholder')} dir="auto"
+          placeholder={t('lbFullNamePlaceholder')}
           className="w-full rounded-xl px-4 py-3 text-sm bg-fg/8 border border-fg/15 text-fg placeholder-fg/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
           style={{ background: 'rgb(var(--fg) / 0.07)' }}
         />
@@ -1095,10 +1094,10 @@ function RegisterForm({
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbMyLangs')}</label>
         <div className="relative">
-          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/40 pointer-events-none" />
+          <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg/40 pointer-events-none" />
           <input
             type="text" value={formLangSearch} onChange={e => setFormLangSearch(e.target.value)}
-            placeholder={t('lbSearchLang')} dir="auto"
+            placeholder={t('lbSearchLang')}
             className="w-full rounded-xl px-4 py-2.5 ps-9 text-sm border border-fg/15 text-fg placeholder-fg/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
             style={{ background: 'rgb(var(--fg) / 0.07)' }}
           />
@@ -1259,8 +1258,8 @@ function RegisterForm({
                             style={{ background: 'rgb(var(--fg) / 0.04)' }}
                           >
                             {si === 0
-                              ? <span className="text-[0.65rem] font-black text-fg/55 w-10 shrink-0 text-start">{dayName(day)}</span>
-                              : <span className="w-10 shrink-0" />
+                              ? <span className="text-[0.65rem] font-black text-fg/55 w-16 shrink-0 text-start truncate">{dayName(day)}</span>
+                              : <span className="w-16 shrink-0" />
                             }
                             <Clock size={12} className="text-fg/25 shrink-0" />
                             <input
@@ -2058,7 +2057,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.15 } }}
                   className="flex items-center gap-3 mb-4 rounded-2xl px-4 py-3.5"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(130,35,52,0.65) 0%, rgba(158,48,68,0.55) 100%)',
+                    background: 'linear-gradient(135deg, rgba(130,35,52,0.95) 0%, rgba(158,48,68,0.92) 100%)',
                     backdropFilter: 'blur(20px)',
                     border: '1px solid rgba(200,80,100,0.2)',
                     boxShadow: '0 4px 20px rgba(130,35,52,0.25), inset 0 1px 0 rgb(var(--fg) / 0.08)',
@@ -2122,7 +2121,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   <input
                     type="text" value={langSearch}
                     onChange={e => setLangSearch(e.target.value)}
-                    placeholder={t('lbSearchLang')} dir="auto"
+                    placeholder={t('lbSearchLang')}
                     className="w-full rounded-xl px-4 py-2.5 ps-9 text-sm bg-fg/10 border border-fg/20 text-fg placeholder-fg/40 focus:outline-none focus:ring-2 focus:ring-fg/30 backdrop-blur-sm"
                   />
                 </div>

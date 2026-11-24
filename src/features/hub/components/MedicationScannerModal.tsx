@@ -299,7 +299,6 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
             onKeyDown={e => e.key === 'Enter' && handleTextSearch()}
             placeholder={t('msPlaceholder')}
             disabled={state === 'loading'}
-            dir="auto"
             className="flex-1 rounded-2xl bg-surface border border-line px-4 py-3
                        text-fg placeholder:text-fg-subtle text-sm
                        focus:outline-none focus:border-teal-400/60
@@ -461,7 +460,6 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                     value={historySearch}
                     onChange={e => setHistorySearch(e.target.value)}
                     placeholder={t('msHistorySearch')}
-                    dir="auto"
                     className="w-full rounded-xl bg-page border border-line px-3 py-2
                                text-fg placeholder:text-fg-subtle text-xs
                                focus:outline-none focus:border-teal-400/60"

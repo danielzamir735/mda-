@@ -204,7 +204,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
             <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
               <Brain size={20} className="text-purple-500 dark:text-purple-400" />
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-start text-start">
               <span className="text-purple-800 dark:text-purple-200 font-bold text-base leading-tight">{t('mhTrainerStart')}</span>
               <span className="text-purple-700/70 dark:text-purple-300/50 text-xs mt-0.5">{t('mhTrainerCount', { n: FLASHCARD_DATA.length })}</span>
             </div>
@@ -266,7 +266,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
           <>
             {MEDICAL_CATEGORIES.map((cat) => (
               <div key={cat.title}>
-                <h3 className={`text-xs font-black uppercase tracking-widest ${cat.color} mb-2 ps-1`}>
+                <h3 className={`text-xs font-black uppercase tracking-widest ${cat.color} brightness-75 dark:brightness-100 mb-2 ps-1`}>
                   {cat.title}
                 </h3>
                 <div className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>

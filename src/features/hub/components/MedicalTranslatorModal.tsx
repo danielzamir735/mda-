@@ -316,7 +316,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
           <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center shrink-0">
             <Brain size={20} className="text-orange-500 dark:text-orange-400" />
           </div>
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start text-start">
             <span className="text-orange-800 dark:text-orange-200 font-bold text-base leading-tight">{t('mtTrainer')}</span>
             <span className="text-orange-700/70 dark:text-orange-300/50 text-xs mt-0.5">{t('mtTrainerCount', { n: PHRASES.length, flag: LANG_FLAGS[activeLang] })}</span>
           </div>

@@ -120,7 +120,7 @@ export default function SoulDepartureModal({ isOpen, onClose }: Props) {
           <p className="text-fg-muted text-sm leading-relaxed text-start">
             {t('sdEmtP1Before')}
             {/* i18n-ok: verse quoted in Hebrew */}
-            <span className="text-blue-700 dark:text-blue-200 font-semibold" lang="he">״תּוֹסֵף רוּחָם יִגְוָעוּן״</span>
+            <span className="text-blue-700 dark:text-blue-200 font-semibold" lang="he" dir="rtl">״תּוֹסֵף רוּחָם יִגְוָעוּן״</span>
             {t('sdEmtP1After')}
           </p>
           <p className="text-fg-muted text-sm leading-relaxed text-start">
