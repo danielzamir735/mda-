@@ -16,6 +16,14 @@ export type AddressResult = {
 const IL_BBOX = '34.2,29.4,35.95,33.4';
 const hasHebrew = (s: string) => /[֐-׿]/.test(s);
 const nn = (s: string) => String(s ?? '').replace(/[\s'"׳״]/g, '');
+// the house number as typed, letter included even when written apart: "49 א", "49א" and "49-א" all give "49א"
+function typedNum(qt: string[]): string {
+  for (let i = 0; i < qt.length; i++) {
+    if (/^\d+[א-ת]$/.test(qt[i])) return qt[i];
+    if (/^\d+$/.test(qt[i])) return /^[א-ת]$/.test(qt[i + 1] || '') ? qt[i] + qt[i + 1] : qt[i];
+  }
+  return '';
+}
 const toks = (s: string) => String(s || '').replace(/[,.\-"'״׳]/g, ' ').split(/\s+/).filter(Boolean);
 
 type Raw = Omit<AddressResult, 'exact' | 'qNum'>;
@@ -49,7 +57,7 @@ async function nominatim(q: string): Promise<Raw[]> {
 
 // the city the user typed counts three times as much as a matching street word; keep the typed house number
 function rank(q: string, res: Raw[]): AddressResult[] {
-  const qt = toks(q), qNum = qt.find(t => /^\d+[א-ת]?$/.test(t)) || '';
+  const qt = toks(q), qNum = typedNum(qt);
   const seen = new Set<string>();
   return res.filter(r => hasHebrew(r.line1 + r.line2))
     .map(r => {
@@ -74,9 +82,10 @@ export async function lookupAddress(q: string): Promise<AddressResult[]> {
 
 // the map page opens straight on this result: no second search there
 export function mapLink(base: string, r: AddressResult): string {
-  const num = r.housenumber || r.qNum;
+  // when the map only knows a nearby number (49 for a typed 49א), ask the map for the typed one
+  const num = r.exact ? (r.housenumber || r.qNum) : (r.qNum || r.housenumber);
   const street = r.street || r.line1.replace(/\s*\d+\s*[א-ת]?$/, '');
   const line1 = num ? `${street} ${num}`.trim() : r.line1;
   const q = r.line2 ? `${line1}, ${r.line2}` : line1;
-  return `${base}?embed=1&ll=${r.lat.toFixed(6)},${r.lng.toFixed(6)}&q=${encodeURIComponent(q)}${r.exact ? '' : '&near=1'}`;
+  return `${base}?embed=1&ll=${r.lat.toFixed(6)},${r.lng.toFixed(6)}&q=${encodeURIComponent(q)}${r.exact ? '' : `&near=1&gn=${encodeURIComponent(r.housenumber)}`}`;
 }

@@ -72,8 +72,10 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
   const typing = focused || query.trim().length > 0 || suggestions.length > 0;
 
   const label = (r: AddressResult) => {
-    const num = r.housenumber || r.qNum;
-    const l1 = !r.housenumber && num ? `${r.line1} ${num}` : r.line1;
+    // keep the number the user typed (49א) even when the map only knows 49
+    const num = r.exact ? (r.housenumber || r.qNum) : r.qNum;
+    const street = r.street || r.line1.replace(/\s*\d+\s*[א-ת]?$/, '');
+    const l1 = num && (!r.housenumber || !r.exact) ? `${street} ${num}`.trim() : r.line1;
     return r.line2 ? `${l1}, ${r.line2}` : l1;
   };
 
