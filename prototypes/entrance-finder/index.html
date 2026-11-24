@@ -279,65 +279,103 @@ async function loadArea(c){
       store.labels.set(l.key, l); b.labels.push(l);
     }
     store.centers.push(c);
-    if (inJerusalem(c)) await jlmNumbers(c);
+    const city = cityOf(c); if (city) await cityNumbers(city, c);
     return true;
   } catch(e){ return false; } finally { clearTimeout(tm); }
 }
-// ---------- Jerusalem municipality GIS: the official buildings and house numbers ----------
-// The city assigns the numbers, so in Jerusalem its data replaces OpenStreetMap's for buildings and numbers.
-const JLM = 'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer';
-const inJerusalem = p => p.lat > 31.70 && p.lat < 31.89 && p.lng > 35.09 && p.lng < 35.27;
-let jlmCredited = false;
-async function jlmQuery(layer, c, d, where){
+// ---------- city GIS: the official buildings and house numbers, where a city publishes them ----------
+// A city assigns its own house numbers, so inside a supported city its data replaces OpenStreetMap's.
+// numbers: a point layer of house-number signs (number + letter); buildings: a polygon layer.
+// byNumber: the buildings layer carries the number itself; otherwise a building is the one under the address point.
+const CITIES = [
+  { id:'jlm', name:'עיריית ירושלים', box:[31.70, 35.09, 31.89, 35.27],
+    url:'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer',
+    numLayer:10, numWhere: n => `BldNum='${n}'`,
+    num: a => ({num: String(a.BldNum || '').trim(), letter: String(a.BLDG_LETTE || '').trim(), street: a.StreetName1}),
+    bldLayer:30, byNumber:true, bldWhere: n => `BLDG_NUM=${n}`,
+    bld: a => ({street: a.StreetName1, floors: a.NUM_FLOORS, apts: a.NUM_APTS_C}) },
+  { id:'tlv', name:'עיריית תל אביב-יפו', box:[32.02, 34.73, 32.15, 34.86],
+    url:'https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer',
+    numLayer:527, numWhere: n => `ms_bayit=${n}`,
+    num: a => ({num: a.ms_bayit == null ? '' : String(a.ms_bayit), letter: String(a.knisa || '').trim(), street: a.t_rechov}),
+    bldLayer:513, byNumber:false,
+    bld: a => ({floors: a.ms_komot}) },
+];
+const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.lng > c.box[1] && p.lng < c.box[3]) || null;
+const credited = new Set();
+async function cityQuery(city, layer, c, d, where){
   const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
-  const url = `${JLM}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
   const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
   try {
     const j = await (await fetch(url, {signal:ctrl.signal})).json();
     if (!j.features) return null;
-    if (!jlmCredited){ jlmCredited = true; map.attributionControl.addAttribution('מבנים ומספרי בתים: עיריית ירושלים'); }
+    if (!credited.has(city.id)){ credited.add(city.id); map.attributionControl.addAttribution(`מבנים ומספרי בתים: ${city.name}`); }
     return j.features;
   } catch(e){ return null; } finally { clearTimeout(tm); }
 }
-// the city's house-number points replace OpenStreetMap's numbers in the loaded area (they carry the letters too)
-async function jlmNumbers(c){
-  const d = 0.0018, pts = await jlmQuery(10, c, d);
-  if (!pts) return;
-  const inBox = l => Math.abs(l.lat - c.lat) < d && Math.abs(l.lng - c.lng) < d*1.18;
-  for (const l of [...store.labels.values()]) if (l.key[0] !== 'j' && inBox(l)){
-    store.labels.delete(l.key); if (l.bld) l.bld.labels = l.bld.labels.filter(x => x !== l);
-  }
-  for (const f of pts){
-    const a = f.attributes, key = 'j' + a.OBJECTID;
-    if (store.labels.has(key) || !a.BldNum || !f.geometry) continue;
-    const l = {key, num: String(a.BldNum).trim() + String(a.BLDG_LETTE || '').trim(), street: a.StreetName1, lat: f.geometry.y, lng: f.geometry.x, bld: null};
+// the city's house-number signs replace OpenStreetMap's numbers near them (outside the city's own data nothing is removed)
+async function cityNumbers(city, c){
+  const d = 0.0018, feats = await cityQuery(city, city.numLayer, c, d);
+  if (!feats || !feats.length) return;
+  const pts = [];
+  for (const f of feats){
+    if (!f.geometry) continue;
+    const a = city.num(f.attributes), p = {lat: f.geometry.y, lng: f.geometry.x};
+    if (!a.num) continue;
+    pts.push(p);
+    const key = city.id + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? `${p.lat},${p.lng}`);
+    if (store.labels.has(key)) continue;
+    const l = {key, city: city.id, num: a.num + a.letter, street: a.street, ...p, bld: null};
     for (const b of store.buildings.values()) if (inPoly(l, b.pts)){ l.bld = b; b.labels.push(l); break; }
     store.labels.set(key, l);
   }
+  for (const l of [...store.labels.values()]) if (!l.city && pts.some(p => dist(p, l) < 60)){
+    store.labels.delete(l.key); if (l.bld) l.bld.labels = l.bld.labels.filter(x => x !== l);
+  }
 }
+// street names compared word by word in any order: Tel Aviv writes "לבנון חיים" for "חיים לבנון"
+const streetKey = s => String(s || '').replace(/^(רחוב|רח'|שדרות|שד'|דרך)\s+/, '').replace(/["'״׳\-.]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+const ring = f => f.geometry && f.geometry.rings ? f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})) : [];
 // the city's buildings for one address: every building that carries the number, and the one the letter points to when known
-async function jlmBuildings(t){
+async function cityBuildings(city, t){
   const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
-  const base = m[1], letter = m[2], st = normStreet(t.street);
-  const [polys, pts] = await Promise.all([jlmQuery(30, t, 0.004, `BLDG_NUM=${base}`), jlmQuery(10, t, 0.004, `BldNum='${base}'`)]);
-  if (!polys) return null;
-  const same = name => !st || normStreet(name) === st;
-  const cands = polys.filter(f => same(f.attributes.StreetName1) && f.geometry && f.geometry.rings)
-    .map(f => ({pts: f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})), floors: f.attributes.NUM_FLOORS, apts: f.attributes.NUM_APTS_C, letters: new Set()}))
-    .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400);
+  const base = m[1], letter = m[2], st = streetKey(t.street);
+  const same = name => !st || streetKey(name) === st;
+  const numFeats = await cityQuery(city, city.numLayer, t, 0.004, city.numWhere(base));
+  const signs = (numFeats || []).filter(f => f.geometry && same(city.num(f.attributes).street))
+    .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
+    .filter(s => dist(t, s.p) < 400);
+  let cands = [];
+  if (city.byNumber){
+    const polys = await cityQuery(city, city.bldLayer, t, 0.004, city.bldWhere(base));
+    if (!polys) return null;
+    cands = polys.filter(f => same(city.bld(f.attributes).street))
+      .map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set()}))
+      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400);
+  } else {
+    if (!signs.length) return null;
+    // the buildings around the address points; each sign belongs to the building it stands in (or touches)
+    const box = signs.reduce((b, s) => ({lat: b.lat + s.p.lat / signs.length, lng: b.lng + s.p.lng / signs.length}), {lat:0, lng:0});
+    const spread = Math.max(0.0006, ...signs.map(s => Math.max(Math.abs(s.p.lat - box.lat), Math.abs(s.p.lng - box.lng)))) + 0.0004;
+    const polys = await cityQuery(city, city.bldLayer, box, spread);
+    if (!polys) return null;
+    const all = polys.map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set()})).filter(c => c.pts.length > 2);
+    for (const s of signs){
+      const c = all.find(c => inPoly(s.p, c.pts)) || all.filter(c => wallDist(s.p, c.pts) < 12).sort((a, b) => wallDist(s.p, a.pts) - wallDist(s.p, b.pts))[0];
+      if (c && !cands.includes(c)) cands.push(c);
+    }
+  }
   if (!cands.length) return null;
-  // which letters the city's number signs give each building ('' = the plain number)
-  for (const f of (pts || [])){
-    if (!same(f.attributes.StreetName1) || !f.geometry) continue;
-    const p = {lat: f.geometry.y, lng: f.geometry.x}, lt = String(f.attributes.BLDG_LETTE || '').trim();
-    const c = cands.find(c => inPoly(p, c.pts)) || cands.find(c => wallDist(p, c.pts) < 12);
-    if (c) c.letters.add(lt);
+  for (const s of signs){
+    const c = cands.find(c => inPoly(s.p, c.pts)) || cands.find(c => wallDist(s.p, c.pts) < 12);
+    if (c) c.letters.add(s.letter);
   }
   const matches = cands.filter(c => c.letters.has(letter));
-  return {base, letter, cands, picked: matches.length === 1 ? matches[0] : null};
+  return {base, letter, cands, picked: matches.length === 1 ? matches[0] : null, city: city.name};
 }
 let redPolys = [];
-function showJlm(t, m){
+function showCity(t, m){
   const shown = m.picked ? [m.picked] : m.cands, n = shown.length;
   redPolys = shown.map(b => b.pts);
   building = {pts: shown.flatMap(b => b.pts), refs: new Set(), labels: []};
@@ -354,8 +392,8 @@ function showJlm(t, m){
   setInfo(n === 1 ? [fl(shown[0]), shown[0].apts ? `${shown[0].apts} דירות` : ''].filter(Boolean).join(' · ')
                   : `${n} בניינים: ` + shown.map(fl).filter(Boolean).join(' ו-'));
   setNote(m.picked ? ''
-    : m.letter && n > 1 ? `בעירייה רשומים ${n} בניינים במספר ${m.base}, בלי אות. ${t.num} הוא אחד מהם, לוודא לפי השלט`
-    : m.letter ? `${t.num} לא רשום בעירייה. מסומן ${m.base}, לוודא בשטח`
+    : m.letter && n > 1 ? `ב${m.city} רשומים ${n} בניינים במספר ${m.base}, בלי אות. ${t.num} הוא אחד מהם, לוודא לפי השלט`
+    : m.letter ? `${t.num} לא רשום ב${m.city}. מסומן ${m.base}, לוודא בשטח`
     : n > 1 ? `${n} בניינים במספר ${m.base}, לוודא לפי השלט` : '');
 }
 function setInfo(txt){ $('info').hidden = !txt; $('info').textContent = txt; }
@@ -433,8 +471,9 @@ async function goTo(t, fromUser){
   if (me) frame(); else { auto = true; map.setView([t.lat, t.lng], 18, {animate:false}); liftAboveBar(); setTimeout(() => auto = false, 50); }
   if (!document.body.classList.contains('embed')) try { history.replaceState(null,'',`?ll=${fx(t.lat)},${fx(t.lng)}&q=${encodeURIComponent($('q').value)}`); } catch(e){}
 
-  // in Jerusalem the city's buildings are asked for at the same time; a slow answer replaces the first result when it comes
-  const jmP = inJerusalem(t) && t.num ? jlmBuildings(t).catch(() => null) : Promise.resolve(null);
+  // in a supported city its buildings are asked for at the same time; a slow answer replaces the first result when it comes
+  const city = cityOf(t);
+  const jmP = city && t.num ? cityBuildings(city, t).catch(() => null) : Promise.resolve(null);
   const ok = store.centers.some(p => dist(p, t) < 60) || await loadArea(t);
   if (seq !== loadSeq) return;
   redPolys = []; setInfo('');
@@ -443,7 +482,7 @@ async function goTo(t, fromUser){
   if (seq !== loadSeq) return;
   const useJlm = m => {
     buildingLayer.clearLayers(); doorsLayer.clearLayers();
-    showJlm(t, m);
+    showCity(t, m);
     drawNumbers(); drawPaths(); updateRoute(true);
     if (follow && me && !inView(me)) frame(true);
   };
