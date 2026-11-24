@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import { LEGAL_CONTACT_EMAIL, LEGAL_DOCS, type LegalDocId } from './legalContent';
-import { useTranslation, useLanguage, type TranslationKey } from '../../i18n';
+import { useTranslation, useLanguage, translate, type TranslationKey } from '../../i18n';
 
 // The documents themselves stay Hebrew (legalContent.ts); only the frame is translated.
 const TAB_LABEL: Record<LegalDocId, TranslationKey> = {
@@ -87,7 +87,7 @@ function LegalDocsView({ onClose, initialDoc }: { onClose: () => void; initialDo
         )}
         <article dir="rtl" lang="he" className="max-w-2xl mx-auto text-right text-fg/85 text-sm leading-relaxed">
           <h3 className="text-fg font-black text-xl">{doc.title}</h3>
-          <p className="text-fg-muted text-xs mt-1">{t('obLegalUpdated', { date: doc.updated })}</p>
+          <p className="text-fg-muted text-xs mt-1">{translate('obLegalUpdated', { date: doc.updated }, 'he')}</p>
 
           {doc.sections.map((section) => (
             <section key={section.heading} className="mt-6">
@@ -109,7 +109,7 @@ function LegalDocsView({ onClose, initialDoc }: { onClose: () => void; initialDo
           ))}
 
           <p className="mt-8 pt-4 border-t border-line">
-            {t('obLegalContact')}{' '}
+            {translate('obLegalContact', undefined, 'he')}{' '}
             <a
               href={`mailto:${LEGAL_CONTACT_EMAIL}`}
               className="text-blue-600 dark:text-blue-400 font-semibold underline underline-offset-2"

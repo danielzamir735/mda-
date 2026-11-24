@@ -73,7 +73,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
           </div>
 
           {/* Body – justify-between ממלא את כל הגובה */}
-          <div className="flex-1 flex flex-col items-center justify-between px-5 pb-10 pt-2">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-between gap-4 px-5 pb-10 pt-2">
 
             {/* Heart + Title */}
             <div className="flex flex-col items-center gap-3">
