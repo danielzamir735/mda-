@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import ReactGA from 'react-ga4';
 import { supabase } from '../../lib/supabase';
+import { useTranslation, useLanguage, translate, type TranslationKey } from '../../i18n';
+import { useSettingsStore } from '../../store/settingsStore';
 
 interface Props {
   isOpen: boolean;
@@ -46,66 +48,68 @@ interface Language {
   code: string;
   name: string;
   flag: string;
+  /** English display name (Hebrew `name` is the default; custom DB languages have Hebrew only). */
+  en?: string;
   custom?: boolean;
 }
 
 // ─── 52 Languages ─────────────────────────────────────────────────────────────
 
 const STATIC_LANGUAGES: Language[] = [
-  { code: 'isl',   name: 'שפת סימנים',         flag: '🤟' },
-  { code: 'ru',    name: 'רוסית',              flag: '🇷🇺' },
-  { code: 'ar',    name: 'ערבית',              flag: '🇸🇦' },
-  { code: 'am',    name: 'אמהרית',             flag: '🇪🇹' },
-  { code: 'en',    name: 'אנגלית',             flag: '🇬🇧' },
-  { code: 'fr',    name: 'צרפתית',             flag: '🇫🇷' },
-  { code: 'es',    name: 'ספרדית',             flag: '🇪🇸' },
-  { code: 'ro',    name: 'רומנית',             flag: '🇷🇴' },
-  { code: 'ti',    name: 'טיגרינית',           flag: '🇪🇷' },
-  { code: 'ka',    name: 'גיאורגית',           flag: '🇬🇪' },
-  { code: 'yi',    name: 'יידיש',              flag: '✡️'  },
-  { code: 'th',    name: 'תאית',               flag: '🇹🇭' },
-  { code: 'zh',    name: 'סינית',              flag: '🇨🇳' },
-  { code: 'uk',    name: 'אוקראינית',          flag: '🇺🇦' },
-  { code: 'he',    name: 'עברית',              flag: '🇮🇱' },
-  { code: 'it',    name: 'איטלקית',            flag: '🇮🇹' },
-  { code: 'de',    name: 'גרמנית',             flag: '🇩🇪' },
-  { code: 'pt',    name: 'פורטוגזית',          flag: '🇵🇹' },
-  { code: 'hi',    name: 'הינדי',              flag: '🇮🇳' },
-  { code: 'tr',    name: 'טורקית',             flag: '🇹🇷' },
-  { code: 'hu',    name: 'הונגרית',            flag: '🇭🇺' },
-  { code: 'pl',    name: 'פולנית',             flag: '🇵🇱' },
-  { code: 'bg',    name: 'בולגרית',            flag: '🇧🇬' },
-  { code: 'cs',    name: "צ'כית",              flag: '🇨🇿' },
-  { code: 'sr',    name: 'סרבית',              flag: '🇷🇸' },
-  { code: 'hr',    name: 'קרואטית',            flag: '🇭🇷' },
-  { code: 'sq',    name: 'אלבנית',             flag: '🇦🇱' },
-  { code: 'el',    name: 'יוונית',             flag: '🇬🇷' },
-  { code: 'nl',    name: 'הולנדית',            flag: '🇳🇱' },
-  { code: 'sv',    name: 'שוודית',             flag: '🇸🇪' },
-  { code: 'no',    name: 'נורווגית',           flag: '🇳🇴' },
-  { code: 'da',    name: 'דנית',               flag: '🇩🇰' },
-  { code: 'fi',    name: 'פינית',              flag: '🇫🇮' },
-  { code: 'ja',    name: 'יפנית',              flag: '🇯🇵' },
-  { code: 'ko',    name: 'קוריאנית',           flag: '🇰🇷' },
-  { code: 'vi',    name: 'וייטנאמית',          flag: '🇻🇳' },
-  { code: 'id',    name: 'אינדונזית',          flag: '🇮🇩' },
-  { code: 'tl',    name: 'טגלוג',              flag: '🇵🇭' },
-  { code: 'sw',    name: 'סוואהילי',           flag: '🇰🇪' },
-  { code: 'so',    name: 'סומלית',             flag: '🇸🇴' },
-  { code: 'fa',    name: 'פרסית',              flag: '🇮🇷' },
-  { code: 'ur',    name: 'אורדו',              flag: '🇵🇰' },
-  { code: 'bn',    name: 'בנגלית',             flag: '🇧🇩' },
-  { code: 'ta',    name: 'טמילית',             flag: '🇮🇳' },
-  { code: 'ne',    name: 'נפאלית',             flag: '🇳🇵' },
-  { code: 'si',    name: 'סינהלית',            flag: '🇱🇰' },
-  { code: 'az',    name: 'אזרית',              flag: '🇦🇿' },
-  { code: 'hy',    name: 'ארמנית',             flag: '🇦🇲' },
-  { code: 'kk',    name: 'קזחית',              flag: '🇰🇿' },
-  { code: 'uz',    name: 'אוזבקית',            flag: '🇺🇿' },
-  { code: 'ms',    name: 'מלאית',              flag: '🇲🇾' },
-  { code: 'ps',    name: 'פשטו',               flag: '🇦🇫' },
-  { code: 'mk',    name: 'מקדונית',            flag: '🇲🇰' },
-  { code: 'pt-br', name: 'פורטוגזית (ברזיל)', flag: '🇧🇷' },
+  { code: 'isl', name: 'שפת סימנים', en: 'Sign language', flag: '🤟' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ru', name: 'רוסית', en: 'Russian', flag: '🇷🇺' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ar', name: 'ערבית', en: 'Arabic', flag: '🇸🇦' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'am', name: 'אמהרית', en: 'Amharic', flag: '🇪🇹' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'en', name: 'אנגלית', en: 'English', flag: '🇬🇧' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'fr', name: 'צרפתית', en: 'French', flag: '🇫🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'es', name: 'ספרדית', en: 'Spanish', flag: '🇪🇸' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ro', name: 'רומנית', en: 'Romanian', flag: '🇷🇴' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ti', name: 'טיגרינית', en: 'Tigrinya', flag: '🇪🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ka', name: 'גיאורגית', en: 'Georgian', flag: '🇬🇪' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'yi', name: 'יידיש', en: 'Yiddish', flag: '✡️' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'th', name: 'תאית', en: 'Thai', flag: '🇹🇭' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'zh', name: 'סינית', en: 'Chinese', flag: '🇨🇳' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'uk', name: 'אוקראינית', en: 'Ukrainian', flag: '🇺🇦' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'he', name: 'עברית', en: 'Hebrew', flag: '🇮🇱' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'it', name: 'איטלקית', en: 'Italian', flag: '🇮🇹' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'de', name: 'גרמנית', en: 'German', flag: '🇩🇪' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'pt', name: 'פורטוגזית', en: 'Portuguese', flag: '🇵🇹' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'hi', name: 'הינדי', en: 'Hindi', flag: '🇮🇳' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'tr', name: 'טורקית', en: 'Turkish', flag: '🇹🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'hu', name: 'הונגרית', en: 'Hungarian', flag: '🇭🇺' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'pl', name: 'פולנית', en: 'Polish', flag: '🇵🇱' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'bg', name: 'בולגרית', en: 'Bulgarian', flag: '🇧🇬' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'cs', name: "צ'כית", en: 'Czech', flag: '🇨🇿' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'sr', name: 'סרבית', en: 'Serbian', flag: '🇷🇸' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'hr', name: 'קרואטית', en: 'Croatian', flag: '🇭🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'sq', name: 'אלבנית', en: 'Albanian', flag: '🇦🇱' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'el', name: 'יוונית', en: 'Greek', flag: '🇬🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'nl', name: 'הולנדית', en: 'Dutch', flag: '🇳🇱' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'sv', name: 'שוודית', en: 'Swedish', flag: '🇸🇪' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'no', name: 'נורווגית', en: 'Norwegian', flag: '🇳🇴' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'da', name: 'דנית', en: 'Danish', flag: '🇩🇰' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'fi', name: 'פינית', en: 'Finnish', flag: '🇫🇮' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ja', name: 'יפנית', en: 'Japanese', flag: '🇯🇵' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ko', name: 'קוריאנית', en: 'Korean', flag: '🇰🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'vi', name: 'וייטנאמית', en: 'Vietnamese', flag: '🇻🇳' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'id', name: 'אינדונזית', en: 'Indonesian', flag: '🇮🇩' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'tl', name: 'טגלוג', en: 'Tagalog', flag: '🇵🇭' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'sw', name: 'סוואהילי', en: 'Swahili', flag: '🇰🇪' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'so', name: 'סומלית', en: 'Somali', flag: '🇸🇴' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'fa', name: 'פרסית', en: 'Persian', flag: '🇮🇷' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ur', name: 'אורדו', en: 'Urdu', flag: '🇵🇰' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'bn', name: 'בנגלית', en: 'Bengali', flag: '🇧🇩' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ta', name: 'טמילית', en: 'Tamil', flag: '🇮🇳' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ne', name: 'נפאלית', en: 'Nepali', flag: '🇳🇵' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'si', name: 'סינהלית', en: 'Sinhala', flag: '🇱🇰' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'az', name: 'אזרית', en: 'Azerbaijani', flag: '🇦🇿' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'hy', name: 'ארמנית', en: 'Armenian', flag: '🇦🇲' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'kk', name: 'קזחית', en: 'Kazakh', flag: '🇰🇿' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'uz', name: 'אוזבקית', en: 'Uzbek', flag: '🇺🇿' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ms', name: 'מלאית', en: 'Malay', flag: '🇲🇾' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'ps', name: 'פשטו', en: 'Pashto', flag: '🇦🇫' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'mk', name: 'מקדונית', en: 'Macedonian', flag: '🇲🇰' }, // i18n-ok: Hebrew display name (English in en)
+  { code: 'pt-br', name: 'פורטוגזית (ברזיל)', en: 'Portuguese (Brazil)', flag: '🇧🇷' }, // i18n-ok: Hebrew display name (English in en)
 ];
 
 // ─── Animation Variants ────────────────────────────────────────────────────────
@@ -126,8 +130,19 @@ const INTRO_PAGE = {
 
 // ─── Day labels ────────────────────────────────────────────────────────────────
 
-const DAY_ABBREVS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
-const DAY_NAMES   = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const dayShort = (day: number) => translate(`lbDayShort${day}` as TranslationKey);
+const dayName  = (day: number) => translate(`lbDay${day}` as TranslationKey);
+
+/** Language name in the interface language. */
+function langName(l: Language): string {
+  return useSettingsStore.getState().language === 'en' && l.en ? l.en : l.name;
+}
+
+function matchesLangSearch(l: Language, q: string): boolean {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  return l.name.includes(q.trim()) || (l.en ?? '').toLowerCase().includes(s) || l.code.toLowerCase().includes(s);
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -215,6 +230,7 @@ export function CountUpNumber({ value, className, style }: { value: number; clas
 // ─── Intro Screen ──────────────────────────────────────────────────────────────
 
 function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCount: number }) {
+  const t = useTranslation();
   const handleStart = () => {
     localStorage.setItem('lb_intro_seen', '1');
     onStart();
@@ -233,6 +249,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
             boxShadow: '0 16px 48px rgba(59,130,246,0.35), 0 4px 12px rgba(59,130,246,0.2)',
           }}
         >
+          {/* theme-ok: white on a coloured button / badge */}
           <Languages size={52} className="text-white" />
         </motion.div>
         <motion.div
@@ -241,6 +258,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
           className="absolute -bottom-2 -right-2 w-11 h-11 rounded-[1rem] bg-emerald-500 flex items-center justify-center"
           style={{ boxShadow: '0 4px 16px rgba(34,197,94,0.45)' }}
         >
+          {/* theme-ok: white on a coloured button / badge */}
           <Phone size={20} className="text-white" fill="white" />
         </motion.div>
       </div>
@@ -251,26 +269,27 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
         animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.3 } }}
         className="flex flex-col gap-4"
       >
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
-          סיוע בתרגום
+        <h2 className="text-2xl font-black text-fg leading-tight">
+          {t('lbTitle')}
         </h2>
-        <p className="text-[0.9rem] text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-          צריך עזרה בתרגום מול מטופל? מתרגמים מתנדבים מוכנים לסייע לך בזמן אמת.
+        <p className="text-[0.9rem] text-fg-muted leading-relaxed max-w-xs mx-auto">
+          {t('lbIntroBody')}
         </p>
         {/* How it works steps */}
-        <div className="flex flex-col gap-2 max-w-xs mx-auto w-full text-right">
+        <div className="flex flex-col gap-2 max-w-xs mx-auto w-full text-start">
           {[
-            { num: '1', text: 'בחר שפה מהרשימה' },
-            { num: '2', text: 'מצא מתרגם פנוי (נקודה ירוקה)' },
-            { num: '3', text: 'התקשר או שלח וואטסאפ בלחיצת כפתור' },
+            { num: '1', text: t('lbStep1') },
+            { num: '2', text: t('lbStep2') },
+            { num: '3', text: t('lbStep3') },
           ].map(step => (
             <div key={step.num} className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
               style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.18)' }}>
+              {/* theme-ok: white on a coloured button / badge */}
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
                 style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)' }}>
                 {step.num}
               </span>
-              <span className="text-sm font-semibold text-gray-700 dark:text-white/80">{step.text}</span>
+              <span className="text-sm font-semibold text-fg/80">{step.text}</span>
             </div>
           ))}
         </div>
@@ -282,13 +301,14 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
         animate={{ opacity: 1, y: 0, transition: { delay: 0.32, duration: 0.3 } }}
         whileTap={{ scale: 0.96 }}
         onClick={handleStart}
+        // theme-ok: white on a coloured button / badge
         className="w-full max-w-xs py-4 rounded-2xl text-white font-black text-lg"
         style={{
           background: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
           boxShadow: '0 8px 32px rgba(59,130,246,0.38)',
         }}
       >
-        קדימה, בואו נתחיל
+        {t('lbStart')}
       </motion.button>
 
       {assistCount > 0 && (
@@ -297,10 +317,10 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
           animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.35 } }}
           className="w-full max-w-xs rounded-2xl px-5 py-4 flex flex-col gap-3"
           style={{
-            background: 'rgba(255,255,255,0.07)',
+            background: 'rgb(var(--fg) / 0.07)',
             backdropFilter: 'blur(24px)',
             border: '1px solid rgba(52,211,153,0.3)',
-            boxShadow: '0 8px 32px rgba(52,211,153,0.12), inset 0 1px 0 rgba(255,255,255,0.12)',
+            boxShadow: '0 8px 32px rgba(52,211,153,0.12), inset 0 1px 0 rgb(var(--fg) / 0.12)',
           }}
         >
           {/* Live label */}
@@ -309,7 +329,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.9)' }} />
             </span>
-            <span className="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest">קהילת חובש+ בתנופה</span>
+            <span className="text-[0.6rem] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t('lbCommunity')}</span>
           </div>
           {/* Number + Users icon */}
           <div className="flex items-center justify-between">
@@ -326,11 +346,11 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               className="flex items-center justify-center w-10 h-10 rounded-xl"
               style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.2)' }}
             >
-              <Users size={20} className="text-emerald-400" />
+              <Users size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
-          <p className="text-xs text-white/55 font-semibold leading-relaxed">
-            שיחות חירום בוצעו דרך המערכת
+          <p className="text-xs text-fg/55 font-semibold leading-relaxed">
+            {t('lbEmergencyCalls')}
           </p>
         </motion.div>
       )}
@@ -341,26 +361,27 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
 // ─── Availability display helper ──────────────────────────────────────────────
 
 function AvailabilityBadge({ translator }: { translator: Translator }) {
+  const t = useTranslation();
   const avail = translator.availability;
   if (avail) {
     if (avail.type === '24_7') return (
       <div className="flex items-center gap-1 mt-0.5">
-        <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
-        <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+        <ShieldCheck size={11} className="text-emerald-600 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+        <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">24/7</span>
       </div>
     );
     if (avail.type === 'no_saturday') return (
       <div className="flex items-center gap-1 mt-0.5">
-        <Moon size={10} className="text-amber-400" />
-        <span className="text-[0.65rem] text-amber-400 font-bold">כל יום מלבד שבת</span>
+        <Moon size={10} className="text-amber-600 dark:text-amber-400" />
+        <span className="text-[0.65rem] text-amber-600 dark:text-amber-400 font-bold">{t('lbEveryDayButSat')}</span>
       </div>
     );
     if (avail.type === 'custom' && avail.schedule.length > 0) return (
       <div className="flex flex-col gap-0.5 mt-0.5">
         {avail.schedule.map((entry, i) => (
-          <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+          <p key={i} className="text-[0.65rem] text-fg-subtle flex items-center gap-1">
             <Clock size={10} />
-            <span className="text-[0.6rem] font-semibold text-gray-500">{DAY_ABBREVS[entry.day]}</span>
+            <span className="text-[0.6rem] font-semibold text-fg-muted">{dayShort(entry.day)}</span>
             {formatTime(entry.start)} – {formatTime(entry.end)}
           </p>
         ))}
@@ -371,8 +392,8 @@ function AvailabilityBadge({ translator }: { translator: Translator }) {
   // Legacy fallback
   if (translator.is_24_7) return (
     <div className="flex items-center gap-1 mt-0.5">
-      <ShieldCheck size={11} className="text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
-      <span className="text-[0.65rem] text-emerald-400 font-bold">24/7</span>
+      <ShieldCheck size={11} className="text-emerald-600 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+      <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">24/7</span>
     </div>
   );
   const slots: TimeSlot[] = (translator.time_slots && translator.time_slots.length > 0)
@@ -384,7 +405,7 @@ function AvailabilityBadge({ translator }: { translator: Translator }) {
   return (
     <div className="flex flex-col gap-0.5 mt-0.5">
       {slots.map((slot, i) => (
-        <p key={i} className="text-[0.65rem] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+        <p key={i} className="text-[0.65rem] text-fg-subtle flex items-center gap-1">
           <Clock size={10} />
           {formatTime(slot.start)} – {formatTime(slot.end)}
         </p>
@@ -414,10 +435,14 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
   isSignLanguage?: boolean;
   onContact?: () => void;
 }) {
+  const t = useTranslation();
   const phone = translator.phone_number.replace(/\D/g, '');
   const waNumber = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+  // The message goes to an Israeli volunteer translator, so it stays Hebrew in both interface languages.
   const waMessage = selectedLangName
+    // i18n-ok: message to the volunteer translator
     ? `שלום, הודעה זו נשלחה דרך אפליקציית חובש +. קיים צורך דחוף בסיוע בתרגום לשפה ה-${selectedLangName} עבור מטופל בשטח. האם ניתן לסייע כעת?`
+    // i18n-ok: message to the volunteer translator
     : 'שלום, הודעה זו נשלחה דרך אפליקציית חובש +. קיים צורך דחוף בסיוע בתרגום עבור מטופל בשטח. האם ניתן לסייע כעת?';
   const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
@@ -425,13 +450,13 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
     <div
       className={`flex items-center gap-3 rounded-2xl px-4 py-3 border transition-all
         ${available
-          ? 'bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10 backdrop-blur-md'
+          ? 'bg-surface/70 dark:bg-fg/5 border-line backdrop-blur-md'
           : isEmergency
             ? 'border-orange-500/20'
-            : 'bg-gray-100/60 dark:bg-white/[0.03] border-gray-200/60 dark:border-white/5 opacity-60'
+            : 'bg-surface-2/60 border-line/60 opacity-60'
         }`}
       style={available
-        ? { boxShadow: '0 4px 24px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.1)' }
+        ? { boxShadow: '0 4px 24px rgba(96,165,250,0.08), inset 0 1px 0 rgb(var(--fg) / 0.1)' }
         : isEmergency
           ? { background: 'rgba(249,115,22,0.06)', boxShadow: '0 2px 12px rgba(249,115,22,0.08)' }
           : undefined}
@@ -441,25 +466,25 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
           ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/30'
           : isEmergency
             ? 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-lg shadow-orange-500/25'
-            : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            : 'bg-gray-300 dark:bg-gray-700 text-fg-muted'
         }`}
       >
         {translator.full_name.charAt(0)}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{translator.full_name}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+        <p className="font-bold text-sm text-fg truncate">{translator.full_name}</p>
+        <p className="text-xs text-fg-muted mt-0.5">
           {translator.languages.map(code => {
             const lang = allLanguages.find(l => l.code === code);
-            return lang ? `${lang.flag} ${lang.name}` : code;
+            return lang ? `${lang.flag} ${langName(lang)}` : code;
           }).join(' · ')}
         </p>
         <AvailabilityBadge translator={translator} />
         {isEmergency && (
           <div className="flex items-center gap-1 mt-0.5">
-            <AlertCircle size={10} className="text-orange-400 shrink-0" />
-            <span className="text-[0.6rem] text-orange-400 font-bold">לחירום בלבד (מחוץ לשעות)</span>
+            <AlertCircle size={10} className="text-orange-600 dark:text-orange-400 shrink-0" />
+            <span className="text-[0.6rem] text-orange-600 dark:text-orange-400 font-bold">{t('lbEmergencyOnly')}</span>
           </div>
         )}
       </div>
@@ -477,9 +502,10 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
               ReactGA.event('video_call_clicked', { language: selectedLangName ?? '' });
               onContact?.();
             }}
+            // theme-ok: white on a coloured button / badge
             className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
             style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
-            aria-label="שיחת וידאו WhatsApp"
+            aria-label={t('lbVideoCall')}
           >
             <Video size={17} />
           </a>
@@ -491,10 +517,12 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
               ReactGA.event('contact_translator', { method: 'call', language: selectedLangName ?? '' });
               onContact?.();
             }}
+            // theme-ok: white on a coloured button / badge
             className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
             style={{ background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', boxShadow: '0 4px 16px rgba(34,197,94,0.4)' }}
-            aria-label="התקשר"
+            aria-label={t('call')}
           >
+            {/* theme-ok: white on a coloured button / badge */}
             <Phone size={17} fill="white" />
           </a>
         )}
@@ -507,6 +535,7 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
             ReactGA.event('contact_translator', { method: 'whatsapp', language: selectedLangName ?? '' });
             onContact?.();
           }}
+          // theme-ok: white on a coloured button / badge
           className="flex items-center justify-center w-10 h-10 rounded-full text-white transition-all active:scale-90"
           style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 16px rgba(37,211,102,0.4)' }}
           aria-label="WhatsApp"
@@ -521,27 +550,28 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
 // ─── Language Grid Card ────────────────────────────────────────────────────────
 
 function LangCard({ lang, count, onClick }: { lang: Language; count: number; onClick: () => void }) {
+  const t = useTranslation();
   return (
     <button
       onClick={onClick}
       className="relative overflow-hidden flex flex-col items-center justify-center gap-2 rounded-2xl py-5 px-2 border
-        bg-white/10 border-white/20
-        active:scale-95 transition-all hover:border-white/40 hover:bg-white/15"
+        bg-fg/10 border-fg/20
+        active:scale-95 transition-all hover:border-fg/40 hover:bg-fg/15"
       style={{
         backdropFilter: 'blur(12px)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.1)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgb(var(--fg) / 0.1)',
       }}
     >
       <span className="text-4xl leading-none">{lang.flag}</span>
-      <span className="text-sm font-bold text-white">{lang.name}</span>
+      <span className="text-sm font-bold text-fg">{langName(lang)}</span>
       {count > 0 ? (
-        <span className="text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-white/80 border border-white/20">
-          {count} מתרגמים
+        <span className="text-[0.6rem] font-semibold px-2 py-0.5 rounded-full bg-fg/15 text-fg/80 border border-fg/20">
+          {t('lbTranslatorsCount', { n: count })}
         </span>
       ) : (
-        <span className="flex items-center gap-1 text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
+        <span className="flex items-center gap-1 text-[0.6rem] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-700 dark:text-red-300 border border-red-400/40">
           <AlertTriangle size={9} className="flex-shrink-0" />
-          עזרו לנו לאייש
+          {t('lbHelpStaff')}
         </span>
       )}
     </button>
@@ -551,6 +581,7 @@ function LangCard({ lang, count, onClick }: { lang: Language; count: number; onC
 // ─── Language Request Form ─────────────────────────────────────────────────────
 
 function LanguageRequestForm() {
+  const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -563,6 +594,7 @@ function LanguageRequestForm() {
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // i18n-ok: message to the app admin, always Hebrew
         body: JSON.stringify({ message: `קטגוריה: הוספת שפה\nשפה מבוקשת: ${trimmed}` }),
       });
       if (!res.ok) throw new Error();
@@ -577,10 +609,10 @@ function LanguageRequestForm() {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all active:scale-95 hover:border-blue-400 dark:hover:border-blue-400 hover:text-blue-500 dark:hover:text-blue-400"
+        className="flex items-center justify-center gap-2 w-full rounded-2xl py-3 px-4 border border-dashed border-line-strong text-fg-muted text-sm font-semibold transition-all active:scale-95 hover:border-blue-400 hover:text-blue-500"
       >
         <Plus size={15} />
-        השפה שלך לא ברשימה? שלח בקשה
+        {t('lbLangMissing')}
       </button>
     );
   }
@@ -593,9 +625,9 @@ function LanguageRequestForm() {
         className="flex flex-col items-center gap-2 rounded-2xl p-4 border border-emerald-400/40 text-center"
         style={{ background: 'rgba(34,197,94,0.1)' }}
       >
-        <Check size={20} className="text-emerald-400" />
-        <p className="text-sm font-bold text-emerald-300">הבקשה נשלחה בהצלחה!</p>
-        <p className="text-xs text-emerald-400/70">נוסיף את השפה בהקדם האפשרי</p>
+        <Check size={20} className="text-emerald-600 dark:text-emerald-400" />
+        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t('lbRequestSent')}</p>
+        <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">{t('lbRequestSentSub')}</p>
       </motion.div>
     );
   }
@@ -604,24 +636,25 @@ function LanguageRequestForm() {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-2 rounded-2xl p-3 border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-white/5"
+      className="flex flex-col gap-2 rounded-2xl p-3 border border-line bg-surface-2"
     >
-      <p className="text-xs font-bold text-gray-600 dark:text-gray-400">בקש הוספת שפה חדשה</p>
+      <p className="text-xs font-bold text-fg-muted">{t('lbRequestTitle')}</p>
       <div className="flex gap-2">
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="שם השפה..."
+          placeholder={t('lbLangNamePlaceholder')}
           autoFocus
           disabled={status === 'sending'}
-          className="flex-1 rounded-xl px-3 py-2 text-sm bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
-          dir="rtl"
+          className="flex-1 rounded-xl px-3 py-2 text-sm bg-surface border border-line text-fg placeholder-fg-subtle focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
+          dir="auto"
         />
         <button
           onClick={handleSend}
           disabled={!name.trim() || status === 'sending'}
+          // theme-ok: white on a coloured button / badge
           className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl text-white transition-all active:scale-95 disabled:opacity-50"
           style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
         >
@@ -629,7 +662,7 @@ function LanguageRequestForm() {
         </button>
       </div>
       {status === 'error' && (
-        <p className="text-xs text-red-400">שליחה נכשלה, נסה שוב</p>
+        <p className="text-xs text-red-600 dark:text-red-400">{t('lbSendFailed')}</p>
       )}
     </motion.div>
   );
@@ -656,6 +689,7 @@ function RegisterForm({
   onModeChange?: (mode: 'new' | 'checking' | 'edit') => void;
   initialPhone?: string;
 }) {
+  const t = useTranslation();
   const [fullName, setFullName]             = useState('');
   const [phone, setPhone]                   = useState('');
   const [phoneConfirm, setPhoneConfirm]     = useState('');
@@ -692,9 +726,7 @@ function RegisterForm({
   const toggleLang = (code: string) =>
     setSelectedLangs(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
 
-  const filteredFormLangs = allLanguages.filter(l =>
-    l.name.includes(formLangSearch) || l.code.toLowerCase().includes(formLangSearch.toLowerCase())
-  );
+  const filteredFormLangs = allLanguages.filter(l => matchesLangSearch(l, formLangSearch));
 
   // ── Phone-based identity lookup ──────────────────────────────────────────────
   const handlePhoneChange = (val: string) => {
@@ -718,7 +750,7 @@ function RegisterForm({
       if (data && !getEditToken(data.id)) {
         // Knowing the phone number is not proof of ownership
         setMode('new');
-        setError('מספר זה כבר רשום במערכת. ניתן לעדכן או להסיר את הרישום רק מהמכשיר שבו בוצעה ההרשמה.');
+        setError(t('lbErrRegisteredElsewhere'));
         return;
       }
 
@@ -778,10 +810,10 @@ function RegisterForm({
 
   // ── Actions ──────────────────────────────────────────────────────────────────
   const handleUpdate = async () => {
-    if (!fullName.trim())           { setError('נא להזין שם מלא');          return; }
-    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    if (!fullName.trim())           { setError(t('lbErrName'));          return; }
+    if (selectedLangs.length === 0) { setError(t('lbErrLang')); return; }
     if (availMode === 'custom' && Object.values(customDays).every(d => !d.enabled)) {
-      setError('בלוח זמנים מותאם יש לבחור לפחות יום אחד'); return;
+      setError(t('lbErrDay')); return;
     }
     setLoading(true); setError(null);
 
@@ -817,13 +849,13 @@ function RegisterForm({
 
       if (dbError || !updated) {
         console.error('[LB] Supabase update error:', dbError);
-        setError(dbError ? `שגיאה בעדכון: ${dbError.message}` : 'לא ניתן לעדכן את הרישום ממכשיר זה.');
+        setError(dbError ? t('lbErrUpdate', { msg: dbError.message }) : t('lbErrUpdateDevice'));
         setLoading(false);
         return;
       }
     } catch (err) {
       console.error('[LB] Unexpected update error:', err);
-      setError('שגיאה בלתי צפויה. נסה שוב.');
+      setError(t('lbErrUnexpected'));
       setLoading(false);
       return;
     }
@@ -841,7 +873,7 @@ function RegisterForm({
       p_edit_token: getEditToken(existingId!) ?? '',
     });
     setLoading(false);
-    if (dbError || !deleted) { setError('שגיאה במחיקה. נסה שוב.'); return; }
+    if (dbError || !deleted) { setError(t('lbErrDelete')); return; }
     localStorage.removeItem(LB_TOKEN_KEY);
     ReactGA.event('translator_delete', {});
     setDeletedSuccess(true);
@@ -849,12 +881,12 @@ function RegisterForm({
   };
 
   const handleSubmit = async () => {
-    if (!fullName.trim())           { setError('נא להזין שם מלא');          return; }
-    if (!phone.trim())              { setError('נא להזין מספר טלפון');       return; }
-    if (!phoneMatch)                { setError('מספרי הטלפון אינם תואמים'); return; }
-    if (selectedLangs.length === 0) { setError('נא לבחור לפחות שפה אחת'); return; }
+    if (!fullName.trim())           { setError(t('lbErrName'));          return; }
+    if (!phone.trim())              { setError(t('lbErrPhone'));       return; }
+    if (!phoneMatch)                { setError(t('lbErrPhoneMismatch')); return; }
+    if (selectedLangs.length === 0) { setError(t('lbErrLang')); return; }
     if (availMode === 'custom' && Object.values(customDays).every(d => !d.enabled)) {
-      setError('בלוח זמנים מותאם יש לבחור לפחות יום אחד'); return;
+      setError(t('lbErrDay')); return;
     }
     setLoading(true); setError(null);
 
@@ -903,7 +935,7 @@ function RegisterForm({
 
       if (dbError) {
         console.error('[LB] Supabase insert error:', dbError);
-        setError(dbError.code === '23505' ? 'מספר זה כבר רשום במערכת.' : `שגיאה בשמירה: ${dbError.message}`);
+        setError(dbError.code === '23505' ? t('lbErrAlreadyRegistered') : t('lbErrSave', { msg: dbError.message }));
         setLoading(false);
         return;
       }
@@ -917,7 +949,7 @@ function RegisterForm({
       setTimeout(() => onSuccess(selectedLangs, newId), 2000);
     } catch (err) {
       console.error('[LB] Unexpected insert error:', err);
-      setError('שגיאה בלתי צפויה. נסה שוב.');
+      setError(t('lbErrUnexpected'));
       setLoading(false);
     }
   };
@@ -929,12 +961,13 @@ function RegisterForm({
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 260, damping: 18 } }}
-          className="w-20 h-20 rounded-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center"
+          className="w-20 h-20 rounded-full bg-fg-subtle flex items-center justify-center"
         >
+          {/* theme-ok: white on a coloured button / badge */}
           <Check size={36} className="text-white" strokeWidth={3} />
         </motion.div>
-        <p className="text-xl font-black text-gray-900 dark:text-white">הוסרת מהמערכת</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">תודה על תרומתך לקהילה</p>
+        <p className="text-xl font-black text-fg">{t('lbRemoved')}</p>
+        <p className="text-sm text-fg-muted">{t('lbRemovedSub')}</p>
       </div>
     );
   }
@@ -948,13 +981,14 @@ function RegisterForm({
           className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center"
           style={{ boxShadow: '0 8px 32px rgba(34,197,94,0.45)' }}
         >
+          {/* theme-ok: white on a coloured button / badge */}
           <Check size={36} className="text-white" strokeWidth={3} />
         </motion.div>
-        <p className="text-xl font-black text-gray-900 dark:text-white">
-          {mode === 'edit' ? 'פרטיך עודכנו בהצלחה!' : 'נרשמת בהצלחה!'}
+        <p className="text-xl font-black text-fg">
+          {mode === 'edit' ? t('lbUpdated') : t('lbRegistered')}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {mode === 'edit' ? 'השינויים נשמרו במערכת' : 'תודה על ההצטרפות לסיוע בתרגום'}
+        <p className="text-sm text-fg-muted">
+          {mode === 'edit' ? t('lbUpdatedSub') : t('lbRegisteredSub')}
         </p>
       </div>
     );
@@ -975,11 +1009,11 @@ function RegisterForm({
             style={{ background: 'rgba(59,130,246,0.12)' }}
           >
             <div className="w-8 h-8 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
-              <UserPlus size={16} className="text-blue-300" />
+              <UserPlus size={16} className="text-blue-700 dark:text-blue-300" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-black text-blue-200">מספר זה כבר רשום במערכת</span>
-              <span className="text-xs text-blue-300/70">תוכל/י לעדכן פרטים או להסיר את עצמך</span>
+              <span className="text-sm font-black text-blue-800 dark:text-blue-200">{t('lbAlreadyRegisteredBanner')}</span>
+              <span className="text-xs text-blue-700/70 dark:text-blue-300/70">{t('lbAlreadyRegisteredSub')}</span>
             </div>
           </motion.div>
         )}
@@ -987,36 +1021,37 @@ function RegisterForm({
 
       {/* Name */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">שם מלא</label>
+        <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbFullName')}</label>
         <input
           type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-          placeholder="שם פרטי ושם משפחה" dir="rtl"
-          className="w-full rounded-xl px-4 py-3 text-sm bg-white/8 border border-white/15 text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
-          style={{ background: 'rgba(255,255,255,0.07)' }}
+          placeholder={t('lbFullNamePlaceholder')} dir="auto"
+          className="w-full rounded-xl px-4 py-3 text-sm bg-fg/8 border border-fg/15 text-fg placeholder-fg/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          style={{ background: 'rgb(var(--fg) / 0.07)' }}
         />
       </div>
 
       {/* Phone */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">מספר טלפון</label>
+        <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbPhone')}</label>
         <div className="relative">
           <input
             type="tel" value={phone} onChange={e => handlePhoneChange(e.target.value)}
             placeholder="05X-XXXXXXX" dir="ltr"
-            className={`w-full rounded-xl px-4 py-3 pr-10 text-sm border text-white placeholder-white/35 focus:outline-none focus:ring-2 transition-all
+            className={`w-full rounded-xl px-4 py-3 pe-10 text-sm border text-fg placeholder-fg/35 focus:outline-none focus:ring-2 transition-all
               ${mode === 'edit'
                 ? 'border-blue-400/70 focus:ring-blue-400/40'
-                : 'border-white/15 focus:ring-blue-400/50'
+                : 'border-fg/15 focus:ring-blue-400/50'
               }`}
-            style={{ background: 'rgba(255,255,255,0.07)' }}
+            style={{ background: 'rgb(var(--fg) / 0.07)' }}
           />
           {mode === 'checking' && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <Loader2 size={16} className="animate-spin text-white/40" />
+            <div className="absolute end-3 top-1/2 -translate-y-1/2">
+              <Loader2 size={16} className="animate-spin text-fg/40" />
             </div>
           )}
           {mode === 'edit' && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+            <div className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+              {/* theme-ok: white on a coloured button / badge */}
               <Check size={11} className="text-white" strokeWidth={3} />
             </div>
           )}
@@ -1026,30 +1061,31 @@ function RegisterForm({
       {/* Phone confirm — only for new registrations */}
       {mode !== 'edit' && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-white/50 uppercase tracking-wide">אימות מספר טלפון</label>
+          <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbPhoneConfirm')}</label>
           <div className="relative">
             <input
               type="tel" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)}
               placeholder="05X-XXXXXXX" dir="ltr"
-              className={`w-full rounded-xl px-4 py-3 pr-10 text-sm border text-white placeholder-white/35 focus:outline-none focus:ring-2 transition-all
+              className={`w-full rounded-xl px-4 py-3 pe-10 text-sm border text-fg placeholder-fg/35 focus:outline-none focus:ring-2 transition-all
                 ${phoneMismatch
                   ? 'border-red-400/70 focus:ring-red-400/40'
                   : phoneMatch
                     ? 'border-emerald-400/70 focus:ring-emerald-400/40'
-                    : 'border-white/15 focus:ring-blue-400/50'
+                    : 'border-fg/15 focus:ring-blue-400/50'
                 }`}
-              style={{ background: 'rgba(255,255,255,0.07)' }}
+              style={{ background: 'rgb(var(--fg) / 0.07)' }}
             />
             {phoneMatch && (
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+              <div className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                {/* theme-ok: white on a coloured button / badge */}
                 <Check size={11} className="text-white" strokeWidth={3} />
               </div>
             )}
           </div>
           {phoneMismatch && (
-            <p className="text-xs text-red-400 font-medium flex items-center gap-1">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
               <AlertCircle size={12} />
-              מספרי הטלפון אינם תואמים
+              {t('lbErrPhoneMismatch')}
             </p>
           )}
         </div>
@@ -1057,14 +1093,14 @@ function RegisterForm({
 
       {/* Languages */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">שפות שאני מדבר/ת</label>
+        <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbMyLangs')}</label>
         <div className="relative">
-          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/40 pointer-events-none" />
           <input
             type="text" value={formLangSearch} onChange={e => setFormLangSearch(e.target.value)}
-            placeholder="חפש שפה..." dir="rtl"
-            className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm border border-white/15 text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
-            style={{ background: 'rgba(255,255,255,0.07)' }}
+            placeholder={t('lbSearchLang')} dir="auto"
+            className="w-full rounded-xl px-4 py-2.5 ps-9 text-sm border border-fg/15 text-fg placeholder-fg/35 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+            style={{ background: 'rgb(var(--fg) / 0.07)' }}
           />
         </div>
 
@@ -1077,26 +1113,26 @@ function RegisterForm({
                 className={`flex flex-col items-center gap-1 rounded-xl py-2.5 px-1 border transition-all active:scale-95
                   ${selected
                     ? 'border-blue-400/80 shadow-lg shadow-blue-500/30'
-                    : 'border-white/15'
+                    : 'border-fg/15'
                   }`}
-                style={{ background: selected ? 'rgba(59,130,246,0.35)' : 'rgba(255,255,255,0.06)' }}
+                style={{ background: selected ? 'rgba(59,130,246,0.35)' : 'rgb(var(--fg) / 0.06)' }}
               >
                 <span className="text-xl leading-none">{lang.flag}</span>
-                <span className={`text-[0.6rem] font-semibold leading-tight text-center ${selected ? 'text-white' : 'text-white/70'}`}>
-                  {lang.name}
+                <span className={`text-[0.6rem] font-semibold leading-tight text-center ${selected ? 'text-fg' : 'text-fg/70'}`}>
+                  {langName(lang)}
                 </span>
               </button>
             );
           })}
           {filteredFormLangs.length === 0 && (
-            <p className="col-span-4 text-center text-sm text-white/40 py-4">לא נמצאה שפה</p>
+            <p className="col-span-4 text-center text-sm text-fg/40 py-4">{t('lbNoLang')}</p>
           )}
         </div>
 
         {/* Language Request */}
-        <div className="flex flex-col gap-2 mt-1" dir="rtl">
-          <p className="text-[0.72rem] text-white/45 text-center leading-relaxed">
-            לא מוצאים את שפת האם שלכם? שלחו בקשה להוספה ונדאג לצרף אתכם.
+        <div className="flex flex-col gap-2 mt-1">
+          <p className="text-[0.72rem] text-fg/45 text-center leading-relaxed">
+            {t('lbMotherTongueMissing')}
           </p>
           <LanguageRequestForm />
         </div>
@@ -1104,7 +1140,7 @@ function RegisterForm({
 
       {/* Availability */}
       <div className="flex flex-col gap-3">
-        <label className="text-xs font-bold text-white/50 uppercase tracking-wide">זמינות</label>
+        <label className="text-xs font-bold text-fg/50 uppercase tracking-wide">{t('lbAvailability')}</label>
 
         {/* Three-mode selector */}
         <div className="flex flex-col gap-2">
@@ -1114,17 +1150,17 @@ function RegisterForm({
             onClick={() => setAvailMode('24_7')}
             className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
             style={{
-              borderColor: availMode === '24_7' ? 'rgba(34,197,94,0.8)' : 'rgba(255,255,255,0.12)',
-              background: availMode === '24_7' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+              borderColor: availMode === '24_7' ? 'rgba(34,197,94,0.8)' : 'rgb(var(--fg) / 0.12)',
+              background: availMode === '24_7' ? 'rgba(34,197,94,0.1)' : 'rgb(var(--fg) / 0.05)',
               boxShadow: availMode === '24_7' ? '0 0 0 3px rgba(34,197,94,0.1), 0 4px 20px rgba(34,197,94,0.18)' : 'none',
             }}
           >
-            <ShieldCheck size={22} className={`shrink-0 ${availMode === '24_7' ? 'text-emerald-400' : 'text-white/40'}`} style={availMode === '24_7' ? { filter: 'drop-shadow(0 0 5px rgba(52,211,153,0.55))' } : undefined} />
+            <ShieldCheck size={22} className={`shrink-0 ${availMode === '24_7' ? 'text-emerald-600 dark:text-emerald-400' : 'text-fg/40'}`} style={availMode === '24_7' ? { filter: 'drop-shadow(0 0 5px rgba(52,211,153,0.55))' } : undefined} />
             <div className="flex flex-col items-start flex-1">
-              <span className="text-sm font-black text-white">זמין 24/7</span>
-              <span className="text-[0.65rem] text-white/45">כולל שבת וחגים</span>
+              <span className="text-sm font-black text-fg">{t('lbAvail247')}</span>
+              <span className="text-[0.65rem] text-fg/45">{t('lbAvail247Sub')}</span>
             </div>
-            {availMode === '24_7' && <Check size={16} className="text-emerald-400 shrink-0" />}
+            {availMode === '24_7' && <Check size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />}
           </button>
 
           {/* 24/7 except Saturday */}
@@ -1133,17 +1169,17 @@ function RegisterForm({
             onClick={() => setAvailMode('no_saturday')}
             className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
             style={{
-              borderColor: availMode === 'no_saturday' ? 'rgba(251,191,36,0.8)' : 'rgba(255,255,255,0.12)',
-              background: availMode === 'no_saturday' ? 'rgba(251,191,36,0.08)' : 'rgba(255,255,255,0.05)',
+              borderColor: availMode === 'no_saturday' ? 'rgba(251,191,36,0.8)' : 'rgb(var(--fg) / 0.12)',
+              background: availMode === 'no_saturday' ? 'rgba(251,191,36,0.08)' : 'rgb(var(--fg) / 0.05)',
               boxShadow: availMode === 'no_saturday' ? '0 0 0 3px rgba(251,191,36,0.08), 0 4px 20px rgba(251,191,36,0.15)' : 'none',
             }}
           >
-            <Moon size={22} className={`shrink-0 ${availMode === 'no_saturday' ? 'text-amber-400' : 'text-white/40'}`} style={availMode === 'no_saturday' ? { filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' } : undefined} />
+            <Moon size={22} className={`shrink-0 ${availMode === 'no_saturday' ? 'text-amber-600 dark:text-amber-400' : 'text-fg/40'}`} style={availMode === 'no_saturday' ? { filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' } : undefined} />
             <div className="flex flex-col items-start flex-1">
-              <span className="text-sm font-black text-white">24/7 מלבד שבת</span>
-              <span className="text-[0.65rem] text-white/45">לא זמין בשבת</span>
+              <span className="text-sm font-black text-fg">{t('lbAvailNoSat')}</span>
+              <span className="text-[0.65rem] text-fg/45">{t('lbAvailNoSatSub')}</span>
             </div>
-            {availMode === 'no_saturday' && <Check size={16} className="text-amber-400 shrink-0" />}
+            {availMode === 'no_saturday' && <Check size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />}
           </button>
 
           {/* Custom schedule */}
@@ -1152,17 +1188,17 @@ function RegisterForm({
             onClick={() => setAvailMode('custom')}
             className="flex items-center gap-3 rounded-2xl px-4 py-3.5 border-2 transition-all active:scale-[0.98]"
             style={{
-              borderColor: availMode === 'custom' ? 'rgba(96,165,250,0.8)' : 'rgba(255,255,255,0.12)',
-              background: availMode === 'custom' ? 'rgba(96,165,250,0.08)' : 'rgba(255,255,255,0.05)',
+              borderColor: availMode === 'custom' ? 'rgba(96,165,250,0.8)' : 'rgb(var(--fg) / 0.12)',
+              background: availMode === 'custom' ? 'rgba(96,165,250,0.08)' : 'rgb(var(--fg) / 0.05)',
               boxShadow: availMode === 'custom' ? '0 0 0 3px rgba(96,165,250,0.08), 0 4px 20px rgba(59,130,246,0.18)' : 'none',
             }}
           >
-            <CalendarDays size={22} className={`shrink-0 ${availMode === 'custom' ? 'text-blue-400' : 'text-white/40'}`} />
+            <CalendarDays size={22} className={`shrink-0 ${availMode === 'custom' ? 'text-blue-600 dark:text-blue-400' : 'text-fg/40'}`} />
             <div className="flex flex-col items-start flex-1">
-              <span className="text-sm font-black text-white">לוח זמנים מותאם</span>
-              <span className="text-[0.65rem] text-white/45">בחר ימים ושעות ספציפיים</span>
+              <span className="text-sm font-black text-fg">{t('lbAvailCustom')}</span>
+              <span className="text-[0.65rem] text-fg/45">{t('lbAvailCustomSub')}</span>
             </div>
-            {availMode === 'custom' && <Check size={16} className="text-blue-400 shrink-0" />}
+            {availMode === 'custom' && <Check size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />}
           </button>
         </div>
 
@@ -1177,14 +1213,14 @@ function RegisterForm({
               transition={{ duration: 0.22 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-3 rounded-xl px-3 py-3 border border-white/15" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex flex-col gap-3 rounded-xl px-3 py-3 border border-fg/15" style={{ background: 'rgb(var(--fg) / 0.05)' }}>
 
                 {/* Header hint */}
-                <p className="text-[0.62rem] text-white/35 text-center font-semibold tracking-wide">לחץ על יום להפעלה / כיבוי</p>
+                <p className="text-[0.62rem] text-fg/35 text-center font-semibold tracking-wide">{t('lbTapDay')}</p>
 
                 {/* Day toggles */}
                 <div className="flex gap-1.5 justify-between">
-                  {DAY_ABBREVS.map((abbr, day) => {
+                  {Array.from({ length: 7 }, (_, day) => dayShort(day)).map((abbr, day) => {
                     const active = customDays[day].enabled;
                     return (
                       <button
@@ -1195,13 +1231,13 @@ function RegisterForm({
                         style={{
                           borderColor: active
                             ? (day === 6 ? 'rgba(248,113,113,0.7)' : 'rgba(96,165,250,0.7)')
-                            : 'rgba(255,255,255,0.1)',
+                            : 'rgb(var(--fg) / 0.1)',
                           background: active
                             ? (day === 6 ? 'rgba(248,113,113,0.12)' : 'rgba(59,130,246,0.12)')
-                            : 'rgba(255,255,255,0.04)',
+                            : 'rgb(var(--fg) / 0.04)',
                         }}
                       >
-                        <span className={`text-[0.7rem] font-black ${active ? (day === 6 ? 'text-red-400' : 'text-blue-400') : 'text-white/35'}`}>
+                        <span className={`text-[0.7rem] font-black ${active ? (day === 6 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400') : 'text-fg/35'}`}>
                           {abbr}
                         </span>
                       </button>
@@ -1219,14 +1255,14 @@ function RegisterForm({
                         {d.slots.map((slot, si) => (
                           <div
                             key={si}
-                            className="flex items-center gap-2 rounded-xl px-3 py-2 border border-white/10"
-                            style={{ background: 'rgba(255,255,255,0.04)' }}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2 border border-fg/10"
+                            style={{ background: 'rgb(var(--fg) / 0.04)' }}
                           >
                             {si === 0
-                              ? <span className="text-[0.65rem] font-black text-white/55 w-10 shrink-0 text-right">{DAY_NAMES[day]}</span>
+                              ? <span className="text-[0.65rem] font-black text-fg/55 w-10 shrink-0 text-start">{dayName(day)}</span>
                               : <span className="w-10 shrink-0" />
                             }
-                            <Clock size={12} className="text-white/25 shrink-0" />
+                            <Clock size={12} className="text-fg/25 shrink-0" />
                             <input
                               type="time"
                               value={slot.start}
@@ -1235,9 +1271,9 @@ function RegisterForm({
                                 slots[si] = { ...slots[si], start: e.target.value };
                                 return { ...prev, [day]: { ...prev[day], slots } };
                               })}
-                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                              className="text-sm font-black bg-transparent text-fg focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
                             />
-                            <span className="text-white/25 font-black text-xs">—</span>
+                            <span className="text-fg/25 font-black text-xs">—</span>
                             <input
                               type="time"
                               value={slot.end}
@@ -1246,9 +1282,9 @@ function RegisterForm({
                                 slots[si] = { ...slots[si], end: e.target.value };
                                 return { ...prev, [day]: { ...prev[day], slots } };
                               })}
-                              className="text-sm font-black bg-transparent text-white focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
+                              className="text-sm font-black bg-transparent text-fg focus:outline-none min-h-[36px] cursor-pointer tracking-wide w-20"
                             />
-                            <div className="flex gap-1 mr-auto">
+                            <div className="flex gap-1 ms-auto">
                               {d.slots.length > 1 && (
                                 <button
                                   type="button"
@@ -1256,8 +1292,8 @@ function RegisterForm({
                                     const slots = prev[day].slots.filter((_, i) => i !== si);
                                     return { ...prev, [day]: { ...prev[day], slots } };
                                   })}
-                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-red-400 transition-colors"
-                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-fg/35 hover:text-red-400 transition-colors"
+                                  style={{ background: 'rgb(var(--fg) / 0.06)' }}
                                 >
                                   <span className="text-base leading-none font-black">−</span>
                                 </button>
@@ -1269,8 +1305,8 @@ function RegisterForm({
                                     const slots = [...prev[day].slots, { start: '08:00', end: '17:00' }];
                                     return { ...prev, [day]: { ...prev[day], slots } };
                                   })}
-                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-white/35 hover:text-blue-400 transition-colors"
-                                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                                  className="w-6 h-6 flex items-center justify-center rounded-lg text-fg/35 hover:text-blue-400 transition-colors"
+                                  style={{ background: 'rgb(var(--fg) / 0.06)' }}
                                 >
                                   <span className="text-base leading-none font-black">+</span>
                                 </button>
@@ -1284,8 +1320,8 @@ function RegisterForm({
                 </div>
 
                 {Object.values(customDays).every(d => !d.enabled) && (
-                  <p className="text-xs text-amber-400/80 text-center font-semibold py-1">
-                    בחר לפחות יום אחד
+                  <p className="text-xs text-amber-600/80 dark:text-amber-400/80 text-center font-semibold py-1">
+                    {t('lbPickDay')}
                   </p>
                 )}
               </div>
@@ -1309,21 +1345,21 @@ function RegisterForm({
       >
         {/* Card header */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b" style={{ borderColor: 'rgba(251,146,60,0.18)' }}>
-          <AlertCircle size={13} className="text-orange-400 shrink-0" />
-          <span className="text-[0.62rem] font-black text-orange-300 uppercase tracking-widest">זמינות חריגה</span>
+          <AlertCircle size={13} className="text-orange-600 dark:text-orange-400 shrink-0" />
+          <span className="text-[0.62rem] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">{t('lbExceptional')}</span>
         </div>
         {/* Card body */}
         <button
           type="button"
           onClick={() => setEmergencyContact(prev => !prev)}
-          className="flex items-center gap-4 w-full px-4 py-3.5 text-right transition-all active:scale-[0.99]"
+          className="flex items-center gap-4 w-full px-4 py-3.5 text-start transition-all active:scale-[0.99]"
         >
-          <div className="flex flex-col text-right flex-1 gap-0.5">
-            <span className="text-sm font-bold text-white leading-snug">
-              האם ניתן ליצור עמך קשר במקרה חירום חריג גם מחוץ לשעות הזמינות?
+          <div className="flex flex-col text-start flex-1 gap-0.5">
+            <span className="text-sm font-bold text-fg leading-snug">
+              {t('lbEmergencyQuestion')}
             </span>
-            <span className={`text-[0.68rem] font-semibold transition-colors ${emergencyContact ? 'text-orange-300' : 'text-white/35'}`}>
-              {emergencyContact ? 'כן — זמין גם בחירום' : 'לא — רק בשעות הזמינות'}
+            <span className={`text-[0.68rem] font-semibold transition-colors ${emergencyContact ? 'text-orange-700 dark:text-orange-300' : 'text-fg/35'}`}>
+              {emergencyContact ? t('lbEmergencyYes') : t('lbEmergencyNo')}
             </span>
           </div>
           {/* iOS-style animated toggle */}
@@ -1334,16 +1370,18 @@ function RegisterForm({
               height: 28,
               background: emergencyContact
                 ? 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)'
-                : 'rgba(255,255,255,0.12)',
+                : 'rgb(var(--fg) / 0.12)',
               boxShadow: emergencyContact ? '0 2px 12px rgba(249,115,22,0.5)' : 'none',
             }}
           >
             <div
+              // theme-ok: white on a coloured button / badge
               className="absolute top-0.5 rounded-full bg-white shadow-md transition-all duration-300"
               style={{
                 width: 23,
                 height: 23,
                 left: emergencyContact ? 22 : 2,
+                // theme-ok: white on a coloured button / badge
                 boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
               }}
             />
@@ -1352,7 +1390,7 @@ function RegisterForm({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl px-4 py-3 border border-red-400/40 text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
+        <div className="flex items-center gap-2 rounded-xl px-4 py-3 border border-red-400/40 text-red-700 dark:text-red-300 text-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
           <AlertCircle size={16} className="shrink-0" />
           {error}
         </div>
@@ -1370,11 +1408,12 @@ function RegisterForm({
           >
             <button
               onClick={handleUpdate} disabled={loading}
+              // theme-ok: white on a coloured button / badge
               className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
-              {loading ? 'שומר...' : 'עדכן פרטים'}
+              {loading ? t('lbSaving') : t('lbUpdateDetails')}
             </button>
             <button
               onClick={handleDelete} disabled={loading}
@@ -1382,18 +1421,19 @@ function RegisterForm({
               style={{ borderColor: 'rgba(239,68,68,0.35)', color: 'rgb(220,38,38)' }}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <AlertCircle size={18} />}
-              הסר אותי מהמערכת
+              {t('lbRemoveMe')}
             </button>
           </motion.div>
         ) : (
           <motion.div key="new-action" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <button
               onClick={handleSubmit} disabled={loading || phoneMismatch || (phoneConfirm.trim() !== '' && !phoneMatch)}
+              // theme-ok: white on a coloured button / badge
               className="flex items-center justify-center gap-2 w-full rounded-2xl py-4 text-white font-black text-base transition-all active:scale-95 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', boxShadow: '0 6px 24px rgba(59,130,246,0.4)' }}
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
-              {loading ? 'שומר...' : 'הצטרף לצוות המתרגמים'}
+              {loading ? t('lbSaving') : t('lbJoinTeam')}
             </button>
           </motion.div>
         )}
@@ -1423,6 +1463,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
   onDeleted: () => void;
   onEdit: (phone: string) => void;
 }) {
+  const t = useTranslation();
   const [data, setData]               = useState<MyTranslatorData | null>(null);
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
@@ -1464,11 +1505,11 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
   if (loading) {
     return (
       <div
-        className="rounded-2xl border border-white/15 px-4 py-4 flex items-center gap-3"
-        style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}
+        className="rounded-2xl border border-fg/15 px-4 py-4 flex items-center gap-3"
+        style={{ background: 'rgb(var(--fg) / 0.06)', backdropFilter: 'blur(12px)' }}
       >
-        <Loader2 size={18} className="animate-spin text-white/40" />
-        <span className="text-sm text-white/50">טוען פרופיל...</span>
+        <Loader2 size={18} className="animate-spin text-fg/40" />
+        <span className="text-sm text-fg/50">{t('lbLoadingProfile')}</span>
       </div>
     );
   }
@@ -1483,17 +1524,17 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
       style={{
         background: 'rgba(59,130,246,0.1)',
         backdropFilter: 'blur(16px)',
-        boxShadow: '0 4px 24px rgba(59,130,246,0.14), inset 0 1px 0 rgba(255,255,255,0.12)',
+        boxShadow: '0 4px 24px rgba(59,130,246,0.14), inset 0 1px 0 rgb(var(--fg) / 0.12)',
       }}
     >
       {/* Card header */}
-      <div className="flex items-center gap-3 px-4 pt-3 pb-2.5 border-b border-white/10">
+      <div className="flex items-center gap-3 px-4 pt-3 pb-2.5 border-b border-fg/10">
         <div className="w-9 h-9 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
-          <UserPlus size={16} className="text-blue-300" />
+          <UserPlus size={16} className="text-blue-700 dark:text-blue-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[0.6rem] font-black text-blue-400 uppercase tracking-widest">ניהול הפרופיל שלי</p>
-          <p className="text-sm font-bold text-white truncate">{data.full_name}</p>
+          <p className="text-[0.6rem] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{t('lbMyProfile')}</p>
+          <p className="text-sm font-bold text-fg truncate">{data.full_name}</p>
         </div>
       </div>
 
@@ -1503,8 +1544,8 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           {data.languages.map(code => {
             const lang = allLanguages.find(l => l.code === code);
             return lang ? (
-              <span key={code} className="text-[0.65rem] px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/10">
-                {lang.flag} {lang.name}
+              <span key={code} className="text-[0.65rem] px-2 py-0.5 rounded-full bg-fg/10 text-fg/70 border border-fg/10">
+                {lang.flag} {langName(lang)}
               </span>
             ) : null;
           })}
@@ -1515,26 +1556,26 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           {(() => {
             const avail = data.availability;
             if (avail) {
-              if (avail.type === '24_7') return <p className="text-xs text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />זמין 24/7</p>;
-              if (avail.type === 'no_saturday') return <p className="text-xs text-amber-400/80 flex items-center gap-1"><Moon size={11} />24/7 מלבד שבת</p>;
+              if (avail.type === '24_7') return <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
+              if (avail.type === 'no_saturday') return <p className="text-xs text-amber-600/80 dark:text-amber-400/80 flex items-center gap-1"><Moon size={11} />{t('lbAvailNoSat')}</p>;
               if (avail.type === 'custom' && avail.schedule.length > 0) return (
                 <>
                   {avail.schedule.map((entry, i) => (
-                    <p key={i} className="text-xs text-white/45 flex items-center gap-1">
+                    <p key={i} className="text-xs text-fg/45 flex items-center gap-1">
                       <Clock size={11} />
-                      <span className="font-semibold text-[0.6rem] text-white/35">{DAY_ABBREVS[entry.day]}</span>
+                      <span className="font-semibold text-[0.6rem] text-fg/35">{dayShort(entry.day)}</span>
                       {formatTime(entry.start)} – {formatTime(entry.end)}
                     </p>
                   ))}
                 </>
               );
             }
-            if (data.is_24_7) return <p className="text-xs text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />זמין 24/7</p>;
+            if (data.is_24_7) return <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
             return (data.time_slots && data.time_slots.length > 0
               ? data.time_slots
               : (data.start_time && data.end_time ? [{ start: data.start_time, end: data.end_time }] : [])
             ).map((slot, i) => (
-              <p key={i} className="text-xs text-white/45 flex items-center gap-1">
+              <p key={i} className="text-xs text-fg/45 flex items-center gap-1">
                 <Clock size={11} />
                 {formatTime(slot.start)} – {formatTime(slot.end)}
               </p>
@@ -1547,33 +1588,33 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           <div className="flex items-center gap-3 mt-0.5">
             <button
               onClick={() => onEdit(data.phone_number)}
-              className="text-xs text-blue-400/80 hover:text-blue-300 font-bold transition-colors"
+              className="text-xs text-blue-600/80 dark:text-blue-400/80 hover:text-blue-300 font-bold transition-colors"
             >
-              ערוך פרטים
+              {t('lbEditDetails')}
             </button>
-            <span className="text-white/20 text-xs">|</span>
+            <span className="text-fg/20 text-xs">|</span>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-xs text-red-400/60 hover:text-red-400 font-semibold transition-colors"
+              className="text-xs text-red-600/60 dark:text-red-400/60 hover:text-red-400 font-semibold transition-colors"
             >
-              הסר פרופיל
+              {t('lbRemoveProfile')}
             </button>
           </div>
         ) : (
           <div className="flex gap-2 mt-0.5">
             <button
               onClick={() => setConfirmDelete(false)}
-              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-white/15 text-white/60 active:scale-95 transition-all"
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-fg/15 text-fg/60 active:scale-95 transition-all"
             >
-              ביטול
+              {t('cancel')}
             </button>
             <button
               onClick={handleDelete}
               disabled={saving}
-              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-red-400/40 text-red-300 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1"
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border border-red-400/40 text-red-700 dark:text-red-300 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1"
               style={{ background: 'rgba(239,68,68,0.15)' }}
             >
-              {saving ? <Loader2 size={12} className="animate-spin" /> : 'מחק לצמיתות'}
+              {saving ? <Loader2 size={12} className="animate-spin" /> : t('lbDeleteForever')}
             </button>
           </div>
         )}
@@ -1590,6 +1631,8 @@ const getStartView = (): View =>
   localStorage.getItem('lb_intro_seen') ? 'languages' : 'intro';
 
 export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
+  useLanguage(); // re-render (language names, day names) when the interface language changes
   const [view, setView]                 = useState<View>(getStartView);
   const [selectedLang, setSelectedLang] = useState<Language | null>(null);
   const [translators, setTranslators]   = useState<Translator[]>([]);
@@ -1783,13 +1826,13 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const available = translators.filter(isAvailableNow);
-  const emergencyBackups = translators.filter(t => !isAvailableNow(t) && t.emergency_only_contact);
-  const countFor = (code: string) => allTranslators.filter(t => t.languages.includes(code)).length;
+  const emergencyBackups = translators.filter(tr => !isAvailableNow(tr) && tr.emergency_only_contact);
+  const countFor = (code: string) => allTranslators.filter(tr => tr.languages.includes(code)).length;
 
   // Staffed languages first, empty ones after — stable sort keeps the curated
   // order within each group
   const filteredLangs = allLanguages
-    .filter(l => l.name.includes(langSearch) || l.code.toLowerCase().includes(langSearch.toLowerCase()))
+    .filter(l => matchesLangSearch(l, langSearch))
     .sort((a, b) => (countFor(b.code) > 0 ? 1 : 0) - (countFor(a.code) > 0 ? 1 : 0));
   const noResults = langSearch.trim().length > 0 && filteredLangs.length === 0;
 
@@ -1797,39 +1840,38 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col animate-fade-scale"
-      style={{ background: 'linear-gradient(160deg, #0d0d18 0%, #111827 60%, #0f172a 100%)' }}
-      dir="rtl"
+      className="fixed inset-0 z-[60] flex flex-col animate-fade-scale bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 dark:from-[#0d0d18] dark:via-[#111827] dark:to-[#0f172a]"
     >
       {/* Header */}
       <div
-        className="shrink-0 flex items-center px-4 border-b border-white/10"
+        className="shrink-0 flex items-center px-4 border-b border-fg/10"
         style={{
           paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
           paddingBottom: '12px',
-          background: 'rgba(13,13,24,0.85)',
+          background: 'rgb(var(--page) / 0.85)',
           backdropFilter: 'blur(20px)',
         }}
       >
         {(view === 'translators' || view === 'register') ? (
           <button
             onClick={handleBack}
-            className="p-2 -mr-2 rounded-xl text-white/60 active:bg-white/10"
+            className="p-2 -ms-2 rounded-xl text-fg/60 active:bg-fg/10"
+            aria-label={t('back')}
           >
-            <ChevronRight size={22} />
+            <ChevronRight size={22} className="ltr:rotate-180" />
           </button>
         ) : view === 'languages' ? (
           <button
             onClick={() => setView('register')}
-            className="flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold text-white/85 border border-white/20 active:scale-95 transition-all"
+            className="flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold text-fg/85 border border-fg/20 active:scale-95 transition-all"
             style={{
-              background: 'rgba(255,255,255,0.08)',
+              background: 'rgb(var(--fg) / 0.08)',
               backdropFilter: 'blur(12px)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.12)',
+              boxShadow: 'inset 0 1px 0 rgb(var(--fg) / 0.12), 0 2px 6px rgba(0,0,0,0.12)',
             }}
           >
             <UserPlus size={13} />
-            הצטרף
+            {t('lbJoin')}
           </button>
         ) : (
           <div className="w-10" />
@@ -1839,18 +1881,18 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view === 'translators' && selectedLang ? (
             <div className="flex items-center justify-center gap-2">
               <span className="text-2xl">{selectedLang.flag}</span>
-              <h1 className="text-lg font-black text-white">{selectedLang.name}</h1>
+              <h1 className="text-lg font-black text-fg">{langName(selectedLang)}</h1>
             </div>
           ) : view === 'register' ? (
-            <h1 className="text-lg font-black text-white leading-tight">
-              {registerMode === 'edit' ? 'עדכון או הסרת פרופיל' : 'הצטרף לצוות המתרגמים'}
+            <h1 className="text-lg font-black text-fg leading-tight">
+              {registerMode === 'edit' ? t('lbEditProfileTitle') : t('lbJoinTeam')}
             </h1>
           ) : view === 'languages' ? (
-            <h1 className="text-base font-black text-white leading-snug">בחר שפה למציאת מתרגמים</h1>
+            <h1 className="text-base font-black text-fg leading-snug">{t('lbChooseLang')}</h1>
           ) : (
             <div className="flex items-center justify-center gap-2">
-              <Globe size={20} className="text-blue-400" />
-              <h1 className="text-lg font-black text-white">סיוע בתרגום</h1>
+              <Globe size={20} className="text-blue-600 dark:text-blue-400" />
+              <h1 className="text-lg font-black text-fg">{t('lbTitle')}</h1>
             </div>
           )}
         </div>
@@ -1859,15 +1901,16 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
           {view !== 'intro' && (
             <button
               onClick={() => setShowInfo(true)}
-              className="p-2 rounded-xl text-white/65 active:bg-white/10 transition-all"
-              aria-label="מידע על השירות"
+              className="p-2 rounded-xl text-fg/65 active:bg-fg/10 transition-all"
+              aria-label={t('lbAboutAria')}
             >
               <HelpCircle size={18} />
             </button>
           )}
           <button
             onClick={onClose}
-            className="p-2 -ml-2 rounded-xl text-white/60 active:bg-white/10"
+            className="p-2 -me-2 rounded-xl text-fg/60 active:bg-fg/10"
+            aria-label={t('close')}
           >
             <X size={22} />
           </button>
@@ -1883,6 +1926,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[70] flex items-center justify-center px-5"
+            // theme-ok: dim backdrop behind a dialog
             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowInfo(false)}
           >
@@ -1891,25 +1935,24 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: [0.34, 1.2, 0.64, 1] } }}
               exit={{ opacity: 0, scale: 0.92, y: 8, transition: { duration: 0.2 } }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-sm rounded-3xl overflow-hidden"
+              className="w-full max-w-sm rounded-3xl overflow-hidden bg-surface/90 border border-line"
               style={{
-                background: 'rgba(255,255,255,0.13)',
                 backdropFilter: 'blur(28px) saturate(1.6)',
-                border: '1px solid rgba(255,255,255,0.25)',
-                boxShadow: '0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.22)',
+                // theme-ok: drop shadow
+                boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
               }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-blue-500/35 flex items-center justify-center shrink-0">
-                    <Info size={18} className="text-blue-300" />
+                    <Info size={18} className="text-blue-700 dark:text-blue-300" />
                   </div>
-                  <h3 className="font-black text-white text-2xl leading-tight">מהו שירות סיוע בתרגום?</h3>
+                  <h3 className="font-black text-fg text-2xl leading-tight">{t('lbAboutTitle')}</h3>
                 </div>
                 <button
                   onClick={() => setShowInfo(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/70 active:bg-white/20"
+                  className="w-7 h-7 rounded-full bg-fg/10 flex items-center justify-center text-fg/70 active:bg-fg/20"
                 >
                   <X size={15} />
                 </button>
@@ -1922,38 +1965,39 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                   className="w-16 h-16 rounded-2xl flex items-center justify-center"
                   style={{
                     background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
-                    boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.25)',
+                    boxShadow: '0 8px 28px rgba(99,102,241,0.45), inset 0 1px 0 rgb(var(--fg) / 0.25)',
                   }}
                 >
+                  {/* theme-ok: white on a coloured button / badge */}
                   <Globe size={30} className="text-white" />
                 </div>
 
                 <div
                   className="rounded-2xl px-4 py-4 w-full"
-                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                  style={{ background: 'rgb(var(--fg) / 0.08)' }}
                 >
-                  <p className="text-white/90 text-[0.9rem] leading-[1.75] font-semibold text-center">
-                    שירות זה מחבר בזמן אמת בין חובשים בשטח למתרגמים מתנדבים מתוך קהילת הכוננים, על מנת להעניק טיפול רפואי מדויק למטופלים שאינם דוברי עברית.
+                  <p className="text-fg/90 text-[0.9rem] leading-[1.75] font-semibold text-center">
+                    {t('lbAboutBody')}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex items-center gap-2.5 justify-center">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0">
-                      <Check size={11} className="text-emerald-300" />
+                      <Check size={11} className="text-emerald-700 dark:text-emerald-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug text-right">בחר שפה מהרשימה ואתר מתרגם פנוי (נקודה ירוקה)</p>
+                    <p className="text-fg/70 text-sm leading-snug text-start">{t('lbAbout1')}</p>
                   </div>
                   <div className="flex items-center gap-2.5 justify-center">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/25 flex items-center justify-center shrink-0">
-                      <Check size={11} className="text-emerald-300" />
+                      <Check size={11} className="text-emerald-700 dark:text-emerald-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug text-right">צור קשר בשיחת טלפון או בוואטסאפ בלחיצת כפתור</p>
+                    <p className="text-fg/70 text-sm leading-snug text-start">{t('lbAbout2')}</p>
                   </div>
                   <div className="flex items-center gap-2.5 justify-center">
                     <div className="w-5 h-5 rounded-full bg-blue-500/25 flex items-center justify-center shrink-0">
-                      <UserPlus size={11} className="text-blue-300" />
+                      <UserPlus size={11} className="text-blue-700 dark:text-blue-300" />
                     </div>
-                    <p className="text-white/70 text-sm leading-snug text-right">גם אתה יכול להצטרף לצוות המתרגמים ולהיות זמין לסייע</p>
+                    <p className="text-fg/70 text-sm leading-snug text-start">{t('lbAbout3')}</p>
                   </div>
                 </div>
               </div>
@@ -1985,10 +2029,10 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     animate={{ opacity: 1, y: 0, transition: { duration: 0.35, delay: 0.1 } }}
                     className="flex items-center justify-center gap-3 mb-4 rounded-2xl px-4 py-3"
                     style={{
-                      background: 'rgba(255,255,255,0.09)',
+                      background: 'rgb(var(--fg) / 0.09)',
                       backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      boxShadow: '0 4px 24px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.12)',
+                      border: '1px solid rgb(var(--fg) / 0.15)',
+                      boxShadow: '0 4px 24px rgba(59,130,246,0.1), inset 0 1px 0 rgb(var(--fg) / 0.12)',
                     }}
                   >
                     <span className="relative flex h-2.5 w-2.5 shrink-0">
@@ -2004,7 +2048,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         WebkitTextFillColor: 'transparent',
                       }}
                     />
-                    <span className="text-xs text-white/60 font-semibold">שיחות סיוע בוצעו דרך המערכת</span>
+                    <span className="text-xs text-fg/60 font-semibold">{t('lbAssistCalls')}</span>
                   </motion.div>
                 )}
 
@@ -2017,18 +2061,19 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     background: 'linear-gradient(135deg, rgba(130,35,52,0.65) 0%, rgba(158,48,68,0.55) 100%)',
                     backdropFilter: 'blur(20px)',
                     border: '1px solid rgba(200,80,100,0.2)',
-                    boxShadow: '0 4px 20px rgba(130,35,52,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    boxShadow: '0 4px 20px rgba(130,35,52,0.25), inset 0 1px 0 rgb(var(--fg) / 0.08)',
                   }}
                 >
-                  <p dir="rtl" className="flex-1 text-white text-xs leading-relaxed font-black">
-                    אסור לנו להשאיר אף שפה מאחור. במקרה חירום, כל שנייה קובעת – ופער שפה הוא פער שיכול לעלות בחיי אדם. מכירים מישהו שדובר את השפות האלו? בבקשה, שלחו לו את האפליקציה עכשיו. עזרו לנו להנגיש עזרה ראשונה לכל אדם, בכל שפה. יחד, אנחנו באמת מצילים חיים.
+                  {/* theme-ok: white text on the dark-red recruitment banner */}
+                  <p className="flex-1 text-white text-xs leading-relaxed font-black">
+                    {t('lbRecruitBanner')}
                   </p>
                   <button
                     onClick={async () => {
                       ReactGA.event('emergency_recruitment_share', { source: 'language_grid_banner' });
                       const shareData = {
-                        title: 'חובש+',
-                        text: 'עוזרים להנגיש את הרפואה לכולם - הצטרפו למערך התרגום של חובש+!',
+                        title: t('lbShareTitle'),
+                        text: t('lbShareText'),
                         url: 'https://hovesh-plus.vercel.app/',
                       };
                       try {
@@ -2036,20 +2081,22 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                           await navigator.share(shareData);
                         } else {
                           await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-                          alert('הקישור הועתק ללוח!');
+                          alert(t('lbLinkCopied'));
                         }
                       } catch { /* user cancelled */ }
                     }}
                     className="shrink-0 flex flex-col items-center gap-1 active:opacity-70 active:scale-90 transition-all"
-                    aria-label="שיתוף"
+                    aria-label={t('share')}
                   >
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.22)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+                      style={{ background: 'rgb(var(--fg) / 0.22)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
                     >
+                      {/* theme-ok: white on a coloured button / badge */}
                       <Share2 size={18} className="text-white" />
                     </div>
-                    <span className="text-[9px] font-black text-white/90 whitespace-nowrap">שתף</span>
+                    {/* theme-ok: on the dark-red banner */}
+                    <span className="text-[9px] font-black text-fg/90 whitespace-nowrap">{t('share')}</span>
                   </button>
                 </motion.div>
 
@@ -2071,23 +2118,23 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                 )}
 
                 <div className="relative mb-4">
-                  <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none" />
                   <input
                     type="text" value={langSearch}
                     onChange={e => setLangSearch(e.target.value)}
-                    placeholder="חפש שפה..." dir="rtl"
-                    className="w-full rounded-xl px-4 py-2.5 pr-9 text-sm bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 backdrop-blur-sm"
+                    placeholder={t('lbSearchLang')} dir="auto"
+                    className="w-full rounded-xl px-4 py-2.5 ps-9 text-sm bg-fg/10 border border-fg/20 text-fg placeholder-fg/40 focus:outline-none focus:ring-2 focus:ring-fg/30 backdrop-blur-sm"
                   />
                 </div>
 
                 {loadingAll ? (
                   <div className="flex justify-center py-12">
-                    <Loader2 size={28} className="animate-spin text-blue-400" />
+                    <Loader2 size={28} className="animate-spin text-blue-600 dark:text-blue-400" />
                   </div>
                 ) : noResults ? (
                   <div className="flex flex-col gap-4 py-4">
-                    <p className="text-center text-sm text-gray-400 dark:text-gray-500">
-                      לא נמצאה שפה תואמת
+                    <p className="text-center text-sm text-fg-subtle">
+                      {t('lbNoMatchingLang')}
                     </p>
                     <LanguageRequestForm />
                   </div>
@@ -2117,20 +2164,20 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               <div className="p-4 flex flex-col gap-4">
                 {loadingList ? (
                   <div className="flex justify-center py-16">
-                    <Loader2 size={28} className="animate-spin text-blue-400" />
+                    <Loader2 size={28} className="animate-spin text-blue-600 dark:text-blue-400" />
                   </div>
                 ) : translators.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                     <span className="text-5xl">{selectedLang?.flag}</span>
-                    <p className="font-bold text-gray-700 dark:text-gray-300">אין מתרגמים רשומים עדיין</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500">
-                      לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!
+                    <p className="font-bold text-fg/80">{t('lbNoTranslatorsYet')}</p>
+                    <p className="text-sm text-fg-subtle">
+                      {t('lbBeFirst')}
                     </p>
                     <button
                       onClick={() => setView('register')}
                       className="mt-2 px-5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-bold active:scale-95 transition-all"
                     >
-                      הצטרף כמתרגם
+                      {t('lbJoinAsTranslator')}
                     </button>
                   </div>
                 ) : (
@@ -2141,11 +2188,11 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow shadow-emerald-400/60 animate-pulse" />
                           <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-                            זמינים עכשיו · {available.length}
+                            {t('lbAvailableNow', { n: available.length })}
                           </span>
                         </div>
-                        {available.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
+                        {available.map(tr => (
+                          <TranslatorCard key={tr.id} translator={tr} available allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}
@@ -2153,15 +2200,15 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                     {/* No active translators state */}
                     {available.length === 0 && (
                       <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-white/8 flex items-center justify-center">
-                          <Clock size={28} className="text-white/30" />
+                        <div className="w-14 h-14 rounded-2xl bg-fg/8 flex items-center justify-center">
+                          <Clock size={28} className="text-fg/30" />
                         </div>
-                        <p className="font-bold text-white/70">אין מתרגמים זמינים כרגע</p>
+                        <p className="font-bold text-fg/70">{t('lbNoneAvailable')}</p>
                         {emergencyBackups.length === 0 && (
-                          <p className="text-sm text-white/35 max-w-[200px]">
+                          <p className="text-sm text-fg/35 max-w-[200px]">
                             {translators.length > 0
-                              ? `${translators.length} מתרגמים רשומים לשפה זו אך אינם זמינים כעת — נסה שוב מאוחר יותר`
-                              : 'לא נמצאו מתרגמים לשפה זו — אתה יכול להיות הראשון!'}
+                              ? t('lbRegisteredNotAvailable', { n: translators.length })
+                              : t('lbBeFirst')}
                           </p>
                         )}
                         {translators.length === 0 && (
@@ -2169,7 +2216,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                             onClick={() => setView('register')}
                             className="mt-1 px-5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-bold active:scale-95 transition-all"
                           >
-                            הצטרף כמתרגם
+                            {t('lbJoinAsTranslator')}
                           </button>
                         )}
                       </div>
@@ -2180,12 +2227,12 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-orange-500 shadow shadow-orange-400/50" />
-                          <span className="text-xs font-black text-orange-400 uppercase tracking-wide">
-                            לחירום בלבד (מחוץ לשעות) · {emergencyBackups.length}
+                          <span className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase tracking-wide">
+                            {t('lbEmergencyOnlyCount', { n: emergencyBackups.length })}
                           </span>
                         </div>
-                        {emergencyBackups.map(t => (
-                          <TranslatorCard key={t.id} translator={t} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
+                        {emergencyBackups.map(tr => (
+                          <TranslatorCard key={tr.id} translator={tr} available={false} isEmergency allLanguages={allLanguages} selectedLangName={selectedLang?.name} isSignLanguage={selectedLang?.code === 'isl'} onContact={incrementCounter} />
                         ))}
                       </div>
                     )}
