@@ -267,19 +267,19 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <span className="text-fg-muted text-xs">{t('shockSiNormal')}</span>
-              <span className="text-fg text-xs font-bold">0.5 – 0.7</span>
+              <span className="text-fg text-xs font-bold" dir="ltr">0.5 – 0.7</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-fg-muted text-xs">SI ≥ 0.9</span>
+              <span className="text-fg-muted text-xs" dir="ltr">SI ≥ 0.9</span>
               <span className="text-red-600 dark:text-red-400 text-xs font-bold">{t('shockSuspected')}</span>
             </div>
             <div className="w-full h-px bg-line" />
             <div className="flex justify-between items-center">
               <span className="text-fg-muted text-xs">{t('shockMapNormal')}</span>
-              <span className="text-fg text-xs font-bold">70 – 100 mmHg</span>
+              <span className="text-fg text-xs font-bold" dir="ltr">70 – 100 mmHg</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-fg-muted text-xs">MAP &lt; 65 mmHg</span>
+              <span className="text-fg-muted text-xs" dir="ltr">MAP &lt; 65 mmHg</span>
               <span className="text-orange-600 dark:text-orange-400 text-xs font-bold">{t('shockIschemiaRisk')}</span>
             </div>
           </div>

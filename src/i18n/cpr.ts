@@ -241,7 +241,7 @@ export default defineDict({
     cprEvHtOff: 'Unmarked: {label}',
 
     // ── shock calculator ──
-    shockCalcTitle: 'Shock & Perfusion Calculator',
+    shockCalcTitle: 'Shock & Perfusion',
     shockResetData: 'Reset data',
     shockPatientData: 'Patient data',
     shockHrLabel: 'Heart rate (bpm)',
