@@ -74,6 +74,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .bar .addr::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--brand);flex:none;align-self:center;box-shadow:0 0 0 3px rgba(225,29,72,.18)}
 .bar .addr span{font-weight:500;color:var(--muted);font-size:14px}
 .note{font-size:13px;color:var(--brand);font-weight:700}
+/* when the open map has no building for the number: hand the exact address to Waze or Google Maps */
+.ext{display:flex;gap:8px}
+.ext a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border-radius:10px;font:700 14.5px/1 var(--font);text-decoration:none;color:#fff}
+.ext .waze{background:#0b7bd8}
+.ext .gmaps{background:var(--surface-2);color:var(--fg);border:1px solid var(--line)}
 .far{font-size:13px;color:#3b82f6;font-weight:600}
 .mini{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11.5px;color:var(--muted)}
 .mini span{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border-radius:999px;padding:2px 9px}
@@ -152,6 +157,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 <section class="bar" id="bar" aria-live="polite" hidden>
   <div class="addr" id="addr"></div>
   <div class="note" id="note" hidden></div>
+  <div class="ext" id="ext" hidden>
+    <a class="waze" id="extWaze" target="_blank" rel="noopener">ניווט בוויז</a>
+    <a class="gmaps" id="extGmaps" target="_blank" rel="noopener">חיפוש בגוגל מפות</a>
+  </div>
   <div class="far" id="farNote" hidden></div>
   <div class="mini">
     <span><i class="lg-foot"></i>שביל</span>
@@ -751,7 +760,7 @@ async function goTo(t, fromUser){
   $('q').value = t.line2 ? `${t.line1}, ${t.line2}` : t.line1;
   $('clearBtn').hidden = false; $('q').blur();
   $('addr').innerHTML = `${esc(t.line1)}${t.line2 ? ` <span>${esc(t.line2)}</span>` : ''}`;
-  setNote(''); $('bar').hidden = false;
+  setNote(''); setExt(null); $('bar').hidden = false;
   clearMarkers(); setData('route', EMPTY); placePin(t); render();
   follow = true; startWatch(); if (fromUser) startHeading();
   frame(false);
@@ -773,13 +782,21 @@ async function goTo(t, fromUser){
     if (hitLabel && hitLabel.key[0] === 'n') dest = {lat:hitLabel.lat, lng:hitLabel.lng};
   } else {
     setNote(!ok ? 'המפה לא ענתה. הסיכה מסמנת את הכתובת'
-      : t.exact === false ? `${t.num} לא מופיע במפה. ${t.housenumber && nn(t.housenumber) !== nn(t.num) ? `הסיכה מסמנת את ${t.housenumber}, ` : 'הסיכה על הרחוב, '}כדאי לוודא בשטח`
+      : t.exact === false ? `${t.num} לא מופיע במפה. ${t.housenumber && nn(t.housenumber) !== nn(t.num) ? `הסיכה מסמנת את ${t.housenumber}` : 'הסיכה על הרחוב'}. הבית המדויק בוויז או בגוגל`
       : 'לא נמצא שרטוט לבניין. הסיכה מסמנת את הכתובת');
+    if (ok && t.num) setExt(t);
     render();
   }
   updateRoute(true); frame(true);
 }
 function setNote(txt){ $('note').hidden = !txt; $('note').textContent = txt; }
+// Waze and Google know house numbers the open map lacks: the exact address is passed to them as typed
+function setExt(t){
+  $('ext').hidden = !t; if (!t) return;
+  const q = encodeURIComponent(t.line2 ? `${t.line1}, ${t.line2}` : t.line1);
+  $('extWaze').href = `https://waze.com/ul?q=${q}&navigate=yes`;
+  $('extGmaps').href = `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
 
 // as the map moves, the parts not loaded yet are fetched
 let areaBusy = false;
