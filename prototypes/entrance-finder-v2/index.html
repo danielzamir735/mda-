@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>איפה הבניין</title>
+<meta name="description" content="גרסת ניסוי: מפה בתלת-ממד, הבניין בפוקוס, מצב לילה ונקודות ציון">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+:root{
+  --bg:#eef1f5; --solid:#ffffff; --surface-2:#f1f4f8; --fg:#16212c; --muted:#66727f;
+  --line:#e4e8ee; --accent:#2563eb; --accent-soft:#e8efff; --brand:#e11d48;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.12);
+  --font:"Heebo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+}
+/* ===== design: technical instrument look ===== */
+.fab .lbl{display:block;font-size:10.5px;font-weight:700;line-height:1;margin-top:3px;letter-spacing:0}
+.fab{flex-direction:column}
+/* pro: technical instrument look. IBM Plex Sans Hebrew, flat panels, square keys, navy number plates */
+[data-theme=pro]{--font:"IBM Plex Sans Hebrew",system-ui,sans-serif; --accent:#1d4ed8; --brand:#c81e1e; --line:#cbd5e1;
+  --shadow:0 1px 0 rgba(15,23,42,.10),0 2px 6px rgba(15,23,42,.08)}
+[data-theme=pro] .search{border-radius:10px;padding:4px}
+[data-theme=pro] .search .logo{border-radius:7px;background:#c81e1e;box-shadow:none;width:36px;height:36px}
+[data-theme=pro] .icon-btn{border-radius:8px}
+[data-theme=pro] .fab{width:58px;height:56px;border-radius:9px;gap:0}
+[data-theme=pro] .fab.on{background:#0f172a;border-color:#0f172a}
+[data-theme=pro] .bar{border-radius:12px;border-top:4px solid var(--brand)}
+[data-theme=pro] .bar .addr{font-weight:700;font-size:19px}
+[data-theme=pro] .bar .addr::before{display:none}
+[data-theme=pro] .mini span{border-radius:4px}
+[data-theme=pro] .tag b{border-radius:4px;font-weight:700;font-family:var(--font)}
+[data-theme=pro] .tag i{border-radius:4px}
+[data-theme=pro] .door b{border-radius:5px}
+/* night: the page around the map follows the map */
+.night{
+  --bg:#0b1220; --solid:#141d2b; --surface-2:#1d2838; --fg:#e7edf5; --muted:#9aa8b8; --line:#26334a;
+  --accent-soft:#1c2c4d; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.45); color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#map{position:fixed;inset:0;z-index:0;background:var(--bg)}
+
+.top{position:fixed;top:0;left:0;right:0;z-index:20;padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));pointer-events:none}
+.search{pointer-events:auto;display:flex;align-items:center;gap:6px;background:var(--solid);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);padding:5px 5px 5px 6px;max-width:640px;margin:0 auto}
+.search .logo{width:38px;height:38px;border-radius:50%;background:linear-gradient(145deg,#fb7185,#e11d48);display:grid;place-items:center;flex:none;box-shadow:0 2px 6px rgba(225,29,72,.35)}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:inherit;font-size:17px;font-weight:500;padding:10px 6px;outline:none}
+.search input::placeholder{color:#97a1ad;font-weight:400}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;flex:none;color:var(--muted)}
+.icon-btn[type=submit]{background:var(--accent);color:#fff}
+.suggest{pointer-events:auto;max-width:640px;margin:8px auto 0;background:var(--solid);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.suggest button{display:block;width:100%;text-align:right;border:0;background:transparent;padding:12px 16px;border-top:1px solid var(--line)}
+.suggest button:first-child{border-top:0}
+.suggest button:hover,.suggest button.active{background:var(--accent-soft)}
+.suggest .s1{font-weight:700}
+.suggest .s2{font-size:13px;color:var(--muted)}
+.suggest .empty{padding:14px 16px;color:var(--muted);font-size:14px}
+
+.fabs{position:fixed;z-index:15;left:max(12px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;top:calc(env(safe-area-inset-top,0px) + 80px)}
+.fab{width:48px;height:48px;border-radius:16px;border:1px solid var(--line);background:var(--solid);color:var(--fg);box-shadow:var(--shadow);display:grid;place-items:center;font-weight:800;font-size:14px}
+.fab.txt{font-size:11.5px;line-height:1.05;font-weight:800}
+.fab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#northBtn svg{transition:transform .15s linear}
+
+.bar{position:fixed;z-index:18;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 20px);max-width:620px;margin:0 auto;background:var(--solid);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:12px 16px 10px;display:flex;flex-direction:column;gap:6px}
+.bar .addr{display:flex;align-items:baseline;gap:8px;font-size:18px;font-weight:800;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .addr::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--brand);flex:none;align-self:center;box-shadow:0 0 0 3px rgba(225,29,72,.18)}
+.bar .addr span{font-weight:500;color:var(--muted);font-size:14px}
+.note{font-size:13px;color:var(--brand);font-weight:700}
+.far{font-size:13px;color:#3b82f6;font-weight:600}
+.mini{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11.5px;color:var(--muted)}
+.mini span{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border-radius:999px;padding:2px 9px}
+.lg-foot{width:18px;height:7px;border-radius:2px;background:#e2dccf;box-shadow:inset 0 0 0 1px #a59b89}
+.lg-steps{width:18px;height:8px;background:repeating-linear-gradient(90deg,#f1ede6 0 1px,#d7d1c6 1px 4px,#8f877a 4px 5px);box-shadow:inset 0 0 0 1px #7d7568}
+.lg-door{font-style:normal}
+.mini .acc{margin-inline-start:auto;background:transparent;padding:0}
+/* inside the app: the app asks for the address, so the map shows no search bar of its own */
+.embed .top{display:none}
+.embed .fabs{top:calc(env(safe-area-inset-top,0px) + 12px)}
+.embed .toast{top:12px}
+.toast{position:fixed;z-index:40;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 80px);background:#16212c;color:#fff;padding:10px 16px;border-radius:14px;font-weight:600;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+
+/* the searched building's tag: its number, and its floors and apartments right under it */
+.tag{display:flex;flex-direction:column;align-items:center;pointer-events:none;transform:translateY(-16px)}
+.tag b{background:var(--brand);color:#fff;border:2px solid #fff;border-radius:10px;font:800 19px/1.25 var(--font);font-family:var(--font);padding:1px 11px;box-shadow:0 3px 10px rgba(225,29,72,.45);white-space:nowrap}
+.tag i{font-style:normal;margin-top:3px;background:var(--solid);color:var(--fg);border:1px solid var(--line);border-radius:999px;font:700 11.5px/1.5 var(--font);padding:0 8px;box-shadow:var(--shadow);white-space:nowrap}
+/* an entrance: a green door with an arrow into the building */
+.door{display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.door b{width:28px;height:28px;border-radius:9px;background:#16a34a;border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.door i{font-style:normal;margin-top:2px;background:#16a34a;color:#fff;border-radius:999px;font:800 10.5px/1.5 var(--font);padding:0 6px;white-space:nowrap}
+/* me: a blue dot with a cone for the direction I face */
+.me{position:relative;width:22px;height:22px}
+.me .dot{position:absolute;inset:0;border-radius:50%;background:#2563eb;border:4px solid #fff;box-shadow:0 0 0 7px rgba(37,99,235,.22),0 2px 6px rgba(0,0,0,.3)}
+.me .cone{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-70px 0 0 -35px;transform-origin:50% 100%;
+  background:radial-gradient(circle at 50% 100%,rgba(37,99,235,.38),rgba(37,99,235,0) 70%);clip-path:polygon(50% 100%,15% 0,85% 0)}
+.maplibregl-ctrl-attrib{font-size:10px}
+</style>
+</head>
+<body>
+<div id="map" aria-label="מפה"></div>
+
+<div class="top">
+  <form class="search" id="searchForm" role="search" autocomplete="off">
+    <div class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-5h4v5"/></svg>
+    </div>
+    <input id="q" type="text" inputmode="search" placeholder="הכנס כתובת ועיר" aria-label="חיפוש כתובת" enterkeyhint="search" lang="he">
+    <button type="button" class="icon-btn" id="clearBtn" aria-label="ניקוי" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button type="submit" class="icon-btn" aria-label="חיפוש">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    </button>
+  </form>
+  <div class="suggest" id="suggest" hidden></div>
+</div>
+
+<div class="fabs">
+  <button class="fab" id="locBtn" aria-label="המפה מסתובבת לכיוון שאני מסתכל, אני והבניין על המסך" title="לכיוון שלי">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 18-7-4-7 4 7-18z"/></svg>
+    <span class="lbl">מצפן</span>
+  </button>
+  <button class="fab" id="northBtn" aria-label="צפון למעלה" title="צפון למעלה" hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l4 10h-8z" fill="#d32f2f"/><path d="M12 22l-4-10h8z" fill="currentColor" opacity=".45"/></svg>
+    <span class="lbl">צפון</span>
+  </button>
+  <button class="fab" id="tdBtn" aria-label="תלת ממד או מבט מלמעלה" title="תלת ממד">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+    <span class="lbl">תלת ממד</span>
+  </button>
+  <button class="fab" id="nightBtn" aria-label="מצב לילה" title="מצב לילה">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+    <span class="lbl">לילה</span>
+  </button>
+  <button class="fab" id="zoomOutBtn" aria-label="להתרחק ולראות את כל הסביבה" title="תצוגה רחבה">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M8 11h6"/></svg>
+    <span class="lbl">הרחק</span>
+  </button>
+  <button class="fab" id="layerBtn" aria-label="החלפה בין מפה ללוויין" title="מפה / לוויין">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+    <span class="lbl">לוויין</span>
+  </button>
+</div>
+
+<section class="bar" id="bar" aria-live="polite" hidden>
+  <div class="addr" id="addr"></div>
+  <div class="note" id="note" hidden></div>
+  <div class="far" id="farNote" hidden></div>
+  <div class="mini">
+    <span><i class="lg-foot"></i>שביל</span>
+    <span><i class="lg-steps"></i>מדרגות</span>
+    <span><i class="lg-door">🚪</i>כניסה</span>
+    <span class="acc" id="acc"></span>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+(() => {
+'use strict';
+const IL_BBOX = '34.2,29.4,35.95,33.4';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2600); }
+function dist(a,b){ const R=6371e3,r=Math.PI/180; const dLat=(b.lat-a.lat)*r,dLng=(b.lng-a.lng)*r;
+  const x=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+const fx = n => Number(n).toFixed(6);
+const nn = s => String(s ?? '').replace(/[\s'"׳״]/g, '');
+const centroid = pts => ({lat: pts.reduce((s,p)=>s+p.lat,0)/pts.length, lng: pts.reduce((s,p)=>s+p.lng,0)/pts.length});
+function inPoly(p, pts){
+  let inside = false;
+  for (let i=0, j=pts.length-1; i<pts.length; j=i++){
+    const a = pts[i], b = pts[j];
+    if (((a.lat>p.lat)!==(b.lat>p.lat)) && (p.lng < (b.lng-a.lng)*(p.lat-a.lat)/(b.lat-a.lat)+a.lng)) inside = !inside;
+  }
+  return inside;
+}
+function segDist(p, a, b){
+  const k = Math.cos(p.lat*Math.PI/180), m = 111320;
+  const ax=(a.lng-p.lng)*k*m, ay=(a.lat-p.lat)*m, bx=(b.lng-p.lng)*k*m, by=(b.lat-p.lat)*m;
+  const dx=bx-ax, dy=by-ay, len=dx*dx+dy*dy;
+  let u = len ? -(ax*dx+ay*dy)/len : 0; u = Math.max(0, Math.min(1, u));
+  return Math.hypot(ax+u*dx, ay+u*dy);
+}
+// the point on the building's outline nearest to p
+function nearestOnWall(p, pts){
+  const k = Math.cos(p.lat*Math.PI/180), m = 111320; let best = null, bd = Infinity;
+  for (let i = 1; i <= pts.length; i++){
+    const a = pts[i-1], b = pts[i % pts.length];
+    const ax=(a.lng-p.lng)*k*m, ay=(a.lat-p.lat)*m, bx=(b.lng-p.lng)*k*m, by=(b.lat-p.lat)*m, dx=bx-ax, dy=by-ay, len=dx*dx+dy*dy;
+    let u = len ? -(ax*dx+ay*dy)/len : 0; u = Math.max(0, Math.min(1, u));
+    const d = Math.hypot(ax+u*dx, ay+u*dy);
+    if (d < bd){ bd = d; best = {lat: a.lat + (b.lat-a.lat)*u, lng: a.lng + (b.lng-a.lng)*u}; }
+  }
+  return best;
+}
+// the spot on the building's wall that faces its street (the searched street first, else any street nearby)
+function streetWall(pts){
+  const c = centroid(pts), key = target ? streetKey(target.street) : '';
+  const near = [...store.roads.values()].filter(r => r.pts.some(q => dist(q, c) < 150));
+  const named = near.filter(r => key && streetKey(r.name) === key);
+  const roads = named.length ? named : near;
+  let best = null, bd = Infinity;
+  for (const r of roads) for (let i = 1; i < r.pts.length; i++){
+    const a = r.pts[i-1], b = r.pts[i];
+    for (const t of [0, .25, .5, .75, 1]){
+      const q = {lat: a.lat + (b.lat-a.lat)*t, lng: a.lng + (b.lng-a.lng)*t}, w = nearestOnWall(q, pts), d = dist(q, w);
+      if (d < bd){ bd = d; best = w; }
+    }
+  }
+  return best || nearestOnWall(target || c, pts);
+}
+function wallDist(p, pts){ let d = Infinity; for (let i=1; i<=pts.length; i++) d = Math.min(d, segDist(p, pts[i-1], pts[i % pts.length])); return d; }
+const normStreet = s => String(s||'').replace(/^(רחוב|רח'|שדרות|שד'|דרך)\s+/,'').replace(/["'״׳\-\s]/g,'').toLowerCase();
+// street names compared word by word in any order: Tel Aviv writes "לבנון חיים" for "חיים לבנון"
+const streetKey = s => String(s || '').replace(/^(רחוב|רח'|שדרות|שד'|דרך)\s+/, '').replace(/["'״׳\-.]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+const ring2 = pts => [...pts.map(p => [p.lng, p.lat]), [pts[0].lng, pts[0].lat]];
+
+// ---------- the map: drawn in the browser (MapLibre), so names stay upright when it turns, and it can tilt into 3D ----------
+// Base map: OpenFreeMap (free, no key), light by day and dark by night. Its own buildings are switched off and it
+// has no house numbers; the page draws those from city data (Jerusalem, Tel Aviv) or OpenStreetMap.
+const STYLES = {day:'https://tiles.openfreemap.org/styles/positron', night:'https://tiles.openfreemap.org/styles/dark'};
+const hour = new Date().getHours();
+let night = hour >= 19 || hour < 6;          // by the clock until the user picks; the moon button switches at any moment
+try { const saved = localStorage.getItem('ef-night'); if (saved !== null) night = saved === '1'; } catch(e){}
+const qp = new URLSearchParams(location.search); if (qp.has('night')) night = qp.get('night') === '1'; // ?night=1 or ?night=0 to try either
+let threeD = false, satOn = false; // top-down by default; the "תלת ממד" button tilts it
+const PITCH = 50;
+const EMBED = new URLSearchParams(location.search).get('embed') === '1';
+if (EMBED) document.body.classList.add('embed');
+const THEMES = {
+  pro:   {numY:['#1e3a8a','#ffffff','#ffffff'], numG:['#e2e8f0','#94a3b8','#334155'], icon:['#1e3a8a','#ffffff'], nightNumG:['#1e293b','#475569','#cbd5e1']},
+};
+const themeName = 'pro'; // the chosen direction: technical, flat, square keys with words, navy number plates
+document.documentElement.dataset.theme = themeName;
+const T = THEMES[themeName];
+try { maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.min.js', true); } catch(e){}
+const map = new maplibregl.Map({
+  container:'map', style: night ? STYLES.night : STYLES.day, center:[34.85, 31.95], zoom:8,
+  pitch:0, maxPitch:0, attributionControl:{compact:true, // flat until the "תלת ממד" button is on
+    customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
+});
+window.__map = map; // debugging handle
+document.body.classList.toggle('night', night);
+
+const COLORS = () => night
+  ? {bld:'#2b3747', bldTop:'#344357', bldLine:'#3d4d63', mask:'#060b14', maskOp:.55, path:'#22c55e', route:'#60a5fa', numY:'#facc15', numG:'#3a4658', numGText:'#c7d0dc'}
+  : {bld:'#d9dde3', bldTop:'#e4e7ec', bldLine:'#b7bec8', mask:'#ffffff', maskOp:.5, path:'#16a34a', route:'#2563eb', numY:'#facc15', numG:'#e7e9ee', numGText:'#59636f'};
+const EMPTY = {type:'FeatureCollection', features:[]};
+const data = {blds:EMPTY, target:EMPTY, mask:EMPTY, paths:EMPTY, stairs:EMPTY, rails:EMPTY, nums:EMPTY, marks:EMPTY, route:EMPTY, acc:EMPTY};
+
+// little pictures drawn in the page itself: number pills and landmark icons
+function pill(fill, stroke){
+  const c = document.createElement('canvas'); c.width = c.height = 48; const g = c.getContext('2d');
+  g.fillStyle = fill; g.strokeStyle = stroke; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(3, 3, 42, 42, 12); g.fill(); g.stroke();
+  return {img: g.getImageData(0, 0, 48, 48), opt: {pixelRatio: 2, stretchX: [[14, 34]], stretchY: [[14, 34]], content: [12, 10, 36, 38]}};
+}
+// one icon set, one line weight: drawn from simple paths so every landmark looks like the same family
+const ICONS = {
+  syn:'M12 3l7.8 13.5H4.2z M12 21L4.2 7.5h15.6z', worship:'M5 20h14 M7 20v-7a5 5 0 0 1 10 0v7 M12 3v5 M10 5h4',
+  school:'M3 20h18 M5 20V10l7-5 7 5v10 M10 20v-5h4v5', kinder:'M4 14h7v6H4z M13 14h7v6h-7z M8.5 7h7v7h-7z',
+  shop:'M3 4h2l2.5 11h10l2-8H6.5 M9 19.5h.01 M17 19.5h.01', bus:'M6 4h12a2 2 0 0 1 2 2v10H4V6a2 2 0 0 1 2-2z M4 11h16 M7 19v-3 M17 19v-3',
+  play:'M4 20V8h4l10 12 M4 12h5', pharm:'M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z', health:'M12 5v14 M5 12h14',
+  park:'M12 21v-6 M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', police:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'
+};
+function glyph(d){
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const [bg, fg] = T.icon;
+  g.fillStyle = bg; g.strokeStyle = themeName === 'calm' ? '#a8a29e' : '#ffffff'; g.lineWidth = 3;
+  if (themeName === 'pro'){ g.beginPath(); g.roundRect(6, 6, 52, 52, 9); } else { g.beginPath(); g.arc(32, 32, 26, 0, Math.PI*2); }
+  g.fill(); g.stroke();
+  g.save(); g.translate(16, 16); g.scale(32/24, 32/24);
+  g.strokeStyle = fg; g.lineWidth = 2.1; g.lineCap = 'round'; g.lineJoin = 'round'; g.stroke(new Path2D(d)); g.restore();
+  return {img: g.getImageData(0, 0, 64, 64), opt: {pixelRatio: 2}};
+}
+function emoji(ch, bg){
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = bg; g.strokeStyle = '#ffffff'; g.lineWidth = 5;
+  g.beginPath(); g.arc(32, 32, 27, 0, Math.PI*2); g.fill(); g.stroke();
+  g.font = '30px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(ch, 32, 34);
+  return {img: g.getImageData(0, 0, 64, 64), opt: {pixelRatio: 2}};
+}
+// paving stones in a staggered bond, the way Israeli footpaths look
+function paver(){
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = night ? '#4a4f57' : '#e2dccf'; g.fillRect(0, 0, 64, 64);
+  g.strokeStyle = night ? '#363a41' : '#bdb3a2'; g.lineWidth = 2;
+  for (let r = 0; r < 4; r++){
+    const y = r * 16; g.beginPath(); g.moveTo(0, y + 1); g.lineTo(64, y + 1); g.stroke();
+    for (let x = (r % 2) * 16; x <= 64; x += 32){ g.beginPath(); g.moveTo(x + 1, y); g.lineTo(x + 1, y + 16); g.stroke(); }
+  }
+  // a few slightly darker stones so it does not look printed
+  g.fillStyle = night ? 'rgba(0,0,0,.12)' : 'rgba(120,100,70,.08)';
+  for (const [x, y] of [[2,2],[34,18],[18,34],[50,50]]) g.fillRect(x, y, 28, 13);
+  return {img: g.getImageData(0, 0, 64, 64), opt: {pixelRatio: 2}};
+}
+// stair treads seen from above: a light tread, the nosing, and the shadow of the next riser (along the line)
+function stairTex(){
+  const c = document.createElement('canvas'); c.width = 24; c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = night ? '#6f747c' : '#d7d1c6'; g.fillRect(0, 0, 24, 64);
+  g.fillStyle = night ? '#8c9199' : '#f1ede6'; g.fillRect(0, 0, 3, 64);      // nosing catches the light
+  g.fillStyle = night ? '#3c4047' : '#8f877a'; g.fillRect(17, 0, 7, 64);     // riser shadow
+  return {img: g.getImageData(0, 0, 24, 64), opt: {pixelRatio: 2}};
+}
+const LANDMARKS = {
+  syn:['✡️','#dbeafe'], worship:['🛐','#e0e7ff'], school:['🏫','#fef3c7'], kinder:['🧸','#fde68a'], shop:['🛒','#dcfce7'],
+  bus:['🚌','#fee2e2'], play:['🛝','#cffafe'], pharm:['💊','#fce7f3'], health:['🏥','#fee2e2'], park:['🌳','#dcfce7'], police:['🚓','#e0e7ff']
+};
+
+// building heights: real in 3D; in the flat view almost zero, so tall buildings do not lean towards the screen's edges
+const bldH = () => threeD ? ['coalesce', ['get','h'], 8] : .2;
+const tgtH = () => threeD ? ['+', ['coalesce', ['get','h'], 9], .6] : .3;
+// all the page's own layers; added again whenever the base style changes (day / night)
+function addLayers(){
+  const C = COLORS();
+  const g = night ? T.nightNumG : T.numG;
+  const imgs = {'pill-y': pill(T.numY[0], T.numY[1]), 'pill-g': pill(g[0], g[1]),
+    'paver': paver(), 'stair': stairTex()};
+  for (const k of Object.keys(ICONS)) imgs['lm-' + k] = glyph(ICONS[k]);
+  for (const [id, {img, opt}] of Object.entries(imgs)) if (!map.hasImage(id)) map.addImage(id, img, opt);
+
+  // the base map's own buildings are hidden (they can be old or a few metres off); street names in Hebrew
+  for (const l of map.getStyle().layers){
+    if (/building/.test(l.id)) map.setLayoutProperty(l.id, 'visibility', 'none');
+    if (l.type === 'symbol' && map.getLayoutProperty(l.id, 'text-field'))
+      map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:he'], ['get', 'name']]);
+  }
+  const src = (id) => { if (!map.getSource(id)) map.addSource(id, {type:'geojson', data: data[id]}); };
+  map.addSource('sat', {type:'raster', tileSize:256, maxzoom:19, attribution:'Imagery © Esri',
+    tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}']});
+  map.addLayer({id:'sat', type:'raster', source:'sat', layout:{visibility: satOn ? 'visible' : 'none'}});
+  ['blds','target','mask','paths','stairs','rails','nums','marks','route','acc'].forEach(src);
+
+  // every building, raised to its height (flat when the map looks straight down)
+  map.addLayer({id:'blds', type:'fill-extrusion', source:'blds', minzoom:15, layout:{visibility: satOn ? 'none' : 'visible'},
+    paint:{'fill-extrusion-color': C.bld, 'fill-extrusion-height': bldH(), 'fill-extrusion-opacity': .92}});
+  map.addLayer({id:'blds-line', type:'line', source:'blds', minzoom:16, layout:{visibility: satOn ? 'none' : 'visible'},
+    paint:{'line-color': C.bldLine, 'line-width': .8}});
+  // the spotlight: everything away from the searched building is softened
+  map.addLayer({id:'mask', type:'fill', source:'mask', paint:{'fill-color': C.mask, 'fill-opacity': satOn ? C.maskOp * .6 : C.maskOp}});
+  // paths drawn as paved walkways at their real width (about 2.2 m), with a darker kerb along the edges
+  const W = m => ['interpolate', ['exponential', 2], ['zoom'], 16, m * .494, 22, m * 31.6]; // metres to screen pixels
+  map.addLayer({id:'paths-edge', type:'line', source:'paths', minzoom:16, filter:['!=',['get','steps'],true],
+    paint:{'line-color': night ? '#2a2f37' : '#a59b89', 'line-width': W(2.7)}, layout:{'line-cap':'round','line-join':'round'}});
+  map.addLayer({id:'paths', type:'line', source:'paths', minzoom:16, filter:['!=',['get','steps'],true],
+    paint:{'line-pattern':'paver', 'line-width': W(2.2)}, layout:{'line-cap':'round','line-join':'round'}});
+  // stairs from above: concrete treads with the shadow of each riser
+  map.addLayer({id:'steps-edge', type:'line', source:'paths', minzoom:16, filter:['==',['get','steps'],true],
+    paint:{'line-color': night ? '#1f242b' : '#7d7568', 'line-width': W(3.1)}});
+  map.addLayer({id:'steps', type:'line', source:'paths', minzoom:16, filter:['==',['get','steps'],true],
+    paint:{'line-pattern':'stair', 'line-width': W(2.6)}});
+  // in 3D the stairs rise step by step: a concrete tread every 30 cm, 16 cm higher than the last
+  map.addLayer({id:'steps-3d', type:'fill-extrusion', source:'stairs', minzoom:16, layout:{visibility: threeD ? 'visible' : 'none'},
+    paint:{'fill-extrusion-color': night ? '#80858d' : '#d3cdc2', 'fill-extrusion-height':['get','h'], 'fill-extrusion-base':0,
+      'fill-extrusion-opacity':1, 'fill-extrusion-vertical-gradient':true}});
+  map.addLayer({id:'steps-rail', type:'line', source:'rails', minzoom:17, layout:{visibility: threeD ? 'visible' : 'none', 'line-cap':'round'},
+    paint:{'line-color': night ? '#cbd5e1' : '#475569', 'line-width':1.6}});
+  // the searched building: red, raised a little above its neighbours, with a red outline on the ground
+  map.addLayer({id:'target', type:'fill-extrusion', source:'target',
+    paint:{'fill-extrusion-color':'#e11d48', 'fill-extrusion-height': tgtH(), 'fill-extrusion-opacity': .88}});
+  map.addLayer({id:'target-line', type:'line', source:'target', paint:{'line-color':'#e11d48', 'line-width':4}});
+  // the walking line, moving towards the building
+  map.addLayer({id:'route-case', type:'line', source:'route', paint:{'line-color':'#ffffff', 'line-width':7, 'line-opacity': night ? .25 : .8},
+    layout:{'line-cap':'round','line-join':'round'}});
+  map.addLayer({id:'route', type:'line', source:'route', paint:{'line-color': C.route, 'line-width':4.5, 'line-dasharray':[0, 4, 3]},
+    layout:{'line-cap':'round','line-join':'round'}});
+  map.addLayer({id:'acc', type:'fill', source:'acc', paint:{'fill-color':'#2563eb', 'fill-opacity':.08}});
+  // landmarks to find your way: synagogue, school, kindergarten, shop, bus stop...
+  map.addLayer({id:'marks', type:'symbol', source:'marks', minzoom:16,
+    layout:{'icon-image':['concat','lm-',['get','k']], 'icon-size':.95, 'icon-allow-overlap':false,
+      'text-field':['step',['zoom'],'',18,['get','name']], 'text-font':['Noto Sans Regular'], 'text-size':11, 'text-offset':[0,1.6], 'text-anchor':'top', 'text-optional':true},
+    paint:{'text-color': night ? '#cbd5e1' : '#475569', 'text-halo-color': night ? '#0b1220' : '#ffffff', 'text-halo-width':1.4}});
+  // house numbers: yellow on the searched street, small and gray elsewhere
+  map.addLayer({id:'nums', type:'symbol', source:'nums', minzoom:16,
+    layout:{'text-field':['get','num'], 'text-font':['Noto Sans Bold'], 'text-size':['case',['==',['get','k'],'y'],13,10.5],
+      'icon-image':['case',['==',['get','k'],'y'],'pill-y','pill-g'], 'icon-text-fit':'both', 'icon-text-fit-padding':[1,4,1,4],
+      'symbol-sort-key':['case',['==',['get','k'],'y'],0,1], 'text-allow-overlap':false, 'icon-allow-overlap':false, 'text-padding':1},
+    paint:{'text-color':['case',['==',['get','k'],'y'], T.numY[2], (night ? T.nightNumG : T.numG)[2]]}});
+}
+let booted = false;
+map.on('style.load', () => { try { addLayers(); } catch(e){ console.warn('layers', e); } render(); if (!booted){ booted = true; boot(); } });
+
+// ---------- layers' data, rebuilt from the store ----------
+function setData(id, fc){ data[id] = fc; const s = map.getSource(id); if (s) s.setData(fc); }
+const poly = (pts, props) => ({type:'Feature', properties: props || {}, geometry:{type:'Polygon', coordinates:[ring2(pts)]}});
+function circle(c, r, n = 48){
+  const out = []; const k = Math.cos(c.lat*Math.PI/180);
+  for (let i = 0; i <= n; i++){ const a = i / n * Math.PI * 2; out.push([c.lng + r*Math.cos(a)/(111320*k), c.lat + r*Math.sin(a)/111320]); }
+  return out;
+}
+// (no wait for the style: data is kept and handed to each source as soon as it exists)
+// a stair line becomes real steps: 30 cm treads in flights of 7, each step 13 cm higher, with a short landing between flights,
+// so a long staircase reads as stairs and not as a wall; a handrail on each side
+function stairBlocks(pts0, down){
+  const pts = down ? [...pts0].reverse() : pts0;
+  const out = [], rails = []; let i = 0;
+  for (let s = 1; s < pts.length; s++){
+    const a = pts[s-1], b = pts[s], k = Math.cos(a.lat*Math.PI/180), m = 111320;
+    const dx = (b.lng-a.lng)*k*m, dy = (b.lat-a.lat)*m, L = Math.hypot(dx, dy); if (L < .3) continue;
+    const n = Math.max(2, Math.round(L / .3)), ux = dx/L, uy = dy/L, w = 1.3;
+    const at = (t, side) => ({lng: a.lng + (dx*t - uy*w*side)/(k*m), lat: a.lat + (dy*t + ux*w*side)/m});
+    for (let j = 0; j < n; j++, i++){
+      const t0 = j/n, t1 = (j + 1.02)/n;
+      const f = i % 9; // steps 0-6 climb, 7-8 are the landing
+      out.push({type:'Feature', properties:{h: f < 7 ? .13 * (f + 1) : .06},
+        geometry:{type:'Polygon', coordinates:[[at(t0,-1), at(t1,-1), at(t1,1), at(t0,1), at(t0,-1)].map(p => [p.lng, p.lat])]}});
+    }
+    for (const side of [-1.05, 1.05]) rails.push({type:'Feature', properties:{}, geometry:{type:'LineString', coordinates:[at(0, side), at(1, side)].map(p => [p.lng, p.lat])}});
+  }
+  return {blocks: out, rails};
+}
+function render(){
+  // buildings: the city's where loaded, else OpenStreetMap's (not the searched ones: those are drawn red)
+  const feats = [];
+  const red = redBlds.map(b => b.pts);
+  const isRed = pts => { const c = centroid(pts); return red.some(r => inPoly(c, r)); };
+  for (const b of store.cityBlds.values()) if (!isRed(b.pts)) feats.push(poly(b.pts, {h: b.h}));
+  const inCity = p => store.cityBoxes.some(b => Math.abs(p.lat - b.c.lat) < b.d && Math.abs(p.lng - b.c.lng) < b.d * 1.18);
+  for (const b of store.buildings.values()) if (!inCity(centroid(b.pts)) && !isRed(b.pts)) feats.push(poly(b.pts, {h: b.h}));
+  setData('blds', {type:'FeatureCollection', features: feats});
+  setData('target', {type:'FeatureCollection', features: redBlds.map(b => poly(b.pts, {h: b.h || 9}))});
+  // the spotlight hole around the searched building
+  if (redBlds.length){
+    const all = redBlds.flatMap(b => b.pts), c = centroid(all);
+    const r = Math.max(70, Math.max(...all.map(p => dist(c, p))) + 45);
+    setData('mask', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon',
+      coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]], circle(c, r)]}}]});
+  } else if (target){
+    setData('mask', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon',
+      coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]], circle(target, 70)]}}]});
+  } else setData('mask', EMPTY);
+  const st = [...store.paths.values()].filter(p => p.steps).map(p => stairBlocks(p.pts, p.down));
+  setData('stairs', {type:'FeatureCollection', features: st.flatMap(x => x.blocks)});
+  setData('rails', {type:'FeatureCollection', features: st.flatMap(x => x.rails)});
+  setData('paths', {type:'FeatureCollection', features: [...store.paths.values()].map(p => ({type:'Feature', properties:{steps: p.steps},
+    geometry:{type:'LineString', coordinates: p.pts.map(q => [q.lng, q.lat])}}))});
+  // numbers: the searched street's in yellow, the rest small and gray; the searched number itself is a tag above the building
+  const tKey = target ? streetKey(target.street) : '';
+  const tBase = target ? nn(target.num).replace(/[א-ת]$/, '') : '';
+  const nums = [];
+  for (const l of store.labels.values()){
+    if (redBlds.length && tBase && nn(l.num).replace(/[א-ת]$/, '') === tBase && redBlds.some(b => inPoly(l, b.pts) || wallDist(l, b.pts) < 12)) continue;
+    if (hitLabel && l === hitLabel) continue;
+    const onStreet = !tKey || !l.street || streetKey(l.street) === tKey;
+    nums.push({type:'Feature', properties:{num: l.num, k: onStreet ? 'y' : 'g'}, geometry:{type:'Point', coordinates:[l.lng, l.lat]}});
+  }
+  setData('nums', {type:'FeatureCollection', features: nums});
+  setData('marks', {type:'FeatureCollection', features: [...store.marks.values()].map(m => ({type:'Feature', properties:{k: m.k, name: m.name || ''},
+    geometry:{type:'Point', coordinates:[m.lng, m.lat]}}))});
+}
+
+// ---------- geocoding (Hebrew only) ----------
+function photonLabel(f){
+  const p = f.properties || {};
+  const street = p.street || (p.type === 'street' ? p.name : '');
+  const line1 = p.housenumber ? `${street || p.name || ''} ${p.housenumber}`.trim()
+              : (p.name && p.name !== street ? p.name + (street ? `, ${street}` : '') : (street || p.name || ''));
+  const line2 = [p.city || p.town || p.village || p.locality].filter(Boolean).join(', ');
+  return {line1: line1 || line2, line2, street, housenumber: p.housenumber || ''};
+}
+async function photon(q){
+  const c = map.getCenter();
+  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=default&bbox=${IL_BBOX}&lat=${c.lat}&lon=${c.lng}`);
+  if (!r.ok) throw new Error('photon');
+  return ((await r.json()).features||[]).map(f => ({lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0], ...photonLabel(f)}));
+}
+async function nominatim(q){
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=il&accept-language=he&limit=7&q=${encodeURIComponent(q)}`);
+  if (!r.ok) throw new Error('nominatim');
+  return (await r.json()).map(x => { const a = x.address || {};
+    const street = a.road || a.pedestrian || a.footway || '';
+    const line1 = a.house_number ? `${street} ${a.house_number}` : (x.name || street || x.display_name.split(',')[0]);
+    return {lat:+x.lat, lng:+x.lon, line1, line2:[a.city||a.town||a.village||a.suburb].filter(Boolean).join(', '), street, housenumber:a.house_number||''}; });
+}
+const hasHebrew = s => /[֐-׿]/.test(s);
+function typedNum(qt){
+  for (let i = 0; i < qt.length; i++){
+    if (/^\d+[א-ת]$/.test(qt[i])) return qt[i];
+    if (/^\d+$/.test(qt[i])) return /^[א-ת]$/.test(qt[i+1] || '') ? qt[i] + qt[i+1] : qt[i];
+  }
+  return '';
+}
+const toks = s => String(s||'').replace(/[,.\-"'״׳]/g,' ').split(/\s+/).filter(Boolean);
+function rankResults(q, res){
+  const qt = toks(q), qNum = typedNum(qt);
+  const seen = new Set();
+  return res.filter(r => hasHebrew(r.line1 + r.line2))
+    .map(r => { const l1 = toks(r.line1), l2 = toks(r.line2); let s = 0;
+      for (const t of qt){ if (l1.includes(t)) s += 1; if (l2.includes(t)) s += 3; }
+      if (qNum && nn(r.housenumber) === nn(qNum)) s += 1;
+      r.exact = !qNum || nn(r.housenumber) === nn(qNum); r.qNum = qNum; return {r, s}; })
+    .sort((a,b) => b.s - a.s).map(x => x.r)
+    .filter(r => { const k = r.line1 + '|' + r.line2; if (seen.has(k)) return false; seen.add(k); return true; })
+    .slice(0, 7);
+}
+async function geocode(q, withNominatim){
+  const [a, b] = await Promise.all([photon(q).catch(() => []), withNominatim ? nominatim(q).catch(() => []) : []]);
+  return rankResults(q, [...b, ...a]);
+}
+
+// ---------- OpenStreetMap data around a point: buildings, numbers, paths, entrances, landmarks ----------
+const store = {buildings:new Map(), labels:new Map(), paths:new Map(), doors:new Map(), marks:new Map(), roads:new Map(), centers:[], cityBlds:new Map(), cityBoxes:[]};
+const FOOT = new Set(['footway','path','pedestrian','steps','living_street','corridor']);
+const levelsH = t => { const h = parseFloat(t.height); if (h > 0) return h; const l = parseFloat(t['building:levels']); return l > 0 ? l * 3.1 : 8; };
+function landmarkKind(t){
+  if (t.amenity === 'place_of_worship') return t.religion === 'jewish' ? 'syn' : 'worship';
+  if (t.amenity === 'school') return 'school';
+  if (t.amenity === 'kindergarten' || t.amenity === 'childcare') return 'kinder';
+  if (t.amenity === 'pharmacy') return 'pharm';
+  if (['hospital','clinic','doctors'].includes(t.amenity)) return 'health';
+  if (t.amenity === 'police') return 'police';
+  if (t.highway === 'bus_stop') return 'bus';
+  if (t.leisure === 'playground') return 'play';
+  if (t.leisure === 'park') return 'park';
+  if (['supermarket','convenience','bakery','greengrocer','kiosk'].includes(t.shop)) return 'shop';
+  return null;
+}
+async function loadArea(c){
+  const dLat = 0.0016, dLng = 0.0019;
+  const url = `https://api.openstreetmap.org/api/0.6/map?bbox=${c.lng-dLng},${c.lat-dLat},${c.lng+dLng},${c.lat+dLat}`;
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch(url, {signal:ctrl.signal}); if (!r.ok) return false;
+    const doc = new DOMParser().parseFromString(await r.text(), 'text/xml');
+    const nodes = new Map(), newB = [];
+    const tags = el => { const o = {}; el.querySelectorAll(':scope > tag').forEach(t => o[t.getAttribute('k')] = t.getAttribute('v')); return o; };
+    doc.querySelectorAll('node').forEach(n => {
+      const id = n.getAttribute('id'), p = {lat:+n.getAttribute('lat'), lng:+n.getAttribute('lon')};
+      nodes.set(id, p);
+      if (!n.querySelector('tag')) return;
+      const tg = tags(n);
+      if (tg.entrance && !store.doors.has(id)) store.doors.set(id, {...p, id});
+      if (tg['addr:housenumber'] && !store.labels.has('n'+id))
+        store.labels.set('n'+id, {key:'n'+id, nodeId:id, num:tg['addr:housenumber'], street:tg['addr:street'], ...p, bld:null});
+      const k = landmarkKind(tg); if (k && !store.marks.has('n'+id)) store.marks.set('n'+id, {...p, k, name: tg.name || ''});
+    });
+    doc.querySelectorAll('way').forEach(w => {
+      const id = w.getAttribute('id');
+      const hw = w.querySelector('tag[k="highway"]')?.getAttribute('v');
+      if (hw && !FOOT.has(hw) && !store.roads.has(id)){
+        const pts = [...w.querySelectorAll('nd')].map(nd => nodes.get(nd.getAttribute('ref'))).filter(Boolean);
+        if (pts.length > 1) store.roads.set(id, {name: w.querySelector('tag[k="name"]')?.getAttribute('v') || '', pts});
+      }
+      if (hw && FOOT.has(hw)){
+        if (store.paths.has(id)) return;
+        const pts = [...w.querySelectorAll('nd')].map(nd => nodes.get(nd.getAttribute('ref'))).filter(Boolean);
+        if (pts.length > 1) store.paths.set(id, {id, steps: hw === 'steps', down: w.querySelector('tag[k="incline"]')?.getAttribute('v') === 'down', pts});
+        return;
+      }
+      const tg = tags(w);
+      const k = landmarkKind(tg);
+      if (k && !store.marks.has('w'+id)){
+        const pts = [...w.querySelectorAll('nd')].map(nd => nodes.get(nd.getAttribute('ref'))).filter(Boolean);
+        if (pts.length) store.marks.set('w'+id, {...centroid(pts), k, name: tg.name || ''});
+      }
+      if (store.buildings.has(id) || !tg.building) return;
+      const refs = [...w.querySelectorAll('nd')].map(nd => nd.getAttribute('ref'));
+      const pts = refs.map(r => nodes.get(r)).filter(Boolean);
+      if (pts.length < 3) return;
+      const b = {id, tags:tg, pts, refs:new Set(refs), labels:[], h: levelsH(tg)};
+      store.buildings.set(id, b); newB.push(b);
+    });
+    for (const l of store.labels.values()){
+      if (l.bld) continue;
+      for (const b of store.buildings.values()) if (b.refs.has(l.nodeId) || inPoly(l, b.pts)){ l.bld = b; b.labels.push(l); break; }
+    }
+    for (const b of newB){
+      const num = b.tags['addr:housenumber'];
+      if (!num || b.labels.some(l => nn(l.num) === nn(num))) continue;
+      const l = {key:'w'+b.id, num, street:b.tags['addr:street'], ...centroid(b.pts), bld:b};
+      store.labels.set(l.key, l); b.labels.push(l);
+    }
+    store.centers.push(c);
+    const city = cityOf(c); if (city) cityArea(city, c).then(render);
+    return true;
+  } catch(e){ return false; } finally { clearTimeout(tm); }
+}
+
+// ---------- city GIS: the official buildings and house numbers, where a city publishes them ----------
+const CITIES = [
+  { id:'jlm', name:'עיריית ירושלים', box:[31.70, 35.09, 31.89, 35.27],
+    url:'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer',
+    numLayer:10, numWhere: n => `BldNum='${n}'`,
+    num: a => ({num: String(a.BldNum || '').trim(), letter: String(a.BLDG_LETTE || '').trim(), street: a.StreetName1}),
+    bldLayer:30, byNumber:true, bldWhere: n => `BLDG_NUM=${n}`,
+    bld: a => ({street: a.StreetName1, floors: a.NUM_FLOORS, apts: a.NUM_APTS_C, h: a.NUM_FLOORS ? a.NUM_FLOORS * 3.1 : 7}) },
+  { id:'tlv', name:'עיריית תל אביב-יפו', box:[32.02, 34.73, 32.15, 34.86],
+    url:'https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer',
+    numLayer:527, numWhere: n => `ms_bayit=${n}`,
+    num: a => ({num: a.ms_bayit == null ? '' : String(a.ms_bayit), letter: String(a.knisa || '').trim(), street: a.t_rechov}),
+    bldLayer:513, byNumber:false,
+    bld: a => ({floors: a.ms_komot, h: a.gova_simplex_2019 > 0 ? a.gova_simplex_2019 : (a.ms_komot ? a.ms_komot * 3.1 : 7)}) },
+];
+const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.lng > c.box[1] && p.lng < c.box[3]) || null;
+const credited = new Set();
+async function cityQuery(city, layer, c, d, where){
+  const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
+  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const j = await (await fetch(url, {signal:ctrl.signal})).json();
+    if (!j.features) return null;
+    if (!credited.has(city.id)){ credited.add(city.id); const a = document.querySelector('.maplibregl-ctrl-attrib-inner'); if (a) a.insertAdjacentHTML('beforeend', ` | מבנים ומספרי בתים: ${esc(city.name)}`); }
+    return j.features;
+  } catch(e){ return null; } finally { clearTimeout(tm); }
+}
+const ring = f => f.geometry && f.geometry.rings ? f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})) : [];
+// the city's numbers and buildings for the loaded area (numbers replace OpenStreetMap's near them)
+async function cityArea(city, c){
+  const d = 0.0018;
+  const [feats, blds] = await Promise.all([cityQuery(city, city.numLayer, c, d), cityQuery(city, city.bldLayer, c, d)]);
+  if (blds && blds.length){
+    for (const f of blds){ const pts = ring(f); if (pts.length > 2) store.cityBlds.set(city.id + 'b' + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? pts[0].lat), {pts, h: city.bld(f.attributes).h}); }
+    store.cityBoxes.push({c, d});
+  }
+  if (!feats || !feats.length) return;
+  const pts = [];
+  for (const f of feats){
+    if (!f.geometry) continue;
+    const a = city.num(f.attributes), p = {lat: f.geometry.y, lng: f.geometry.x};
+    if (!a.num) continue;
+    pts.push(p);
+    const key = city.id + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? `${p.lat},${p.lng}`);
+    if (store.labels.has(key)) continue;
+    store.labels.set(key, {key, city: city.id, num: a.num + a.letter, street: a.street, ...p, bld: null});
+  }
+  for (const l of [...store.labels.values()]) if (!l.city && pts.some(p => dist(p, l) < 60)) store.labels.delete(l.key);
+}
+// the city's buildings for one address, and the one the letter points to when known; signs are kept as entrances
+async function cityBuildings(city, t){
+  const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
+  const base = m[1], letter = m[2], st = streetKey(t.street);
+  const same = name => !st || !name || streetKey(name) === st;
+  const numFeats = await cityQuery(city, city.numLayer, t, 0.004, city.numWhere(base));
+  const signs = (numFeats || []).filter(f => f.geometry && same(city.num(f.attributes).street))
+    .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
+    .filter(s => dist(t, s.p) < 400);
+  let cands = [];
+  if (city.byNumber){
+    const polys = await cityQuery(city, city.bldLayer, t, 0.004, city.bldWhere(base));
+    if (!polys) return null;
+    cands = polys.filter(f => same(city.bld(f.attributes).street))
+      .map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []}))
+      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400);
+  } else {
+    if (!signs.length) return null;
+    const box = signs.reduce((b, s) => ({lat: b.lat + s.p.lat / signs.length, lng: b.lng + s.p.lng / signs.length}), {lat:0, lng:0});
+    const spread = Math.max(0.0006, ...signs.map(s => Math.max(Math.abs(s.p.lat - box.lat), Math.abs(s.p.lng - box.lng)))) + 0.0004;
+    const polys = await cityQuery(city, city.bldLayer, box, spread);
+    if (!polys) return null;
+    const all = polys.map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []})).filter(c => c.pts.length > 2);
+    for (const s of signs){
+      const c = all.find(c => inPoly(s.p, c.pts)) || all.filter(c => wallDist(s.p, c.pts) < 12).sort((a, b) => wallDist(s.p, a.pts) - wallDist(s.p, b.pts))[0];
+      if (c && !cands.includes(c)) cands.push(c);
+    }
+  }
+  if (!cands.length) return null;
+  for (const s of signs){
+    const c = cands.find(c => inPoly(s.p, c.pts)) || cands.find(c => wallDist(s.p, c.pts) < 12);
+    if (c){ c.letters.add(s.letter); c.signs.push(s); }
+  }
+  const matches = cands.filter(c => c.letters.has(letter));
+  return {base, letter, cands, picked: matches.length === 1 ? matches[0] : null, city: city.name};
+}
+
+// ---------- the searched building ----------
+let target = null, redBlds = [], hitLabel = null, dest = null, loadSeq = 0, tagMarkers = [], doorMarkers = [], pinMarker = null;
+function clearMarkers(){ for (const m of [...tagMarkers, ...doorMarkers]) m.remove(); tagMarkers = []; doorMarkers = []; if (pinMarker){ pinMarker.remove(); pinMarker = null; } }
+function tagEl(num, info){
+  const el = document.createElement('div'); el.className = 'tag';
+  el.innerHTML = `<b>${esc(num)}</b>${info ? `<i>${esc(info)}</i>` : ''}`; return el;
+}
+function doorEl(label){
+  const el = document.createElement('div'); el.className = 'door';
+  el.innerHTML = `<b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4h10v17"/><path d="M3 21h18"/><circle cx="13" cy="12.5" r=".6" fill="#fff"/></svg></b>${label ? `<i>${esc(label)}</i>` : ''}`;
+  return el;
+}
+const floorsTxt = b => [b.floors ? `${b.floors} קומות` : '', b.apts ? `${b.apts} דירות` : ''].filter(Boolean).join(' · ');
+function showTarget(blds, num, notes){
+  clearMarkers();
+  redBlds = blds;
+  for (const b of blds){
+    const c = centroid(b.pts);
+    tagMarkers.push(new maplibregl.Marker({element: tagEl(num, floorsTxt(b)), anchor:'bottom'}).setLngLat([c.lng, c.lat]).addTo(map));
+    // entrances: the city's number signs on the building's wall, else OpenStreetMap's entrance points
+    // OpenStreetMap's entrance points sit on the wall already. A city's number sign is often drawn in the middle of the
+    // building, so it is moved to the wall: its own nearest wall when it is close to one, else the wall facing the street.
+    const osmDoors = [...store.doors.values()].filter(d => (b.refs && b.refs.has(d.id)) || wallDist(d, b.pts) < 2).map(d => ({...d, label:''}));
+    const front = streetWall(b.pts);
+    const doors = osmDoors.length ? osmDoors
+      : (b.signs || []).map(s => ({...(wallDist(s.p, b.pts) < 4 && !inPoly(s.p, b.pts) ? nearestOnWall(s.p, b.pts) : front),
+          label: s.letter ? `${num.replace(/[א-ת]$/, '')}${s.letter}` : ''}));
+    // two signs that land on the same spot become one door
+    for (let i = doors.length - 1; i > 0; i--) if (doors.slice(0, i).some(d => dist(d, doors[i]) < 3)) doors.splice(i, 1);
+    for (const d of doors) doorMarkers.push(new maplibregl.Marker({element: doorEl(d.label), anchor:'bottom'}).setLngLat([d.lng, d.lat]).addTo(map));
+  }
+  dest = blds.length ? centroid(blds[0].pts) : dest;
+  setNote(notes || '');
+  render();
+}
+function showCity(t, m){
+  const shown = m.picked ? [m.picked] : m.cands, n = shown.length;
+  const sure = m.picked || (n === 1 && !m.letter);
+  showTarget(shown, sure ? t.num : m.base,
+    m.picked ? ''
+    : m.letter && n > 1 ? `${n} בניינים במספר ${m.base}. ${t.num} הוא אחד מהם, לוודא לפי השלט`
+    : m.letter ? `${t.num} לא רשום. מסומן ${m.base}, לוודא לפי השלט`
+    : n > 1 ? `${n} בניינים במספר ${m.base}, לוודא לפי השלט` : '');
+}
+function findBuilding(t){
+  const num = nn(t.num), st = normStreet(t.street);
+  const sameStreet = l => !st || !l.street || normStreet(l.street) === st;
+  if (num){
+    const reach = t.exact === false ? 450 : 250;
+    const hits = [...store.labels.values()].filter(l => nn(l.num) === num && sameStreet(l) && dist(t, l) < reach);
+    hits.sort((a,b) => (!!b.bld - !!a.bld) || dist(t, a) - dist(t, b));
+    if (hits.length) return {b: hits[0].bld, hit: hits[0]};
+  }
+  if (t.exact === false) return {b: null, hit: null};
+  const B = [...store.buildings.values()];
+  const inside = B.find(b => inPoly(t, b.pts)); if (inside) return {b: inside, hit: null};
+  let best = null, bd = 25;
+  for (const b of B){ const d = Math.min(...b.pts.map(p => dist(t, p))); if (d < bd){ bd = d; best = b; } }
+  return {b: best, hit: null};
+}
+function placePin(t){
+  if (pinMarker) pinMarker.remove();
+  const el = document.createElement('div');
+  el.innerHTML = '<svg width="34" height="44" viewBox="0 0 90 120"><path d="M45 4C24 4 8 20 8 41c0 27 37 67 37 67s37-40 37-67C82 20 66 4 45 4z" fill="#e11d48" stroke="#fff" stroke-width="7"/><circle cx="45" cy="41" r="13" fill="#fff"/></svg>';
+  pinMarker = new maplibregl.Marker({element: el, anchor:'bottom'}).setLngLat([t.lng, t.lat]).addTo(map);
+}
+
+async function goTo(t, fromUser){
+  t.num = t.exact === false ? (t.qNum || t.housenumber || '') : (t.housenumber || t.qNum || '');
+  if (t.exact === false && t.street && t.num) t.line1 = `${t.street} ${t.num}`;
+  target = t; redBlds = []; hitLabel = null; dest = {lat:t.lat, lng:t.lng};
+  const seq = ++loadSeq;
+  clearTimeout(sugTimer); sugSeq++;
+  $('suggest').hidden = true;
+  $('q').value = t.line2 ? `${t.line1}, ${t.line2}` : t.line1;
+  $('clearBtn').hidden = false; $('q').blur();
+  $('addr').innerHTML = `${esc(t.line1)}${t.line2 ? ` <span>${esc(t.line2)}</span>` : ''}`;
+  setNote(''); $('bar').hidden = false;
+  clearMarkers(); setData('route', EMPTY); placePin(t); render();
+  follow = true; startWatch(); if (fromUser) startHeading();
+  frame(false);
+  if (!EMBED) try { history.replaceState(null,'',`?ll=${fx(t.lat)},${fx(t.lng)}&q=${encodeURIComponent($('q').value)}`); } catch(e){}
+
+  const city = cityOf(t);
+  const jmP = city && t.num ? cityBuildings(city, t).catch(() => null) : Promise.resolve(null);
+  const ok = store.centers.some(p => dist(p, t) < 60) || await loadArea(t);
+  if (seq !== loadSeq) return;
+  const PENDING = {};
+  const jm = await Promise.race([jmP, new Promise(r => setTimeout(() => r(PENDING), 2500))]);
+  if (seq !== loadSeq) return;
+  const useCity = m => { showCity(t, m); updateRoute(true); frame(true); };
+  if (jm && jm !== PENDING){ useCity(jm); return; }
+  if (jm === PENDING) jmP.then(m => { if (m && seq === loadSeq) useCity(m); });
+  const f = findBuilding(t); hitLabel = f.hit;
+  if (f.b){
+    showTarget([f.b], t.num || (f.hit && f.hit.num) || '', '');
+    if (hitLabel && hitLabel.key[0] === 'n') dest = {lat:hitLabel.lat, lng:hitLabel.lng};
+  } else {
+    setNote(!ok ? 'המפה לא ענתה. הסיכה מסמנת את הכתובת'
+      : t.exact === false ? `${t.num} לא מופיע במפה. ${t.housenumber && nn(t.housenumber) !== nn(t.num) ? `הסיכה מסמנת את ${t.housenumber}, ` : 'הסיכה על הרחוב, '}כדאי לוודא בשטח`
+      : 'לא נמצא שרטוט לבניין. הסיכה מסמנת את הכתובת');
+    render();
+  }
+  updateRoute(true); frame(true);
+}
+function setNote(txt){ $('note').hidden = !txt; $('note').textContent = txt; }
+
+// as the map moves, the parts not loaded yet are fetched
+let areaBusy = false;
+map.on('moveend', async () => {
+  if (areaBusy || map.getZoom() < 16) return;
+  const c = map.getCenter(); const here = {lat:c.lat, lng:c.lng};
+  if (store.centers.some(p => dist(p, here) < 140)) return;
+  areaBusy = true; const ok = await loadArea(here); areaBusy = false;
+  if (ok) render();
+});
+
+// ---------- live position ----------
+let me = null, watchId = null, follow = true, meMarker = null, lastFixAt = 0;
+function startWatch(){
+  if (watchId !== null || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(onPos, err => {
+    watchId = null;
+    if (err.code === 1) toast('אין הרשאת מיקום. אפשר לאשר בהגדרות הדפדפן');
+  }, {enableHighAccuracy:true, maximumAge:0, timeout:30000});
+}
+function onPos(pos){
+  const c = pos.coords, now = Date.now();
+  if (me && c.accuracy > Math.max(25, me.acc * 2.5) && now - lastFixAt < 15000) return;
+  const first = !me;
+  me = {lat:c.latitude, lng:c.longitude, acc:c.accuracy};
+  lastFixAt = now;
+  if (c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 1.2) gpsHeading = c.heading;
+  $('acc').textContent = `דיוק המיקום: ${Math.round(c.accuracy)} מ'`;
+  if (!meMarker){
+    const el = document.createElement('div'); el.className = 'me'; el.innerHTML = '<div class="cone" hidden></div><div class="dot"></div>';
+    meMarker = new maplibregl.Marker({element: el, rotationAlignment:'map'}).setLngLat([me.lng, me.lat]).addTo(map);
+  } else meMarker.setLngLat([me.lng, me.lat]);
+  setData('acc', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon', coordinates:[circle(me, me.acc, 32)]}}]});
+  updateRoute(false);
+  if (!follow) return;
+  if (first) frame(true);
+  else if (!inView(me)) frame(true);
+}
+function inView(p){
+  const pt = map.project([p.lng, p.lat]), w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
+  return pt.x > 40 && pt.x < w - 40 && pt.y > 120 && pt.y < h - barH() - 40;
+}
+function barH(){ return $('bar').hidden ? 0 : ($('bar').getBoundingClientRect().height || 0); }
+// me and the building in one frame, above the bottom bar; tilted when 3D is on
+const FAR = 700;
+let auto = false;
+function frame(smooth){
+  if (!target && !me) return;
+  const near = me && (!target || dist(me, target) < FAR);
+  const pts = [];
+  if (me && near) pts.push([me.lng, me.lat]);
+  if (redBlds.length) redBlds.forEach(b => b.pts.forEach(p => pts.push([p.lng, p.lat])));
+  else if (target) pts.push([target.lng, target.lat]);
+  if (!pts.length) return;
+  const b = pts.reduce((bb, p) => bb.extend(p), new maplibregl.LngLatBounds(pts[0], pts[0]));
+  const bearing = map.getBearing(), pitch = threeD ? PITCH : 0;
+  const cam = map.cameraForBounds(b, {padding:{top:130, bottom: barH() + 50, left:80, right:40}, bearing, maxZoom:19});
+  let zoom = cam ? Math.max(17, Math.min(19, cam.zoom - (threeD ? 0.3 : 0))) : 18;
+  auto = true;
+  map.easeTo({center: cam ? cam.center : b.getCenter(), zoom, bearing, pitch, duration: smooth ? 700 : 0});
+  setTimeout(() => { auto = false; }, smooth ? 900 : 60);
+  $('farNote').hidden = near || !me;
+  if (!near && me && target) $('farNote').textContent = `אתה במרחק ${(dist(me, target)/1000).toFixed(1)} ק"מ. המפה מראה רק את הבניין`;
+}
+// moving the map by hand stops the automatic framing until the arrow button is tapped
+map.on('dragstart', e => { if (e.originalEvent) follow = false; });
+map.on('zoomstart', e => { if (e.originalEvent && !auto) follow = false; });
+
+// ---------- turning with the compass: names stay upright, only the map turns ----------
+let headingOn = false, heading = null, gpsHeading = null, lastCompassAt = 0, applied = null, lastTurnAt = 0, fingersUntil = 0;
+function onOrient(e){
+  let h = null;
+  if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;
+  else if (e.absolute && typeof e.alpha === 'number') h = 360 - e.alpha;
+  if (h == null) return;
+  h = (h + (screen.orientation?.angle || window.orientation || 0) + 360) % 360;
+  lastCompassAt = Date.now();
+  if (heading == null) heading = h;
+  else { let d = ((h - heading + 540) % 360) - 180; heading = (heading + d * 0.15 + 360) % 360; }
+}
+let compassAsk = null;
+function askCompass(){
+  if (compassAsk || typeof DeviceOrientationEvent === 'undefined' || typeof DeviceOrientationEvent.requestPermission !== 'function') return;
+  compassAsk = DeviceOrientationEvent.requestPermission().catch(() => 'denied');
+  compassAsk.then(r => { if (r !== 'granted') compassAsk = null; });
+}
+async function startHeading(){
+  if (headingOn) return;
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    if (!compassAsk) return;
+    if (await compassAsk !== 'granted') return;
+  }
+  headingOn = true;
+  window.addEventListener('deviceorientationabsolute', onOrient, true);
+  window.addEventListener('deviceorientation', onOrient, true);
+  $('locBtn').classList.add('on');
+  requestAnimationFrame(tick);
+}
+function stopHeading(){
+  headingOn = false;
+  window.removeEventListener('deviceorientationabsolute', onOrient, true);
+  window.removeEventListener('deviceorientation', onOrient, true);
+  $('locBtn').classList.remove('on');
+}
+const mapEl = $('map');
+mapEl.addEventListener('touchstart', () => { fingersUntil = Infinity; }, {passive:true});
+const fingersOff = e => { if (!e.touches || !e.touches.length) fingersUntil = Date.now() + 600; };
+mapEl.addEventListener('touchend', fingersOff, {passive:true});
+mapEl.addEventListener('touchcancel', fingersOff, {passive:true});
+function tick(){
+  if (!headingOn) return;
+  const now = Date.now();
+  const h = (now - lastCompassAt < 3000) ? heading : gpsHeading;
+  if (h != null && now - lastTurnAt > 120 && now > fingersUntil && !map.isZooming() && (applied == null || Math.abs(((h - applied + 540) % 360) - 180) > 4)){
+    applied = h; lastTurnAt = now; map.setBearing(h);
+  }
+  if (meMarker){ const cone = meMarker.getElement().querySelector('.cone'); if (h != null){ cone.hidden = false; cone.style.transform = `rotate(${h}deg)`; } }
+  requestAnimationFrame(tick);
+}
+map.on('rotate', () => {
+  const b = map.getBearing();
+  $('northBtn').hidden = Math.abs(((b % 360) + 360) % 360) < 1;
+  $('northBtn').querySelector('svg').style.transform = `rotate(${-b}deg)`;
+});
+$('locBtn').onclick = () => { askCompass(); follow = true; startWatch(); startHeading(); if (me || target) frame(true); else toast('מחפש את המיקום שלך…'); };
+$('northBtn').onclick = () => { stopHeading(); applied = null; map.easeTo({bearing:0, duration:400}); };
+$('zoomOutBtn').onclick = () => { follow = false; map.easeTo({zoom: map.getZoom() - 2, duration:400}); };
+$('tdBtn').onclick = () => {
+  threeD = !threeD; $('tdBtn').classList.toggle('on', threeD);
+  if (threeD) map.setMaxPitch(65);
+  map.easeTo({pitch: threeD ? PITCH : 0, duration:500});
+  if (!threeD) setTimeout(() => map.setMaxPitch(0), 520); // flat again, and two fingers cannot tilt it by accident
+  if (map.getLayer('blds')) map.setPaintProperty('blds', 'fill-extrusion-height', bldH());
+  if (map.getLayer('target')) map.setPaintProperty('target', 'fill-extrusion-height', tgtH());
+  // tilted: stairs stand up as blocks and paths get wider
+  if (map.getLayer('steps-3d')) map.setLayoutProperty('steps-3d', 'visibility', threeD ? 'visible' : 'none');
+  if (map.getLayer('steps-rail')) map.setLayoutProperty('steps-rail', 'visibility', threeD ? 'visible' : 'none');
+};
+$('layerBtn').onclick = () => {
+  satOn = !satOn; $('layerBtn').classList.toggle('on', satOn);
+  if (map.getLayer('sat')) map.setLayoutProperty('sat', 'visibility', satOn ? 'visible' : 'none');
+  for (const id of ['blds', 'blds-line']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', satOn ? 'none' : 'visible');
+};
+const MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+function nightButton(){
+  const b = $('nightBtn');
+  b.querySelector('svg').innerHTML = night ? SUN : MOON;
+  b.querySelector('.lbl').textContent = night ? 'יום' : 'לילה';
+  b.setAttribute('aria-label', night ? 'מעבר למצב יום' : 'מעבר למצב לילה'); b.title = b.getAttribute('aria-label');
+}
+function setNight(on){
+  night = on; try { localStorage.setItem('ef-night', on ? '1' : '0'); } catch(e){} document.body.classList.toggle('night', night); nightButton();
+  document.querySelector('meta[name=theme-color]').content = night ? '#0b1220' : '#ffffff';
+  map.setStyle(night ? STYLES.night : STYLES.day, {diff:false}); // a full reload, so 'style.load' adds the page's layers back
+}
+nightButton();
+$('nightBtn').onclick = () => setNight(!night);
+
+// ---------- the walking line, with dashes that move towards the building ----------
+let lastRouteAt = 0, lastRouteFrom = null, routeSeq = 0;
+async function updateRoute(force){
+  if (!me || !target || !dest || dist(me, dest) > 1500){ setData('route', EMPTY); return; }
+  const now = Date.now();
+  if (!force && lastRouteFrom && dist(lastRouteFrom, me) < 12 && now - lastRouteAt < 20000) return;
+  if (!force && now - lastRouteAt < 5000) return;
+  lastRouteAt = now; lastRouteFrom = {...me};
+  const seq = ++routeSeq, to = {...dest};
+  const line = c => setData('route', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'LineString', coordinates:c}}]});
+  line([[me.lng, me.lat], [to.lng, to.lat]]);
+  try {
+    const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${me.lng},${me.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`, {signal:ctrl.signal});
+    const rt = r.ok ? (await r.json()).routes?.[0] : null; if (!rt || seq !== routeSeq) return;
+    const c = rt.geometry.coordinates; const end = c[c.length-1];
+    if (dist({lat:end[1], lng:end[0]}, to) > 8) c.push([to.lng, to.lat]);
+    line(c);
+  } catch(e){}
+}
+// the dash pattern steps along every 90 ms, which reads as movement towards the building
+const DASHES = [[0,4,3],[0.5,4,2.5],[1,4,2],[1.5,4,1.5],[2,4,1],[2.5,4,0.5],[3,4,0],[0,0.5,3,3.5],[0,1,3,3],[0,1.5,3,2.5],[0,2,3,2],[0,2.5,3,1.5],[0,3,3,1],[0,3.5,3,0.5]];
+let dashStep = 0;
+setInterval(() => { if (map.getLayer('route') && data.route.features.length){ dashStep = (dashStep + 1) % DASHES.length; map.setPaintProperty('route', 'line-dasharray', DASHES[dashStep]); } }, 90);
+
+// ---------- search UI ----------
+let sugTimer = null, sugItems = [], sugActive = -1, sugSeq = 0;
+$('q').addEventListener('input', () => {
+  const v = $('q').value.trim();
+  $('clearBtn').hidden = !v;
+  clearTimeout(sugTimer);
+  if (v.length < 2){ $('suggest').hidden = true; return; }
+  sugTimer = setTimeout(async () => { const seq = ++sugSeq; const res = await geocode(v, false); if (seq === sugSeq) showSuggest(res); }, 650);
+});
+$('q').addEventListener('keydown', e => {
+  if ($('suggest').hidden || !sugItems.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault(); sugActive = (sugActive + (e.key==='ArrowDown'?1:-1) + sugItems.length) % sugItems.length;
+    [...$('suggest').querySelectorAll('button')].forEach((b,i)=>b.classList.toggle('active', i===sugActive));
+  } else if (e.key === 'Escape'){ $('suggest').hidden = true; }
+});
+function showSuggest(res){
+  sugItems = res; sugActive = -1;
+  $('suggest').innerHTML = res.length
+    ? res.map((r,i) => `<button type="button" data-i="${i}"><div class="s1">${esc(r.line1)}</div><div class="s2">${esc(r.line2)}</div></button>`).join('')
+    : '<div class="empty">לא נמצא. נסו להוסיף עיר</div>';
+  $('suggest').hidden = false;
+}
+$('suggest').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b){ askCompass(); goTo(sugItems[+b.dataset.i], true); } });
+$('searchForm').addEventListener('submit', async e => {
+  e.preventDefault(); askCompass();
+  if (sugActive >= 0 && sugItems[sugActive]) return goTo(sugItems[sugActive], true);
+  const v = $('q').value.trim(); if (!v) return;
+  const res = await geocode(v, true);
+  if (!res.length){ toast('לא מצאתי את הכתובת. נסו להוסיף עיר'); return; }
+  if (res.length === 1 || res[0].exact) return goTo(res[0], true);
+  showSuggest(res);
+});
+$('clearBtn').onclick = () => { $('q').value=''; $('clearBtn').hidden=true; $('suggest').hidden=true; $('q').focus(); };
+map.on('click', () => { $('suggest').hidden = true; });
+
+// ---------- open from a link: ?ll=lat,lng&q=address ----------
+// (runs once the first style is in: the map's 'load' waits for every tile and image, which can take long)
+function boot(){
+  const sp = new URLSearchParams(location.search);
+  if (EMBED){
+    // tell the app the map is drawn, so it can drop its loading screen
+    const ready = () => { try { window.parent.postMessage({type:'entrance-finder-ready'}, '*'); } catch(e){} };
+    map.once('idle', ready); setTimeout(ready, 12000);
+  }
+  const ll = (sp.get('ll')||'').split(',').map(Number);
+  if (ll.length === 2 && ll.every(Number.isFinite)){
+    const q = sp.get('q') || '';
+    const [line1, ...rest] = q.split(',');
+    const numM = (line1 || '').match(/(\d+\s*[א-ת]?)\s*$/);
+    goTo({lat:ll[0], lng:ll[1], line1: line1 || 'מיקום', line2: rest.join(',').trim(),
+          street: numM ? line1.slice(0, numM.index).trim() : '', housenumber: numM ? nn(numM[1]) : '',
+          // near=1: the app's search only found a nearby number (49 for a typed 49א); gn is that number
+          ...(sp.get('near') === '1' ? {exact:false, qNum: numM ? nn(numM[1]) : '', housenumber: sp.get('gn') || ''} : {})}, EMBED);
+    return;
+  }
+  // only a typed address: look it up and go straight to the building
+  const q = (sp.get('q') || '').trim();
+  if (q){
+    $('q').value = q; $('clearBtn').hidden = false;
+    geocode(q, true).then(res => {
+      if (!res.length){ toast('לא מצאתי את הכתובת. נסו להוסיף עיר'); return; }
+      if (res.length === 1 || res[0].exact) goTo(res[0], true); else showSuggest(res);
+    });
+  }
+}
+})();
+</script>
+</body>
+</html>
