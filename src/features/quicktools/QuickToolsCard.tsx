@@ -43,7 +43,7 @@ export default function QuickToolsCard() {
             >
               <Camera size={18} className="text-fg-muted" />
             </div>
-            <span className="text-fg text-sm font-bold">{t('camera')}</span>
+            <span className="text-fg text-sm font-bold text-start">{t('camera')}</span>
           </button>
 
           {/* Add Vitals */}
@@ -60,7 +60,7 @@ export default function QuickToolsCard() {
             >
               <Activity size={18} className="text-green-600 dark:text-emt-green" />
             </div>
-            <span className="text-green-600 dark:text-emt-green text-sm font-bold">{t('addVitals')}</span>
+            <span className="text-green-600 dark:text-emt-green text-sm font-bold text-start">{t('addVitals')}</span>
           </button>
 
           {/* Vitals History */}
@@ -77,7 +77,7 @@ export default function QuickToolsCard() {
             >
               <History size={18} className="text-green-600 dark:text-emt-green" />
             </div>
-            <span className="text-green-600 dark:text-emt-green text-sm font-bold">{t('vitalsHistory')}</span>
+            <span className="text-green-600 dark:text-emt-green text-sm font-bold text-start">{t('vitalsHistory')}</span>
           </button>
 
           {/* Daily Challenge */}
@@ -95,7 +95,7 @@ export default function QuickToolsCard() {
               <span className="absolute inset-0 rounded-full border border-amber-400/60 animate-ping opacity-70" aria-hidden="true" />
               <Trophy size={18} className="text-amber-600 dark:text-amber-400 relative" />
             </div>
-            <span className="text-amber-600 dark:text-amber-400 text-sm font-bold">{t('homeDailyChallenge')}</span>
+            <span className="text-amber-600 dark:text-amber-400 text-sm font-bold text-start">{t('homeDailyChallenge')}</span>
           </button>
 
         </div>

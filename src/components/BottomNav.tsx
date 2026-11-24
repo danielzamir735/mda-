@@ -37,7 +37,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpe
         onClick={() => onSupportOpen?.()}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-500 dark:text-rose-400"
         aria-label={t('homeNavSupport')}
       >
         <span className="animate-heartbeat">
@@ -94,7 +94,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpe
         onClick={onHubOpen}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-400"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-600 dark:text-amber-400"
         aria-label={t('hub')}
       >
         <LayoutGrid size={24} strokeWidth={1.5} />

@@ -52,7 +52,7 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
         </div>
         <div>
           <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('electricShocks')}</p>
-          <p className="font-black text-xl leading-tight" style={{ color: (log.cprShocks ?? 0) > 0 ? '#fb923c' : '#6b7280' }}>
+          <p className={`font-black text-xl leading-tight ${(log.cprShocks ?? 0) > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-fg-subtle'}`}>
             {log.cprShocks ?? 0}
           </p>
         </div>
@@ -180,7 +180,7 @@ function LogCard({ log, onDelete, onEdit }: {
         {log.fastTest && (
           <div>
             <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
-            <p className={`font-black text-lg leading-tight ${log.fastTest === FAST_NORMAL ? 'text-emt-green' : 'text-emt-red'}`}>
+            <p className={`font-black text-lg leading-tight ${log.fastTest === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
               {log.fastTest === FAST_NORMAL ? t('normal') : log.fastTest === FAST_ABNORMAL ? t('abnormal') : log.fastTest}
             </p>
           </div>
@@ -192,14 +192,14 @@ function LogCard({ log, onDelete, onEdit }: {
         <div className="mt-2 pt-2 border-t border-line flex flex-wrap gap-x-4 gap-y-1">
           {log.fastMotorStrength && (
             <span className="text-xs text-fg-muted">
-              {t('fastMotorStrength')}: <span className={`font-bold ${log.fastMotorStrength === FAST_NORMAL ? 'text-emt-green' : 'text-emt-red'}`}>
+              {t('fastMotorStrength')}: <span className={`font-bold ${log.fastMotorStrength === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
                 {log.fastMotorStrength === FAST_NORMAL ? t('normal') : t('abnormal')}
               </span>
             </span>
           )}
           {log.fastFacialDroop && (
             <span className="text-xs text-fg-muted">
-              {t('fastFacialDroop')}: <span className={`font-bold ${log.fastFacialDroop === FAST_NORMAL ? 'text-emt-green' : 'text-emt-red'}`}>
+              {t('fastFacialDroop')}: <span className={`font-bold ${log.fastFacialDroop === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
                 {log.fastFacialDroop === FAST_NORMAL ? t('normal') : t('abnormal')}
               </span>
             </span>
@@ -281,7 +281,7 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
                 </div>
                 <button
                   onClick={() => setAddingForPatient(group.name)}
-                  className="flex items-center gap-1 text-emt-green text-xs font-bold px-2.5 py-1.5 rounded-xl bg-emt-green/10 active:bg-emt-green/20 transition-colors shrink-0"
+                  className="flex items-center gap-1 text-green-600 dark:text-emt-green text-xs font-bold px-2.5 py-1.5 rounded-xl bg-emt-green/10 active:bg-emt-green/20 transition-colors shrink-0"
                 >
                   <Plus size={12} />
                   {t('addRecord')}
