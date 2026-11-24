@@ -279,7 +279,7 @@ async function loadArea(c){
       store.labels.set(l.key, l); b.labels.push(l);
     }
     store.centers.push(c);
-    const city = cityOf(c); if (city) await cityNumbers(city, c);
+    const city = cityOf(c); if (city) cityNumbers(city, c).then(() => drawNumbers());
     return true;
   } catch(e){ return false; } finally { clearTimeout(tm); }
 }
@@ -305,7 +305,8 @@ const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.l
 const credited = new Set();
 async function cityQuery(city, layer, c, d, where){
   const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
-  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const direct = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const url = direct;
   const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
   try {
     const j = await (await fetch(url, {signal:ctrl.signal})).json();
@@ -341,11 +342,13 @@ const ring = f => f.geometry && f.geometry.rings ? f.geometry.rings[0].map(([x, 
 async function cityBuildings(city, t){
   const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
   const base = m[1], letter = m[2], st = streetKey(t.street);
-  const same = name => !st || streetKey(name) === st;
+  const same = name => !st || !name || streetKey(name) === st;
   const numFeats = await cityQuery(city, city.numLayer, t, 0.004, city.numWhere(base));
   const signs = (numFeats || []).filter(f => f.geometry && same(city.num(f.attributes).street))
     .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
-    .filter(s => dist(t, s.p) < 400);
+    .filter(s => dist(t, s.p) < (city.noStreet ? 150 : 400));
+  // without street names only the nearest building with the number counts
+  if (city.noStreet && signs.length){ signs.sort((a, b) => dist(t, a.p) - dist(t, b.p)); const near = signs[0].p; signs.splice(0, signs.length, ...signs.filter(s => dist(near, s.p) < 25)); }
   let cands = [];
   if (city.byNumber){
     const polys = await cityQuery(city, city.bldLayer, t, 0.004, city.bldWhere(base));
