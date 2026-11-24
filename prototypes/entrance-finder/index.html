@@ -256,7 +256,7 @@ try { maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@
 const map = new maplibregl.Map({
   container:'map', style: night ? STYLES.night : STYLES.day, center:[34.85, 31.95], zoom:8,
   pitch:0, maxPitch:0, attributionControl:{compact:true, // flat until the "תלת ממד" button is on
-    customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
+    customAttribution:'כתובות © HERE · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
 });
 window.__map = map; // debugging handle
 document.body.classList.toggle('night', night);
@@ -781,6 +781,8 @@ async function goTo(t, fromUser){
     showTarget([f.b], t.num || (f.hit && f.hit.num) || '', '');
     if (hitLabel && hitLabel.key[0] === 'n') dest = {lat:hitLabel.lat, lng:hitLabel.lng};
   } else {
+    if (ok && t.num && await hereFix(t, seq)) return;
+    if (seq !== loadSeq) return;
     setNote(!ok ? 'המפה לא ענתה. הסיכה מסמנת את הכתובת'
       : t.exact === false ? `${t.num} לא מופיע במפה. ${t.housenumber && nn(t.housenumber) !== nn(t.num) ? `הסיכה מסמנת את ${t.housenumber}` : 'הסיכה על הרחוב'}. הבית המדויק בוויז או בגוגל`
       : 'לא נמצא שרטוט לבניין. הסיכה מסמנת את הכתובת');
@@ -788,6 +790,27 @@ async function goTo(t, fromUser){
     render();
   }
   updateRoute(true); frame(true);
+}
+// HERE knows house numbers the open map lacks. The key stays on the server; no key there yet means no answer, and the map
+// falls back to the street with the Waze and Google buttons
+const GEO_URL = 'https://entrance-finder-ten.vercel.app/api/geocode';
+async function hereFix(t, seq){
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 6000);
+  const r = await fetch(`${GEO_URL}?q=${encodeURIComponent(t.line2 ? `${t.line1}, ${t.line2}` : t.line1)}`, {signal:ctrl.signal})
+    .then(x => x.ok ? x.json() : null).catch(() => null);
+  clearTimeout(tm);
+  if (!r || !r.found || seq !== loadSeq || nn(r.houseNumber) !== nn(t.num).replace(/[א-ת]$/, '') && nn(r.houseNumber) !== nn(t.num)) return false;
+  t.lat = r.lat; t.lng = r.lng; t.exact = true; t.housenumber = r.houseNumber;
+  dest = r.access ? {lat:r.access.lat, lng:r.access.lng} : {lat:t.lat, lng:t.lng};
+  placePin(t);
+  if (!store.centers.some(p => dist(p, t) < 60)) await loadArea(t);
+  if (seq !== loadSeq) return true;
+  const f = findBuilding(t);
+  if (f.b) showTarget([f.b], t.num, ''); else render();
+  setNote(r.interpolated ? `מיקום משוער של ${t.num} לפי סדר המספרים ברחוב, לוודא לפי השלט` : '');
+  setExt(r.interpolated ? t : null);
+  updateRoute(true); frame(true);
+  return true;
 }
 function setNote(txt){ $('note').hidden = !txt; $('note').textContent = txt; }
 // Waze and Google know house numbers the open map lacks: the exact address is passed to them as typed
