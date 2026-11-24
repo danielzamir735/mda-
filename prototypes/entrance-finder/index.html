@@ -55,6 +55,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .bar .addr::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--brand);flex:none;align-self:center;box-shadow:0 0 0 3px rgba(225,29,72,.18)}
 .bar .addr span{font-weight:500;color:var(--muted);font-size:14px}
 .note{font-size:13px;color:var(--brand);font-weight:700}
+.info{font-size:13.5px;color:#1f2937;font-weight:700}
 .far{font-size:13px;color:#1d4ed8;font-weight:600}
 .mini{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11.5px;color:var(--muted)}
 .mini span{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border-radius:999px;padding:2px 9px}
@@ -120,6 +121,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 <section class="bar" id="bar" aria-live="polite" hidden>
   <div class="addr" id="addr"></div>
   <div class="note" id="note" hidden></div>
+  <div class="info" id="info" hidden></div>
   <div class="far" id="farNote" hidden></div>
   <div class="mini">
     <span><i class="lg-foot"></i>שביל</span>
@@ -200,9 +202,17 @@ async function nominatim(q){
 }
 const hasHebrew = s => /[֐-׿]/.test(s);
 // rank so the city the user typed wins over a better-numbered match elsewhere; keep the typed house number
+// the house number as typed, letter included even when written apart: "49 א", "49א" and "49-א" all give "49א"
+function typedNum(qt){
+  for (let i = 0; i < qt.length; i++){
+    if (/^\d+[א-ת]$/.test(qt[i])) return qt[i];
+    if (/^\d+$/.test(qt[i])) return /^[א-ת]$/.test(qt[i+1] || '') ? qt[i] + qt[i+1] : qt[i];
+  }
+  return '';
+}
 const toks = s => String(s||'').replace(/[,.\-"'״׳]/g,' ').split(/\s+/).filter(Boolean);
 function rankResults(q, res){
-  const qt = toks(q), qNum = qt.find(t => /^\d+[א-ת]?$/.test(t)) || '';
+  const qt = toks(q), qNum = typedNum(qt);
   const seen = new Set();
   return res.filter(r => hasHebrew(r.line1 + r.line2))
     .map(r => { const l1 = toks(r.line1), l2 = toks(r.line2); let s = 0;
@@ -269,9 +279,87 @@ async function loadArea(c){
       store.labels.set(l.key, l); b.labels.push(l);
     }
     store.centers.push(c);
+    if (inJerusalem(c)) await jlmNumbers(c);
     return true;
   } catch(e){ return false; } finally { clearTimeout(tm); }
 }
+// ---------- Jerusalem municipality GIS: the official buildings and house numbers ----------
+// The city assigns the numbers, so in Jerusalem its data replaces OpenStreetMap's for buildings and numbers.
+const JLM = 'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer';
+const inJerusalem = p => p.lat > 31.70 && p.lat < 31.89 && p.lng > 35.09 && p.lng < 35.27;
+let jlmCredited = false;
+async function jlmQuery(layer, c, d, where){
+  const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
+  const url = `${JLM}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const j = await (await fetch(url, {signal:ctrl.signal})).json();
+    if (!j.features) return null;
+    if (!jlmCredited){ jlmCredited = true; map.attributionControl.addAttribution('מבנים ומספרי בתים: עיריית ירושלים'); }
+    return j.features;
+  } catch(e){ return null; } finally { clearTimeout(tm); }
+}
+// the city's house-number points replace OpenStreetMap's numbers in the loaded area (they carry the letters too)
+async function jlmNumbers(c){
+  const d = 0.0018, pts = await jlmQuery(10, c, d);
+  if (!pts) return;
+  const inBox = l => Math.abs(l.lat - c.lat) < d && Math.abs(l.lng - c.lng) < d*1.18;
+  for (const l of [...store.labels.values()]) if (l.key[0] !== 'j' && inBox(l)){
+    store.labels.delete(l.key); if (l.bld) l.bld.labels = l.bld.labels.filter(x => x !== l);
+  }
+  for (const f of pts){
+    const a = f.attributes, key = 'j' + a.OBJECTID;
+    if (store.labels.has(key) || !a.BldNum || !f.geometry) continue;
+    const l = {key, num: String(a.BldNum).trim() + String(a.BLDG_LETTE || '').trim(), street: a.StreetName1, lat: f.geometry.y, lng: f.geometry.x, bld: null};
+    for (const b of store.buildings.values()) if (inPoly(l, b.pts)){ l.bld = b; b.labels.push(l); break; }
+    store.labels.set(key, l);
+  }
+}
+// the city's buildings for one address: every building that carries the number, and the one the letter points to when known
+async function jlmBuildings(t){
+  const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
+  const base = m[1], letter = m[2], st = normStreet(t.street);
+  const [polys, pts] = await Promise.all([jlmQuery(30, t, 0.004, `BLDG_NUM=${base}`), jlmQuery(10, t, 0.004, `BldNum='${base}'`)]);
+  if (!polys) return null;
+  const same = name => !st || normStreet(name) === st;
+  const cands = polys.filter(f => same(f.attributes.StreetName1) && f.geometry && f.geometry.rings)
+    .map(f => ({pts: f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})), floors: f.attributes.NUM_FLOORS, apts: f.attributes.NUM_APTS_C, letters: new Set()}))
+    .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400);
+  if (!cands.length) return null;
+  // which letters the city's number signs give each building ('' = the plain number)
+  for (const f of (pts || [])){
+    if (!same(f.attributes.StreetName1) || !f.geometry) continue;
+    const p = {lat: f.geometry.y, lng: f.geometry.x}, lt = String(f.attributes.BLDG_LETTE || '').trim();
+    const c = cands.find(c => inPoly(p, c.pts)) || cands.find(c => wallDist(p, c.pts) < 12);
+    if (c) c.letters.add(lt);
+  }
+  const matches = cands.filter(c => c.letters.has(letter));
+  return {base, letter, cands, picked: matches.length === 1 ? matches[0] : null};
+}
+let redPolys = [];
+function showJlm(t, m){
+  const shown = m.picked ? [m.picked] : m.cands, n = shown.length;
+  redPolys = shown.map(b => b.pts);
+  building = {pts: shown.flatMap(b => b.pts), refs: new Set(), labels: []};
+  for (const b of shown) L.polygon(b.pts.map(p => [p.lat, p.lng]), {color:css('--brand'), weight:4, fillColor:css('--brand'), fillOpacity:.12, interactive:false}).addTo(buildingLayer);
+  const sure = m.picked || (n === 1 && !m.letter);
+  // unsure which building carries the letter: each one shows the number the city gives it, and the note explains
+  const shownNum = sure ? t.num : m.base;
+  hitLabel = {key:'x', num: shownNum, ...centroid(shown[0].pts), bld: null};
+  for (const b of shown.slice(1))
+    L.marker([centroid(b.pts).lat, centroid(b.pts).lng], {icon:L.divIcon({className:'hn-wrap', iconSize:null, html:`<span class="hn hit">${esc(shownNum)}</span>`}), interactive:false, keyboard:false, zIndexOffset:3000}).addTo(buildingLayer);
+  dest = centroid(shown[0].pts);
+  if (targetMarker){ map.removeLayer(targetMarker); targetMarker = null; }
+  const fl = b => b.floors ? `${b.floors} קומות` : '';
+  setInfo(n === 1 ? [fl(shown[0]), shown[0].apts ? `${shown[0].apts} דירות` : ''].filter(Boolean).join(' · ')
+                  : `${n} בניינים: ` + shown.map(fl).filter(Boolean).join(' ו-'));
+  setNote(m.picked ? ''
+    : m.letter && n > 1 ? `בעירייה רשומים ${n} בניינים במספר ${m.base}, בלי אות. ${t.num} הוא אחד מהם, לוודא לפי השלט`
+    : m.letter ? `${t.num} לא רשום בעירייה. מסומן ${m.base}, לוודא בשטח`
+    : n > 1 ? `${n} בניינים במספר ${m.base}, לוודא לפי השלט` : '');
+}
+function setInfo(txt){ $('info').hidden = !txt; $('info').textContent = txt; }
+
 // as the map is moved, fetch the parts not loaded yet
 let areaBusy = false;
 // everything loaded is drawn once and stays put; zooming only shows or hides it, so nothing is redrawn under the fingers
@@ -328,14 +416,16 @@ function findBuilding(t){
 let target = null, building = null, hitLabel = null, dest = null, loadSeq = 0;
 
 async function goTo(t, fromUser){
-  t.num = t.housenumber || t.qNum || '';
+  // when the map only knows a nearby number (49 for a typed 49א), keep the number the user asked for
+  t.num = t.exact === false ? (t.qNum || t.housenumber || '') : (t.housenumber || t.qNum || '');
+  if (t.exact === false && t.street && t.num) t.line1 = `${t.street} ${t.num}`; // the title shows what was asked for
   target = t; building = null; hitLabel = null; dest = {lat:t.lat, lng:t.lng};
   const seq = ++loadSeq;
   clearTimeout(sugTimer); sugSeq++;
   $('suggest').hidden = true;
   $('q').value = t.line2 ? `${t.line1}, ${t.line2}` : t.line1;
   $('clearBtn').hidden = false; $('q').blur();
-  showAddr(); setNote('');
+  showAddr(); setNote(''); setInfo(''); redPolys = [];
   $('bar').hidden = false;
   buildingLayer.clearLayers(); routeLayer.clearLayers(); doorsLayer.clearLayers();
   placeTarget(); drawNumbers(); drawPaths();
@@ -343,11 +433,26 @@ async function goTo(t, fromUser){
   if (me) frame(); else { auto = true; map.setView([t.lat, t.lng], 18, {animate:false}); liftAboveBar(); setTimeout(() => auto = false, 50); }
   if (!document.body.classList.contains('embed')) try { history.replaceState(null,'',`?ll=${fx(t.lat)},${fx(t.lng)}&q=${encodeURIComponent($('q').value)}`); } catch(e){}
 
+  // in Jerusalem the city's buildings are asked for at the same time; a slow answer replaces the first result when it comes
+  const jmP = inJerusalem(t) && t.num ? jlmBuildings(t).catch(() => null) : Promise.resolve(null);
   const ok = store.centers.some(p => dist(p, t) < 60) || await loadArea(t);
   if (seq !== loadSeq) return;
+  redPolys = []; setInfo('');
+  const PENDING = {};
+  const jm = await Promise.race([jmP, new Promise(r => setTimeout(() => r(PENDING), 2500))]);
+  if (seq !== loadSeq) return;
+  const useJlm = m => {
+    buildingLayer.clearLayers(); doorsLayer.clearLayers();
+    showJlm(t, m);
+    drawNumbers(); drawPaths(); updateRoute(true);
+    if (follow && me && !inView(me)) frame(true);
+  };
+  if (jm && jm !== PENDING){ useJlm(jm); return; }
+  if (jm === PENDING) jmP.then(m => { if (m && seq === loadSeq) useJlm(m); });
   const f = findBuilding(t); building = f.b; hitLabel = f.hit;
   // the searched number is always shown in red: on its own spot, else in the middle of the building, else on the pin
-  if (!hitLabel && t.num) hitLabel = {key:'x', num:t.num, ...(building ? centroid(building.pts) : {lat:t.lat, lng:t.lng}), bld:building};
+  // a number the map does not have is never painted in red on a guessed building
+  if (!hitLabel && t.num && (building || t.exact !== false)) hitLabel = {key:'x', num:t.num, ...(building ? centroid(building.pts) : {lat:t.lat, lng:t.lng}), bld:building};
   if (building){
     dest = hitLabel && hitLabel.key[0] === 'n' ? {lat:hitLabel.lat, lng:hitLabel.lng} : centroid(building.pts);
     L.polygon(building.pts.map(p => [p.lat,p.lng]), {color:css('--brand'), weight:4, fillColor:css('--brand'), fillOpacity:.12, interactive:false}).addTo(buildingLayer);
@@ -356,7 +461,8 @@ async function goTo(t, fromUser){
       L.marker([d.lat, d.lng], {icon:L.divIcon({className:'hn-wrap', iconSize:null, html:'<span class="door">כניסה</span>'}), interactive:false, keyboard:false, zIndexOffset:2500}).addTo(doorsLayer);
   } else {
     setNote(!ok ? 'המפה לא ענתה. הסיכה מסמנת את הכתובת'
-      : t.exact === false ? 'מספר הבית לא נמצא במפה. הסיכה על הרחוב' : 'לא נמצא שרטוט לבניין. הסיכה מסמנת את הכתובת');
+      : t.exact === false ? `${t.num} לא מופיע במפה. ${t.housenumber && nn(t.housenumber) !== nn(t.num) ? `הסיכה מסמנת את ${t.housenumber}, ` : 'הסיכה על הרחוב, '}כדאי לוודא בשטח`
+      : 'לא נמצא שרטוט לבניין. הסיכה מסמנת את הכתובת');
   }
   drawNumbers(); drawPaths(); updateRoute(true);
   if (follow && me && !inView(me)) frame(true);
@@ -389,6 +495,7 @@ function drawNumbers(){
   for (const l of store.labels.values()){
     if (l === hitLabel) continue;
     if (hitLabel && l.bld && l.bld === hitLabel.bld && nn(l.num) === nn(hitLabel.num)) continue; // same number twice on one building
+    if (redPolys.length && target && nn(l.num).replace(/[א-ת]$/, '') === nn(target.num).replace(/[א-ת]$/, '') && redPolys.some(pts => inPoly(l, pts) || wallDist(l, pts) < 12)) continue;
     label(l, false);
   }
 }
@@ -624,7 +731,7 @@ map.on('click', () => { $('suggest').hidden = true; });
     const numM = (line1 || '').match(/(\d+\s*[א-ת]?)\s*$/);
     goTo({lat:ll[0], lng:ll[1], line1: line1 || 'מיקום', line2: rest.join(',').trim(),
           street: numM ? line1.slice(0, numM.index).trim() : '', housenumber: numM ? numM[1] : '',
-          ...(sp.get('near') === '1' ? {exact:false, qNum: numM ? numM[1] : ''} : {})}, embed);
+          ...(sp.get('near') === '1' ? {exact:false, qNum: numM ? nn(numM[1]) : '', housenumber: sp.get('gn') || ''} : {})}, embed);
     return;
   }
   // opened from the app with only the typed address: look it up and go straight to the building
