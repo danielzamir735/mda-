@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
 /* Light, calm look: soft grey-white map, white floating cards, one blue for "me", red for the building */
 :root{
@@ -134,6 +135,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
 <script>
 (() => {
 'use strict';
@@ -156,11 +159,29 @@ const map = L.map('map', {zoomControl:false, rotate:true, bearing:0, touchRotate
   renderer: L.svg({padding:1})})
   .setView([31.95,34.85], 9);
 window.__map = map; // debugging handle
-// OSM tiles in grey: building outlines stay, colours go
-// The gray map comes from OpenStreetMap at zoom 16 at most: from 17 it prints its own house numbers and
-// building shapes, which can be old or a few metres off. Buildings and numbers are drawn by the page instead.
-const plain = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {maxZoom:20, maxNativeZoom:16, className:'plain-tiles', attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);
+// The base map is drawn in the browser from vector data (OpenFreeMap, free, no key): street lines and names stay
+// sharp at every zoom. Its own buildings are switched off and it has no house numbers; the page draws those itself.
+// A phone without WebGL gets OpenStreetMap images at zoom 16 at most (no house numbers there), stretched beyond.
+const OSM_CREDIT = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
+let plain;
+const glOk = (() => { try { return !!(window.maplibregl && L.maplibreGL && maplibregl.supported ? maplibregl.supported() : document.createElement('canvas').getContext('webgl')); } catch(e){ return false; } })();
+if (glOk){
+  try { maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.min.js', true); } catch(e){}
+  plain = L.maplibreGL({style:'https://tiles.openfreemap.org/styles/positron', padding:0.6, interactive:false,
+    attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles ' + OSM_CREDIT}).addTo(map);
+  const gl = plain.getMaplibreMap();
+  gl.once('load', () => { // once: changing the style would fire 'styledata' again
+    try {
+      if (gl.getLayer('building')) gl.setLayoutProperty('building', 'visibility', 'none');
+      // street and place names in Hebrew where the data has them
+      for (const l of gl.getStyle().layers) if (l.type === 'symbol' && gl.getLayoutProperty(l.id, 'text-field'))
+        gl.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:he'], ['get', 'name']]);
+    } catch(e){}
+  });
+} else {
+  plain = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:20, maxNativeZoom:16, className:'plain-tiles', attribution: OSM_CREDIT}).addTo(map);
+}
 const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   {maxZoom:20, maxNativeZoom:19, attribution:'Imagery © Esri'});
 let satOn = false;
