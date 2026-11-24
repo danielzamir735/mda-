@@ -76,7 +76,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .hn-wrap{width:0;height:0}
 .hn{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:#facc15;color:#1a1400;border:1px solid rgba(120,90,0,.45);border-radius:6px;font:800 12px/1.35 var(--font);padding:0 5px;box-shadow:0 1px 3px rgba(0,0,0,.18);pointer-events:none}
 .hide-nums .hn:not(.hit),.hide-nums .door{display:none}
-.hide-paths .fp{display:none}
+.hide-paths .fp,.hide-paths .fb{display:none}
 .z17 .hn:not(.hit){font-size:10px;padding:0 3px;border-radius:5px}
 .hn.hit{background:var(--brand);color:#fff;border:2px solid #fff;font-size:18px;padding:1px 10px;box-shadow:0 3px 10px rgba(225,29,72,.45)}
 .door{position:absolute;transform:translate(-50%,-115%);white-space:nowrap;color:#fff;background:#16a34a;border:2px solid #fff;border-radius:999px;font:800 12px/1.3 var(--font);padding:1px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none}
@@ -157,18 +157,25 @@ const map = L.map('map', {zoomControl:false, rotate:true, bearing:0, touchRotate
   .setView([31.95,34.85], 9);
 window.__map = map; // debugging handle
 // OSM tiles in grey: building outlines stay, colours go
+// The gray map comes from OpenStreetMap at zoom 16 at most: from 17 it prints its own house numbers and
+// building shapes, which can be old or a few metres off. Buildings and numbers are drawn by the page instead.
 const plain = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {maxZoom:20, maxNativeZoom:19, className:'plain-tiles', attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);
+  {maxZoom:20, maxNativeZoom:16, className:'plain-tiles', attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);
 const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   {maxZoom:20, maxNativeZoom:19, attribution:'Imagery © Esri'});
 let satOn = false;
 $('layerBtn').onclick = () => {
   satOn = !satOn;
   if (satOn){ map.removeLayer(plain); sat.addTo(map); } else { map.removeLayer(sat); plain.addTo(map); }
+  map.getPane('foot').style.display = satOn ? 'none' : ''; // the photo shows the real roofs
   $('layerBtn').classList.toggle('on', satOn);
 };
 $('zoomOutBtn').onclick = () => { follow = false; map.zoomOut(2); };
 
+// building footprints: city data where there is any, else OpenStreetMap; drawn under paths and the red outline
+map.createPane('foot', map._rotatePane || undefined); map.getPane('foot').style.zIndex = 350; // inside the pane that turns with the map
+const footRenderer = L.svg({pane:'foot', padding:1});
+const footLayer = L.layerGroup().addTo(map);
 const pathsLayer = L.layerGroup().addTo(map);
 const buildingLayer = L.layerGroup().addTo(map);
 const doorsLayer = L.layerGroup().addTo(map);
@@ -232,7 +239,7 @@ async function geocode(q, withNominatim){
 // ---------- buildings, numbers and paths from OpenStreetMap ----------
 // A label is one house number at one spot: an address point (often an entrance) or a building's own tag.
 // One building can carry several labels, e.g. a block with entrances 12, 14 and 16.
-const store = {buildings:new Map(), labels:new Map(), paths:new Map(), doors:new Map(), centers:[]};
+const store = {buildings:new Map(), labels:new Map(), paths:new Map(), doors:new Map(), centers:[], cityBlds:new Map(), cityBoxes:[]};
 const FOOT = new Set(['footway','path','pedestrian','steps','living_street','corridor']);
 async function loadArea(c){
   const dLat = 0.0016, dLng = 0.0019; // about 180 m each way
@@ -279,7 +286,7 @@ async function loadArea(c){
       store.labels.set(l.key, l); b.labels.push(l);
     }
     store.centers.push(c);
-    const city = cityOf(c); if (city) cityNumbers(city, c).then(() => drawNumbers());
+    const city = cityOf(c); if (city) cityNumbers(city, c).then(() => { drawNumbers(); drawFoot(); });
     return true;
   } catch(e){ return false; } finally { clearTimeout(tm); }
 }
@@ -317,7 +324,12 @@ async function cityQuery(city, layer, c, d, where){
 }
 // the city's house-number signs replace OpenStreetMap's numbers near them (outside the city's own data nothing is removed)
 async function cityNumbers(city, c){
-  const d = 0.0018, feats = await cityQuery(city, city.numLayer, c, d);
+  const d = 0.0018;
+  const [feats, blds] = await Promise.all([cityQuery(city, city.numLayer, c, d), cityQuery(city, city.bldLayer, c, d)]);
+  if (blds && blds.length){
+    for (const f of blds){ const pts = ring(f); if (pts.length > 2) store.cityBlds.set(city.id + 'b' + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? pts[0].lat), pts); }
+    store.cityBoxes.push({c, d});
+  }
   if (!feats || !feats.length) return;
   const pts = [];
   for (const f of feats){
@@ -414,7 +426,7 @@ map.on('moveend', async () => {
   const c = map.getCenter(); const here = {lat:c.lat, lng:c.lng};
   if (store.centers.some(p => dist(p, here) < 140)) return;
   areaBusy = true; const ok = await loadArea(here); areaBusy = false;
-  if (ok){ drawNumbers(); drawPaths(); }  // only new data causes a redraw
+  if (ok){ drawNumbers(); drawPaths(); drawFoot(); }  // only new data causes a redraw
 });
 function inPoly(p, pts){
   let inside = false;
@@ -479,6 +491,7 @@ async function goTo(t, fromUser){
   const jmP = city && t.num ? cityBuildings(city, t).catch(() => null) : Promise.resolve(null);
   const ok = store.centers.some(p => dist(p, t) < 60) || await loadArea(t);
   if (seq !== loadSeq) return;
+  drawFoot();
   redPolys = []; setInfo('');
   const PENDING = {};
   const jm = await Promise.race([jmP, new Promise(r => setTimeout(() => r(PENDING), 2500))]);
@@ -514,6 +527,17 @@ function setNote(txt){ $('note').hidden = !txt; $('note').textContent = txt; }
 function placeTarget(){
   if (targetMarker) map.removeLayer(targetMarker);
   targetMarker = L.marker([target.lat, target.lng], {icon:L.divIcon({className:'', iconSize:[34,34], iconAnchor:[17,34], html:'<div class="target-pin"></div>'}), keyboard:false, zIndexOffset:900}).addTo(map);
+}
+// every building in light gray, crisp at any zoom; OpenStreetMap's are skipped where the city's are loaded
+function drawFoot(){
+  footLayer.clearLayers();
+  const style = {renderer: footRenderer, color:'#b4bac3', weight:1, fillColor:'#dde1e6', fillOpacity:1, interactive:false, className:'fb'};
+  for (const pts of store.cityBlds.values()) L.polygon(pts.map(p => [p.lat, p.lng]), style).addTo(footLayer);
+  const inCity = p => store.cityBoxes.some(b => Math.abs(p.lat - b.c.lat) < b.d && Math.abs(p.lng - b.c.lng) < b.d * 1.18);
+  for (const b of store.buildings.values()){
+    if (inCity(centroid(b.pts))) continue;
+    L.polygon(b.pts.map(p => [p.lat, p.lng]), style).addTo(footLayer);
+  }
 }
 // footpaths in green and stairs in orange "rungs"
 function drawPaths(){
