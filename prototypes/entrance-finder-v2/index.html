@@ -630,7 +630,17 @@ async function loadAreaNow(c){
 }
 
 // ---------- city GIS: the official buildings and house numbers, where a city publishes them ----------
+// Ramat Hasharon's judicial border (simplified), since its area overlaps Tel Aviv's box
+const RH_BORDER = [[32.13067,34.81951],[32.12588,34.82177],[32.12398,34.82402],[32.12327,34.82357],[32.12443,34.81116],[32.1284,34.809],[32.12973,34.80718],[32.13069,34.80447],[32.13091,34.80275],[32.13052,34.79986],[32.12965,34.79832],[32.1286,34.79751],[32.1287,34.79559],[32.1339,34.79682],[32.13668,34.79829],[32.14141,34.8016],[32.14781,34.80357],[32.15029,34.80473],[32.15338,34.80669],[32.15297,34.80764],[32.15349,34.80783],[32.1528,34.80917],[32.15531,34.8114],[32.15699,34.81165],[32.15784,34.81309],[32.1587,34.81333],[32.15824,34.81537],[32.1445,34.81041],[32.14319,34.81714],[32.14191,34.81756],[32.14099,34.81914],[32.14071,34.82061],[32.14239,34.82092],[32.14371,34.82234],[32.14514,34.82308],[32.14867,34.82425],[32.14903,34.82219],[32.15116,34.82274],[32.15027,34.82765],[32.15146,34.82787],[32.1514,34.82822],[32.15264,34.82855],[32.15248,34.82928],[32.15463,34.82985],[32.15372,34.83628],[32.15238,34.84056],[32.15007,34.84522],[32.14896,34.8495],[32.1492,34.84962],[32.14864,34.8554],[32.14824,34.85507],[32.14549,34.85539],[32.14444,34.85507],[32.1438,34.85541],[32.14336,34.85527],[32.14287,34.85621],[32.14219,34.85627],[32.13921,34.85965],[32.13816,34.85957],[32.13633,34.8604],[32.13594,34.86298],[32.13251,34.86333],[32.13161,34.86555],[32.12962,34.86273],[32.1287,34.86372],[32.12706,34.86442],[32.12593,34.86446],[32.12503,34.8649],[32.12381,34.86474],[32.1228,34.86532],[32.12222,34.86532],[32.12237,34.86662],[32.12201,34.86777],[32.12165,34.86799],[32.12069,34.86719],[32.11972,34.86704],[32.11824,34.86609],[32.11774,34.86521],[32.11678,34.86474],[32.11712,34.86303],[32.11633,34.8617],[32.11584,34.86168],[32.11562,34.86258],[32.11393,34.86244],[32.11345,34.861],[32.11245,34.86095],[32.11192,34.85781],[32.11481,34.85756],[32.11488,34.85536],[32.11446,34.8554],[32.11433,34.85512],[32.11434,34.85377],[32.11374,34.85375],[32.11359,34.85235],[32.1139,34.85231],[32.1136,34.85077],[32.1194,34.85226],[32.11981,34.85031],[32.12032,34.85038],[32.1187,34.8489],[32.11876,34.84853],[32.11906,34.84854],[32.11966,34.84624],[32.11972,34.84428],[32.12046,34.8444],[32.12148,34.84205],[32.12334,34.842],[32.12326,34.8414],[32.12387,34.84128],[32.12394,34.83995],[32.12577,34.83995],[32.12587,34.83643],[32.12769,34.8373],[32.12769,34.83579],[32.12812,34.8358],[32.12852,34.83341],[32.12869,34.82891],[32.12784,34.82804],[32.12785,34.82618],[32.13036,34.82759],[32.13067,34.81951]].map(([lat, lng]) => ({lat, lng}));
 const CITIES = [
+  { id:'rh', name:'עיריית רמת השרון', box:[32.111, 34.794, 32.159, 34.868], poly: RH_BORDER,
+    url:'https://gis.ramat-hasharon.muni.il/arcgis/rest/services',
+    numUrl:'https://gis.ramat-hasharon.muni.il/arcgis/rest/services/RH_HouseNumbers/MapServer', numLayer:0,
+    // the number and its letter are one field ("9א"), so every number starting with the digits is asked for and sorted here
+    numWhere: n => `BuildingNumber LIKE '${n}%'`, numFields:'OBJECTID,RH_StreetName,BuildingNumber',
+    num: a => { const m = String(a.BuildingNumber || '').trim().match(/^(\d+)\s*([א-ת]?)/); return {num: m ? m[1] : '', letter: m ? m[2] : '', street: a.RH_StreetName}; },
+    bldUrl:'https://gis.ramat-hasharon.muni.il/arcgis/rest/services/RH_Tichnun/MapServer', bldLayer:222, byNumber:false, bldFields:'OBJECTID,floors',
+    bld: a => ({floors: a.floors, h: a.floors > 0 ? a.floors * 3.1 : 7}) },
   { id:'jlm', name:'עיריית ירושלים', box:[31.70, 35.09, 31.89, 35.27],
     url:'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer',
     numLayer:10, numWhere: n => `BldNum='${n}'`, numFields:'OBJECTID,BldNum,BLDG_LETTE,StreetName1',
@@ -644,12 +654,12 @@ const CITIES = [
     bldLayer:513, byNumber:false,
     bld: a => ({floors: a.ms_komot, h: a.gova_simplex_2019 > 0 ? a.gova_simplex_2019 : (a.ms_komot ? a.ms_komot * 3.1 : 7)}) },
 ];
-const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.lng > c.box[1] && p.lng < c.box[3]) || null;
+const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.lng > c.box[1] && p.lng < c.box[3] && (!c.poly || inPoly(p, c.poly))) || null;
 const credited = new Set();
 async function cityQuery(city, layer, c, d, where){
   const fields = (layer === city.numLayer ? city.numFields : layer === city.bldLayer ? city.bldFields : null) || '*';
   const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
-  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=${fields}&returnGeometry=true`;
+  const url = `${(layer === city.numLayer ? city.numUrl : city.bldUrl) || city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=${fields}&returnGeometry=true`;
   const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
   try {
     const j = await (await fetch(url, {signal:ctrl.signal})).json();
@@ -690,7 +700,7 @@ async function cityBuildings(city, t){
   const hasExact = (numFeats || []).some(f => streetKey(city.num(f.attributes).street) === st);
   const same = name => !st || !name || streetKey(name) === st
     || (!hasExact && (st.split(' ').every(w => words(name).includes(w)) || words(name).every(w => st.split(' ').includes(w))));
-  const signs = (numFeats || []).filter(f => f.geometry && same(city.num(f.attributes).street))
+  const signs = (numFeats || []).filter(f => f.geometry && city.num(f.attributes).num === base && same(city.num(f.attributes).street))
     .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
     .filter(s => dist(t, s.p) < reach);
   let cands = [];
