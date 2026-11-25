@@ -435,7 +435,6 @@ function render(){
   const red = redBlds.map(b => b.pts);
   const isRed = pts => { const c = centroid(pts); return red.some(r => inPoly(c, r)); };
   for (const b of store.cityBlds.values()) if (!isRed(b.pts)) feats.push(poly(b.pts, {h: b.h}));
-  const inCity = p => store.cityBoxes.some(b => Math.abs(p.lat - b.c.lat) < b.d && Math.abs(p.lng - b.c.lng) < b.d * 1.18);
   for (const b of store.buildings.values()) if (!inCity(centroid(b.pts)) && !isRed(b.pts)) feats.push(poly(b.pts, {h: b.h}));
   setData('blds', {type:'FeatureCollection', features: feats});
   setData('target', {type:'FeatureCollection', features: redBlds.map(b => poly(b.pts, {h: b.h || 9}))});
@@ -461,6 +460,7 @@ function render(){
   for (const l of store.labels.values()){
     if (redBlds.length && tBase && nn(l.num).replace(/[א-ת]$/, '') === tBase && redBlds.some(b => inPoly(l, b.pts) || wallDist(l, b.pts) < 12)) continue;
     if (hitLabel && l === hitLabel) continue;
+    if (!l.city && inCity(l)) continue; // the city's own signs stand there instead
     const onStreet = !tKey || !l.street || streetKey(l.street) === tKey;
     nums.push({type:'Feature', properties:{num: l.num, k: onStreet ? 'y' : 'g'}, geometry:{type:'Point', coordinates:[l.lng, l.lat]}});
   }
@@ -532,6 +532,8 @@ async function geocode(q, withNominatim){
 }
 
 // ---------- OpenStreetMap data around a point: buildings, numbers, paths, entrances, landmarks ----------
+// an area is either the city's (its buildings and numbers only) or OpenStreetMap's, never a mix of the two
+const inCity = p => store.cityBoxes.some(b => Math.abs(p.lat - b.c.lat) < b.d && Math.abs(p.lng - b.c.lng) < b.d * 1.18);
 const store = {buildings:new Map(), labels:new Map(), paths:new Map(), doors:new Map(), marks:new Map(), roads:new Map(), centers:[], cityBlds:new Map(), cityBoxes:[]};
 const FOOT = new Set(['footway','path','pedestrian','steps','living_street','corridor']);
 const levelsH = t => { const h = parseFloat(t.height); if (h > 0) return h; const l = parseFloat(t['building:levels']); return l > 0 ? l * 3.1 : 8; };
@@ -548,8 +550,16 @@ function landmarkKind(t){
   if (['supermarket','convenience','bakery','greengrocer','kiosk'].includes(t.shop)) return 'shop';
   return null;
 }
-async function loadArea(c){
+const loading = [];
+function loadArea(c){
+  const same = loading.find(x => dist(x.c, c) < 140); if (same) return same.p;
+  const x = {c, p: loadAreaNow(c).finally(() => loading.splice(loading.indexOf(x), 1))};
+  loading.push(x); return x.p;
+}
+async function loadAreaNow(c){
   const dLat = 0.0016, dLng = 0.0019;
+  // the searched building's own city request goes first; the whole area's follows a moment later
+  const city = cityOf(c), cityP = city ? new Promise(r => setTimeout(r, 600)).then(() => cityArea(city, c)).catch(() => {}) : null;
   const url = `https://api.openstreetmap.org/api/0.6/map?bbox=${c.lng-dLng},${c.lat-dLat},${c.lng+dLng},${c.lat+dLat}`;
   const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 15000);
   try {
@@ -604,7 +614,7 @@ async function loadArea(c){
       store.labels.set(l.key, l); b.labels.push(l);
     }
     store.centers.push(c);
-    const city = cityOf(c); if (city) cityArea(city, c).then(render);
+    if (cityP){ cityP.then(render); await Promise.race([cityP, new Promise(r => setTimeout(r, 5000))]); }
     return true;
   } catch(e){ return false; } finally { clearTimeout(tm); }
 }
@@ -613,9 +623,9 @@ async function loadArea(c){
 const CITIES = [
   { id:'jlm', name:'עיריית ירושלים', box:[31.70, 35.09, 31.89, 35.27],
     url:'https://gisviewer.jerusalem.muni.il/arcgis/rest/services/BaseLayers/MapServer',
-    numLayer:10, numWhere: n => `BldNum='${n}'`,
+    numLayer:10, numWhere: n => `BldNum='${n}'`, numFields:'OBJECTID,BldNum,BLDG_LETTE,StreetName1',
     num: a => ({num: String(a.BldNum || '').trim(), letter: String(a.BLDG_LETTE || '').trim(), street: a.StreetName1}),
-    bldLayer:30, byNumber:true, bldWhere: n => `BLDG_NUM=${n}`,
+    bldLayer:30, byNumber:true, bldWhere: n => `BLDG_NUM=${n}`, bldFields:'OBJECTID,StreetName1,BLDG_NUM,BLDG_CH,NUM_FLOORS,NUM_APTS_C',
     bld: a => ({street: a.StreetName1, num: a.BLDG_NUM, name: String(a.BLDG_CH || '').trim(), floors: a.NUM_FLOORS, apts: a.NUM_APTS_C, h: a.NUM_FLOORS ? a.NUM_FLOORS * 3.1 : 7}) },
   { id:'tlv', name:'עיריית תל אביב-יפו', box:[32.02, 34.73, 32.15, 34.86],
     url:'https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer',
@@ -627,8 +637,9 @@ const CITIES = [
 const cityOf = p => CITIES.find(c => p.lat > c.box[0] && p.lat < c.box[2] && p.lng > c.box[1] && p.lng < c.box[3]) || null;
 const credited = new Set();
 async function cityQuery(city, layer, c, d, where){
+  const fields = (layer === city.numLayer ? city.numFields : layer === city.bldLayer ? city.bldFields : null) || '*';
   const env = [c.lng - d*1.18, c.lat - d, c.lng + d*1.18, c.lat + d].join(',');
-  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true`;
+  const url = `${city.url}/${layer}/query?f=json&where=${encodeURIComponent(where || '1=1')}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=${fields}&returnGeometry=true`;
   const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
   try {
     const j = await (await fetch(url, {signal:ctrl.signal})).json();
@@ -640,43 +651,47 @@ async function cityQuery(city, layer, c, d, where){
 const ring = f => f.geometry && f.geometry.rings ? f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})) : [];
 // the city's numbers and buildings for the loaded area (numbers replace OpenStreetMap's near them)
 async function cityArea(city, c){
-  const d = 0.0018;
+  const d = 0.0022; // a little wider than OpenStreetMap's area, whose buildings and streets run past its edge
   const [feats, blds] = await Promise.all([cityQuery(city, city.numLayer, c, d), cityQuery(city, city.bldLayer, c, d)]);
-  if (blds && blds.length){
-    for (const f of blds){ const pts = ring(f); if (pts.length > 2) store.cityBlds.set(city.id + 'b' + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? pts[0].lat), {pts, h: city.bld(f.attributes).h}); }
-    store.cityBoxes.push({c, d});
-  }
-  if (!feats || !feats.length) return;
-  const pts = [];
+  // if one layer did not answer, the area stays OpenStreetMap's whole
+  if (!blds || !blds.length || !feats) return;
+  for (const f of blds){ const pts = ring(f); if (pts.length > 2) store.cityBlds.set(city.id + 'b' + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? pts[0].lat), {pts, city: city.id, ...city.bld(f.attributes)}); }
   for (const f of feats){
     if (!f.geometry) continue;
     const a = city.num(f.attributes), p = {lat: f.geometry.y, lng: f.geometry.x};
     if (!a.num) continue;
-    pts.push(p);
     const key = city.id + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? `${p.lat},${p.lng}`);
     if (store.labels.has(key)) continue;
     store.labels.set(key, {key, city: city.id, num: a.num + a.letter, street: a.street, ...p, bld: null});
   }
-  for (const l of [...store.labels.values()]) if (!l.city && pts.some(p => dist(p, l) < 60)) store.labels.delete(l.key);
+  store.cityBoxes.push({c, d});
 }
 // the city's buildings for one address, and the one the letter points to when known; signs are kept as entrances
 async function cityBuildings(city, t){
   const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
   const base = m[1], letter = m[2], st = streetKey(t.street);
-  const same = name => !st || !name || streetKey(name) === st;
-  const numFeats = await cityQuery(city, city.numLayer, t, 0.004, city.numWhere(base));
+  // when only the street is known (the pin is mid-street), the number may be further along it
+  const box = t.exact === false ? 0.008 : 0.004, reach = t.exact === false ? 900 : 400;
+  const numFeats = await cityQuery(city, city.numLayer, t, box, city.numWhere(base));
+  // the street's name as typed; the city often writes it surname first ("שינקין מנחם" for שינקין). The exact name wins,
+  // and only when the city has no street by that exact name does a name holding all the typed words count
+  // (so עזרא never falls to אבן עזרא, which has its own street)
+  const words = n => streetKey(n).split(' ').filter(Boolean);
+  const hasExact = (numFeats || []).some(f => streetKey(city.num(f.attributes).street) === st);
+  const same = name => !st || !name || streetKey(name) === st
+    || (!hasExact && (st.split(' ').every(w => words(name).includes(w)) || words(name).every(w => st.split(' ').includes(w))));
   const signs = (numFeats || []).filter(f => f.geometry && same(city.num(f.attributes).street))
     .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
-    .filter(s => dist(t, s.p) < 400);
+    .filter(s => dist(t, s.p) < reach);
   let cands = [];
   if (city.byNumber){
-    const polys = await cityQuery(city, city.bldLayer, t, 0.004, city.bldWhere(base));
+    const polys = await cityQuery(city, city.bldLayer, t, box, city.bldWhere(base));
     if (!polys) return null;
     // a building listed without a street name counts only when the typed street's number sign is on it;
     // otherwise any "5" nearby with no street would pass for עזרא 5
     const onIt = pts => signs.some(s => inPoly(s.p, pts) || wallDist(s.p, pts) < 12);
     cands = polys.map(f => ({pts: ring(f), ...city.bld(f.attributes), letters: new Set(), signs: []}))
-      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < 400)
+      .filter(c => c.pts.length > 2 && dist(t, centroid(c.pts)) < reach)
       .filter(c => String(c.street || '').trim() ? same(c.street) : onIt(c.pts));
     // the city lists some entrances only as a sign, inside a building listed under another address
     // (עזרא 5 is a door of ישיבת קמיניץ, יחזקאל 24): the building that holds the sign is the one
@@ -757,16 +772,20 @@ function showCity(t, m){
     : n > 1 ? `${n} בניינים במספר ${m.base}, לוודא לפי השלט` : '');
 }
 function findBuilding(t){
-  const num = nn(t.num), st = normStreet(t.street);
+  const num = nn(t.num), st = normStreet(t.street), cityHere = inCity(t);
   const sameStreet = l => !st || !l.street || normStreet(l.street) === st;
+  const B = cityHere ? [...store.cityBlds.values()] : [...store.buildings.values()];
+  const bldOf = l => cityHere
+    ? B.find(b => inPoly(l, b.pts)) || B.filter(b => wallDist(l, b.pts) < 12).sort((a, b) => wallDist(l, a.pts) - wallDist(l, b.pts))[0] || null
+    : l.bld;
   if (num){
     const reach = t.exact === false ? 450 : 250;
-    const hits = [...store.labels.values()].filter(l => nn(l.num) === num && sameStreet(l) && dist(t, l) < reach);
-    hits.sort((a,b) => (!!b.bld - !!a.bld) || dist(t, a) - dist(t, b));
-    if (hits.length) return {b: hits[0].bld, hit: hits[0]};
+    const hits = [...store.labels.values()].filter(l => !!l.city === cityHere && nn(l.num) === num && sameStreet(l) && dist(t, l) < reach)
+      .map(l => ({l, b: bldOf(l)}));
+    hits.sort((a, b) => (!!b.b - !!a.b) || dist(t, a.l) - dist(t, b.l));
+    if (hits.length) return {b: hits[0].b, hit: hits[0].l};
   }
   if (t.exact === false) return {b: null, hit: null};
-  const B = [...store.buildings.values()];
   const inside = B.find(b => inPoly(t, b.pts)); if (inside) return {b: inside, hit: null};
   let best = null, bd = 25;
   for (const b of B){ const d = Math.min(...b.pts.map(p => dist(t, p))); if (d < bd){ bd = d; best = b; } }
@@ -802,7 +821,16 @@ async function goTo(t, fromUser){
   const PENDING = {};
   const jm = await Promise.race([jmP, new Promise(r => setTimeout(() => r(PENDING), 2500))]);
   if (seq !== loadSeq) return;
-  const useCity = m => { showCity(t, m); updateRoute(true); frame(true); };
+  const useCity = m => {
+    showCity(t, m);
+    // found away from the pin (only the street was known): the target moves to the building, and its area loads too
+    const c = redBlds.length ? centroid(redBlds.flatMap(b => b.pts)) : null;
+    if (c && dist(c, t) > 60){
+      t.lat = c.lat; t.lng = c.lng; dest = {lat: c.lat, lng: c.lng}; // the red building and its tag replace the pin
+      if (!store.centers.some(p => dist(p, c) < 60)) loadArea(c).then(() => { if (seq === loadSeq) render(); });
+    }
+    updateRoute(true); frame(true);
+  };
   if (jm && jm !== PENDING){ useCity(jm); return; }
   if (jm === PENDING) jmP.then(m => { if (m && seq === loadSeq) useCity(m); });
   const f = findBuilding(t); hitLabel = f.hit;
@@ -855,7 +883,7 @@ let areaBusy = false;
 map.on('moveend', async () => {
   if (areaBusy || map.getZoom() < 16) return;
   const c = map.getCenter(); const here = {lat:c.lat, lng:c.lng};
-  if (store.centers.some(p => dist(p, here) < 140)) return;
+  if (store.centers.some(p => dist(p, here) < 140) || loading.some(x => dist(x.c, here) < 140)) return;
   areaBusy = true; const ok = await loadArea(here); areaBusy = false;
   if (ok) render();
 });
