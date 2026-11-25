@@ -273,9 +273,9 @@ document.body.classList.toggle('night', night);
 
 const COLORS = () => night
   ? {bld:'#2b3747', bldTop:'#344357', bldLine:'#3d4d63', mask:'#060b14', maskOp:.55, path:'#22c55e', route:'#60a5fa', numY:'#facc15', numG:'#3a4658', numGText:'#c7d0dc'}
-  : {bld:'#d9dde3', bldTop:'#e4e7ec', bldLine:'#b7bec8', mask:'#ffffff', maskOp:.5, path:'#16a34a', route:'#2563eb', numY:'#facc15', numG:'#e7e9ee', numGText:'#59636f'};
+  : {bld:'#cbc4b4', bldTop:'#d6cfc0', bldLine:'#aaa291', mask:'#ebe6d5', maskOp:.32, path:'#16a34a', route:'#2563eb', numY:'#facc15', numG:'#e7e9ee', numGText:'#59636f'};
 const EMPTY = {type:'FeatureCollection', features:[]};
-const data = {blds:EMPTY, target:EMPTY, mask:EMPTY, paths:EMPTY, stairs:EMPTY, rails:EMPTY, nums:EMPTY, marks:EMPTY, route:EMPTY, acc:EMPTY};
+const data = {blds:EMPTY, target:EMPTY, mask:EMPTY, paths:EMPTY, stairs:EMPTY, rails:EMPTY, nums:EMPTY, names:EMPTY, marks:EMPTY, route:EMPTY, acc:EMPTY};
 
 // little pictures drawn in the page itself: number pills and landmark icons
 function pill(fill, stroke){
@@ -350,7 +350,12 @@ function addLayers(){
   for (const [id, {img, opt}] of Object.entries(imgs)) if (!map.hasImage(id)) map.addImage(id, img, opt);
 
   // the base map's own buildings are hidden (they can be old or a few metres off); street names in Hebrew
+  const CITY_LOOK = {background:'#ebe6d5', landuse_residential:'#e7e1cf', park:'#d6e2bf', highway_path:'#f3eee1', highway_minor:'#ffffff',
+    highway_major_casing:'#dcb56c', highway_major_inner:'#f8dca4', highway_major_subtle:'#f3d9a6',
+    highway_motorway_casing:'#d3a258', highway_motorway_inner:'#f5c984', highway_motorway_subtle:'#f0cf98',
+    highway_motorway_bridge_casing:'#d3a258', highway_motorway_bridge_inner:'#f5c984'};
   for (const l of map.getStyle().layers){
+    if (!night && CITY_LOOK[l.id]) map.setPaintProperty(l.id, l.type === 'background' ? 'background-color' : l.type === 'fill' ? 'fill-color' : 'line-color', CITY_LOOK[l.id]);
     if (/building/.test(l.id)) map.setLayoutProperty(l.id, 'visibility', 'none');
     if (l.type === 'symbol' && map.getLayoutProperty(l.id, 'text-field'))
       map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:he'], ['get', 'name']]);
@@ -359,7 +364,7 @@ function addLayers(){
   map.addSource('sat', {type:'raster', tileSize:256, maxzoom:19, attribution:'Imagery © Esri',
     tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}']});
   map.addLayer({id:'sat', type:'raster', source:'sat', layout:{visibility: satOn ? 'visible' : 'none'}});
-  ['blds','target','mask','paths','stairs','rails','nums','marks','route','acc'].forEach(src);
+  ['blds','target','mask','paths','stairs','rails','nums','names','marks','route','acc'].forEach(src);
 
   // every building, raised to its height (flat when the map looks straight down)
   map.addLayer({id:'blds', type:'fill-extrusion', source:'blds', minzoom:15, layout:{visibility: satOn ? 'none' : 'visible'},
@@ -401,11 +406,17 @@ function addLayers(){
       'text-field':['step',['zoom'],'',18,['get','name']], 'text-font':['Noto Sans Regular'], 'text-size':11, 'text-offset':[0,1.6], 'text-anchor':'top', 'text-optional':true},
     paint:{'text-color': night ? '#cbd5e1' : '#475569', 'text-halo-color': night ? '#0b1220' : '#ffffff', 'text-halo-width':1.4}});
   // house numbers: yellow on the searched street, small and gray elsewhere
+  // place names the city gives its buildings (קופת חולים, מרכז מסחרי, בית כנסת...)
+  map.addLayer({id:'names', type:'symbol', source:'names', minzoom:17,
+    layout:{'text-field':['get','name'], 'text-font':['Noto Sans Regular'], 'text-size':11.5, 'text-max-width':7, 'text-line-height':1.15,
+      'text-padding':2, 'symbol-sort-key':2},
+    paint:{'text-color': night ? '#cbd5e1' : '#3f3a33', 'text-halo-color': night ? '#0b1220' : 'rgba(235,230,213,.9)', 'text-halo-width':1.2}});
+  // house numbers as on the city map: red figures on the buildings, no plates; the searched street's a little larger
   map.addLayer({id:'nums', type:'symbol', source:'nums', minzoom:16,
-    layout:{'text-field':['get','num'], 'text-font':['Noto Sans Bold'], 'text-size':['case',['==',['get','k'],'y'],13,10.5],
-      'icon-image':['case',['==',['get','k'],'y'],'pill-y','pill-g'], 'icon-text-fit':'both', 'icon-text-fit-padding':[1,4,1,4],
-      'symbol-sort-key':['case',['==',['get','k'],'y'],0,1], 'text-allow-overlap':false, 'icon-allow-overlap':false, 'text-padding':1},
-    paint:{'text-color':['case',['==',['get','k'],'y'], T.numY[2], (night ? T.nightNumG : T.numG)[2]]}});
+    layout:{'text-field':['get','num'], 'text-font':['Noto Sans Bold'], 'text-size':['case',['==',['get','k'],'y'],14,12],
+      'symbol-sort-key':['case',['==',['get','k'],'y'],0,1], 'text-allow-overlap':false, 'text-padding':1},
+    paint:{'text-color':['case',['get','r'],'#ffffff', night ? '#ff9f9f' : '#b3141c'],
+      'text-halo-color':['case',['get','r'],'#9f1239', night ? '#0b1220' : 'rgba(255,255,255,.75)'], 'text-halo-width':1}});
 }
 let booted = false;
 map.on('style.load', () => { try { addLayers(); } catch(e){ console.warn('layers', e); } render(); if (!booted){ booted = true; boot(); } });
@@ -472,9 +483,12 @@ function render(){
     if (hitLabel && l === hitLabel) continue;
     if (!l.city && inCity(l)) continue; // the city's own signs stand there instead
     const onStreet = !tKey || !l.street || streetKey(l.street) === tKey;
-    nums.push({type:'Feature', properties:{num: l.num, k: onStreet ? 'y' : 'g'}, geometry:{type:'Point', coordinates:[l.lng, l.lat]}});
+    const onRed = redBlds.some(b => inPoly(l, b.pts)); // white on the red building, red everywhere else
+    nums.push({type:'Feature', properties:{num: l.num, k: onStreet ? 'y' : 'g', r: onRed}, geometry:{type:'Point', coordinates:[l.lng, l.lat]}});
   }
   setData('nums', {type:'FeatureCollection', features: nums});
+  setData('names', {type:'FeatureCollection', features: [...store.cityBlds.values()].filter(b => b.name).map(b => {
+    const c = centroid(b.pts); return {type:'Feature', properties:{name: b.name}, geometry:{type:'Point', coordinates:[c.lng, c.lat]}}; })});
   setData('marks', {type:'FeatureCollection', features: [...store.marks.values()].map(m => ({type:'Feature', properties:{k: m.k, name: m.name || ''},
     geometry:{type:'Point', coordinates:[m.lng, m.lat]}}))});
 }
