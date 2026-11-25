@@ -11,6 +11,7 @@ export type AddressResult = {
   housenumber: string;
   exact: boolean;     // false when the user typed a number this result does not carry
   qNum: string;       // the house number the user typed
+  src?: 'city';       // from the city's own list of house-number signs
 };
 
 const IL_BBOX = '34.2,29.4,35.95,33.4';
@@ -30,7 +31,9 @@ function typedNum(qt: string[]): string {
   return '';
 }
 const NOISE = new Set(['רחוב', 'רח', 'שדרות', 'שד']);
-const toks = (s: string) => String(s || '').replace(/[,.\-"'״׳]/g, ' ').split(/\s+/).filter(Boolean);
+// ת"א is one word (Tel Aviv), not the letters ת and א
+const abbr = (s: string) => String(s || '').replace(/(^|\s)ת["״']א(?=\s|,|$)/g, '$1תל אביב').replace(/(^|\s)י["״']ם(?=\s|,|$)/g, '$1ירושלים');
+const toks = (s: string) => abbr(s).replace(/[,.\-"'״׳]/g, ' ').split(/\s+/).filter(Boolean);
 
 type Raw = Omit<AddressResult, 'exact' | 'qNum'>;
 
@@ -61,6 +64,9 @@ async function nominatim(q: string): Promise<Raw[]> {
   });
 }
 
+const near = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+  Math.abs(a.lat - b.lat) < 0.0012 && Math.abs(a.lng - b.lng) < 0.0014; // about 130 m
+
 // the city the user typed counts three times as much as a matching street word; keep the typed house number.
 // The street must be the one typed, whole: "עזרא" ranks above "אבן עזרא", which only contains it.
 function rank(q: string, res: Raw[]): AddressResult[] {
@@ -74,6 +80,7 @@ function rank(q: string, res: Raw[]): AddressResult[] {
       const l1 = toks(r.line1), l2 = toks(r.line2); let s = 0;
       for (const t of qt) { if (l1.includes(t)) s += 1; if (l2.includes(t)) s += 3; }
       if (qNum && nn(r.housenumber) === nn(qNum)) s += 1;
+      if (r.src === 'city') s += 3; // the city's own sign for this number
       // the street as typed: whole (+2), being completed ("עזרא" → "עזרא הסופר", 0), or a different street that only contains the word (-4)
       const st = toks(r.street).filter(t => !/\d/.test(t) && !NOISE.has(t));
       if (st.length && typedStreet.length) {
@@ -85,8 +92,43 @@ function rank(q: string, res: Raw[]): AddressResult[] {
       return { r: { ...r, exact: !qNum || nn(r.housenumber) === nn(qNum), qNum }, s };
     })
     .sort((a, b) => b.s - a.s).map(x => x.r)
+    .filter((r, _, all) => r.src === 'city' || !all.some(c => c.src === 'city' && nn(c.housenumber) === nn(r.housenumber) && near(c, r)))
     .filter(r => { const k = r.line1 + '|' + r.line2; if (seen.has(k)) return false; seen.add(k); return true; })
     .slice(0, 6);
+}
+
+// Tel Aviv-Yafo publishes every house-number sign with its street, so there the city's own list is searched directly.
+// It knows numbers the open map lacks and writes street names surname first ("שינקין מנחם").
+// (Jerusalem's server refuses any query with a street name in it, so Jerusalem is matched on the map, by number.)
+const TLV_NUMS = 'https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer/527/query';
+const TLV_NAMES = ['תל אביב יפו', 'תל אביב', 'יפו'];
+function tlvParts(q: string): { words: string[]; num: string; letter: string } | null {
+  const flat = abbr(q).replace(/[,.\-"'״׳]/g, ' ').replace(/\s+/g, ' ').trim();
+  // the city written out, or being typed at the end ("תל אב")
+  const city = TLV_NAMES.find(n => ` ${flat} `.includes(` ${n} `)) || (/(^|\s)תל\s+אב?$/.test(flat) ? 'תל אב' : null);
+  if (!city) return null;
+  const qt = toks(flat.replace(city, ' ')).filter(t => !NOISE.has(t));
+  const n = typedNum(qt), m = n.match(/^(\d+)([א-ת]?)$/);
+  const words = qt.filter(t => !/\d/.test(t) && !(m && m[2] && t === m[2]));
+  return m && words.length ? { words, num: m[1], letter: m[2] } : null;
+}
+async function tlvLookup(q: string, signal?: AbortSignal): Promise<Raw[]> {
+  const p = tlvParts(q); if (!p) return [];
+  const where = p.words.map(w => `t_rechov LIKE '%${w.replace(/'/g, '')}%'`).join(' AND ') + ` AND ms_bayit=${+p.num}`;
+  const url = `${TLV_NUMS}?f=json&outSR=4326&returnGeometry=true&outFields=t_rechov,ms_bayit,knisa&where=${encodeURIComponent(where)}`;
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 4000);
+  signal?.addEventListener('abort', () => ctrl.abort());
+  try {
+    const j = await (await fetch(url, { signal: ctrl.signal })).json();
+    const seen = new Set<string>();
+    return (j.features || []).flatMap((f: { attributes: Record<string, string | number>; geometry?: { x: number; y: number } }) => {
+      const a = f.attributes, street = String(a.t_rechov || '').trim(), letter = String(a.knisa || '').trim();
+      const hn = `${a.ms_bayit}${letter}`, k = `${street}|${hn}`;
+      if (!f.geometry || !street || seen.has(k)) return [];
+      seen.add(k);
+      return [{ lat: f.geometry.y, lng: f.geometry.x, line1: `${street} ${hn}`, line2: 'תל אביב–יפו', street, housenumber: hn, src: 'city' }];
+    });
+  } catch { return []; } finally { clearTimeout(tm); }
 }
 
 // a city half typed after the number ("עזרא 5 י") confuses the search, so it also runs without that last word;
@@ -98,14 +140,16 @@ function withoutPartialCity(q: string): string | null {
 }
 
 export async function suggestAddresses(q: string, signal?: AbortSignal): Promise<AddressResult[]> {
+  q = abbr(q); // the searches do not know ת"א or י"ם
   const q2 = withoutPartialCity(q);
-  const [a, b] = await Promise.all([photon(q, signal).catch(() => []), q2 ? photon(q2, signal).catch(() => []) : []]);
-  return rank(q, [...a, ...b]);
+  const [a, b, c] = await Promise.all([photon(q, signal).catch(() => []), q2 ? photon(q2, signal).catch(() => []) : [], tlvLookup(q, signal)]);
+  return rank(q, [...c, ...a, ...b]);
 }
 
 export async function lookupAddress(q: string): Promise<AddressResult[]> {
-  const [a, b] = await Promise.all([nominatim(q).catch(() => []), photon(q).catch(() => [])]);
-  return rank(q, [...a, ...b]);
+  q = abbr(q);
+  const [a, b, c] = await Promise.all([nominatim(q).catch(() => []), photon(q).catch(() => []), tlvLookup(q)]);
+  return rank(q, [...c, ...a, ...b]);
 }
 
 // the map page opens straight on this result: no second search there
