@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { rateLimit, getIp } from './_rateLimit.js';
 import { DAILY_TYPES, buildDailyPrompt, type DailyType } from './_dailyPrompts.js';
-import { MED_SCAN_PROMPT } from './_medScanPrompt.js';
+import { MED_SCAN_PROMPT, MED_SCAN_ENGLISH_SUFFIX } from './_medScanPrompt.js';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const MAX_QUERY_LENGTH = 200;
@@ -99,13 +99,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // The prompt is always built here from a named task — free-form prompt text from
   // the caller is never accepted, so the endpoint can't be used as a general LLM proxy.
-  const { task, type, today, query, image, model: preferredModel } = (req.body ?? {}) as {
+  const { task, type, today, query, image, lang, model: preferredModel } = (req.body ?? {}) as {
     task?: unknown;
     type?: unknown;
     today?: unknown;
     query?: unknown;
     image?: { data?: unknown; mimeType?: unknown };
     model?: unknown;
+    lang?: unknown;
   };
 
   let prompt: string;
@@ -133,6 +134,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       prompt = MED_SCAN_PROMPT;
     }
+    // Answer in the user's interface language; anything other than 'en' keeps the Hebrew default.
+    if (lang === 'en') prompt += MED_SCAN_ENGLISH_SUFFIX;
   } else {
     return res.status(400).json({ error: 'invalid task' });
   }

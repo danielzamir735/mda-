@@ -2,25 +2,26 @@ import { useRef, useState, useEffect } from 'react';
 import { X, Camera, Image, Search, Scan, AlertCircle, RotateCcw, Clock, ChevronDown, Cpu, Database, FileEdit, Activity } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage, translate, type TranslationKey } from '../../../i18n';
 
-const IMAGE_LOADING_STEPS = [
-  { text: 'מעבד תמונה...', Icon: Image },
-  { text: 'מזהה תווית...', Icon: Scan },
-  { text: 'מחלץ נתונים...', Icon: Cpu },
-  { text: 'בודק מאגר תרופות...', Icon: Database },
-  { text: 'מנתח מינון...', Icon: Activity },
-  { text: 'בודק אינטראקציות...', Icon: AlertCircle },
-  { text: 'מכין סיכום...', Icon: FileEdit },
+const IMAGE_LOADING_STEPS: { text: TranslationKey; Icon: typeof Image }[] = [
+  { text: 'msStepImage', Icon: Image },
+  { text: 'msStepLabel', Icon: Scan },
+  { text: 'msStepExtract', Icon: Cpu },
+  { text: 'msStepDb', Icon: Database },
+  { text: 'msStepDose', Icon: Activity },
+  { text: 'msStepInteractions', Icon: AlertCircle },
+  { text: 'msStepSummary', Icon: FileEdit },
 ];
 
-const TEXT_LOADING_STEPS = [
-  { text: 'מזהה תרופה...', Icon: Search },
-  { text: 'בודק מאגר תרופות...', Icon: Database },
-  { text: 'מחפש מידע קליני...', Icon: Scan },
-  { text: 'מנתח נתונים...', Icon: Cpu },
-  { text: 'מנתח מינון...', Icon: Activity },
-  { text: 'בודק אינטראקציות...', Icon: AlertCircle },
-  { text: 'מכין סיכום...', Icon: FileEdit },
+const TEXT_LOADING_STEPS: { text: TranslationKey; Icon: typeof Image }[] = [
+  { text: 'msStepIdentify', Icon: Search },
+  { text: 'msStepDb', Icon: Database },
+  { text: 'msStepClinical', Icon: Scan },
+  { text: 'msStepAnalyze', Icon: Cpu },
+  { text: 'msStepDose', Icon: Activity },
+  { text: 'msStepInteractions', Icon: AlertCircle },
+  { text: 'msStepSummary', Icon: FileEdit },
 ];
 
 const HISTORY_KEY = 'med-scanner-history';
@@ -43,8 +44,9 @@ function loadHistory(): HistoryItem[] {
 }
 
 function extractMedName(result: string): string {
-  const match = result.match(/(?:\*\*)?שם מסחרי:(?:\*\*)?\s*(.+)/);
-  return match?.[1]?.trim().replace(/\*\*/g, '') || 'תרופה זוהתה';
+  // Answers come in Hebrew or English (the server answers in the user's language)
+  const match = result.match(/(?:\*\*)?(?:שם מסחרי|Brand name):(?:\*\*)?\s*(.+)/i); // i18n-ok: matches the AI's Hebrew answer format
+  return match?.[1]?.trim().replace(/\*\*/g, '') || translate('msIdentified');
 }
 
 function loadImageElement(file: File): Promise<HTMLImageElement> {
@@ -90,16 +92,16 @@ function renderResult(text: string) {
 
     const parts = trimmed.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={j} className="text-white font-bold">{part.slice(2, -2)}</strong>;
+        return <strong key={j} className="text-fg font-bold">{part.slice(2, -2)}</strong>;
       }
       return <span key={j}>{part}</span>;
     });
 
     if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith('* ')) {
       return (
-        <div key={i} className="flex gap-2 text-sm text-emt-muted leading-relaxed">
-          <span className="text-teal-400 mt-0.5 shrink-0">•</span>
-          <span>{parts}</span>
+        <div key={i} className="flex gap-2 text-sm text-fg-muted leading-relaxed">
+          <span className="text-teal-600 dark:text-teal-400 mt-0.5 shrink-0">•</span>
+          <span dir="auto">{parts}</span>
         </div>
       );
     }
@@ -107,12 +109,12 @@ function renderResult(text: string) {
     if (trimmed.startsWith('#') || (trimmed.endsWith(':') && trimmed.length < 60)) {
       const heading = trimmed.replace(/^#+\s*/, '');
       return (
-        <p key={i} className="text-sm font-bold text-teal-400 mt-3 mb-0.5">{heading}</p>
+        <p key={i} dir="auto" className="text-sm font-bold text-teal-600 dark:text-teal-400 mt-3 mb-0.5">{heading}</p>
       );
     }
 
     return (
-      <p key={i} className="text-sm text-emt-muted leading-relaxed">{parts}</p>
+      <p key={i} dir="auto" className="text-sm text-fg-muted leading-relaxed">{parts}</p>
     );
   });
 }
@@ -123,6 +125,8 @@ interface Props {
 }
 
 export default function MedicationScannerModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
+  const { lang, isEn } = useLanguage();
   useModalBackHandler(isOpen, onClose);
 
   const [state, setState] = useState<State>('idle');
@@ -193,7 +197,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: 'med_scan', query }),
+        body: JSON.stringify({ task: 'med_scan', query, lang }),
       });
       if (!res.ok) throw new Error(`Gemini proxy error: ${res.status}`);
       const { text } = await res.json() as { text: string };
@@ -225,6 +229,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           task: 'med_scan',
+          lang,
           image: { data: base64, mimeType },
         }),
       });
@@ -247,19 +252,19 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-emt-dark overflow-hidden">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page overflow-hidden">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Scan size={22} className="text-teal-400" />
-          <h2 className="text-emt-light font-bold text-xl">מידע על תרופות</h2>
+          <Scan size={22} className="text-teal-600 dark:text-teal-400" />
+          <h2 className="text-fg font-bold text-xl">{t('msTitle')}</h2>
         </div>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-emt-muted hover:text-emt-light"
-          aria-label="סגור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
@@ -292,11 +297,10 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
             value={textQuery}
             onChange={e => setTextQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleTextSearch()}
-            placeholder="הקלד שם תרופה..."
+            placeholder={t('msPlaceholder')}
             disabled={state === 'loading'}
-            dir="rtl"
-            className="flex-1 rounded-2xl bg-emt-gray border border-emt-border px-4 py-3
-                       text-emt-light placeholder:text-emt-muted text-sm
+            className="flex-1 rounded-2xl bg-surface border border-line px-4 py-3
+                       text-fg placeholder:text-fg-subtle text-sm
                        focus:outline-none focus:border-teal-400/60
                        disabled:opacity-50"
           />
@@ -307,17 +311,17 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        flex items-center justify-center shrink-0
                        active:scale-90 transition-transform
                        disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="חפש"
+            aria-label={t('search')}
           >
-            <Search size={20} className="text-teal-400" />
+            <Search size={20} className="text-teal-600 dark:text-teal-400" />
           </button>
         </div>
 
         {/* Divider */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-emt-border" />
-          <span className="text-emt-muted text-xs">או</span>
-          <div className="flex-1 h-px bg-emt-border" />
+          <div className="flex-1 h-px bg-line" />
+          <span className="text-fg-muted text-xs">{t('msOr')}</span>
+          <div className="flex-1 h-px bg-line" />
         </div>
 
         {/* Camera + Gallery buttons */}
@@ -331,10 +335,10 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-14 h-14 rounded-full bg-teal-400/15 flex items-center justify-center">
-              <Camera size={28} className="text-teal-400" />
+              <Camera size={28} className="text-teal-600 dark:text-teal-400" />
             </div>
-            <span className="text-teal-400 font-black text-base tracking-tight">מצלמה</span>
-            <span className="text-emt-muted text-xs text-center px-2">צלם את התרופה</span>
+            <span className="text-teal-600 dark:text-teal-400 font-black text-base tracking-tight">{t('msCamera')}</span>
+            <span className="text-fg-muted text-xs text-center px-2">{t('msCameraSub')}</span>
           </button>
 
           <button
@@ -346,10 +350,10 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-14 h-14 rounded-full bg-purple-400/15 flex items-center justify-center">
-              <Image size={28} className="text-purple-400" />
+              <Image size={28} className="text-purple-600 dark:text-purple-400" />
             </div>
-            <span className="text-purple-400 font-black text-base tracking-tight">גלריה</span>
-            <span className="text-emt-muted text-xs text-center px-2">בחר מהתמונות</span>
+            <span className="text-purple-600 dark:text-purple-400 font-black text-base tracking-tight">{t('msGallery')}</span>
+            <span className="text-fg-muted text-xs text-center px-2">{t('msGallerySub')}</span>
           </button>
         </div>
 
@@ -358,8 +362,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
           <div className="flex justify-center">
             <img
               src={preview}
-              alt="תמונת התרופה"
-              className="w-40 h-40 object-cover rounded-2xl border border-emt-border shadow-md"
+              alt={t('msPhotoAlt')}
+              className="w-40 h-40 object-cover rounded-2xl border border-line shadow-md"
             />
           </div>
         )}
@@ -377,9 +381,9 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                 style={{ animation: 'fadeIn 0.4s ease' }}
               >
                 <div className="w-12 h-12 rounded-full bg-teal-400/10 flex items-center justify-center">
-                  <StepIcon size={24} className="text-teal-400" />
+                  <StepIcon size={24} className="text-teal-600 dark:text-teal-400" />
                 </div>
-                <p className="text-teal-300 text-base font-semibold">{text}</p>
+                <p className="text-teal-700 dark:text-teal-300 text-base font-semibold">{t(text)}</p>
               </div>
               <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
             </div>
@@ -389,15 +393,15 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         {/* Error */}
         {state === 'error' && (
           <div className="rounded-2xl border border-emt-yellow/30 bg-emt-yellow/10 p-4 flex flex-col items-center gap-3 text-center">
-            <AlertCircle size={32} className="text-emt-yellow" />
-            <p className="text-emt-yellow font-bold text-base">שגיאה בטעינת המידע</p>
-            <p className="text-emt-muted text-sm">לא ניתן היה לאחזר את המידע. אנא בדוק חיבור לאינטרנט ונסה שוב.</p>
+            <AlertCircle size={32} className="text-amber-600 dark:text-emt-yellow" />
+            <p className="text-amber-700 dark:text-emt-yellow font-bold text-base">{t('msErrorTitle')}</p>
+            <p className="text-fg-muted text-sm">{t('msErrorBody')}</p>
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-amber-700 dark:text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
             >
               <RotateCcw size={16} />
-              נסה שוב
+              {t('retry')}
             </button>
           </div>
         )}
@@ -407,15 +411,15 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
           <div className="rounded-2xl border border-teal-400/30 bg-teal-400/5 p-4 flex flex-col gap-1">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Scan size={16} className="text-teal-400" />
-                <span className="text-teal-400 font-black text-sm uppercase tracking-wider">תוצאות הזיהוי</span>
+                <Scan size={16} className="text-teal-600 dark:text-teal-400" />
+                <span className="text-teal-600 dark:text-teal-400 font-black text-sm uppercase tracking-wider">{t('msResults')}</span>
               </div>
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emt-gray border border-emt-border text-emt-muted text-xs font-bold active:scale-95 transition-transform"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2 border border-line text-fg-muted text-xs font-bold active:scale-95 transition-transform"
               >
                 <RotateCcw size={12} />
-                חפש שוב
+                {t('msSearchAgain')}
               </button>
             </div>
             <div className="space-y-0.5">
@@ -426,43 +430,42 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
 
         {/* ── Search History ───────────────────────────────────────────── */}
         {searchHistory.length > 0 && (
-          <div className="rounded-2xl border border-emt-border bg-emt-gray/50 overflow-hidden">
+          <div className="rounded-2xl border border-line bg-surface/60 overflow-hidden">
             {/* History header — collapsible */}
             <button
               onClick={() => setHistoryExpanded(e => !e)}
               className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
             >
               <div className="flex items-center gap-2">
-                <Clock size={16} className="text-purple-400" />
-                <span className="text-purple-300 font-bold text-sm">היסטוריית חיפושים</span>
-                <span className="text-emt-muted text-xs bg-emt-border rounded-full px-2 py-0.5">
+                <Clock size={16} className="text-purple-600 dark:text-purple-400" />
+                <span className="text-purple-700 dark:text-purple-300 font-bold text-sm">{t('msHistory')}</span>
+                <span className="text-fg-muted text-xs bg-surface-3 rounded-full px-2 py-0.5">
                   {searchHistory.length}
                 </span>
               </div>
               <ChevronDown
                 size={16}
-                className="text-emt-muted transition-transform duration-200"
+                className="text-fg-muted transition-transform duration-200"
                 style={{ transform: historyExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
 
             {/* History list */}
             {historyExpanded && (
-              <div className="border-t border-emt-border">
+              <div className="border-t border-line">
                 {/* Search filter */}
-                <div className="px-3 py-2 border-b border-emt-border/50">
+                <div className="px-3 py-2 border-b border-line/50">
                   <input
                     type="text"
                     value={historySearch}
                     onChange={e => setHistorySearch(e.target.value)}
-                    placeholder="חפש בהיסטוריה..."
-                    dir="rtl"
-                    className="w-full rounded-xl bg-emt-dark border border-emt-border px-3 py-2
-                               text-emt-light placeholder:text-emt-muted text-xs
+                    placeholder={t('msHistorySearch')}
+                    className="w-full rounded-xl bg-page border border-line px-3 py-2
+                               text-fg placeholder:text-fg-subtle text-xs
                                focus:outline-none focus:border-teal-400/60"
                   />
                 </div>
-                <div className="divide-y divide-emt-border/50">
+                <div className="divide-y divide-line/50">
                   {searchHistory
                     .filter(item => {
                       if (!historySearch.trim()) return true;
@@ -475,22 +478,22 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                     .map(item => {
                       const d = new Date(item.timestamp);
                       const formatted =
-                        d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+                        d.toLocaleDateString(isEn ? 'en-GB' : 'he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
                         ' ' +
-                        d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                        d.toLocaleTimeString(isEn ? 'en-GB' : 'he-IL', { hour: '2-digit', minute: '2-digit' });
                       return (
                         <button
                           key={item.id}
                           onClick={() => handleHistoryItemClick(item)}
-                          className="w-full flex items-center justify-between px-4 py-3 text-right
-                                     hover:bg-white/5 active:bg-white/10 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-3 text-start
+                                     hover:bg-fg/5 active:bg-fg/10 transition-colors"
                         >
-                          <span className="text-emt-light text-sm font-semibold truncate flex-1 min-w-0">
+                          <span dir="auto" className="text-fg text-sm font-semibold truncate flex-1 min-w-0 text-start">
                             {item.query}
                           </span>
-                          <div className="flex items-center gap-1.5 shrink-0 mr-3">
-                            <span className="text-emt-muted text-xs">{formatted}</span>
-                            <Scan size={12} className="text-teal-400/60" />
+                          <div className="flex items-center gap-1.5 shrink-0 ms-3">
+                            <span className="text-fg-muted text-xs">{formatted}</span>
+                            <Scan size={12} className="text-teal-600/60 dark:text-teal-400/60" />
                           </div>
                         </button>
                       );
@@ -502,8 +505,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         )}
 
         {/* Disclaimer */}
-        <p className="text-center text-xs text-emt-muted px-4 leading-relaxed">
-          המידע מסופק על ידי AI ואינו מהווה המלצה רפואית. יש להיוועץ תמיד עם גורם מוסמך.
+        <p className="text-center text-xs text-fg-muted px-4 leading-relaxed">
+          {t('msDisclaimer')}
         </p>
       </div>
     </div>

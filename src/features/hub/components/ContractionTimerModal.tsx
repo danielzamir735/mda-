@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useContractionStore, contractionStart } from '../../../store/contractionStore';
 import type { Contraction, ContractionSession } from '../../../store/contractionStore';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, translate } from '../../../i18n';
 
 // ── Audio feedback via Web Audio API (no file needed, silent on error) ─────
 function playBeep(frequency = 660, duration = 0.12, volume = 0.07) {
@@ -29,7 +30,7 @@ function playBeep(frequency = 660, duration = 0.12, volume = 0.07) {
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}ש'`;
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : translate('ctSecShort', { s });
 }
 
 /** Wall-clock HH:mm:ss */
@@ -54,41 +55,42 @@ const TABLE_COLS = '1.6rem 1fr 1fr 0.8fr 0.8fr';
 function ContractionTable({ contractions, activeStartMs, activeElapsed, bare = false }: {
   contractions: Contraction[]; activeStartMs?: number | null; activeElapsed?: number; bare?: boolean;
 }) {
+  const t = useTranslation();
   return (
     <div
       className={bare ? 'w-full' : 'w-full shrink-0 rounded-2xl overflow-hidden'}
-      style={bare ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : { border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.03)' }}
+      style={bare ? { borderTop: '1px solid rgb(var(--fg) / 0.06)' } : { border: '1px solid rgb(var(--fg) / 0.09)', background: 'rgb(var(--fg) / 0.03)' }}
     >
       <div
         className="grid px-3 py-2 text-[0.7rem] font-bold tracking-wider"
-        style={{ gridTemplateColumns: TABLE_COLS, color: 'rgba(255,255,255,0.35)', background: 'rgba(0,0,0,0.18)' }}
+        style={{ gridTemplateColumns: TABLE_COLS, color: 'rgb(var(--fg) / 0.45)', background: 'rgb(var(--fg) / 0.05)' }}
       >
         <span>#</span>
-        <span className="text-center">התחלה</span>
-        <span className="text-center">סיום</span>
-        <span className="text-center">משך</span>
-        <span className="text-center">מרווח</span>
+        <span className="text-center">{t('ctColStart')}</span>
+        <span className="text-center">{t('ctColEnd')}</span>
+        <span className="text-center">{t('ctColDuration')}</span>
+        <span className="text-center">{t('ctColInterval')}</span>
       </div>
       {activeStartMs != null && (
-        <div className="grid items-center px-3 py-2.5" style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(239,35,60,0.08)' }}>
-          <span className="text-xs font-semibold text-red-300/70">{contractions.length + 1}</span>
-          <span className="text-center text-xs tabular-nums text-white/70">{fmtClock(activeStartMs)}</span>
-          <span className="text-center text-xs text-red-300 font-bold">בתהליך…</span>
-          <span className="text-center font-black text-sm text-red-300 tabular-nums">{fmt(activeElapsed ?? 0)}</span>
-          <span className="text-center text-xs text-white/30">—</span>
+        <div className="grid items-center px-3 py-2.5" style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgb(var(--fg) / 0.05)', background: 'rgba(239,35,60,0.08)' }}>
+          <span className="text-xs font-semibold text-red-600/70 dark:text-red-300/70">{contractions.length + 1}</span>
+          <span className="text-center text-xs tabular-nums text-fg/70">{fmtClock(activeStartMs)}</span>
+          <span className="text-center text-xs text-red-600 dark:text-red-300 font-bold">{t('ctInProgress')}</span>
+          <span className="text-center font-black text-sm text-red-600 dark:text-red-300 tabular-nums">{fmt(activeElapsed ?? 0)}</span>
+          <span className="text-center text-xs text-fg/30">—</span>
         </div>
       )}
       {contractions.map((c, i) => (
         <div
           key={c.id}
           className="grid items-center px-3 py-2.5"
-          style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgba(255,255,255,0.04)' }}
+          style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgb(var(--fg) / 0.05)' }}
         >
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>{contractions.length - i}</span>
-          <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.7)' }}>{fmtClock(contractionStart(c))}</span>
-          <span className="text-center text-xs tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>{fmtClock(c.id)}</span>
-          <span className="text-center font-black text-sm text-green-400 tabular-nums">{fmt(c.duration)}</span>
-          <span className={`text-center font-black text-sm tabular-nums ${c.interval !== null && c.interval < 300 ? 'text-red-400' : 'text-blue-400'}`}>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(var(--fg) / 0.4)' }}>{contractions.length - i}</span>
+          <span className="text-center text-xs tabular-nums" style={{ color: 'rgb(var(--fg) / 0.75)' }}>{fmtClock(contractionStart(c))}</span>
+          <span className="text-center text-xs tabular-nums" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{fmtClock(c.id)}</span>
+          <span className="text-center font-black text-sm text-green-600 dark:text-green-400 tabular-nums">{fmt(c.duration)}</span>
+          <span className={`text-center font-black text-sm tabular-nums ${c.interval !== null && c.interval < 300 ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
             {c.interval !== null ? fmt(c.interval) : '—'}
           </span>
         </div>
@@ -100,6 +102,7 @@ function ContractionTable({ contractions, activeStartMs, activeElapsed, bare = f
 interface Props { isOpen: boolean; onClose: () => void; }
 
 export default function ContractionTimerModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const {
     contractions, sessions, active, startMs, currentLabel,
     startContraction, endContraction, deleteSession, reset, setCurrentLabel, renameSession, restoreSession,
@@ -194,25 +197,24 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
   // ─────────────────────────────────────────────────────────────────────
   return (
     <div
-      className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #0d0b1e 0%, #1a1040 45%, #0f1a2e 100%)' }}
+      className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-gradient-to-br from-violet-100 via-indigo-50 to-sky-50 dark:from-[#0d0b1e] dark:via-[#1a1040] dark:to-[#0f1a2e]"
     >
       {/* ── Glassmorphism Header ────────────────────────────────────────── */}
       <div
         className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3"
         style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: 'rgb(var(--fg) / 0.04)',
           backdropFilter: 'blur(24px)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid rgb(var(--fg) / 0.08)',
         }}
       >
         <button
           onClick={onClose}
           className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-          aria-label="סגור"
+          style={{ background: 'rgb(var(--fg) / 0.08)', border: '1px solid rgb(var(--fg) / 0.12)' }}
+          aria-label={t('close')}
         >
-          <X size={20} className="text-white/80" />
+          <X size={20} className="text-fg/80" />
         </button>
 
         <div className="flex items-center gap-2.5">
@@ -225,7 +227,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             }
             transition={active ? { duration: 1.5, repeat: Infinity } : {}}
           />
-          <h2 className="text-white font-bold text-xl">מחשבון צירים</h2>
+          <h2 className="text-fg font-bold text-xl">{t('ctTitle')}</h2>
         </div>
 
         <div className="flex items-center gap-2">
@@ -235,18 +237,18 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                 onClick={() => setShowHistory(true)}
                 className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
                 style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)' }}
-                aria-label="היסטוריה"
+                aria-label={t('ctHistory')}
               >
-                <History size={18} className="text-purple-300" />
+                <History size={18} className="text-purple-600 dark:text-purple-300" />
               </button>
               {contractions.length > 0 && (
                 <button
                   onClick={handleReset}
-                  className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform"
-                  style={{ background: 'rgba(239,35,60,0.12)', border: '1px solid rgba(239,35,60,0.35)', color: '#f87171' }}
-                  aria-label="איפוס ושמירה להיסטוריה"
+                  className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform text-red-600 dark:text-red-400"
+                  style={{ background: 'rgba(239,35,60,0.12)', border: '1px solid rgba(239,35,60,0.35)' }}
+                  aria-label={t('ctResetAria')}
                 >
-                  איפוס
+                  {t('ctReset')}
                 </button>
               )}
             </>
@@ -264,9 +266,8 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -80, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="shrink-0 mx-4 mt-3 rounded-2xl overflow-hidden"
+            className="shrink-0 mx-4 mt-3 rounded-2xl overflow-hidden bg-red-50/90 dark:bg-slate-950/80"
             style={{
-              background: 'rgba(2,6,23,0.8)',
               border: '1px solid rgba(239,35,60,0.7)',
               backdropFilter: 'blur(24px)',
               boxShadow: '0 0 24px rgba(239,35,60,0.35), 0 0 48px rgba(239,35,60,0.15)',
@@ -274,18 +275,17 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           >
             <div className="p-4 flex items-start gap-3">
               <motion.p
-                className="flex-1 text-lg font-black leading-snug text-right"
-                style={{ color: '#fca5a5', direction: 'rtl' }}
+                className="flex-1 text-lg font-black leading-snug text-start text-red-700 dark:text-red-300"
                 animate={{ opacity: [1, 0.82, 1] }}
                 transition={{ duration: 1.6, repeat: Infinity }}
               >
-                ⚠️ צירים בתדירות גבוהה — פחות מ-2 דקות בין ציר לציר. יש להזמין נט&quot;ן באופן מיידי.
+                {t('ctBirthAlert')}
               </motion.p>
               <button
                 onClick={() => setDismissedAtInterval(lastInterval)}
                 className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
                 style={{ background: 'rgba(239,35,60,0.15)', border: '1px solid rgba(239,35,60,0.35)' }}
-                aria-label="סגור התראה"
+                aria-label={t('ctDismissAlert')}
               >
                 <X size={14} className="text-red-400" />
               </button>
@@ -300,14 +300,14 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         {/* Mother name / nickname — optional */}
         <label
           className="w-full shrink-0 flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
+          style={{ background: 'rgb(var(--fg) / 0.04)', border: '1px solid rgb(var(--fg) / 0.09)' }}
         >
-          <User size={16} className="text-purple-300/70 shrink-0" />
+          <User size={16} className="text-purple-600/70 dark:text-purple-300/70 shrink-0" />
           <input
             value={currentLabel}
             onChange={e => setCurrentLabel(e.target.value)}
-            placeholder="שם / כינוי יולדת (לא חובה)"
-            className="flex-1 bg-transparent text-white text-sm placeholder-white/30 focus:outline-none"
+            placeholder={t('ctMotherPlaceholder')}
+            className="flex-1 bg-transparent text-fg text-sm placeholder-fg/40 focus:outline-none"
             maxLength={40}
           />
         </label>
@@ -321,10 +321,9 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.25 }}
-              className="text-center font-bold text-lg tracking-wide"
-              style={{ color: active ? '#fca5a5' : 'rgba(255,255,255,0.55)' }}
+              className={`text-center font-bold text-lg tracking-wide ${active ? 'text-red-600 dark:text-red-300' : 'text-fg/60'}`}
             >
-              {active ? 'ציר פעיל — לחץ לסיום' : 'לחץ כשמתחיל ציר'}
+              {active ? t('ctActiveHint') : t('ctIdleHint')}
             </motion.p>
           )}
         </AnimatePresence>
@@ -347,8 +346,8 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>משך ממוצע</p>
-                  <p className="font-black text-xl text-green-400">{fmt(avgDuration)}</p>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctAvgDuration')}</p>
+                  <p className="font-black text-xl text-green-600 dark:text-green-400">{fmt(avgDuration)}</p>
                 </div>
               )}
 
@@ -361,8 +360,8 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>מרווח ממוצע</p>
-                  <p className={`font-black text-xl ${isUrgent ? 'text-red-400' : 'text-blue-400'}`}>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctAvgInterval')}</p>
+                  <p className={`font-black text-xl ${isUrgent ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                     {fmt(avgInterval)}
                   </p>
                 </div>
@@ -376,8 +375,8 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                   backdropFilter: 'blur(12px)',
                 }}
               >
-                <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>צירים</p>
-                <p className="font-black text-xl text-purple-300">{contractions.length}</p>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctCount')}</p>
+                <p className="font-black text-xl text-purple-600 dark:text-purple-300">{contractions.length}</p>
               </div>
             </motion.div>
           )}
@@ -425,27 +424,28 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               border: `3px solid ${active ? 'rgba(239,35,60,0.8)' : 'rgba(34,197,94,0.55)'}`,
               backdropFilter: 'blur(20px)',
               boxShadow: active
-                ? '0 0 48px rgba(239,35,60,0.45), 0 0 80px rgba(239,35,60,0.15), inset 0 1px 0 rgba(255,255,255,0.15)'
-                : '0 0 32px rgba(34,197,94,0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
+                ? '0 0 48px rgba(239,35,60,0.45), 0 0 80px rgba(239,35,60,0.15), inset 0 1px 0 rgb(255 255 255 / 0.15)'
+                : '0 0 32px rgba(34,197,94,0.18), inset 0 1px 0 rgb(var(--fg) / 0.06)',
             }}
             className="flex flex-col items-center justify-center select-none relative z-10"
-            aria-label={active ? 'סיים ציר' : 'התחל ציר'}
+            aria-label={active ? t('ctEnd') : t('ctStart')}
           >
             {active ? (
               <>
                 <motion.span
+                  // theme-ok: white digits on the red button
                   className="text-5xl font-black tabular-nums text-white leading-none"
                   animate={{ opacity: [1, 0.8, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
                 >
                   {fmt(elapsed)}
                 </motion.span>
-                <span className="text-sm font-bold text-red-200 mt-2 tracking-wide">סיים ציר</span>
+                <span className="text-sm font-bold text-red-100 mt-2 tracking-wide">{t('ctEnd')}</span>
               </>
             ) : (
               <>
-                <Timer size={54} className="text-green-400" strokeWidth={1.5} />
-                <span className="text-base font-bold text-green-300 mt-2 tracking-wide">התחל ציר</span>
+                <Timer size={54} className="text-green-600 dark:text-green-400" strokeWidth={1.5} />
+                <span className="text-base font-bold text-green-700 dark:text-green-300 mt-2 tracking-wide">{t('ctStart')}</span>
               </>
             )}
           </motion.button>
@@ -459,14 +459,14 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="text-center text-sm"
-              style={{ color: 'rgba(255,255,255,0.4)' }}
+              style={{ color: 'rgb(var(--fg) / 0.55)' }}
             >
-              הציר האחרון:{' '}
-              <span className="text-green-400 font-bold">{fmt(contractions[0].duration)}</span>
+              {t('ctLast')}{' '}
+              <span className="text-green-600 dark:text-green-400 font-bold">{fmt(contractions[0].duration)}</span>
               {contractions[0].interval !== null && (
                 <>
-                  {' · '}מרווח:{' '}
-                  <span className={`font-bold ${isUrgent ? 'text-red-400' : 'text-blue-400'}`}>
+                  {' · '}{t('ctIntervalLabel')}{' '}
+                  <span className={`font-bold ${isUrgent ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                     {fmt(contractions[0].interval!)}
                   </span>
                 </>
@@ -486,8 +486,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
         {showHistory && (
           <motion.div
             key="history-screen"
-            className="fixed inset-0 z-[80] flex flex-col"
-            style={{ background: 'linear-gradient(160deg, #0d0b1e 0%, #1a1040 45%, #0f1a2e 100%)' }}
+            className="fixed inset-0 z-[80] flex flex-col bg-gradient-to-br from-violet-100 via-indigo-50 to-sky-50 dark:from-[#0d0b1e] dark:via-[#1a1040] dark:to-[#0f1a2e]"
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
@@ -497,28 +496,28 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
             <div
               className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3"
               style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgb(var(--fg) / 0.04)',
                 backdropFilter: 'blur(24px)',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                borderBottom: '1px solid rgb(var(--fg) / 0.08)',
               }}
             >
               <button
                 onClick={() => { setShowHistory(false); setExpandedSession(null); }}
                 className="w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-                aria-label="חזור"
+                style={{ background: 'rgb(var(--fg) / 0.08)', border: '1px solid rgb(var(--fg) / 0.12)' }}
+                aria-label={t('back')}
               >
-                <ChevronRight size={22} className="text-white/80" />
+                <ChevronRight size={22} className="text-fg/80 ltr:rotate-180" />
               </button>
 
               <div className="flex items-center gap-2">
-                <History size={18} className="text-purple-300" />
-                <h3 className="text-white font-bold text-xl">היסטוריית סשנים</h3>
+                <History size={18} className="text-purple-600 dark:text-purple-300" />
+                <h3 className="text-fg font-bold text-xl">{t('ctSessionsHistory')}</h3>
               </div>
 
               <div
-                className="px-3 py-1.5 rounded-full text-sm font-bold tabular-nums"
-                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', color: '#c4b5fd' }}
+                className="px-3 py-1.5 rounded-full text-sm font-bold tabular-nums text-violet-700 dark:text-violet-300"
+                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)' }}
               >
                 {sessions.length}
               </div>
@@ -534,10 +533,10 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                     index={sessions.length - si}
                     isExpanded={expandedSession === session.id}
                     onToggle={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
-                    onDelete={() => { if (window.confirm('למחוק את הסשן הזה מההיסטוריה?')) deleteSession(session.id); }}
+                    onDelete={() => { if (window.confirm(t('ctDeleteConfirm'))) deleteSession(session.id); }}
                     onRename={(label) => renameSession(session.id, label)}
                     onRestore={() => {
-                      if (active) { window.alert('יש ציר פעיל — סיים אותו קודם'); return; }
+                      if (active) { window.alert(t('ctActiveFirst')); return; }
                       restoreSession(session.id);
                       setShowHistory(false);
                       setExpandedSession(null);
@@ -548,10 +547,10 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
 
               {sessions.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-48 gap-3">
-                  <History size={32} className="text-white/15" />
-                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>אין סשנים שמורים</p>
-                  <p className="text-xs text-center max-w-[200px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                    לחץ "איפוס" לשמירת הסשן הנוכחי
+                  <History size={32} className="text-fg/15" />
+                  <p className="text-sm" style={{ color: 'rgb(var(--fg) / 0.45)' }}>{t('ctNoSessions')}</p>
+                  <p className="text-xs text-center max-w-[200px]" style={{ color: 'rgb(var(--fg) / 0.35)' }}>
+                    {t('ctNoSessionsHint')}
                   </p>
                 </div>
               )}
@@ -575,6 +574,7 @@ interface SessionCardProps {
 }
 
 function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename, onRestore }: SessionCardProps) {
+  const t = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(session.label ?? '');
   const list = session.contractions;
@@ -600,14 +600,14 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename,
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.22 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}
+      style={{ background: 'rgb(var(--fg) / 0.04)', border: '1px solid rgb(var(--fg) / 0.09)' }}
     >
       {/* Session header row */}
       <div className="flex items-center gap-3 px-4 py-3">
         {/* Index badge */}
         <div
-          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-black"
-          style={{ background: 'rgba(167,139,250,0.15)', color: '#c4b5fd' }}
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-violet-700 dark:text-violet-300"
+          style={{ background: 'rgba(167,139,250,0.15)' }}
         >
           {index}
         </div>
@@ -620,32 +620,32 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename,
               value={draft}
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') saveLabel(); }}
-              placeholder="שם / כינוי יולדת"
+              placeholder={t('ctMotherPlaceholderShort')}
               maxLength={40}
-              className="flex-1 min-w-0 rounded-xl bg-white/5 border border-white/15 px-3 py-1.5 text-white text-sm focus:outline-none"
+              className="flex-1 min-w-0 rounded-xl bg-fg/5 border border-fg/15 px-3 py-1.5 text-fg text-sm focus:outline-none"
             />
-            <button onClick={saveLabel} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/30 text-purple-100">שמור</button>
+            <button onClick={saveLabel} className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/30 text-purple-800 dark:text-purple-100">{t('save')}</button>
           </div>
         ) : (
-          <button onClick={onToggle} className="flex-1 min-w-0 flex flex-col items-start gap-0.5 text-right">
-            <span className="text-white/90 text-sm font-bold truncate max-w-full">
-              {session.label || 'יולדת ללא שם'}
+          <button onClick={onToggle} className="flex-1 min-w-0 flex flex-col items-start gap-0.5 text-start">
+            <span className="text-fg/90 text-sm font-bold truncate max-w-full">
+              {session.label || t('ctUnnamed')}
             </span>
-            <span className="text-white/55 text-xs tabular-nums">
+            <span className="text-fg/60 text-xs tabular-nums">
               {fmtDay(firstStart)} · {fmtHM(firstStart)}–{fmtHM(lastEnd)}
             </span>
-            <span className="text-white/40 text-xs">
-              {count} צירים · ממוצע {fmt(avgDur)}
-              {avgInt !== null && ` · מרווח ${fmt(avgInt)}`}
+            <span className="text-fg/50 text-xs">
+              {t('ctSessionSummary', { count, avg: fmt(avgDur) })}
+              {avgInt !== null && t('ctSessionInterval', { interval: fmt(avgInt) })}
             </span>
           </button>
         )}
 
         {/* Expand toggle */}
         {!editing && (
-          <button onClick={onToggle} className="p-1.5 rounded-full active:scale-90 transition-transform" aria-label="הרחב">
+          <button onClick={onToggle} className="p-1.5 rounded-full active:scale-90 transition-transform" aria-label={t('expand')}>
             <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown size={16} className="text-white/40" />
+              <ChevronDown size={16} className="text-fg/40" />
             </motion.div>
           </button>
         )}
@@ -664,27 +664,27 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename,
             <div className="flex gap-2 px-4 pb-3">
               <button
                 onClick={onRestore}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform"
-                style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', color: '#86efac' }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform text-green-700 dark:text-green-300"
+                style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)' }}
               >
                 <Undo2 size={14} />
-                המשך סשן זה
+                {t('ctResume')}
               </button>
               <button
                 onClick={() => { setDraft(session.label ?? ''); setEditing(true); }}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform"
-                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', color: '#c4b5fd' }}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform text-violet-700 dark:text-violet-300"
+                style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)' }}
               >
                 <Pencil size={13} />
-                שם
+                {t('ctName')}
               </button>
               <button
                 onClick={onDelete}
                 className="flex items-center justify-center px-3 py-2 rounded-xl active:scale-95 transition-transform"
                 style={{ background: 'rgba(239,35,60,0.08)', border: '1px solid rgba(239,35,60,0.25)' }}
-                aria-label="מחק סשן"
+                aria-label={t('ctDeleteSession')}
               >
-                <Trash2 size={14} className="text-red-400/70" />
+                <Trash2 size={14} className="text-red-500/80 dark:text-red-400/70" />
               </button>
             </div>
             <ContractionTable contractions={list} bare />

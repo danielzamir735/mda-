@@ -22,3 +22,10 @@ export const MED_SCAN_PROMPT =
   '❗ חשוב לדעת:\n' +
   '[משפט אחד או שניים על אזהרה קריטית או תופעת לוואי חריגה שחובה לשים לב אליה].\n\n' +
   'אם אתה רוצה, אפשר להשוות אותה לתרופות מקבילות או לבדוק התאמה למצב מסוים 👍';
+
+// Appended when the app's interface is in English (the client sends lang: 'en').
+// Same structure, English headings, so the client can still find "Brand name:".
+export const MED_SCAN_ENGLISH_SUFFIX =
+  '\n\nIMPORTANT: The user reads English. Write the whole answer in English, keeping exactly the same structure ' +
+  'and bullets, with these headings: "Brand name:", "Generic name:", "What it is for:", ' +
+  '"Usual dosage (general):", "Contraindications:", "❗ Important:". Do not write any Hebrew.';
