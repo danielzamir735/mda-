@@ -1133,6 +1133,8 @@ function frame(smooth){
   const bearing = map.getBearing(), pitch = threeD ? PITCH : 0;
   const cam = map.cameraForBounds(b, {padding:{top:130, bottom: barH() + 50, left:80, right:40}, bearing, maxZoom:19});
   let zoom = cam ? Math.max(17, Math.min(19, cam.zoom - (threeD ? 0.3 : 0))) : 18;
+  // only the user on the map (no address yet): a little wider, so the buildings around show too
+  if (!target && !redBlds.length) zoom = threeD ? 16.9 : 17.2;
   auto = true;
   map.easeTo({center: cam ? cam.center : b.getCenter(), zoom, bearing, pitch, duration: smooth ? 700 : 0});
   setTimeout(() => { auto = false; }, smooth ? 900 : 60);
