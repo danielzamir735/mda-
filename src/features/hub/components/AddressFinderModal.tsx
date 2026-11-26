@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, MapPinned, Search, Building2, Hash, Footprints, Navigation, Compass, ArrowRight, MapPin, Loader2 } from 'lucide-react';
+import { X, MapPinned, Search, Building2, Hash, Footprints, Navigation, Compass, MapPin, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { trackInteraction } from '../../../utils/analytics';
 import { suggestAddresses, lookupAddress, mapLink, type AddressResult } from '../utils/addressSearch';
 
-// "איתור כתובת מהיר" (beta): the user types an address, and the map page shows the building in red,
-// every house number, footpaths and stairs, and where the user stands relative to it.
+// "איתור כתובת מהיר" (beta): the map opens straight away on the user's own location, so they can see what is
+// around them. An address typed in the bar above it is marked on the same map (the building in red, every
+// house number, footpaths and stairs), and the small buttons hand it to Waze or Google Maps.
 // The map itself is a separate page, embedded here.
 const MAP_URL = 'https://entrance-finder-ten.vercel.app/';
+const MAP_ORIGIN = new URL(MAP_URL).origin;
 const INTRO_KEY = 'address_finder_intro_seen_v1';
 
 const BENEFITS = [
@@ -28,6 +30,26 @@ function BetaTag() {
   );
 }
 
+// the address as the user typed it (49א stays 49א even when the map only knows 49)
+const label = (r: AddressResult) => {
+  const num = r.exact ? (r.housenumber || r.qNum) : r.qNum;
+  const street = r.street || r.line1.replace(/\s*\d+\s*[א-ת]?$/, '');
+  const l1 = num && (!r.housenumber || !r.exact) ? `${street} ${num}`.trim() : r.line1;
+  return r.line2 ? `${l1}, ${r.line2}` : l1;
+};
+
+// Waze and Google Maps: the exact point when the house itself was found, else the address as typed
+// (they know house numbers the open map lacks)
+function navLinks(r: AddressResult) {
+  const exact = r.exact && !!r.housenumber;
+  const q = encodeURIComponent(label(r));
+  const ll = `${r.lat.toFixed(6)},${r.lng.toFixed(6)}`;
+  return {
+    waze: exact ? `https://waze.com/ul?ll=${ll}&navigate=yes` : `https://waze.com/ul?q=${q}&navigate=yes`,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${exact ? ll : q}`,
+  };
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -35,49 +57,48 @@ interface Props {
 
 export default function AddressFinderModal({ isOpen, onClose }: Props) {
   const [query, setQuery] = useState('');
-  const [mapQuery, setMapQuery] = useState<string | null>(null); // the map page link once a search is done
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
   const [picked, setPicked] = useState<AddressResult | null>(null);
+  const [shown, setShown] = useState<AddressResult | null>(null); // the address marked on the map now
   const [busy, setBusy] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [mapLoading, setMapLoading] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const mapReady = useRef(false);
+  const pending = useRef<string | null>(null); // an address chosen before the map finished loading
   const sugTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sugAbort = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // the map opens on the user's own location; addresses are sent to it later, without loading it again
+  const send = (link: string) => {
+    const win = frameRef.current?.contentWindow;
+    if (!mapReady.current || !win) { pending.current = link; return; }
+    win.postMessage({ type: 'ef-goto', query: link.split('?')[1] || '' }, MAP_ORIGIN);
+  };
+
   useEffect(() => () => { clearTimeout(sugTimer.current); sugAbort.current?.abort(); }, []);
-  // the map page says when its first map tiles are drawn; until then a loading screen covers the white page
   useEffect(() => {
+    const t = setTimeout(() => setMapLoading(false), 15000); // never keep the loading screen forever
     const onMsg = (e: MessageEvent) => {
-      if (e.origin === new URL(MAP_URL).origin && e.data?.type === 'entrance-finder-ready') setMapLoading(false);
+      if (e.origin !== MAP_ORIGIN || e.data?.type !== 'entrance-finder-ready') return;
+      mapReady.current = true; setMapLoading(false);
+      if (pending.current) { const l = pending.current; pending.current = null; send(l); }
     };
     window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
+    return () => { clearTimeout(t); window.removeEventListener('message', onMsg); };
   }, []);
+
   // the explanation shows only the first time (the modal is mounted only while open)
   const [showIntro, setShowIntro] = useState(() => {
     try { return localStorage.getItem(INTRO_KEY) !== '1'; } catch { return true; }
   });
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const closeIntro = () => {
     try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* private mode */ }
     setShowIntro(false);
-    setTimeout(() => inputRef.current?.focus(), 250);
   };
 
-  // back: map → address screen → tools
   useModalBackHandler(isOpen, onClose);
-  useModalBackHandler(mapQuery !== null, () => setMapQuery(null));
-
-  const typing = focused || query.trim().length > 0 || suggestions.length > 0;
-
-  const label = (r: AddressResult) => {
-    // keep the number the user typed (49א) even when the map only knows 49
-    const num = r.exact ? (r.housenumber || r.qNum) : r.qNum;
-    const street = r.street || r.line1.replace(/\s*\d+\s*[א-ת]?$/, '');
-    const l1 = num && (!r.housenumber || !r.exact) ? `${street} ${num}`.trim() : r.line1;
-    return r.line2 ? `${l1}, ${r.line2}` : l1;
-  };
 
   // suggestions from the first letters typed
   const onType = (v: string) => {
@@ -90,26 +111,19 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
     }, 300);
   };
 
-  // tapping a suggestion opens the map straight away: no second tap on "חיפוש"
-  const choose = (r: AddressResult) => {
+  const open = (r: AddressResult) => {
+    inputRef.current?.blur();
     clearTimeout(sugTimer.current); sugAbort.current?.abort();
-    setPicked(r); setQuery(label(r)); setMessage('');
-    open(r);
+    setSuggestions([]); setMessage('');
+    setPicked(r); setShown(r); setQuery(label(r));
+    trackInteraction('איתור כתובת מהיר · חיפוש', 'emergency_info');
+    send(mapLink(MAP_URL, r));
   };
 
   const clear = () => {
     clearTimeout(sugTimer.current); sugAbort.current?.abort();
     setQuery(''); setPicked(null); setSuggestions([]); setMessage('');
     inputRef.current?.focus();
-  };
-
-  const open = (r: AddressResult) => {
-    inputRef.current?.blur();
-    setSuggestions([]);
-    trackInteraction('איתור כתובת מהיר · חיפוש', 'emergency_info');
-    setMapLoading(true);
-    setTimeout(() => setMapLoading(false), 15000); // never keep the loading screen forever
-    setMapQuery(mapLink(MAP_URL, r));
   };
 
   const search = async (e?: React.FormEvent) => {
@@ -126,23 +140,15 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
     setSuggestions(res); setMessage('בחרו את הכתובת המתאימה');
   };
 
+  const nav = shown ? navLinks(shown) : null;
+  const navBtn = 'shrink-0 w-12 flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-bold leading-none transition-opacity';
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark" dir="rtl">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2 min-w-0">
-          {mapQuery !== null ? (
-            <HapticButton
-              onClick={() => setMapQuery(null)}
-              pressScale={0.88}
-              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border flex items-center justify-center text-gray-500 dark:text-emt-muted"
-              aria-label="חיפוש כתובת אחרת"
-            >
-              <ArrowRight size={20} />
-            </HapticButton>
-          ) : (
-            <MapPinned size={22} className="text-rose-400 shrink-0" />
-          )}
+          <MapPinned size={22} className="text-rose-400 shrink-0" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight truncate">איתור כתובת מהיר</h2>
           <BetaTag />
         </div>
@@ -156,132 +162,122 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
         </HapticButton>
       </div>
 
-      {mapQuery !== null ? (
-        <div className="relative flex-1 flex">
-          <iframe
-            key={mapQuery}
-            title="מפת איתור כתובת"
-            src={mapQuery}
-            allow="geolocation; accelerometer; gyroscope; magnetometer"
-            className="flex-1 w-full border-0 bg-white"
-          />
-          {/* the first open downloads the map page, which can take a few seconds */}
-          {mapLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-emt-dark" role="status">
-              <Loader2 size={34} className="animate-spin text-rose-400" />
-              <p className="text-gray-600 dark:text-emt-muted font-semibold">טוען את המפה…</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        // while typing, the welcome text folds away so the field, search button and suggestions
-        // sit at the top of the screen, above the phone keyboard
-        <div className={`relative flex-1 overflow-y-auto px-5 flex flex-col items-center ${typing ? 'pt-4 pb-4' : 'pt-12 pb-10'}`}>
-          {!typing && (
-            <>
-              <div className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[28rem] h-80 rounded-full bg-rose-500/10 blur-3xl" />
-              {/* a pin with a slow ring around it, like a location being found */}
-              <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
-                <span className="absolute inset-0 rounded-full border border-rose-400/25 motion-safe:animate-ping [animation-duration:2.6s]" />
-                <span className="absolute inset-2 rounded-full border border-rose-400/30" />
-                <span
-                  className="relative w-16 h-16 rounded-full flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)', boxShadow: '0 8px 30px rgba(225,29,72,0.40)' }}
-                >
-                  <MapPin size={30} className="text-white" strokeWidth={2.4} />
-                </span>
-              </div>
-              <h1 className="relative text-gray-900 dark:text-emt-light font-extrabold text-[28px] text-center leading-tight">
-                לאיזו כתובת מגיעים?
-              </h1>
-              <p className="relative text-gray-500 dark:text-emt-muted text-base text-center mt-2 mb-7 max-w-xs leading-relaxed">
-                כתבו רחוב, מספר בית ועיר, והבניין יסומן לכם על המפה
-              </p>
-            </>
-          )}
-
-          <form onSubmit={search} className="relative w-full max-w-md flex flex-col gap-2.5" role="search">
-            <div className="flex items-stretch gap-2">
-              <div className="relative flex-1 min-w-0">
-                <MapPin size={20} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-rose-400" />
-                <input
-                  ref={inputRef}
-                  value={query}
-                  onChange={e => onType(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  type="text"
-                  inputMode="search"
-                  enterKeyHint="search"
-                  lang="he"
-                  autoComplete="off"
-                  placeholder="רחוב, מספר בית ועיר"
-                  aria-label="כתובת ועיר"
-                  className={`w-full rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray pr-10 ${query ? 'pl-11' : 'pl-3'} py-3.5 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25`}
-                />
-                {/* clears the whole field in one tap */}
-                {query && (
-                  <button
-                    type="button"
-                    onPointerDown={e => e.preventDefault()}
-                    onClick={clear}
-                    aria-label="מחיקת הכתובת"
-                    className="absolute left-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-gray-400 dark:text-emt-muted active:bg-gray-100 dark:active:bg-white/10"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/15 flex items-center justify-center">
-                      <X size={15} strokeWidth={2.6} className="text-gray-600 dark:text-emt-light" />
-                    </span>
-                  </button>
-                )}
-              </div>
-              {/* the search button sits next to the field, so the keyboard never hides it */}
-              <HapticButton
-                type="submit"
-                pressScale={0.94}
-                disabled={busy}
+      {/* Search bar, with Waze and Google Maps for the address on the map */}
+      <form onSubmit={search} className="relative z-10 shrink-0 px-3 pb-2.5 border-b border-gray-200 dark:border-emt-border" role="search">
+        <div className="flex items-stretch gap-1.5 h-12">
+          <div className="relative flex-1 min-w-0">
+            <MapPin size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-rose-400" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => onType(e.target.value)}
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              lang="he"
+              autoComplete="off"
+              placeholder="חיפוש כתובת"
+              aria-label="כתובת ועיר"
+              className={`w-full h-full rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray pr-9 ${query ? 'pl-10' : 'pl-3'} text-base text-gray-900 dark:text-emt-light placeholder:text-gray-400 dark:placeholder:text-emt-muted outline-none focus:border-rose-400/70 focus:ring-2 focus:ring-rose-400/25`}
+            />
+            {/* clears the whole field in one tap */}
+            {query && (
+              <button
+                type="button"
                 onPointerDown={e => e.preventDefault()}
-                className="shrink-0 flex items-center justify-center gap-1.5 px-4 rounded-2xl text-white font-bold text-base disabled:opacity-80"
-                style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', boxShadow: '0 4px 18px rgba(225,29,72,0.35)' }}
+                onClick={clear}
+                aria-label="מחיקת הכתובת"
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center active:bg-gray-100 dark:active:bg-white/10"
               >
-                {busy ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
-                חיפוש
-              </HapticButton>
-            </div>
-            {message && <p className="text-sm font-semibold text-rose-400 px-1">{message}</p>}
-            {suggestions.length > 0 && (
-              <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden" role="listbox" aria-label="הצעות כתובת">
-                {suggestions.map((r, i) => (
-                  <button
-                    key={`${r.line1}|${r.line2}|${i}`}
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    onPointerDown={e => e.preventDefault()}
-                    onClick={() => choose(r)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-right border-t first:border-t-0 border-gray-100 dark:border-emt-border active:bg-rose-400/10"
-                  >
-                    <MapPin size={18} className="text-rose-400 shrink-0" />
-                    <span className="min-w-0">
-                      <span className="block font-bold text-gray-900 dark:text-emt-light truncate">{r.line1}</span>
-                      {r.line2 && <span className="block text-xs text-gray-500 dark:text-emt-muted">{r.line2}</span>}
-                      {/* the map knows the street but not the number typed: say so before the tap */}
-                      {!r.exact && r.qNum && !r.housenumber && (
-                        <span className="block text-xs font-semibold text-amber-600 dark:text-amber-300">מספר {r.qNum} לא רשום במפה, יסומן הרחוב</span>
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/15 flex items-center justify-center">
+                  <X size={14} strokeWidth={2.6} className="text-gray-600 dark:text-emt-light" />
+                </span>
+              </button>
             )}
-          </form>
-
-          {!typing && (
-            <p className="text-gray-400 dark:text-emt-muted text-xs text-center mt-6 max-w-xs leading-relaxed">
-              השירות בניסוי. המידע מגיע ממפה פתוחה ועלול להיות חסר, אז בקריאה דחופה כדאי לאמת גם מול המוקד.
-            </p>
-          )}
+          </div>
+          <HapticButton
+            type="submit"
+            pressScale={0.94}
+            disabled={busy}
+            onPointerDown={e => e.preventDefault()}
+            aria-label="חיפוש"
+            className="shrink-0 w-12 flex items-center justify-center rounded-xl text-white disabled:opacity-80"
+            style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}
+          >
+            {busy ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+          </HapticButton>
+          {/* navigation apps: active once an address is on the map */}
+          <a
+            href={nav?.waze}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!nav}
+            aria-label="ניווט בוויז"
+            onClick={e => { if (!nav) { e.preventDefault(); setMessage('חפשו כתובת, ואז אפשר לנווט אליה'); } else trackInteraction('איתור כתובת מהיר · וויז', 'emergency_info'); }}
+            className={`${navBtn} bg-[#33ccff] text-[#06263a] ${nav ? '' : 'opacity-40'}`}
+          >
+            <Navigation size={17} strokeWidth={2.4} />
+            וויז
+          </a>
+          <a
+            href={nav?.google}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!nav}
+            aria-label="ניווט בגוגל מפות"
+            onClick={e => { if (!nav) { e.preventDefault(); setMessage('חפשו כתובת, ואז אפשר לנווט אליה'); } else trackInteraction('איתור כתובת מהיר · גוגל מפות', 'emergency_info'); }}
+            className={`${navBtn} bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border text-gray-800 dark:text-emt-light ${nav ? '' : 'opacity-40'}`}
+          >
+            <MapPin size={17} strokeWidth={2.4} className="text-[#ea4335]" />
+            גוגל
+          </a>
         </div>
-      )}
+        {message && <p className="text-sm font-semibold text-rose-400 px-1 pt-1.5">{message}</p>}
+        {/* suggestions open over the map */}
+        {suggestions.length > 0 && (
+          <div className="absolute right-3 left-3 top-full mt-1 rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden shadow-xl" role="listbox" aria-label="הצעות כתובת">
+            {suggestions.map((r, i) => (
+              <button
+                key={`${r.line1}|${r.line2}|${i}`}
+                type="button"
+                role="option"
+                aria-selected={false}
+                onPointerDown={e => e.preventDefault()}
+                onClick={() => open(r)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-right border-t first:border-t-0 border-gray-100 dark:border-emt-border active:bg-rose-400/10"
+              >
+                <MapPin size={18} className="text-rose-400 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block font-bold text-gray-900 dark:text-emt-light truncate">{r.line1}</span>
+                  {r.line2 && <span className="block text-xs text-gray-500 dark:text-emt-muted">{r.line2}</span>}
+                  {/* the map knows the street but not the number typed: say so before the tap */}
+                  {!r.exact && r.qNum && !r.housenumber && (
+                    <span className="block text-xs font-semibold text-amber-600 dark:text-amber-300">מספר {r.qNum} לא רשום במפה, יסומן הרחוב</span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </form>
+
+      {/* The map: the user's own location until an address is searched */}
+      <div className="relative flex-1 flex">
+        <iframe
+          ref={frameRef}
+          title="מפת איתור כתובת"
+          src={`${MAP_URL}?embed=1`}
+          allow="geolocation; accelerometer; gyroscope; magnetometer"
+          className="flex-1 w-full border-0 bg-white"
+        />
+        {/* the first open downloads the map page, which can take a few seconds */}
+        {mapLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-emt-dark" role="status">
+            <Loader2 size={34} className="animate-spin text-rose-400" />
+            <p className="text-gray-600 dark:text-emt-muted font-semibold">טוען את המפה…</p>
+          </div>
+        )}
+      </div>
 
       {/* First-time explanation: a full screen of its own */}
       <AnimatePresence>
@@ -322,6 +318,9 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                   </div>
                 ))}
               </div>
+              <p className="text-gray-400 dark:text-emt-muted text-xs text-center mt-4 leading-relaxed">
+                השירות בניסוי. המידע מגיע ממפות פתוחות ומהעיריות ועלול להיות חסר, אז בקריאה דחופה כדאי לאמת גם מול המוקד.
+              </p>
             </div>
             <div className="relative px-5 pt-4">
               <HapticButton
