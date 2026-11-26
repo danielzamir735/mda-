@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DownloadCloud } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onUpdate: () => void;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function UpdateModal({ onUpdate, onDismiss }: Props) {
+  const t = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleUpdate = () => {
@@ -15,19 +17,20 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
-      <div className="w-[90%] max-w-md bg-slate-900 shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
+    // theme-ok: the dim backdrop behind a pop-up stays dark in both modes
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-[90%] max-w-md bg-surface shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
         {/* Icon */}
         <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 mx-auto mb-4">
-          <DownloadCloud size={28} className="text-emerald-400" />
+          <DownloadCloud size={28} className="text-emerald-600 dark:text-emerald-400" />
         </div>
 
         {/* Text */}
-        <p className="text-2xl font-bold text-white mb-3">
-          עדכון גרסה זמין
+        <p className="text-2xl font-bold text-fg mb-3">
+          {t('obUpdateTitle')}
         </p>
-        <p className="text-base text-slate-300 mb-6">
-          העדכון ייקח שנייה בדיוק. אל דאגה, שום נתון ששמרת לא יימחק והאפליקציה תעלה מיד מחדש.
+        <p className="text-base text-fg-muted mb-6">
+          {t('obUpdateText')}
         </p>
 
         {/* Buttons */}
@@ -39,15 +42,15 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
                        rounded-xl transition-colors duration-150
                        disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? 'מעדכן…' : 'עדכן עכשיו'}
+            {loading ? t('obUpdating') : t('obUpdateNow')}
           </button>
           {onDismiss && (
             <button
               onClick={onDismiss}
-              className="w-full py-2.5 text-slate-400 hover:text-white text-base
+              className="w-full py-2.5 text-fg-muted hover:text-fg text-base
                          transition-colors duration-150"
             >
-              מאוחר יותר
+              {t('obLater')}
             </button>
           )}
         </div>
