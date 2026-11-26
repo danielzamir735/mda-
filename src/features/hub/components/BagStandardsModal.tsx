@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight, Backpack, CheckCircle2, Circle, XCircle, RotateCcw, Calendar, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import { useTranslation } from '../../../hooks/useTranslation';
+import { useTranslation, translate, type TranslationKey } from '../../../hooks/useTranslation';
 import { trackEvent } from '../../../utils/analytics';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface BagItem { name: string; qty: string }
-interface Bag { id: string; title: string; subtitle: string; color: string; border: string; bg: string; iconColor: string; items: BagItem[] }
-interface MDACategory { id: string; title: string; color: string; border: string; bg: string; items: BagItem[] }
+/** `k` is a dictionary key (with `v` filling {n}); `name` is a literal, already-English label.
+ *  `qk` formats the quantity (e.g. "1 each"). */
+interface BagItem { k?: TranslationKey; v?: string; name?: string; qty: string; qk?: TranslationKey }
+interface Bag { id: string; title: TranslationKey; subtitle: TranslationKey; color: string; border: string; bg: string; iconColor: string; items: BagItem[] }
+interface MDACategory { id: string; title: TranslationKey; color: string; border: string; bg: string; items: BagItem[] }
 interface ItemStatus { status: 'have' | 'missing' | null; expiryDate?: string }
 type BagInventory = Record<string, ItemStatus>
 
@@ -17,119 +19,119 @@ type BagInventory = Record<string, ItemStatus>
 const BAGS: Bag[] = [
   {
     id: 'maar',
-    title: 'תיק מע״ר',
-    subtitle: 'מגיב ראשון',
+    title: 'bagTFirstResponderBag',
+    subtitle: 'bagTFirstResponder',
     color: 'text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
     iconColor: 'text-emerald-400',
     items: [
-      { name: 'תרמיל גב', qty: '1' },
-      { name: 'משולש בד', qty: '5' },
-      { name: 'תחבושת אישית', qty: '5' },
-      { name: 'תחבושת בינונית', qty: '1' },
-      { name: 'חוסם עורקים', qty: '1' },
-      { name: 'אגד (תחבושת)', qty: '10' },
-      { name: 'מיקרופור', qty: '2' },
-      { name: 'פלסטר', qty: '200' },
-      { name: 'מלע״כ (מספריים)', qty: '1' },
-      { name: 'פד גזה סטרילי', qty: '20' },
-      { name: 'סד קשיח', qty: '1' },
-      { name: 'סביעור / חיטוי', qty: '2' },
-      { name: 'מסכת כיס להנשמה', qty: '1' },
-      { name: 'תחבושת לכוויות (ברנשילד)', qty: '3' },
-      { name: 'שמיכה היפותרמית', qty: '2' },
-      { name: 'כפפות ח״פ (זוגות)', qty: '20' },
-      { name: 'פנס ראש', qty: '1' },
-      { name: 'תחבושות אלסטיות', qty: '5' },
-      { name: 'מזרק אפיפן (במקרה אלרגיה)', qty: '1' },
+      { k: 'bagBackpack', qty: '1' },
+      { k: 'bagTriangularBandage', qty: '5' },
+      { k: 'bagPersonalIsraeliDressing', qty: '5' },
+      { k: 'bagMediumDressing', qty: '1' },
+      { k: 'bagTourniquet', qty: '1' },
+      { k: 'bagRollerBandage', qty: '10' },
+      { k: 'bagMicroporeTape', qty: '2' },
+      { k: 'bagAdhesiveBandages', qty: '200' },
+      { k: 'bagTraumaShears', qty: '1' },
+      { k: 'bagSterileGauzePad', qty: '20' },
+      { k: 'bagRigidSplint', qty: '1' },
+      { k: 'bagSaviorDisinfectant', qty: '2' },
+      { k: 'bagPocketResuscitationMask', qty: '1' },
+      { k: 'bagBurnDressingBurnshield', qty: '3' },
+      { k: 'bagHypothermiaBlanket', qty: '2' },
+      { k: 'bagDisposableGlovesPairs', qty: '20' },
+      { k: 'bagHeadlamp', qty: '1' },
+      { k: 'bagElasticBandages', qty: '5' },
+      { k: 'bagEpipenAutoInjectorForAllergy', qty: '1' },
     ],
   },
   {
     id: 'chovesh',
-    title: 'תיק חובש',
-    subtitle: 'חובש מוסמך',
+    title: 'bagTEmtBag',
+    subtitle: 'bagTCertifiedEmt',
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
     iconColor: 'text-blue-400',
     items: [
-      { name: 'תרמיל גב', qty: '1' },
-      { name: 'משולש בד', qty: '8' },
-      { name: 'תחבושת אישית', qty: '4' },
-      { name: 'תחבושת בינונית', qty: '1' },
-      { name: 'חוסם עורקים', qty: '2' },
-      { name: 'אגד (תחבושת)', qty: '10' },
-      { name: 'מיקרופור', qty: '3' },
-      { name: 'פלסטר', qty: '200' },
-      { name: 'מלע״כ', qty: '1' },
-      { name: 'פד גזה', qty: '20' },
-      { name: 'סד קשיח', qty: '1' },
-      { name: 'חיטוי עור', qty: '1' },
-      { name: 'תחבושת לכוויות', qty: '3' },
-      { name: 'אשרמן', qty: '1' },
-      { name: 'שמיכה היפותרמית', qty: '1' },
-      { name: 'מנתב אוויר 3,4,5', qty: '1 כ״א' },
-      { name: 'כפפות', qty: '20' },
-      { name: 'צווארון מתכוונן', qty: '1' },
-      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
-      { name: 'מד סטורציה', qty: '1' },
-      { name: 'ערכת עירוי NaCl 0.9%', qty: '4' },
-      { name: 'מסכת כיס', qty: '1' },
-      { name: 'קטטר סקשן', qty: '2' },
-      { name: 'סקשן', qty: '1' },
-      { name: 'פנס ראש', qty: '1' },
-      { name: 'תחבושות אלסטיות', qty: '5' },
-      { name: "גלוקוג'ל", qty: '1' },
-      { name: 'אספירין 300מ"ג', qty: '10' },
-      { name: 'תחבושת המוסטטית', qty: '5' },
-      { name: 'מד חום', qty: '2' },
-      { name: 'מזרק אפיפן', qty: '1' },
+      { k: 'bagBackpack', qty: '1' },
+      { k: 'bagTriangularBandage', qty: '8' },
+      { k: 'bagPersonalIsraeliDressing', qty: '4' },
+      { k: 'bagMediumDressing', qty: '1' },
+      { k: 'bagTourniquet', qty: '2' },
+      { k: 'bagRollerBandage', qty: '10' },
+      { k: 'bagMicroporeTape', qty: '3' },
+      { k: 'bagAdhesiveBandages', qty: '200' },
+      { k: 'bagTraumaShears2', qty: '1' },
+      { k: 'bagGauzePad', qty: '20' },
+      { k: 'bagRigidSplint', qty: '1' },
+      { k: 'bagSkinDisinfectant', qty: '1' },
+      { k: 'bagBurnDressing', qty: '3' },
+      { k: 'bagAshermanChestSeal', qty: '1' },
+      { k: 'bagHypothermiaBlanket', qty: '1' },
+      { k: 'bagOpa', v: '3,4,5', qty: '1', qk: 'bagQtyEach' },
+      { k: 'bagGloves', qty: '20' },
+      { k: 'bagAdjustableCervicalCollar', qty: '1' },
+      { k: 'bagBpCuffStethoscope', qty: '1', qk: 'bagQtyEach' },
+      { k: 'bagPulseOximeter', qty: '1' },
+      { k: 'bagIvSetNacl09', qty: '4' },
+      { k: 'bagPocketMask', qty: '1' },
+      { k: 'bagSuctionCatheter', qty: '2' },
+      { k: 'bagSuctionUnit', qty: '1' },
+      { k: 'bagHeadlamp', qty: '1' },
+      { k: 'bagElasticBandages', qty: '5' },
+      { k: 'bagGlucoseGel', qty: '1' },
+      { k: 'bagAspirin300Mg', qty: '10' },
+      { k: 'bagHemostaticDressing', qty: '5' },
+      { k: 'bagThermometer', qty: '2' },
+      { k: 'bagEpipenAutoInjector', qty: '1' },
     ],
   },
   {
     id: 'paramedic',
-    title: 'תיק פאראמדיק',
-    subtitle: 'פאראמדיק מוסמך',
+    title: 'bagTParamedicBag',
+    subtitle: 'bagTCertifiedParamedic',
     color: 'text-emt-red',
     border: 'border-emt-red/30',
     bg: 'bg-emt-red/10',
     iconColor: 'text-emt-red',
     items: [
-      { name: 'דפיברילטור', qty: '1' },
-      { name: 'חוסם עורקים', qty: '2' },
-      { name: 'ערכת עירוי NaCl 0.9% 500cc', qty: '4' },
-      { name: 'מפוח הנשמה + מסכות + מסנן', qty: '1' },
-      { name: 'מכשיר סקשן + קטטרים', qty: '1' },
-      { name: 'ערכת אינטובציה קומפלט + LMA', qty: '1' },
-      { name: 'מזרק תוך גרמי (BIG) ילד+מבוגר', qty: '2' },
-      { name: 'אשרמן', qty: '1' },
-      { name: 'מחט וויגון לניקוז חזה + סקלפל', qty: '2' },
-      { name: 'מד ל״ד, סטטוסקופ, סטורציה, מד חום', qty: '1 כ״א' },
-      { name: 'גלוקומטר + סטיקים', qty: '1' },
-      { name: 'צווארון מתכוונן + סד קשיח', qty: '1 כ״א' },
-      { name: 'מיכל חמצן נייד + וסת + מסכות', qty: '1' },
-      { name: 'אדרנלין 1mg', qty: '5' },
-      { name: 'אטרופין 1mg', qty: '4' },
-      { name: 'פרוקור 150mg', qty: '2' },
-      { name: 'דורמיקום 5mg', qty: '5' },
-      { name: 'סוכר מרוכז Dextrose 50%', qty: '1' },
-      { name: 'איזוקט ספריי', qty: '1' },
-      { name: 'אספירין 300mg', qty: '10' },
-      { name: 'ונטולין + אירוונט', qty: '1 כ״א' },
-      { name: 'אקמול + אופטלגין', qty: '20 כ״א' },
+      { k: 'bagDefibrillator', qty: '1' },
+      { k: 'bagTourniquet', qty: '2' },
+      { k: 'bagIvSetNacl092', qty: '4' },
+      { k: 'bagBagValveMaskMasksFilter', qty: '1' },
+      { k: 'bagSuctionUnitCatheters', qty: '1' },
+      { k: 'bagCompleteIntubationKitLma', qty: '1' },
+      { k: 'bagIntraosseousGunBigChildAdult', qty: '2' },
+      { k: 'bagAshermanChestSeal', qty: '1' },
+      { k: 'bagVenflonNeedleForChestDecompression', qty: '2' },
+      { k: 'bagBpCuffStethoscopePulseOximeter', qty: '1', qk: 'bagQtyEach' },
+      { k: 'bagGlucometerTestStrips', qty: '1' },
+      { k: 'bagAdjustableCollarRigidSplint', qty: '1', qk: 'bagQtyEach' },
+      { k: 'bagPortableOxygenCylinderRegulatorMasks', qty: '1' },
+      { k: 'bagAdrenaline1Mg', qty: '5' },
+      { k: 'bagAtropine1Mg', qty: '4' },
+      { k: 'bagProcorAmiodarone150Mg', qty: '2' },
+      { k: 'bagDormicumMidazolam5Mg', qty: '5' },
+      { k: 'bagConcentratedGlucoseDextrose50', qty: '1' },
+      { k: 'bagIsoketSpray', qty: '1' },
+      { k: 'bagAspirin300Mg2', qty: '10' },
+      { k: 'bagVentolinAtrovent', qty: '1', qk: 'bagQtyEach' },
+      { k: 'bagAcamolParacetamolOptalginDipyrone', qty: '20', qk: 'bagQtyEach' },
     ],
   },
   {
     id: 'doctor_camp',
-    title: 'תיק רופא חניון',
-    subtitle: 'רופא חניון',
+    title: 'bagTCampDoctorBag',
+    subtitle: 'bagTCampDoctor',
     color: 'text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
     iconColor: 'text-purple-400',
     items: [
-      { name: 'ציוד החייאה וטראומה מלא (זהה לפראמדיק)', qty: '1' },
+      { k: 'bagFullResuscitationAndTraumaKit', qty: '1' },
       { name: 'Lidocaine 2%', qty: '1' },
       { name: 'Diazapam (Assival) 1mg/5mg', qty: '2' },
       { name: 'Furosemide 40mg', qty: '4' },
@@ -146,18 +148,18 @@ const BAGS: Bag[] = [
   },
   {
     id: 'doctor_walk',
-    title: 'תיק רופא הליכה',
-    subtitle: 'רופא הליכה',
+    title: 'bagTHikingDoctorBag',
+    subtitle: 'bagTHikingDoctor',
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     iconColor: 'text-amber-400',
     items: [
-      { name: 'ציוד טראומה בסיסי (כמו חובש)', qty: '1 סט' },
-      { name: 'מפוח הנשמה + מסכות', qty: '1' },
-      { name: 'ערכת עירוי NaCl 0.9% 500cc', qty: '2' },
-      { name: 'אדרנלין 1mg', qty: '3' },
-      { name: 'אטרופין 1mg', qty: '2' },
+      { k: 'bagBasicTraumaKitAsFor', qty: '1', qk: 'bagQtySet' },
+      { k: 'bagBagValveMaskMasks', qty: '1' },
+      { k: 'bagIvSetNacl092', qty: '2' },
+      { k: 'bagAdrenaline1Mg', qty: '3' },
+      { k: 'bagAtropine1Mg', qty: '2' },
       { name: 'Diazepam (Assival) 10mg', qty: '2' },
       { name: 'Furosemide 40mg', qty: '2' },
       { name: 'Prednisone 20mg', qty: '4' },
@@ -166,11 +168,11 @@ const BAGS: Bag[] = [
       { name: 'Amoxicillin 250mg', qty: '10' },
       { name: 'Pramin 10mg', qty: '5' },
       { name: 'Zofran 4mg', qty: '10' },
-      { name: 'אספירין 300mg', qty: '5' },
-      { name: 'מזרקים + מחטים', qty: 'מגוון' },
-      { name: 'כפפות חד-פעמיות (זוגות)', qty: '10' },
-      { name: 'גלוקומטר + סטיקים', qty: '1' },
-      { name: 'מד ל״ד + סטטוסקופ', qty: '1 כ״א' },
+      { k: 'bagAspirin300Mg2', qty: '5' },
+      { k: 'bagSyringesNeedles', qty: '', qk: 'bagQtyAssorted' },
+      { k: 'bagDisposableGlovesPairs2', qty: '10' },
+      { k: 'bagGlucometerTestStrips', qty: '1' },
+      { k: 'bagBpCuffStethoscope', qty: '1', qk: 'bagQtyEach' },
     ],
   },
 ];
@@ -179,117 +181,117 @@ const BAGS: Bag[] = [
 const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'trauma',
-    title: 'חבישה וטראומה',
+    title: 'bagTDressingsTrauma',
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
-      { name: 'חסם עורקים גומי', qty: '2' },
-      { name: 'חסם עורקים CAT', qty: '1' },
-      { name: 'פלסטרים', qty: '10' },
-      { name: 'גליל אגד 5 ס"מ', qty: '5' },
-      { name: 'פד גזה סטרילי 10×10', qty: '20' },
-      { name: 'פד גזה סטרילי 5×5', qty: '20' },
-      { name: 'לויקופלסט / דבק', qty: '1' },
-      { name: 'תחבושת אלסטית', qty: '2' },
-      { name: 'תחבושת בינונית', qty: '1' },
-      { name: 'תחבושת אישית', qty: '3' },
-      { name: 'תחבושת טקטית / ישראלית', qty: '1' },
-      { name: 'תחבושת אשרמן', qty: '1' },
-      { name: 'תחבושת המוסטטית', qty: '1' },
-      { name: 'משולש לקיבוע', qty: '4' },
-      { name: 'מלע"כ (מספריים)', qty: '1' },
-      { name: 'שמיכת מילוט', qty: '1' },
-      { name: 'פולידין תמיסה 20 מ"ל', qty: '1' },
+      { k: 'bagRubberTourniquet', qty: '2' },
+      { k: 'bagCatTourniquet', qty: '1' },
+      { k: 'bagAdhesiveBandages2', qty: '10' },
+      { k: 'bagRollerBandage5Cm', qty: '5' },
+      { k: 'bagSterileGauzePad1010', qty: '20' },
+      { k: 'bagSterileGauzePad55', qty: '20' },
+      { k: 'bagLeukoplastTape', qty: '1' },
+      { k: 'bagElasticBandage', qty: '2' },
+      { k: 'bagMediumDressing', qty: '1' },
+      { k: 'bagPersonalIsraeliDressing', qty: '3' },
+      { k: 'bagTacticalIsraeliBandage', qty: '1' },
+      { k: 'bagAshermanChestSeal2', qty: '1' },
+      { k: 'bagHemostaticDressing', qty: '1' },
+      { k: 'bagTriangularBandageForImmobilization', qty: '4' },
+      { k: 'bagTraumaShears3', qty: '1' },
+      { k: 'bagRescueSpaceBlanket', qty: '1' },
+      { k: 'bagPovidoneIodineSolution20Ml', qty: '1' },
     ],
   },
   {
     id: 'airway',
-    title: 'החייאה, הנשמה וחמצן',
+    title: 'bagTResuscitationVentilationOxygen',
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
-      { name: 'סוללה 9V לדפיברילטור', qty: '1' },
-      { name: 'מדבקה לדפיברילטור (Life Line)', qty: '1' },
-      { name: 'מדבקה לדפי G3', qty: '1' },
-      { name: 'ווסת לבלון חמצן', qty: '1' },
-      { name: 'סקשן ידני', qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 5", qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 2", qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 0", qty: '1' },
-      { name: "מפוח הנשמה מבוגר (כולל מסכה מס' 5)", qty: '1' },
-      { name: "מפוח הנשמה ילד (כולל מסכה מס' 2)", qty: '1' },
-      { name: 'מסכת חמצן מבוגר', qty: '2' },
-      { name: 'מסכת חמצן ילד', qty: '2' },
-      { name: 'קטטר לסקשן אדום', qty: '2' },
-      { name: 'קטטר לסקשן כחול', qty: '2' },
-      { name: 'מנתב אוויר 00', qty: '1' },
-      { name: 'מנתב אוויר 0', qty: '1' },
-      { name: 'מנתב אוויר 1', qty: '1' },
-      { name: 'מנתב אוויר 2', qty: '1' },
-      { name: 'מנתב אוויר 3', qty: '2' },
-      { name: 'מנתב אוויר 4', qty: '1' },
-      { name: 'מסנן ויראלי מבוגר', qty: '2' },
-      { name: 'מסנן ויראלי ילד', qty: '1' },
+      { k: 'bag9vBatteryForDefibrillator', qty: '1' },
+      { k: 'bagDefibrillatorPadLifeLine', qty: '1' },
+      { k: 'bagPadForG3Defibrillator', qty: '1' },
+      { k: 'bagOxygenCylinderRegulator', qty: '1' },
+      { k: 'bagManualSuction', qty: '1' },
+      { k: 'bagBvmMask', v: '5', qty: '1' },
+      { k: 'bagBvmMask', v: '2', qty: '1' },
+      { k: 'bagBvmMask', v: '0', qty: '1' },
+      { k: 'bagAdultBagValveMaskIncl', qty: '1' },
+      { k: 'bagChildBagValveMaskIncl', qty: '1' },
+      { k: 'bagAdultOxygenMask', qty: '2' },
+      { k: 'bagChildOxygenMask', qty: '2' },
+      { k: 'bagSuctionCatheterRed', qty: '2' },
+      { k: 'bagSuctionCatheterBlue', qty: '2' },
+      { k: 'bagOpa', v: '00', qty: '1' },
+      { k: 'bagOpa', v: '0', qty: '1' },
+      { k: 'bagOpa', v: '1', qty: '1' },
+      { k: 'bagOpa', v: '2', qty: '1' },
+      { k: 'bagOpa', v: '3', qty: '2' },
+      { k: 'bagOpa', v: '4', qty: '1' },
+      { k: 'bagAdultViralFilter', qty: '2' },
+      { k: 'bagChildViralFilter', qty: '1' },
     ],
   },
   {
     id: 'meds',
-    title: 'עירוי, סוכר ותרופות',
+    title: 'bagTIvGlucoseMedications',
     color: 'text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: 'ערכה לפתיחת וריד', qty: '1' },
-      { name: 'סליין 0.5 ליטר', qty: '1' },
-      { name: 'פח מחטים (0.5 ליטר)', qty: '1' },
-      { name: 'ערכת הזרקת אדרנלין', qty: '1' },
-      { name: 'דוקרנים למד סוכר', qty: '10' },
-      { name: 'סטיקים למד סוכר – פרסטיל', qty: '10' },
-      { name: 'סטיקים למד סוכר – דגם חדש (שור)', qty: '10' },
-      { name: 'סוללה למד סוכר 3V', qty: '2' },
-      { name: "ספונג'טה לחיטוי", qty: '10' },
-      { name: "גלוקוג'ל", qty: '2' },
-      { name: 'אספירין', qty: '10' },
+      { k: 'bagIvStartKit', qty: '1' },
+      { k: 'bagSaline05L', qty: '1' },
+      { k: 'bagSharpsContainer05L', qty: '1' },
+      { k: 'bagAdrenalineInjectionKit', qty: '1' },
+      { k: 'bagGlucometerLancets', qty: '10' },
+      { k: 'bagGlucometerStripsFreestyle', qty: '10' },
+      { k: 'bagGlucometerStripsNewModelSure', qty: '10' },
+      { k: 'bag3vGlucometerBattery', qty: '2' },
+      { k: 'bagAlcoholSwab', qty: '10' },
+      { k: 'bagGlucoseGel', qty: '2' },
+      { k: 'bagAspirin', qty: '10' },
     ],
   },
   {
     id: 'immob',
-    title: 'קיבוע ולידה',
+    title: 'bagTImmobilizationChildbirth',
     color: 'text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
     items: [
-      { name: 'סד קשיח לקיבוע', qty: '1' },
-      { name: 'צווארון מתכוונן', qty: '1' },
-      { name: 'ערכת לידה', qty: '1' },
+      { k: 'bagRigidImmobilizationSplint', qty: '1' },
+      { k: 'bagAdjustableCervicalCollar', qty: '1' },
+      { k: 'bagChildbirthKit', qty: '1' },
     ],
   },
   {
     id: 'general',
-    title: 'כללי וציוד עזר',
+    title: 'bagTGeneralAccessories',
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
-      { name: 'כפפות מידה S', qty: '100' },
-      { name: 'כפפות מידה M', qty: '100' },
-      { name: 'כפפות מידה L', qty: '100' },
-      { name: 'כפפות מידה XL', qty: '100' },
-      { name: "ג'ל לחיטוי ידיים", qty: '1' },
-      { name: 'מסכת הגנה N-95', qty: '3' },
-      { name: 'מסכה כירורגית', qty: '10' },
-      { name: 'מגבון אישי לחיטוי', qty: '5' },
-      { name: 'מדל"ד מבוגר (כולל סטטוסקופ)', qty: '1' },
-      { name: 'סטטוסקופ', qty: '1' },
-      { name: 'סוללה AAA למד סטורציה', qty: '2' },
-      { name: 'סכין גילוח', qty: '1' },
-      { name: 'אלונקת בד', qty: '1' },
-      { name: 'סט תגי אר"ן (מארז של 5)', qty: '1' },
-      { name: 'טוש לא מחיק', qty: '1' },
-      { name: 'גומיה לאיטום ווסת חמצן', qty: '1' },
-      { name: 'קליפס לראגר', qty: '1' },
+      { k: 'bagGlovesSize', v: 'S', qty: '100' },
+      { k: 'bagGlovesSize', v: 'M', qty: '100' },
+      { k: 'bagGlovesSize', v: 'L', qty: '100' },
+      { k: 'bagGlovesSize', v: 'XL', qty: '100' },
+      { k: 'bagHandSanitizerGel', qty: '1' },
+      { k: 'bagN95RespiratorMask', qty: '3' },
+      { k: 'bagSurgicalMask', qty: '10' },
+      { k: 'bagDisinfectingWipe', qty: '5' },
+      { k: 'bagAdultBpCuffInclStethoscope', qty: '1' },
+      { k: 'bagStethoscope', qty: '1' },
+      { k: 'bagAaaBatteryForPulseOximeter', qty: '2' },
+      { k: 'bagRazor', qty: '1' },
+      { k: 'bagFabricStretcher', qty: '1' },
+      { k: 'bagMciTriageTagSetPack', qty: '1' },
+      { k: 'bagPermanentMarker', qty: '1' },
+      { k: 'bagOxygenRegulatorSealingWasher', qty: '1' },
+      { k: 'bagRagarClip', qty: '1' },
     ],
   },
 ];
@@ -298,217 +300,217 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
 const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'intubation',
-    title: 'נתיב אוויר ואינטובציה',
+    title: 'bagTAirwayIntubation',
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
     items: [
-      { name: 'מחט לעירוי תוך-גרמי Sam IO 25 מ"מ', qty: '1' },
-      { name: 'מכוון טובוס למבוגר (14 ס"מ)', qty: '2' },
-      { name: 'מכוון טובוס לילד (10 ס"מ)', qty: '1' },
-      { name: 'מכוון אנדוטרכיאלי (בוזי) לטובוס', qty: '1' },
-      { name: 'ידית לרינגוסקופ (בסיס)', qty: '1' },
-      { name: "להב לרינגוסקופ מקינטוש מס' 1", qty: '1' },
-      { name: "להב לרינגוסקופ מקינטוש מס' 2", qty: '1' },
-      { name: "להב לרינגוסקופ מקינטוש מס' 3", qty: '1' },
-      { name: "להב לרינגוסקופ מקינטוש מס' 4", qty: '1' },
-      { name: 'מלקחיים מגיל למבוגר', qty: '1' },
-      { name: 'שרוך לבן לקיבוע', qty: '3' },
-      { name: 'מסכת פנים לאינטובציה (כולל שקף)', qty: '4' },
-      { name: 'משקף מגן קשיח לאינטובציה', qty: '1' },
-      { name: 'מזרק 20 סמ"ק ללא מחט', qty: '2' },
-      { name: "טובוס מס' 3", qty: '1' },
-      { name: "טובוס מס' 3.5", qty: '1' },
-      { name: "טובוס מס' 4", qty: '1' },
-      { name: "טובוס מס' 4.5", qty: '1' },
-      { name: "טובוס מס' 5", qty: '1' },
-      { name: "טובוס מס' 5.5", qty: '1' },
-      { name: "טובוס מס' 6", qty: '1' },
-      { name: "טובוס מס' 6.5", qty: '1' },
-      { name: "טובוס מס' 7", qty: '2' },
-      { name: "טובוס מס' 7.5", qty: '2' },
-      { name: "טובוס מס' 8", qty: '2' },
-      { name: "ג'ל לובריקציה 2.7 גרם (שקיק)", qty: '5' },
-      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 2", qty: '1' },
-      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 3", qty: '1' },
-      { name: "להב וידאו-לרינגוסקופ McGRATH מס' 4", qty: '1' },
-      { name: "להב וידאו-לרינגוסקופ McGRATH מס' X3", qty: '1' },
+      { k: 'bagSamIoIntraosseousNeedle25', qty: '1' },
+      { k: 'bagAdultEtTubeStylet14', qty: '2' },
+      { k: 'bagChildEtTubeStylet10', qty: '1' },
+      { k: 'bagEndotrachealIntroducerBougie', qty: '1' },
+      { k: 'bagLaryngoscopeHandle', qty: '1' },
+      { k: 'bagMacBlade', v: '1', qty: '1' },
+      { k: 'bagMacBlade', v: '2', qty: '1' },
+      { k: 'bagMacBlade', v: '3', qty: '1' },
+      { k: 'bagMacBlade', v: '4', qty: '1' },
+      { k: 'bagAdultMagillForceps', qty: '1' },
+      { k: 'bagWhiteTieForSecuringThe', qty: '3' },
+      { k: 'bagFaceMaskForIntubationWith', qty: '4' },
+      { k: 'bagRigidSafetyGogglesForIntubation', qty: '1' },
+      { k: 'bag20CcSyringeWithoutNeedle', qty: '2' },
+      { k: 'bagEtTube', v: '3', qty: '1' },
+      { k: 'bagEtTube', v: '3.5', qty: '1' },
+      { k: 'bagEtTube', v: '4', qty: '1' },
+      { k: 'bagEtTube', v: '4.5', qty: '1' },
+      { k: 'bagEtTube', v: '5', qty: '1' },
+      { k: 'bagEtTube', v: '5.5', qty: '1' },
+      { k: 'bagEtTube', v: '6', qty: '1' },
+      { k: 'bagEtTube', v: '6.5', qty: '1' },
+      { k: 'bagEtTube', v: '7', qty: '2' },
+      { k: 'bagEtTube', v: '7.5', qty: '2' },
+      { k: 'bagEtTube', v: '8', qty: '2' },
+      { k: 'bagLubricatingGel27G', qty: '5' },
+      { k: 'bagMcGrathBlade', v: '2', qty: '1' },
+      { k: 'bagMcGrathBlade', v: '3', qty: '1' },
+      { k: 'bagMcGrathBlade', v: '4', qty: '1' },
+      { k: 'bagMcGrathBlade', v: 'X3', qty: '1' },
     ],
   },
   {
     id: 'airway',
-    title: 'הנשמה, חמצן ונשימתי',
+    title: 'bagTVentilationOxygenRespiratory',
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
-      { name: 'סוללה 9V לדפיברילטור', qty: '1' },
-      { name: 'מדבקה לדפיברילטור (Life Line)', qty: '1' },
-      { name: 'ווסת לבלון חמצן', qty: '1' },
-      { name: 'סקשן ידני', qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 5", qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 2", qty: '1' },
-      { name: "מסכת הנשמה (אמבו) מס' 0", qty: '1' },
-      { name: "מפוח הנשמה מבוגר (כולל מסכה מס' 5)", qty: '1' },
-      { name: "מפוח הנשמה ילד (כולל מסכה מס' 2)", qty: '1' },
-      { name: 'מסכת חמצן מבוגר', qty: '2' },
-      { name: 'מסכת חמצן ילד', qty: '1' },
-      { name: 'מסכת אינהלציה מבוגר', qty: '2' },
-      { name: 'מסכת אינהלציה ילד', qty: '2' },
-      { name: 'קטטר לסקשן אדום', qty: '1' },
-      { name: 'קטטר לסקשן כחול', qty: '2' },
-      { name: 'מנתב אוויר 00', qty: '1' },
-      { name: 'מנתב אוויר 0', qty: '1' },
-      { name: 'מנתב אוויר 1', qty: '1' },
-      { name: 'מנתב אוויר 2', qty: '1' },
-      { name: 'מנתב אוויר 3', qty: '2' },
-      { name: 'מנתב אוויר 4', qty: '1' },
-      { name: 'מסנן ויראלי מבוגר', qty: '2' },
-      { name: 'מסנן ויראלי ילד', qty: '1' },
-      { name: 'קטטר לזונדה 16', qty: '1' },
-      { name: 'קטטר לזונדה 18', qty: '1' },
+      { k: 'bag9vBatteryForDefibrillator', qty: '1' },
+      { k: 'bagDefibrillatorPadLifeLine', qty: '1' },
+      { k: 'bagOxygenCylinderRegulator', qty: '1' },
+      { k: 'bagManualSuction', qty: '1' },
+      { k: 'bagBvmMask', v: '5', qty: '1' },
+      { k: 'bagBvmMask', v: '2', qty: '1' },
+      { k: 'bagBvmMask', v: '0', qty: '1' },
+      { k: 'bagAdultBagValveMaskIncl', qty: '1' },
+      { k: 'bagChildBagValveMaskIncl', qty: '1' },
+      { k: 'bagAdultOxygenMask', qty: '2' },
+      { k: 'bagChildOxygenMask', qty: '1' },
+      { k: 'bagAdultNebulizerMask', qty: '2' },
+      { k: 'bagChildNebulizerMask', qty: '2' },
+      { k: 'bagSuctionCatheterRed', qty: '1' },
+      { k: 'bagSuctionCatheterBlue', qty: '2' },
+      { k: 'bagOpa', v: '00', qty: '1' },
+      { k: 'bagOpa', v: '0', qty: '1' },
+      { k: 'bagOpa', v: '1', qty: '1' },
+      { k: 'bagOpa', v: '2', qty: '1' },
+      { k: 'bagOpa', v: '3', qty: '2' },
+      { k: 'bagOpa', v: '4', qty: '1' },
+      { k: 'bagAdultViralFilter', qty: '2' },
+      { k: 'bagChildViralFilter', qty: '1' },
+      { k: 'bagNgTube', v: '16', qty: '1' },
+      { k: 'bagNgTube', v: '18', qty: '1' },
     ],
   },
   {
     id: 'trauma',
-    title: 'חבישה, טראומה וניקור חזה',
+    title: 'bagTDressingsTraumaChestDecompression',
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
-      { name: 'חסם עורקים גומי', qty: '1' },
-      { name: 'חסם עורקים CAT', qty: '1' },
-      { name: 'פלסטרים', qty: '20' },
-      { name: 'גליל אגד 5 ס"מ', qty: '5' },
-      { name: 'פד גזה סטרילי 10×10', qty: '10' },
-      { name: 'פד גזה סטרילי 5×5', qty: '20' },
-      { name: 'שמיכת מילוט', qty: '1' },
-      { name: 'לויקופלסט / דבק', qty: '1' },
-      { name: 'תחבושת אלסטית', qty: '2' },
-      { name: 'תחבושת בינונית', qty: '1' },
-      { name: 'תחבושת אישית', qty: '2' },
-      { name: 'משולש לקיבוע', qty: '4' },
-      { name: 'מלע"כ (מספריים)', qty: '1' },
-      { name: 'תחבושת טקטית / ישראלית', qty: '1' },
-      { name: 'תחבושת אשרמן', qty: '1' },
-      { name: 'תחבושת המוסטטית', qty: '1' },
-      { name: 'פולידין תמיסה 20 מ"ל', qty: '1' },
-      { name: 'ערכת ניקור חזה', qty: '1' },
-      { name: 'מחט ניקוז חזה T-PAK 14 מ"מ', qty: '1' },
-      { name: 'צינורית לעירוי', qty: '3' },
+      { k: 'bagRubberTourniquet', qty: '1' },
+      { k: 'bagCatTourniquet', qty: '1' },
+      { k: 'bagAdhesiveBandages2', qty: '20' },
+      { k: 'bagRollerBandage5Cm', qty: '5' },
+      { k: 'bagSterileGauzePad1010', qty: '10' },
+      { k: 'bagSterileGauzePad55', qty: '20' },
+      { k: 'bagRescueSpaceBlanket', qty: '1' },
+      { k: 'bagLeukoplastTape', qty: '1' },
+      { k: 'bagElasticBandage', qty: '2' },
+      { k: 'bagMediumDressing', qty: '1' },
+      { k: 'bagPersonalIsraeliDressing', qty: '2' },
+      { k: 'bagTriangularBandageForImmobilization', qty: '4' },
+      { k: 'bagTraumaShears3', qty: '1' },
+      { k: 'bagTacticalIsraeliBandage', qty: '1' },
+      { k: 'bagAshermanChestSeal2', qty: '1' },
+      { k: 'bagHemostaticDressing', qty: '1' },
+      { k: 'bagPovidoneIodineSolution20Ml', qty: '1' },
+      { k: 'bagNeedleDecompressionKit', qty: '1' },
+      { k: 'bagTPakChestDecompressionNeedle', qty: '1' },
+      { k: 'bagIvTubing', qty: '3' },
     ],
   },
   {
     id: 'iv',
-    title: 'עירוי, הזרקה וסוכר',
+    title: 'bagTIvInjectionGlucose',
     color: 'text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
     items: [
-      { name: 'ערכה לפתיחת וריד', qty: '1' },
-      { name: 'סליין 0.5 ליטר', qty: '1' },
-      { name: 'פח מחטים (0.5 ליטר)', qty: '1' },
-      { name: 'מחט סטרילית G18 1½" (ורוד)', qty: '6' },
-      { name: 'מחט סטרילית G21 1½" (ירוק)', qty: '6' },
-      { name: 'מזרק נזאלי (קונוס להחדרת תרופות)', qty: '2' },
-      { name: 'סטופקוק / ברז תלת-כיווני עם אקסטנשן', qty: '2' },
-      { name: 'מזרק 1 מ"ל', qty: '3' },
-      { name: 'מזרק 10 סמ"ק ללא מחט', qty: '6' },
-      { name: 'מזרק 2.5/3 סמ"ק ללא מחט', qty: '6' },
-      { name: 'מזרק 5 סמ"ק ללא מחט', qty: '6' },
-      { name: 'מזרק 60×50 – זונדה (סופגניה)', qty: '1' },
-      { name: 'ונפלון כחול G22', qty: '2' },
-      { name: 'ונפלון ירוק G18', qty: '2' },
-      { name: 'ונפלון ורוד G20', qty: '2' },
-      { name: 'ונפלון צהוב G24', qty: '1' },
-      { name: 'מזרק תוך-גרמי לילדים BIG', qty: '1' },
-      { name: 'מזרק תוך-גרמי למבוגר BIG', qty: '1' },
-      { name: 'דוקרנים למד סוכר', qty: '10' },
-      { name: 'סטיקים למד סוכר – פרסטיל', qty: '10' },
-      { name: 'סטיקים למד סוכר – דגם חדש (שור)', qty: '10' },
-      { name: 'סוללה למד סוכר 3V', qty: '2' },
-      { name: "ספונג'טה לחיטוי", qty: '5' },
+      { k: 'bagIvStartKit', qty: '1' },
+      { k: 'bagSaline05L', qty: '1' },
+      { k: 'bagSharpsContainer05L', qty: '1' },
+      { k: 'bagSterileNeedleG181Pink', qty: '6' },
+      { k: 'bagSterileNeedleG211Green', qty: '6' },
+      { k: 'bagNasalAtomizerConeForIntranasal', qty: '2' },
+      { k: 'bagStopcock3WayTapWith', qty: '2' },
+      { k: 'bag1MlSyringe', qty: '3' },
+      { k: 'bag10CcSyringeWithoutNeedle', qty: '6' },
+      { k: 'bag253CcSyringe', qty: '6' },
+      { k: 'bag5CcSyringeWithoutNeedle', qty: '6' },
+      { k: 'bag6050CcCatheterTip', qty: '1' },
+      { k: 'bagBlueIvCannulaG22', qty: '2' },
+      { k: 'bagGreenIvCannulaG18', qty: '2' },
+      { k: 'bagPinkIvCannulaG20', qty: '2' },
+      { k: 'bagYellowIvCannulaG24', qty: '1' },
+      { k: 'bagPediatricIntraosseousGunBig', qty: '1' },
+      { k: 'bagAdultIntraosseousGunBig', qty: '1' },
+      { k: 'bagGlucometerLancets', qty: '10' },
+      { k: 'bagGlucometerStripsFreestyle', qty: '10' },
+      { k: 'bagGlucometerStripsNewModelSure', qty: '10' },
+      { k: 'bag3vGlucometerBattery', qty: '2' },
+      { k: 'bagAlcoholSwab', qty: '5' },
     ],
   },
   {
     id: 'meds',
-    title: 'תרופות ואמפולות',
+    title: 'bagTMedicationsAmpoules',
     color: 'text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: "גלוקוג'ל", qty: '1' },
-      { name: 'אספירין', qty: '10' },
-      { name: 'סליין 100 סמ"ק (NaCl 0.9%)', qty: '2' },
-      { name: 'סליין 0.9% 10 מ"ל', qty: '6' },
-      { name: 'ארוונט 0.25mg/1cc', qty: '1' },
-      { name: 'ונטולין תמיסה 20 מ"ל', qty: '1' },
-      { name: 'איזוקט ספריי (Nitrolingual)', qty: '1' },
-      { name: "אדרנלין אמפ' 1 מ\"ג/1 מ\"ל", qty: '10' },
-      { name: 'אטרופין 1 מ"ג/1 מ"ל', qty: '3' },
-      { name: "איקקור (אמיודרון) אמפ'", qty: '2' },
-      { name: 'מגנזיום סולפט 5 גרם', qty: '1' },
-      { name: 'הפרין / פרגמין 5000 יב"ל', qty: '1' },
-      { name: 'אדנוזין 6 מ"ג/2 מ"ל', qty: '5' },
-      { name: 'לידוקאין 2% (עזרקאין)', qty: '2' },
-      { name: 'פוסיד (פורוסמיד) 20 מ"ג/2 מ"ל', qty: '10' },
-      { name: 'דורמיקום (מידזולם) 5 מ"ג', qty: '5' },
-      { name: 'סולומדרול 125 מ"ג/2 מ"ל', qty: '2' },
-      { name: 'נרקן (נלוקסון) 0.4 מ"ג/1 מ"ל', qty: '5' },
-      { name: 'גלוקוז 50% (Dextrose)', qty: '3' },
-      { name: 'אקמול / דקסמול טבליות', qty: '10' },
-      { name: 'אקמול נוזלי לווריד', qty: '1' },
-      { name: 'פראמין 10 מ"ג/2 מ"ל', qty: '2' },
-      { name: "אופטלגין אמפ'", qty: '2' },
-      { name: 'טרמדול (טרמל) 100 מ"ג/2 מ"ל', qty: '1' },
-      { name: 'אטומידאט-ליפורו 20 מ"ג/10 מ"ל', qty: '2' },
+      { k: 'bagGlucoseGel', qty: '1' },
+      { k: 'bagAspirin', qty: '10' },
+      { k: 'bagSaline100CcNacl0', qty: '2' },
+      { k: 'bagSaline0910Ml', qty: '6' },
+      { k: 'bagAtrovent025Mg1', qty: '1' },
+      { k: 'bagVentolinSolution20Ml', qty: '1' },
+      { k: 'bagIsoketSprayNitrolingual', qty: '1' },
+      { k: 'bagAdrenalineAmp1Mg1', qty: '10' },
+      { k: 'bagAtropine1Mg1Ml', qty: '3' },
+      { k: 'bagProcorAmiodaroneAmp', qty: '2' },
+      { k: 'bagMagnesiumSulfate5G', qty: '1' },
+      { k: 'bagHeparinFragmin5000Iu', qty: '1' },
+      { k: 'bagAdenosine6Mg2Ml', qty: '5' },
+      { k: 'bagLidocaine2Esracaine', qty: '2' },
+      { k: 'bagFusidFurosemide20Mg2', qty: '10' },
+      { k: 'bagDormicumMidazolam5Mg2', qty: '5' },
+      { k: 'bagSoluMedrol125Mg2', qty: '2' },
+      { k: 'bagNarcanNaloxone04Mg', qty: '5' },
+      { k: 'bagGlucose50Dextrose', qty: '3' },
+      { k: 'bagAcamolDexamolTablets', qty: '10' },
+      { k: 'bagIvParacetamolAcamol', qty: '1' },
+      { k: 'bagPramin10Mg2Ml', qty: '2' },
+      { k: 'bagOptalginAmp', qty: '2' },
+      { k: 'bagTramadolTramal100Mg2', qty: '1' },
+      { k: 'bagEtomidateLipuro20Mg10', qty: '2' },
     ],
   },
   {
     id: 'monitor',
-    title: 'מוניטור / קורפולס',
+    title: 'bagTMonitorCorpuls',
     color: 'text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
     items: [
-      { name: 'מדבקות ECG (F50, מארז 30/50)', qty: '1' },
-      { name: 'נייר הדפסה לקורפולס', qty: '1' },
-      { name: 'קפנו נושם (נזאלי) – קורפולס', qty: '1' },
-      { name: 'קפנו מונשם – קורפולס', qty: '1' },
-      { name: 'קפנוגרף כימי – פילטר', qty: '1' },
-      { name: 'כיסוי גומי למדחום – קורפולס (מארז 10)', qty: '1' },
-      { name: 'מדבקת דפיברילציה מבוגר – קורפולס', qty: '1' },
-      { name: 'מדבקת דפיברילציה תינוק/ילד – קורפולס', qty: '1' },
+      { k: 'bagEcgElectrodesF50PackOf', qty: '1' },
+      { k: 'bagCorpulsPrinterPaper', qty: '1' },
+      { k: 'bagCapnographySpontaneousBreathingNasalCorpuls', qty: '1' },
+      { k: 'bagCapnographyVentilatedCorpuls', qty: '1' },
+      { k: 'bagColorimetricCapnometerFilter', qty: '1' },
+      { k: 'bagThermometerProbeCoversCorpulsPack', qty: '1' },
+      { k: 'bagAdultDefibrillationPadCorpuls', qty: '1' },
+      { k: 'bagInfantChildDefibrillationPadCorpuls', qty: '1' },
     ],
   },
   {
     id: 'general',
-    title: 'קיבוע, לידה וכללי',
+    title: 'bagTImmobilizationChildbirthGeneral',
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
-      { name: 'סד קשיח לקיבוע', qty: '1' },
-      { name: 'צווארון מתכוונן', qty: '1' },
-      { name: 'ערכת לידה', qty: '1' },
-      { name: 'שקית שתן', qty: '1' },
-      { name: 'כפפות מידה S', qty: '100' },
-      { name: 'כפפות מידה M', qty: '30' },
-      { name: 'כפפות מידה L', qty: '30' },
-      { name: 'כפפות מידה XL', qty: '30' },
-      { name: "ג'ל לחיטוי ידיים", qty: '1' },
-      { name: 'מסכת הגנה N-95', qty: '3' },
-      { name: 'מסכה כירורגית', qty: '10' },
-      { name: 'מגבון אישי לחיטוי', qty: '5' },
-      { name: 'מדל"ד מבוגר (כולל סטטוסקופ)', qty: '1' },
-      { name: 'סטטוסקופ', qty: '1' },
-      { name: 'סוללה AAA למד סטורציה', qty: '2' },
-      { name: 'אלונקת בד', qty: '1' },
-      { name: 'סט תגי אר"ן (מארז של 5)', qty: '1' },
-      { name: 'טוש לא מחיק', qty: '1' },
-      { name: 'גומיה לאיטום ווסת חמצן', qty: '1' },
-      { name: 'קליפס לראגר', qty: '1' },
-      { name: "בנדולרה כתומה (יח' נשלפת)", qty: '1' },
+      { k: 'bagRigidImmobilizationSplint', qty: '1' },
+      { k: 'bagAdjustableCervicalCollar', qty: '1' },
+      { k: 'bagChildbirthKit', qty: '1' },
+      { k: 'bagUrineBag', qty: '1' },
+      { k: 'bagGlovesSize', v: 'S', qty: '100' },
+      { k: 'bagGlovesSize', v: 'M', qty: '30' },
+      { k: 'bagGlovesSize', v: 'L', qty: '30' },
+      { k: 'bagGlovesSize', v: 'XL', qty: '30' },
+      { k: 'bagHandSanitizerGel', qty: '1' },
+      { k: 'bagN95RespiratorMask', qty: '3' },
+      { k: 'bagSurgicalMask', qty: '10' },
+      { k: 'bagDisinfectingWipe', qty: '5' },
+      { k: 'bagAdultBpCuffInclStethoscope', qty: '1' },
+      { k: 'bagStethoscope', qty: '1' },
+      { k: 'bagAaaBatteryForPulseOximeter', qty: '2' },
+      { k: 'bagFabricStretcher', qty: '1' },
+      { k: 'bagMciTriageTagSetPack', qty: '1' },
+      { k: 'bagPermanentMarker', qty: '1' },
+      { k: 'bagOxygenRegulatorSealingWasher', qty: '1' },
+      { k: 'bagRagarClip', qty: '1' },
+      { k: 'bagOrangeBandolierGrabUnit', qty: '1' },
     ],
   },
 ];
@@ -516,77 +518,82 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
 const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'meds',
-    title: 'תרופות ונוזלים',
+    title: 'bagTMedicationsFluids',
     color: 'text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
-      { name: 'אספירין 300mg', qty: '10' },
-      { name: "גלוקוג'ל", qty: '1' },
-      { name: 'פולידין 20 מ"ל', qty: '1' },
-      { name: 'מי מלח 0.9%', qty: '1' },
+      { k: 'bagAspirin300Mg2', qty: '10' },
+      { k: 'bagGlucoseGel', qty: '1' },
+      { k: 'bagPovidoneIodine20Ml', qty: '1' },
+      { k: 'bagSaline09', qty: '1' },
     ],
   },
   {
     id: 'airway',
-    title: 'ציוד הנשמה וחמצן',
+    title: 'bagTVentilationOxygenEquipment',
     color: 'text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
-      { name: 'שק הנשמה מבוגר (אמבו)', qty: '1' },
-      { name: 'שק הנשמה ילד (אמבו)', qty: '1' },
-      { name: 'מסכת חמצן מבוגר M', qty: '1' },
-      { name: 'מסכת חמצן מבוגר S', qty: '1' },
-      { name: 'מסכת חמצן ילד', qty: '1' },
-      { name: 'מסכת חמצן פעוט (Toddler)', qty: '1' },
-      { name: 'מסכת חמצן תינוק (Infant)', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 00', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 0', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 1', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 2', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 3', qty: '1' },
-      { name: 'מנתב אוויר פלסטי 4', qty: '1' },
-      { name: 'סקשן ידני', qty: '1' },
-      { name: 'קטטר שאיבה 18', qty: '1' },
-      { name: 'קטטר שאיבה 8', qty: '1' },
-      { name: 'מיכל חמצן D + וסת', qty: '1' },
+      { k: 'bagAdultResuscitationBagAmbu', qty: '1' },
+      { k: 'bagChildResuscitationBagAmbu', qty: '1' },
+      { k: 'bagAdultOxygenMaskM', qty: '1' },
+      { k: 'bagAdultOxygenMaskS', qty: '1' },
+      { k: 'bagChildOxygenMask', qty: '1' },
+      { k: 'bagToddlerOxygenMask', qty: '1' },
+      { k: 'bagInfantOxygenMask', qty: '1' },
+      { k: 'bagOpaPlastic', v: '00', qty: '1' },
+      { k: 'bagOpaPlastic', v: '0', qty: '1' },
+      { k: 'bagOpaPlastic', v: '1', qty: '1' },
+      { k: 'bagOpaPlastic', v: '2', qty: '1' },
+      { k: 'bagOpaPlastic', v: '3', qty: '1' },
+      { k: 'bagOpaPlastic', v: '4', qty: '1' },
+      { k: 'bagManualSuction', qty: '1' },
+      { k: 'bagSuctionCatheterSize', v: '18', qty: '1' },
+      { k: 'bagSuctionCatheterSize', v: '8', qty: '1' },
+      { k: 'bagDOxygenCylinderRegulator', qty: '1' },
     ],
   },
   {
     id: 'diagnostics',
-    title: 'אבחון ומדידה',
+    title: 'bagTDiagnosticsMeasurement',
     color: 'text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
-      { name: 'מד ל"ד + סטטוסקופ (מבוגר)', qty: '1' },
-      { name: 'מד ל"ד + סטטוסקופ (ילד)', qty: '1' },
-      { name: 'גלוקומטר + 5 מחטים + 5 סטיקים', qty: '1' },
+      { k: 'bagBpCuffStethoscopeAdult', qty: '1' },
+      { k: 'bagBpCuffStethoscopeChild', qty: '1' },
+      { k: 'bagGlucometer5Lancets5Strips', qty: '1' },
     ],
   },
   {
     id: 'trauma',
-    title: 'חבישה וטראומה',
+    title: 'bagTDressingsTrauma',
     color: 'text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
-      { name: 'חוסם עורקים גומי', qty: '3' },
-      { name: 'תחבושת אישית', qty: '1' },
-      { name: 'תחבושת בינונית', qty: '1' },
-      { name: 'פד גזה 3x3 סטרילי', qty: '10' },
-      { name: 'מספריים', qty: '1' },
-      { name: 'תחבושות אלסטיות', qty: '5' },
-      { name: 'צווארון צוואר מבוגר', qty: '1' },
-      { name: 'צווארון צוואר ילד', qty: '1' },
-      { name: 'ערכת מגן אישי (PPE)', qty: '1' },
-      { name: 'שמיכה אלומיניום', qty: '1' },
+      { k: 'bagRubberTourniquet2', qty: '3' },
+      { k: 'bagPersonalIsraeliDressing', qty: '1' },
+      { k: 'bagMediumDressing', qty: '1' },
+      { k: 'bagSterileGauzePad3x3', qty: '10' },
+      { k: 'bagScissors', qty: '1' },
+      { k: 'bagElasticBandages', qty: '5' },
+      { k: 'bagAdultCervicalCollar', qty: '1' },
+      { k: 'bagChildCervicalCollar', qty: '1' },
+      { k: 'bagPersonalProtectiveKitPpe', qty: '1' },
+      { k: 'bagAluminumBlanket', qty: '1' },
     ],
   },
 ];
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
+
+/** Label in the current (or given) language. The Hebrew label is also the saved key for the MOH bags. */
+function itemLabel(item: BagItem, lang?: 'he' | 'en'): string {
+  return item.k ? translate(item.k, item.v !== undefined ? { n: item.v } : undefined, lang) : item.name ?? '';
+}
 
 function daysUntilExpiry(dateStr: string): number {
   const expiry = new Date(dateStr + 'T00:00:00');
@@ -598,11 +605,11 @@ function daysUntilExpiry(dateStr: string): number {
 function formatExpiryLabel(dateStr: string, days: number): string {
   const [year, month, day] = dateStr.split('-');
   const dateFormatted = `${day}/${month}/${year}`;
-  if (days < 0) return `פג תוקף! ${dateFormatted}`;
-  if (days === 0) return `פג תוקף היום - ${dateFormatted}`;
-  if (days === 1) return `פג תוקף מחר - ${dateFormatted}`;
-  if (days <= 7) return `פג תוקף בעוד ${days} ימים - ${dateFormatted}`;
-  return `תוקף עד ${dateFormatted}`;
+  if (days < 0) return translate('bagExpired', { date: dateFormatted });
+  if (days === 0) return translate('bagExpiresToday', { date: dateFormatted });
+  if (days === 1) return translate('bagExpiresTomorrow', { date: dateFormatted });
+  if (days <= 7) return translate('bagExpiresInDays', { days, date: dateFormatted });
+  return translate('bagValidUntil', { date: dateFormatted });
 }
 
 function loadInventory(key: string): BagInventory {
@@ -669,9 +676,9 @@ function checkExpiryNotifications() {
 
   const doNotify = () => {
     const parts: string[] = [];
-    if (expired > 0) parts.push(`${expired} פריטים פג תוקפם`);
-    if (soon > 0) parts.push(`${soon} פריטים פגים תוקף תוך שבוע`);
-    new Notification('⚠️ בדיקת תיק הצלה', { body: parts.join(', ') + '.' });
+    if (expired > 0) parts.push(translate('bagNotifExpired', { n: expired }));
+    if (soon > 0) parts.push(translate('bagNotifSoon', { n: soon }));
+    new Notification(translate('bagNotifTitle'), { body: parts.join(', ') + '.' });
   };
 
   if (Notification.permission === 'granted') doNotify();
@@ -694,6 +701,7 @@ interface ItemRowProps {
 }
 
 function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, onExpiryChange }: ItemRowProps) {
+  const t = useTranslation();
   const [showDate, setShowDate] = useState(false);
   const days = status.expiryDate != null ? daysUntilExpiry(status.expiryDate) : null;
   const isExpired = days !== null && days < 0;
@@ -704,26 +712,25 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
     <div className="flex flex-col">
       <div
         className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-          status.status === 'have' ? 'bg-emerald-950/20' :
-          status.status === 'missing' ? 'bg-red-950/20' : ''
+          status.status === 'have' ? 'bg-emerald-500/10 dark:bg-emerald-950/20' :
+          status.status === 'missing' ? 'bg-red-500/10 dark:bg-red-950/20' : ''
         }`}
-        dir="rtl"
       >
         {/* Status icon — tap to cycle null → have → missing → null */}
         <button onClick={onToggle} className="shrink-0 active:scale-90 transition-transform flex flex-col items-center gap-0.5">
           {status.status === 'have'
-            ? <CheckCircle2 size={22} className="text-emerald-400" />
+            ? <CheckCircle2 size={22} className="text-emerald-500 dark:text-emerald-400" />
             : status.status === 'missing'
-            ? <XCircle size={22} className="text-red-400" />
-            : <Circle size={22} className="text-gray-300 dark:text-slate-600" />}
+            ? <XCircle size={22} className="text-red-500 dark:text-red-400" />
+            : <Circle size={22} className="text-fg-subtle" />}
         </button>
 
         <span className={`flex-1 text-sm font-medium ${
-          status.status === 'missing' ? 'text-red-400' :
-          status.status === 'have' ? 'text-emerald-400' :
-          'text-gray-900 dark:text-emt-light'
+          status.status === 'missing' ? 'text-red-600 dark:text-red-400' :
+          status.status === 'have' ? 'text-emerald-600 dark:text-emerald-400' :
+          'text-fg'
         }`}>
-          {item.name}
+          {item.k ? t(item.k, item.v !== undefined ? { n: item.v } : undefined) : item.name}
         </span>
 
         {hasWarning && (
@@ -735,16 +742,16 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
           className={`shrink-0 flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg active:scale-90 transition-all ${
             status.expiryDate
               ? isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-emerald-400'
-              : 'text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-800'
+              : 'text-fg-muted bg-surface-2'
           }`}
-          aria-label="תאריך תפוגה"
+          aria-label={t('bagExpiryDate')}
         >
           <Calendar size={14} />
-          {!status.expiryDate && <span className="text-[8px] font-medium leading-none">תפוגה</span>}
+          {!status.expiryDate && <span className="text-[8px] font-medium leading-none">{t('bagExpiry')}</span>}
         </button>
 
         <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${accentBg} ${accentColor} border ${accentBorder}`}>
-          {item.qty}
+          {item.qk ? t(item.qk, { n: item.qty }) : item.qty}
         </span>
       </div>
 
@@ -752,9 +759,8 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
       {status.expiryDate && !showDate && (
         <p
           className={`px-14 pb-2 text-xs font-medium ${
-            isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-gray-500 dark:text-emt-muted'
+            isExpired ? 'text-red-500 dark:text-red-400' : isSoon ? 'text-amber-600 dark:text-amber-400' : 'text-fg-muted'
           }`}
-          dir="rtl"
         >
           {formatExpiryLabel(status.expiryDate, days!)}
         </p>
@@ -762,7 +768,7 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
 
       {/* Date picker (expanded) */}
       {showDate && (
-        <div className="px-4 pb-3 flex items-center gap-2" dir="rtl">
+        <div className="px-4 pb-3 flex items-center gap-2">
           <input
             type="date"
             value={status.expiryDate ?? ''}
@@ -773,24 +779,44 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
                 Notification.requestPermission();
               }
             }}
-            className="flex-1 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-emt-border rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-emt-light"
+            className="flex-1 bg-surface-2 border border-line rounded-xl px-3 py-2 text-sm text-fg"
           />
           {status.expiryDate && (
             <button
               onClick={() => onExpiryChange(undefined)}
-              className="text-red-400 text-xs px-2 py-2 rounded-xl bg-red-950/20 shrink-0"
+              className="text-red-600 dark:text-red-400 text-xs px-2 py-2 rounded-xl bg-red-500/10 dark:bg-red-950/20 shrink-0"
             >
-              מחק
+              {t('delete')}
             </button>
           )}
           <button
             onClick={() => setShowDate(false)}
-            className="text-gray-500 text-xs px-2 py-2 rounded-xl bg-gray-100 dark:bg-slate-700 shrink-0"
+            className="text-fg-muted text-xs px-2 py-2 rounded-xl bg-surface-3 shrink-0"
           >
-            סגור
+            {t('close')}
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Legend ───────────────────────────────────────────────────────────────────
+
+function Legend() {
+  const t = useTranslation();
+  return (
+    <div className="shrink-0 px-4 py-2 border-b border-line/60 flex flex-col gap-1.5 text-xs text-fg-muted">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="font-semibold text-fg/70">{t('bagLegendTap')}</span>
+        <span className="flex items-center gap-1"><Circle size={11} /> {t('bagNotMarked')}</span>
+        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 size={11} /> {t('bagHave')}</span>
+        <span className="flex items-center gap-1 text-red-600 dark:text-red-400"><XCircle size={11} /> {t('bagMissing')}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Calendar size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+        <span>{t('bagLegendExpiry')}</span>
+      </div>
     </div>
   );
 }
@@ -933,25 +959,25 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   // ── Selected bag detail view ───────────────────────────────────────────────
 
   if (selectedBag) {
-    const haveCount = selectedBag.items.filter(item => mohInventory[item.name]?.status === 'have').length;
-    const missingCount = selectedBag.items.filter(item => mohInventory[item.name]?.status === 'missing').length;
+    const haveCount = selectedBag.items.filter(item => mohInventory[itemLabel(item, 'he')]?.status === 'have').length;
+    const missingCount = selectedBag.items.filter(item => mohInventory[itemLabel(item, 'he')]?.status === 'missing').length;
 
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="fixed inset-0 z-[60] flex flex-col bg-page">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <button
             onClick={() => window.history.back()}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+                       text-fg-muted hover:text-fg"
             aria-label={t('back')}
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} className="ltr:rotate-180" />
           </button>
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{selectedBag.title}</h2>
+          <h2 className="text-fg font-bold text-xl">{t(selectedBag.title)}</h2>
           <button
             onClick={clearMohChecklist}
-            className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
+            className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
             <RotateCcw size={15} />
@@ -960,48 +986,40 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Status summary */}
-        <div className="shrink-0 px-4 py-2 border-b border-gray-200 dark:border-emt-border flex items-center gap-3" dir="rtl">
-          <span className="text-sm text-gray-500 dark:text-emt-muted">{selectedBag.items.length} {t('items')}</span>
+        <div className="shrink-0 px-4 py-2 border-b border-line flex items-center gap-3">
+          <span className="text-sm text-fg-muted">{selectedBag.items.length} {t('items')}</span>
           {haveCount > 0 && (
-            <span className="text-xs font-medium text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 size={12} /> {haveCount} יש
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <CheckCircle2 size={12} /> {haveCount} {t('bagHave')}
             </span>
           )}
           {missingCount > 0 && (
-            <span className="text-xs font-medium text-red-400 flex items-center gap-1">
-              <XCircle size={12} /> {missingCount} אין
+            <span className="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1">
+              <XCircle size={12} /> {missingCount} {t('bagMissing')}
             </span>
           )}
         </div>
 
         {/* Legend */}
-        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex flex-col gap-1.5 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-semibold text-gray-500 dark:text-emt-light/70">לחץ על הסמל לסימון:</span>
-            <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
-            <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
-            <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar size={11} className="text-blue-400 shrink-0" />
-            <span>לחץ על כפתור <span className="font-semibold">״תפוגה״</span> ליד פריט להוספת תאריך תפוגה</span>
-          </div>
-        </div>
+        <Legend />
 
-        <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-gray-100 dark:divide-white/5">
-          {selectedBag.items.map((item) => (
-            <ItemRow
-              key={item.name}
-              item={item}
-              itemKey={item.name}
-              status={mohInventory[item.name] ?? { status: null }}
-              accentColor={selectedBag.color}
-              accentBg={selectedBag.bg}
-              accentBorder={selectedBag.border}
-              onToggle={() => toggleMohItem(item.name)}
-              onExpiryChange={(date) => setMohExpiry(item.name, date)}
-            />
-          ))}
+        <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-line/60">
+          {selectedBag.items.map((item) => {
+            const key = itemLabel(item, 'he'); // saved under the Hebrew label, as before
+            return (
+              <ItemRow
+                key={key}
+                item={item}
+                itemKey={key}
+                status={mohInventory[key] ?? { status: null }}
+                accentColor={selectedBag.color}
+                accentBg={selectedBag.bg}
+                accentBorder={selectedBag.border}
+                onToggle={() => toggleMohItem(key)}
+                onExpiryChange={(date) => setMohExpiry(key, date)}
+              />
+            );
+          })}
         </div>
       </div>
     );
@@ -1009,10 +1027,10 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
   // ── Standard selector tabs ─────────────────────────────────────────────────
 
-  const STANDARDS: { id: Standard; label: string }[] = [
-    { id: 'moh', label: 'תקן משרד החינוך' },
-    { id: 'mda', label: 'תקן מד״א' },
-    { id: 'hatzalah', label: 'תקן איחוד הצלה' },
+  const STANDARDS: { id: Standard; label: TranslationKey }[] = [
+    { id: 'moh', label: 'bagStdMoe' },
+    { id: 'mda', label: 'bagStdMda' },
+    { id: 'hatzalah', label: 'bagStdHatzalah' },
   ];
 
   // ── List view ──────────────────────────────────────────────────────────────
@@ -1023,7 +1041,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
     onToggle: (key: string) => void,
     onExpiry: (key: string, date: string | undefined) => void,
   ) => (
-    <div className="flex flex-col gap-4" dir="rtl">
+    <div className="flex flex-col gap-4">
       {categories.map((cat) => {
         const haveCount = cat.items.filter((_, i) => inventory[`${cat.id}-${i}`]?.status === 'have').length;
         const catWarnings = cat.items.reduce((acc, _, i) => {
@@ -1037,18 +1055,18 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
         return (
           <div key={cat.id} className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>
-            <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`} dir="rtl">
-              <p className={`font-bold text-sm ${cat.color}`}>{cat.title}</p>
+            <div className={`px-4 py-3 border-b ${cat.border} flex items-center justify-between`}>
+              <p className={`font-bold text-sm ${cat.color}`}>{t(cat.title)}</p>
               <div className="flex items-center gap-2">
                 {(catWarnings.expired > 0 || catWarnings.soon > 0) && (
-                  <AlertTriangle size={14} className={catWarnings.expired > 0 ? 'text-red-400' : 'text-amber-400'} />
+                  <AlertTriangle size={14} className={catWarnings.expired > 0 ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'} />
                 )}
                 <span className={`text-xs font-medium ${cat.color} opacity-70`}>
                   {haveCount}/{cat.items.length}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col divide-y divide-white/5">
+            <div className="flex flex-col divide-y divide-fg/5">
               {cat.items.map((item, i) => {
                 const key = `${cat.id}-${i}`;
                 return (
@@ -1073,23 +1091,23 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-page">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+                     text-fg-muted hover:text-fg"
           aria-label={t('back')}
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={20} className="ltr:rotate-180" />
         </button>
-        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">{t('bagStandardsTitle')}</h2>
+        <h2 className="text-fg font-bold text-xl">{t('bagStandardsTitle')}</h2>
         {activeStandard === 'mda' || activeStandard === 'hatzalah' ? (
           <button
             onClick={activeStandard === 'mda' ? clearMdaChecklist : clearHatzalahChecklist}
-            className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm transition-colors active:scale-90"
+            className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
             <RotateCcw size={15} />
@@ -1101,39 +1119,26 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-4 py-3 border-b border-gray-100 dark:border-white/10">
-        <div className="flex rounded-2xl p-1 gap-1" style={{ background: 'rgba(120,120,128,0.12)' }} dir="rtl">
+      <div className="shrink-0 px-4 py-3 border-b border-line">
+        <div className="flex rounded-2xl p-1 gap-1 bg-surface-2">
           {STANDARDS.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => { setActiveStandard(id); trackEvent('bag_standards_tab', { standard: id }); }}
               className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-bold transition-all duration-200 active:scale-95 leading-tight ${
                 activeStandard === id
-                  ? 'bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light shadow-sm'
-                  : 'text-gray-500 dark:text-emt-muted'
+                  ? 'bg-surface text-fg shadow-sm'
+                  : 'text-fg-muted'
               }`}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
       </div>
 
       {/* Legend for MDA / Hatzalah */}
-      {(activeStandard === 'mda' || activeStandard === 'hatzalah') && (
-        <div className="shrink-0 px-4 py-2 border-b border-gray-100 dark:border-white/5 flex flex-col gap-1.5 text-xs text-gray-400 dark:text-emt-muted" dir="rtl">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-semibold text-gray-500 dark:text-emt-light/70">לחץ על הסמל לסימון:</span>
-            <span className="flex items-center gap-1"><Circle size={11} /> לא סומן</span>
-            <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 size={11} /> יש</span>
-            <span className="flex items-center gap-1 text-red-400"><XCircle size={11} /> אין</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar size={11} className="text-blue-400 shrink-0" />
-            <span>לחץ על כפתור <span className="font-semibold">״תפוגה״</span> ליד פריט להוספת תאריך תפוגה</span>
-          </div>
-        </div>
-      )}
+      {(activeStandard === 'mda' || activeStandard === 'hatzalah') && <Legend />}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
@@ -1149,7 +1154,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
                   key={bag.id}
                   onClick={() => {
                     setSelectedBag(bag);
-                    trackEvent('bag_standards_view', { bag_id: bag.id, bag_title: bag.title });
+                    trackEvent('bag_standards_view', { bag_id: bag.id, bag_title: translate(bag.title, undefined, 'he') });
                     window.history.pushState({ bagDetail: true }, '');
                   }}
                   className={`w-full rounded-2xl border ${bag.border} ${bag.bg} p-5
@@ -1158,12 +1163,12 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bag.bg} border ${bag.border}`}>
                     <Backpack size={24} className={bag.iconColor} />
                   </div>
-                  <div className="flex-1 text-right">
-                    <p className={`text-lg font-bold ${bag.color}`}>{bag.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">{bag.items.length} {t('items')}</p>
+                  <div className="flex-1 text-start">
+                    <p className={`text-lg font-bold ${bag.color}`}>{t(bag.title)}</p>
+                    <p className="text-xs text-fg-muted mt-0.5">{bag.items.length} {t('items')}</p>
                   </div>
                   {hasAnyWarning && (
-                    <AlertTriangle size={18} className={expired > 0 ? 'text-red-400' : 'text-amber-400'} />
+                    <AlertTriangle size={18} className={expired > 0 ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'} />
                   )}
                 </button>
               );
@@ -1177,21 +1182,21 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
 
         {activeStandard === 'hatzalah' && (
           <>
-            <div className="flex rounded-2xl p-1 gap-1 mb-4" style={{ background: 'rgba(120,120,128,0.12)' }} dir="rtl">
+            <div className="flex rounded-2xl p-1 gap-1 mb-4 bg-surface-2">
               {([
-                { id: 'bls', label: 'כונן BLS' },
-                { id: 'als', label: 'כונן ALS' },
+                { id: 'bls', label: 'bagHatzBls' },
+                { id: 'als', label: 'bagHatzAls' },
               ] as const).map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => { setHatzVariant(id); trackEvent('bag_standards_hatzalah_variant', { variant: id }); }}
                   className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
                     hatzVariant === id
-                      ? 'bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light shadow-sm'
-                      : 'text-gray-500 dark:text-emt-muted'
+                      ? 'bg-surface text-fg shadow-sm'
+                      : 'text-fg-muted'
                   }`}
                 >
-                  {label}
+                  {t(label)}
                 </button>
               ))}
             </div>
