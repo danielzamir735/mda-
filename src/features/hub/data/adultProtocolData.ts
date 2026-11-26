@@ -37,7 +37,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'cardiac-arrest',
     label: 'דום לב',
-    color: 'text-red-500',
+    color: 'text-red-700 dark:text-red-500',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/30',
     solidBg: 'bg-red-600',
@@ -45,7 +45,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אדרנלין',
         sub: 'Epinephrine — VF / PEA / Asystole',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           { route: 'IV / IO', dose: '1 mg', max: 'כל 3–5 דקות ללא הגבלה', note: 'ממשיכים עד ROSC' },
           { route: 'ET', dose: '3 mg', note: 'כלל ETx3' },
@@ -54,7 +54,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אמיודרון',
         sub: 'Amiodarone — VF / VT ללא דופק',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           { route: 'IV Push — מנה 1', dose: '300 mg' },
           { route: 'IV Push — מנה 2', dose: '150 mg', max: 'כ"סה 450 mg (3 מנות)' },
@@ -64,7 +64,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'ביקרבונט',
         sub: 'Sodium Bicarbonate',
-        color: 'text-slate-400',
+        color: 'text-slate-600 dark:text-slate-400',
         routes: [
           {
             route: 'IV',
@@ -82,7 +82,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'bradycardia',
     label: 'ברדיקרדיה',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     bgColor: 'bg-amber-400/10',
     borderColor: 'border-amber-400/30',
     solidBg: 'bg-amber-500',
@@ -90,7 +90,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אטרופין',
         sub: 'Atropine',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           { route: 'IV / IO', dose: '1 mg', max: '3 mg סה"כ', note: 'כל 3–5 דקות' },
         ],
@@ -98,7 +98,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אדרנלין',
         sub: 'Epinephrine — ברדיקרדיה עם היפופרפוזיה',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           { route: 'IV Push', dose: '10–20 mcg', note: 'כל 2 דקות' },
           { route: 'IV Drip', dose: '2–10 mcg/דקה' },
@@ -111,7 +111,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'tachycardia',
     label: 'טכיקרדיה',
-    color: 'text-cyan-400',
+    color: 'text-cyan-700 dark:text-cyan-400',
     bgColor: 'bg-cyan-400/10',
     borderColor: 'border-cyan-400/30',
     solidBg: 'bg-cyan-500',
@@ -119,7 +119,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אדנוזין',
         sub: 'Adenosine — SVT / NCT / WCT',
-        color: 'text-cyan-400',
+        color: 'text-cyan-700 dark:text-cyan-400',
         routes: [
           { route: 'IV Push מהיר — מנה 1', dose: '6 mg', max: '2 מנות מקסימום' },
           { route: 'IV Push מהיר — מנה 2', dose: '12 mg' },
@@ -129,7 +129,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'איקקור',
         sub: 'Verapamil — NCT בלבד',
-        color: 'text-sky-400',
+        color: 'text-sky-700 dark:text-sky-400',
         routes: [
           { route: 'IV איטי (10 דקות)', dose: '2.5 → 5 mg', max: '20 mg סה"כ' },
         ],
@@ -138,7 +138,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אמיודרון',
         sub: 'Amiodarone — NCT / WCT',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           { route: 'IV NCT (10 דקות)', dose: '150 mg', max: '300 mg סה"כ' },
           {
@@ -152,7 +152,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'מגנזיום',
         sub: 'Magnesium — TdP / WCT פולימורפי',
-        color: 'text-lime-400',
+        color: 'text-lime-800 dark:text-lime-400',
         routes: [
           { route: 'IV (5–10 דקות)', dose: '1–2 g', note: 'מהול ב-100cc' },
         ],
@@ -165,7 +165,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'acs',
     label: 'ACS',
-    color: 'text-orange-400',
+    color: 'text-orange-700 dark:text-orange-400',
     bgColor: 'bg-orange-400/10',
     borderColor: 'border-orange-400/30',
     solidBg: 'bg-orange-500',
@@ -173,7 +173,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אספירין',
         sub: 'Aspirin',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           { route: 'PO (לעיסה)', dose: '160–325 mg' },
         ],
@@ -181,7 +181,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'ניטרולינגואל',
         sub: 'Nitrolingual — SL spray',
-        color: 'text-yellow-400',
+        color: 'text-yellow-800 dark:text-yellow-400',
         routes: [
           { route: 'SL', dose: '0.4 mg', max: '3 מנות בהפרש 3–5 דקות', note: 'לא לתת אם ל"ד <90 / PDE5 inhibitors' },
         ],
@@ -189,7 +189,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'פנטניל',
         sub: 'Fentanyl — כאב חזה',
-        color: 'text-purple-400',
+        color: 'text-purple-700 dark:text-purple-400',
         routes: [
           {
             route: 'IV איטי (10 דקות)',
@@ -203,7 +203,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'הפרין',
         sub: 'Heparin — ACS / PAF >48ש׳',
-        color: 'text-rose-400',
+        color: 'text-rose-700 dark:text-rose-400',
         routes: [
           { route: 'IV Push', dose: '5,000 U', note: 'מנה יחידה' },
         ],
@@ -215,7 +215,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'pulm-edema',
     label: 'בצקת ריאות',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     bgColor: 'bg-blue-400/10',
     borderColor: 'border-blue-400/30',
     solidBg: 'bg-blue-500',
@@ -223,7 +223,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'ניטרולינגואל',
         sub: 'Nitrolingual SL',
-        color: 'text-yellow-400',
+        color: 'text-yellow-800 dark:text-yellow-400',
         routes: [
           { route: 'SL', dose: '0.4 mg', max: 'כל 3–5 דקות', note: 'לא לתת אם ל"ד <90' },
         ],
@@ -231,7 +231,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'איזוסורביד דיניטרט',
         sub: 'Isosorbide Dinitrate — IV Drip',
-        color: 'text-blue-400',
+        color: 'text-blue-700 dark:text-blue-400',
         routes: [
           { route: 'IV Drip', dose: '20 mcg/דקה', max: '200 mcg/דקה', note: 'הכפל מנה כל 5 דקות' },
         ],
@@ -239,7 +239,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'פוסיד',
         sub: 'Furosemide',
-        color: 'text-indigo-400',
+        color: 'text-indigo-700 dark:text-indigo-400',
         routes: [
           {
             route: 'IV',
@@ -253,7 +253,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'דופמין',
         sub: 'Dopamine — בצקת ריאות עם היפוטנסיה',
-        color: 'text-violet-400',
+        color: 'text-violet-700 dark:text-violet-400',
         routes: [
           { route: 'IV Drip', dose: '5–20 mcg/kg/דקה' },
         ],
@@ -265,7 +265,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'anaphylaxis',
     label: 'אנאפילקסיס',
-    color: 'text-rose-500',
+    color: 'text-rose-700 dark:text-rose-500',
     bgColor: 'bg-rose-500/10',
     borderColor: 'border-rose-500/30',
     solidBg: 'bg-rose-600',
@@ -273,7 +273,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אדרנלין',
         sub: 'Epinephrine 1:1,000 — IM',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           { route: 'SC (ירך) — קל/בינוני', dose: '0.3 mg', max: 'מנה יחידה' },
           { route: 'IM (ירך) — קשה', dose: '0.3–0.5 mg', max: '3 מנות | כל 10 דקות', note: 'זהירות גיל >40 / IHD' },
@@ -283,7 +283,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'ונטולין',
         sub: 'Salbutamol — ברונכוספזם',
-        color: 'text-teal-400',
+        color: 'text-teal-700 dark:text-teal-400',
         routes: [
           { route: 'אינהלציה', dose: '2.5–5 mg', max: '3 מנות | כל 20 דקות' },
         ],
@@ -291,7 +291,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'סולמדרול',
         sub: 'Methylprednisolone',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           { route: 'IV', dose: '125 mg', note: 'מנה יחידה' },
         ],
@@ -299,7 +299,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'נוזלים',
         sub: 'NaCl 0.9% — שוק',
-        color: 'text-blue-300',
+        color: 'text-blue-700 dark:text-blue-300',
         routes: [
           { route: 'IV', dose: '250–500 cc', note: 'בולוסים חוזרים לפי מצב' },
         ],
@@ -311,7 +311,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'respiratory',
     label: 'אסתמה / COPD',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     bgColor: 'bg-teal-400/10',
     borderColor: 'border-teal-400/30',
     solidBg: 'bg-teal-500',
@@ -319,7 +319,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'ונטולין',
         sub: 'Salbutamol',
-        color: 'text-teal-400',
+        color: 'text-teal-700 dark:text-teal-400',
         routes: [
           { route: 'אינהלציה — קל/בינוני', dose: '2.5 mg', max: '3 מנות | כל 20 דקות' },
           { route: 'אינהלציה — קשה', dose: '5 mg', max: '3 מנות' },
@@ -329,7 +329,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אירובנט',
         sub: 'Ipratropium',
-        color: 'text-teal-300',
+        color: 'text-teal-700 dark:text-teal-300',
         routes: [
           { route: 'אינהלציה — אסתמה', dose: '0.5 mg', max: '3 מנות (קשה)' },
           { route: 'אינהלציה — COPD', dose: '0.5 mg', note: 'מנה יחידה' },
@@ -339,7 +339,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'מגנזיום',
         sub: 'Magnesium — אסתמה קשה',
-        color: 'text-lime-400',
+        color: 'text-lime-800 dark:text-lime-400',
         routes: [
           { route: 'IV (20 דקות)', dose: '2–3 g', note: 'אסתמה קשה בלבד' },
         ],
@@ -347,7 +347,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'סולמדרול',
         sub: 'Methylprednisolone',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           { route: 'IV', dose: '125 mg', note: 'מנה יחידה' },
         ],
@@ -355,7 +355,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אדרנלין',
         sub: 'Epinephrine — אסתמה / סטרידור',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           { route: 'SC', dose: '0.3 mg', note: 'מנה יחידה' },
         ],
@@ -367,7 +367,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'sedation',
     label: 'סדציה',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     bgColor: 'bg-sky-400/10',
     borderColor: 'border-sky-400/30',
     solidBg: 'bg-sky-500',
@@ -375,7 +375,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אטומידאט',
         sub: 'Etomidate — RSI',
-        color: 'text-sky-400',
+        color: 'text-sky-700 dark:text-sky-400',
         routes: [
           {
             route: 'IV (30–60 שניות) — RSI',
@@ -393,7 +393,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'קטמין',
         sub: 'Ketamine — RSI / DSI',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           {
             route: 'IV — RSI',
@@ -415,7 +415,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'מידזולם',
         sub: 'Midazolam / Dormicum — סדציה',
-        color: 'text-violet-400',
+        color: 'text-violet-700 dark:text-violet-400',
         routes: [
           { route: 'IV — שטחית (היפוך חשמלי)', dose: '2.5–5 mg' },
           {
@@ -434,7 +434,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אטרופין',
         sub: 'Atropine — לפני אינטובציה',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           { route: 'IV', dose: '1 mg', note: 'לפני אינטובציה / ארס' },
         ],
@@ -446,7 +446,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'pain',
     label: 'כאב',
-    color: 'text-pink-400',
+    color: 'text-pink-700 dark:text-pink-400',
     bgColor: 'bg-pink-400/10',
     borderColor: 'border-pink-400/30',
     solidBg: 'bg-pink-500',
@@ -454,7 +454,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'פנטניל',
         sub: 'Fentanyl — כאב חזק 7–10',
-        color: 'text-purple-400',
+        color: 'text-purple-700 dark:text-purple-400',
         routes: [
           {
             route: 'IV איטי (10 דקות)',
@@ -478,7 +478,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'קטמין',
         sub: 'Ketamine — low-dose analgesia',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           {
             route: 'IV — סינרגיסטי',
@@ -501,7 +501,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אקמול',
         sub: 'Paracetamol',
-        color: 'text-pink-400',
+        color: 'text-pink-700 dark:text-pink-400',
         routes: [
           { route: 'IV (10 דקות)', dose: '1,000 mg' },
           { route: 'PO', dose: '500–1,000 mg' },
@@ -510,7 +510,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אפטלגין',
         sub: 'Metamizole / Dipyrone',
-        color: 'text-rose-400',
+        color: 'text-rose-700 dark:text-rose-400',
         routes: [
           { route: 'IV איטי', dose: '1,000 mg' },
         ],
@@ -518,7 +518,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'פראמין',
         sub: 'Metoclopramide — בחילות',
-        color: 'text-indigo-400',
+        color: 'text-indigo-700 dark:text-indigo-400',
         routes: [
           { route: 'IV / IM', dose: '10 mg', note: 'גיל 75+ / CRF: 5 mg | גיל 14+ בלבד' },
         ],
@@ -526,7 +526,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'זופרן',
         sub: 'Ondansetron — בחילות',
-        color: 'text-cyan-400',
+        color: 'text-cyan-700 dark:text-cyan-400',
         routes: [
           { route: 'IV / IM', dose: '4 mg', note: 'מנה יחידה' },
         ],
@@ -538,7 +538,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
   {
     id: 'poisoning',
     label: 'הרעלות',
-    color: 'text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     bgColor: 'bg-green-400/10',
     borderColor: 'border-green-400/30',
     solidBg: 'bg-green-600',
@@ -546,7 +546,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'נרקן',
         sub: 'Naloxone — הרעלת אופייטים',
-        color: 'text-green-400',
+        color: 'text-green-800 dark:text-green-400',
         routes: [
           { route: 'IN', dose: '0.4 mg', max: 'חזרה לאחר 5–10 דקות' },
           { route: 'IV איטי', dose: '0.4 mg', note: 'מהול ב-10cc סליין, לאט', max: 'חזרה לאחר 5–10 דקות | סה"כ עד 2 mg' },
@@ -555,7 +555,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'אטרופין',
         sub: 'Atropine — זרחנים אורגניים / קרבמטים',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           { route: 'IV — קל/בינוני', dose: '1–2 mg', max: 'כל 5 דקות עד אטרופינזציה' },
           { route: 'IV — קשה', dose: '2–4 mg', max: 'כל 5 דקות עד אטרופינזציה' },
@@ -565,7 +565,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'הידרוקסיקובלמין',
         sub: 'Hydroxocobalamin — הרעלת ציאניד',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           { route: 'IV (15 דקות)', dose: '5 g', note: 'מהול ב-200cc D5W/NS' },
         ],
@@ -573,7 +573,7 @@ export const ADULT_SCENARIOS: AdultScenario[] = [
       {
         name: 'תיאוסולפט',
         sub: 'Sodium Thiosulfate — הרעלת ציאניד',
-        color: 'text-slate-400',
+        color: 'text-slate-600 dark:text-slate-400',
         routes: [
           { route: 'IV (10 דקות)', dose: '12.5 g' },
         ],

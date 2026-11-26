@@ -7,6 +7,7 @@ import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { useChecklistStore } from '../../../store/checklistStore';
 import { AMBULANCE_CHECKLIST } from '../data/ambulanceChecklistData';
 import { trackInteraction, trackEvent } from '../../../utils/analytics';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
 
   const {
     checkedItems, hiddenItems, customItems,
@@ -51,7 +53,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   const isComplete = totalItems > 0 && checkedCount === totalItems;
 
   useEffect(() => {
-    if (isOpen) trackInteraction('רשימת ציוד לאמבולנס', 'tools');
+    if (isOpen) trackInteraction('רשימת ציוד לאמבולנס', 'tools'); // i18n-ok: analytics label, kept stable
   }, [isOpen]);
 
   useEffect(() => {
@@ -85,40 +87,40 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line-strong">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line-strong
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-emt-muted hover:text-emt-light"
-          aria-label="חזור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('back')}
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={20} className="ltr:rotate-180" />
         </button>
 
-        <h2 className="text-emt-light font-bold text-xl">בדיקת אמבולנס</h2>
+        <h2 className="text-fg font-bold text-xl">{t('refAmbTitle')}</h2>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => (isCustomizeMode ? exitCustomize() : setIsCustomizeMode(true))}
             className={`px-3 py-1.5 rounded-lg border text-sm font-bold active:scale-95 transition-all ${
               isCustomizeMode
-                ? 'bg-emt-yellow/10 border-emt-yellow text-emt-yellow'
-                : 'bg-emt-gray border-emt-border text-emt-muted hover:text-emt-light'
+                ? 'bg-emt-yellow/10 border-emt-yellow text-amber-800 dark:text-emt-yellow'
+                : 'bg-surface-2 border-line-strong text-fg-muted hover:text-fg'
             }`}
           >
-            {isCustomizeMode ? 'סיום' : 'התאמה אישית'}
+            {isCustomizeMode ? t('done') : t('refCustomize')}
           </button>
           <button
             onClick={clearChecklist}
             disabled={checkedCount === 0}
-            className="w-10 h-10 rounded-full bg-emt-gray border border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line-strong
                        flex items-center justify-center active:scale-90 transition-transform
                        disabled:opacity-30 disabled:cursor-not-allowed
-                       text-emt-muted hover:text-emt-red"
-            aria-label="אפס הכל"
+                       text-fg-muted hover:text-emt-red"
+            aria-label={t('refResetAll')}
           >
             <RotateCcw size={16} />
           </button>
@@ -126,15 +128,15 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
       </div>
 
       {/* Progress Bar */}
-      <div className="shrink-0 px-4 py-3 border-b border-emt-border">
+      <div className="shrink-0 px-4 py-3 border-b border-line-strong">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-emt-muted">{checkedCount} / {totalItems} פריטים</span>
+          <span className="text-sm text-fg-muted">{checkedCount} / {totalItems} {t('items')}</span>
           {isCustomizeMode
-            ? <span className="text-sm font-bold text-emt-yellow">מצב עריכה</span>
-            : isComplete && <span className="text-sm font-bold text-emt-green">הרכב מוכן ✓</span>
+            ? <span className="text-sm font-bold text-amber-800 dark:text-emt-yellow">{t('refEditMode')}</span>
+            : isComplete && <span className="text-sm font-bold text-emt-green">{t('refVehicleReady')}</span>
           }
         </div>
-        <div className="h-2 rounded-full bg-emt-gray overflow-hidden">
+        <div className="h-2 rounded-full bg-surface-3 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-300 ${isComplete ? 'bg-emt-green' : 'bg-emt-yellow'}`}
             style={{ width: `${progress}%` }}
@@ -145,7 +147,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
       {/* Accordion List */}
       <div className="flex-1 overflow-y-auto">
         {displayCategories.length === 0 && (
-          <p className="text-center text-emt-muted text-sm py-12">לא נמצאו תוצאות</p>
+          <p className="text-center text-fg-muted text-sm py-12">{t('noResults')}</p>
         )}
 
         {displayCategories.map((category) => {
@@ -155,23 +157,23 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
           const catComplete = catTotal > 0 && catChecked === catTotal;
 
           return (
-            <div key={category.id} className="border-b border-emt-border">
+            <div key={category.id} className="border-b border-line-strong">
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category.id)}
-                className="w-full flex items-center justify-between px-4 py-4 active:bg-emt-gray/50 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-4 active:bg-surface-2 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {expanded
-                    ? <ChevronUp size={16} className="text-emt-muted" />
-                    : <ChevronDown size={16} className="text-emt-muted" />
+                    ? <ChevronUp size={16} className="text-fg-muted" />
+                    : <ChevronDown size={16} className="text-fg-muted" />
                   }
-                  <span className={`font-bold text-base ${catComplete && !isCustomizeMode ? 'text-emt-green' : 'text-emt-light'}`}>
+                  <span className={`font-bold text-base ${catComplete && !isCustomizeMode ? 'text-emt-green' : 'text-fg'}`}>
                     {category.name}
                   </span>
                 </div>
                 {!isCustomizeMode && (
-                  <span className={`text-sm font-mono ${catComplete ? 'text-emt-green' : 'text-emt-muted'}`}>
+                  <span className={`text-sm font-mono ${catComplete ? 'text-emt-green' : 'text-fg-muted'}`}>
                     {catChecked}/{catTotal}
                   </span>
                 )}
@@ -197,7 +199,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                               className="w-8 h-8 rounded-full bg-emt-red/10 border border-emt-red/30
                                          flex items-center justify-center shrink-0
                                          active:scale-90 transition-transform text-emt-red"
-                              aria-label="מחק פריט"
+                              aria-label={t('refDeleteItem')}
                             >
                               <Trash2 size={15} />
                             </button>
@@ -208,7 +210,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                               className="w-8 h-8 rounded-full bg-emt-green/10 border border-emt-green/30
                                          flex items-center justify-center shrink-0
                                          active:scale-90 transition-transform text-emt-green"
-                              aria-label="הצג פריט"
+                              aria-label={t('refShowItem')}
                             >
                               <Eye size={15} />
                             </button>
@@ -219,13 +221,13 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                               className="w-8 h-8 rounded-full bg-emt-red/10 border border-emt-red/30
                                          flex items-center justify-center shrink-0
                                          active:scale-90 transition-transform text-emt-red"
-                              aria-label="הסתר פריט"
+                              aria-label={t('refHideItem')}
                             >
                               <Trash2 size={15} />
                             </button>
                           )}
-                          <span className="flex-1 text-right text-sm text-emt-light">{item.name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full border text-emt-yellow border-emt-yellow/30 shrink-0">
+                          <span className="flex-1 text-start text-sm text-fg">{item.name}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full border text-amber-800 dark:text-emt-yellow border-emt-yellow/30 shrink-0">
                             {item.requiredAmount}
                           </span>
                         </div>
@@ -237,22 +239,23 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                       <button
                         key={item.id}
                         onClick={() => toggleItem(item.id)}
-                        className="w-full flex items-center gap-3 px-6 py-3 active:bg-emt-gray/30 transition-colors"
+                        className="w-full flex items-center gap-3 px-6 py-3 active:bg-surface-2 transition-colors"
                       >
                         <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          checked ? 'bg-emt-green border-emt-green' : 'bg-transparent border-emt-border'
+                          checked ? 'bg-emt-green border-emt-green' : 'bg-transparent border-line-strong'
                         }`}>
                           {checked && (
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              {/* theme-ok: white tick on the green box */}
                               <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </div>
-                        <span className={`flex-1 text-right text-sm ${checked ? 'text-emt-muted line-through' : 'text-emt-light'}`}>
+                        <span className={`flex-1 text-start text-sm ${checked ? 'text-fg-muted line-through' : 'text-fg'}`}>
                           {item.name}
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${
-                          checked ? 'text-emt-muted border-emt-border' : 'text-emt-yellow border-emt-yellow/30'
+                          checked ? 'text-fg-muted border-line-strong' : 'text-amber-800 dark:text-emt-yellow border-emt-yellow/30'
                         }`}>
                           {item.requiredAmount}
                         </span>
@@ -269,7 +272,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                           className="w-8 h-8 rounded-full bg-emt-green/10 border border-emt-green/40
                                      flex items-center justify-center shrink-0
                                      active:scale-90 transition-transform text-emt-green"
-                          aria-label="שמור"
+                          aria-label={t('save')}
                         >
                           <Check size={15} />
                         </button>
@@ -281,18 +284,17 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                             if (e.key === 'Enter') handleSaveItem(category.id);
                             if (e.key === 'Escape') { setAddingToCategory(null); setNewItemName(''); }
                           }}
-                          placeholder="שם הפריט..."
-                          dir="rtl"
-                          className="flex-1 bg-emt-gray border border-emt-border rounded-lg py-2 px-3
-                                     text-sm text-emt-light text-right placeholder:text-emt-muted
+                          placeholder={t('refItemNamePlaceholder')}
+                          className="flex-1 bg-surface-2 border border-line-strong rounded-lg py-2 px-3
+                                     text-sm text-fg text-start placeholder:text-fg-subtle
                                      focus:outline-none focus:border-emt-yellow transition-colors"
                         />
                         <button
                           onClick={() => { setAddingToCategory(null); setNewItemName(''); }}
-                          className="w-8 h-8 rounded-full bg-emt-gray border border-emt-border
+                          className="w-8 h-8 rounded-full bg-surface-2 border border-line-strong
                                      flex items-center justify-center shrink-0
-                                     active:scale-90 transition-transform text-emt-muted"
-                          aria-label="ביטול"
+                                     active:scale-90 transition-transform text-fg-muted"
+                          aria-label={t('cancel')}
                         >
                           <X size={15} />
                         </button>
@@ -307,7 +309,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                         style={{ width: 'calc(100% - 2rem)' }}
                       >
                         <Plus size={16} />
-                        <span>הוסף פריט</span>
+                        <span>{t('refAddItem')}</span>
                       </button>
                     )
                   )}

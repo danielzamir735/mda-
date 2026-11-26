@@ -33,7 +33,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Cardiovascular',
     description:
       'תרופות המיועדות לטיפול ביתר לחץ דם, אי-ספיקת לב והפרעות קצב. פועלות להרחבת כלי דם, הפחתת עומס מהלב והסדרת הולכה חשמלית.',
-    color: 'text-red-400',
+    color: 'text-red-700 dark:text-red-400',
     border: 'border-red-400/30',
     bg: 'bg-red-400/5',
     divider: 'border-b border-red-400/20',
@@ -109,7 +109,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Blood Thinners',
     description:
       'תרופות למניעת יצירת קרישי דם ואירועים מוחיים, מחולקות לנוגדי קרישה ונוגדי טסיות.',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/5',
     divider: 'border-b border-rose-400/20',
@@ -141,7 +141,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Respiratory',
     description:
       'תרופות להרחבת דרכי הנשימה (ברונכודילטורים) הניתנות לרוב במשאף או אינהלציה.',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/5',
     divider: 'border-b border-sky-400/20',
@@ -164,7 +164,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Diabetes',
     description:
       'תרופות הפועלות במנגנונים שונים לוויסות רמות הגלוקוז בדם והאינסולין.',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/5',
     divider: 'border-b border-amber-400/20',
@@ -191,7 +191,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Neurology & Psychiatry',
     description:
       'תרופות המשפיעות על מערכת העצבים ומשמשות לטיפול בדיכאון, חרדה, הרגעה ומניעת פרכוסים.',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/5',
     divider: 'border-b border-violet-400/20',
@@ -241,7 +241,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     title: 'מערכת העיכול (כיב קיבה, צרבת)',
     titleEn: 'Gastrointestinal',
     description: 'תרופות המיועדות לסתור או למנוע עודף חומציות בקיבה.',
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/5',
     divider: 'border-b border-emerald-400/20',
@@ -264,7 +264,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Analgesics',
     description:
       'תרופות נוגדות דלקת שאינן סטרואידים (NSAIDs) ואופיואידים חזקים לשיכוך כאב.',
-    color: 'text-orange-400',
+    color: 'text-orange-700 dark:text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/5',
     divider: 'border-b border-orange-400/20',
@@ -300,7 +300,7 @@ export const MED_CATEGORIES: MedCategory[] = [
     titleEn: 'Thyroid',
     description:
       'טיפול בעודף פעילות (על ידי תרופות מווסתות) או בחוסר פעילות (על ידי תחליפי הורמון).',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/5',
     divider: 'border-b border-teal-400/20',

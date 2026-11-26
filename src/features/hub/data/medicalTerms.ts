@@ -70,7 +70,7 @@ export const TABLET_CATEGORIES: TabletCategory[] = [
 export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   {
     title: 'לב וכלי דם',
-    color: 'text-red-400',
+    color: 'text-red-700 dark:text-red-400',
     bg: 'bg-red-400/5',
     border: 'border-red-400/20',
     terms: [
@@ -123,7 +123,7 @@ export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   },
   {
     title: 'נשימה',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     bg: 'bg-blue-400/5',
     border: 'border-blue-400/20',
     terms: [
@@ -161,7 +161,7 @@ export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   },
   {
     title: 'עצבים ומוח',
-    color: 'text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     bg: 'bg-purple-400/5',
     border: 'border-purple-400/20',
     terms: [
@@ -204,7 +204,7 @@ export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   },
   {
     title: 'סוכר ובלוטות',
-    color: 'text-yellow-400',
+    color: 'text-yellow-800 dark:text-yellow-400',
     bg: 'bg-yellow-400/5',
     border: 'border-yellow-400/20',
     terms: [
@@ -242,7 +242,7 @@ export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   },
   {
     title: 'כליות ועיכול',
-    color: 'text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     bg: 'bg-green-400/5',
     border: 'border-green-400/20',
     terms: [
@@ -295,7 +295,7 @@ export const MEDICAL_CATEGORIES: MedicalCategory[] = [
   },
   {
     title: 'כללי ואחר',
-    color: 'text-gray-400',
+    color: 'text-gray-600 dark:text-gray-400',
     bg: 'bg-gray-400/5',
     border: 'border-gray-200 dark:border-emt-border',
     terms: [

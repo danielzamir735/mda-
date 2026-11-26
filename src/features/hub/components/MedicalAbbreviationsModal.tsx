@@ -17,6 +17,7 @@ import {
 import { useAbbreviationSrsStore, MAX_BOX } from '../../../store/abbreviationSrsStore';
 import { speakEnglish, warmUpVoices } from '../../../utils/tts';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage } from '../../../hooks/useTranslation';
 
 interface Props {
   isOpen: boolean;
@@ -32,25 +33,26 @@ function TermRow({
   color: string;
   borderClass?: string;
 }) {
+  const t = useTranslation();
   return (
     <div className={['flex items-center gap-3 px-4 py-3', borderClass ?? ''].join(' ')}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.he}</span>
+          <span className="text-sm font-bold text-fg">{item.he}</span>
           <span className={`text-base font-black font-mono ${color}`} dir="ltr">
             {item.abbr}
           </span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5">
-          הגייה: {item.phonetic}
+        <p className="text-xs text-fg-muted mt-0.5">
+          {t('refPronunciation', { p: item.phonetic })}
         </p>
       </div>
       <button
         onClick={() => { trackEvent('medical_term_tts_played'); speakEnglish(item.speech); }}
         className="w-10 h-10 shrink-0 rounded-xl bg-sky-500/10 border border-sky-400/25
-                   flex items-center justify-center text-sky-400
+                   flex items-center justify-center text-sky-700 dark:text-sky-400
                    active:scale-90 transition-transform"
-        aria-label={`השמע הגייה של ${item.abbr}`}
+        aria-label={t('refPlayPronunciation', { term: item.abbr })}
       >
         <Volume2 size={18} />
       </button>
@@ -70,31 +72,31 @@ function DictionaryRow({
   return (
     <div className={['px-4 py-3', borderClass ?? ''].join(' ')}>
       <p className={`text-sm font-black ${color}`}>{item.term}</p>
-      <p className="text-sm text-gray-700 dark:text-emt-light/90 leading-relaxed mt-0.5">{item.def}</p>
+      <p className="text-sm text-fg/90 leading-relaxed mt-0.5">{item.def}</p>
     </div>
   );
 }
 
 function VenflonTable() {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden">
+    <div className="rounded-2xl border border-line bg-surface overflow-hidden">
       {VENFLON_SIZES.map((v, i) => (
         <div
           key={v.gauge}
           className={[
             'flex items-center gap-3 px-4 py-3',
-            i < VENFLON_SIZES.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : '',
+            i < VENFLON_SIZES.length - 1 ? 'border-b border-line' : '',
           ].join(' ')}
         >
           <span className={`w-4 h-4 rounded-full shrink-0 ${v.dot}`} aria-hidden="true" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-bold text-gray-900 dark:text-white">
+              <span className="text-sm font-bold text-fg">
                 {v.colorName} · <span dir="ltr" className="font-mono">{v.gauge}</span>
               </span>
-              <span className="text-xs font-bold text-gray-500 dark:text-emt-muted shrink-0">{v.flow}</span>
+              <span className="text-xs font-bold text-fg-muted shrink-0">{v.flow}</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-emt-muted mt-0.5 leading-relaxed">{v.indication}</p>
+            <p className="text-xs text-fg-muted mt-0.5 leading-relaxed">{v.indication}</p>
           </div>
         </div>
       ))}
@@ -110,6 +112,8 @@ type Tab = 'abbreviations' | 'dictionary';
 
 export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const [query, setQuery] = useState('');
   const [trainerOpen, setTrainerOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('abbreviations');
@@ -149,16 +153,16 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
     ? DICTIONARY_SECTIONS.flatMap((section) =>
         section.terms
           .filter(
-            (t) =>
-              t.term.toLowerCase().includes(q) ||
-              t.def.toLowerCase().includes(q) ||
+            (term) =>
+              term.term.toLowerCase().includes(q) ||
+              term.def.toLowerCase().includes(q) ||
               section.title.toLowerCase().includes(q),
           )
           .map((item) => ({ item, color: section.color })),
       )
     : null;
   const showVenflonInSearch = q
-    ? 'ונפלונים וציוד חדירה ורידית'.includes(q) ||
+    ? t('refVenflonTitle').toLowerCase().includes(q) ||
       VENFLON_SIZES.some(
         (v) => v.gauge.toLowerCase().includes(q) || v.colorName.includes(q) || v.indication.includes(q),
       )
@@ -171,22 +175,22 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-[75] flex flex-col bg-gray-50 dark:bg-emt-dark" dir="rtl">
+      <div className="fixed inset-0 z-[75] flex flex-col bg-page" dir={dir}>
         {/* Header */}
-        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+        <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <GraduationCap size={22} className="text-sky-400" />
+            <GraduationCap size={22} className="text-sky-700 dark:text-sky-400" />
             <div>
-              <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">מושגים רפואיים</h2>
-              <p className="text-gray-500 dark:text-emt-muted text-xs">קיצורים · מילון · שינון</p>
+              <h2 className="text-fg font-bold text-xl leading-tight">{t('refTermsTitle')}</h2>
+              <p className="text-fg-muted text-xs">{t('refTermsSubtitle')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-            aria-label="סגור"
+                       text-fg-muted hover:text-fg"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
@@ -197,24 +201,24 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
           <div className="relative">
             <Search
               size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-emt-muted pointer-events-none"
+              className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none"
             />
             <input
               type="text"
-              placeholder="חפש קיצור, מושג, הגדרה או קטגוריה..."
+              placeholder={t('refTermsSearch')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 dark:border-emt-border
-                         bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light
-                         placeholder-gray-400 dark:placeholder-emt-muted
-                         pr-9 pl-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+              className="w-full rounded-xl border border-line
+                         bg-surface text-fg
+                         placeholder:text-fg-subtle
+                         ps-9 pe-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400/40"
             />
           </div>
           {!q && (
-            <div className="mt-2.5 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border p-1">
+            <div className="mt-2.5 grid grid-cols-2 gap-1 rounded-xl bg-surface-2 border border-line p-1">
               {([
-                ['abbreviations', `קיצורים (${ALL_ABBREVIATIONS.length})`],
-                ['dictionary', `מילון (${TOTAL_DICTIONARY_TERMS})`],
+                ['abbreviations', t('refTabAbbr', { n: ALL_ABBREVIATIONS.length })],
+                ['dictionary', t('refTabDictionary', { n: TOTAL_DICTIONARY_TERMS })],
               ] as const).map(([id, label]) => (
                 <button
                   key={id}
@@ -224,7 +228,7 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                     'rounded-lg py-2 text-sm font-bold transition-colors',
                     tab === id
                       ? 'bg-sky-500/20 text-sky-700 dark:text-sky-200 border border-sky-400/40'
-                      : 'text-gray-500 dark:text-emt-muted border border-transparent',
+                      : 'text-fg-muted border border-transparent',
                   ].join(' ')}
                 >
                   {label}
@@ -241,14 +245,14 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
             <>
               {filtered && filtered.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-black tracking-widest text-gray-500 dark:text-emt-muted mb-2 pr-1">קיצורים</h3>
-                  <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
+                  <h3 className="text-xs font-black tracking-widest text-fg-muted mb-2 ps-1">{t('refAbbrHeading')}</h3>
+                  <div className="rounded-2xl border border-line overflow-hidden">
                     {filtered.map(({ item, color }, i) => (
                       <TermRow
                         key={item.id}
                         item={item}
                         color={color}
-                        borderClass={i < filtered.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : ''}
+                        borderClass={i < filtered.length - 1 ? 'border-b border-line' : ''}
                       />
                     ))}
                   </div>
@@ -256,14 +260,14 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
               )}
               {filteredDictionary && filteredDictionary.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-black tracking-widest text-gray-500 dark:text-emt-muted mb-2 pr-1">מילון</h3>
-                  <div className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden">
+                  <h3 className="text-xs font-black tracking-widest text-fg-muted mb-2 ps-1">{t('refDictionaryHeading')}</h3>
+                  <div className="rounded-2xl border border-line overflow-hidden">
                     {filteredDictionary.map(({ item, color }, i) => (
                       <DictionaryRow
                         key={item.term}
                         item={item}
                         color={color}
-                        borderClass={i < filteredDictionary.length - 1 ? 'border-b border-gray-200 dark:border-emt-border' : ''}
+                        borderClass={i < filteredDictionary.length - 1 ? 'border-b border-line' : ''}
                       />
                     ))}
                   </div>
@@ -271,12 +275,12 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
               )}
               {showVenflonInSearch && (
                 <div>
-                  <h3 className="text-xs font-black tracking-widest text-gray-500 dark:text-emt-muted mb-2 pr-1">ונפלונים וציוד חדירה ורידית</h3>
+                  <h3 className="text-xs font-black tracking-widest text-fg-muted mb-2 ps-1">{t('refVenflonTitle')}</h3>
                   <VenflonTable />
                 </div>
               )}
               {!filtered?.length && !filteredDictionary?.length && !showVenflonInSearch && (
-                <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
+                <p className="text-center text-fg-muted py-8 text-sm">{t('noResults')}</p>
               )}
             </>
           ) : tab === 'dictionary' ? (
@@ -288,15 +292,15 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                            active:scale-[0.98] transition-transform"
               >
                 <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0">
-                  <Brain size={20} className="text-sky-400" />
+                  <Brain size={20} className="text-sky-700 dark:text-sky-400" />
                 </div>
                 <div className="flex flex-col items-start">
-                  <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">שינון המילון</span>
-                  <span className="text-sky-600/60 dark:text-sky-300/50 text-xs mt-0.5">
-                    {TOTAL_DICTIONARY_TERMS} מושגים · {DICTIONARY_SECTIONS.length} פרקים
+                  <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">{t('refDictionaryTraining')}</span>
+                  <span className="text-sky-700 dark:text-sky-300/50 text-xs mt-0.5">
+                    {t('refTermsAndChapters', { n: TOTAL_DICTIONARY_TERMS, c: DICTIONARY_SECTIONS.length })}
                   </span>
                 </div>
-                <div className="mr-auto text-sky-400/40 text-lg">←</div>
+                <div className="ms-auto text-sky-700 dark:text-sky-500/50 text-lg ltr:rotate-180">←</div>
               </button>
 
               {DICTIONARY_SECTIONS.map((section) => {
@@ -306,13 +310,13 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                     <button
                       onClick={() => setOpenSectionId(open ? null : section.id)}
                       aria-expanded={open}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 text-right"
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-start"
                     >
                       <span className={`flex-1 text-sm font-black ${section.color}`}>{section.title}</span>
-                      <span className="text-xs font-bold text-gray-500 dark:text-emt-muted shrink-0">{section.terms.length}</span>
+                      <span className="text-xs font-bold text-fg-muted shrink-0">{section.terms.length}</span>
                       <ChevronDown
                         size={18}
-                        className={`shrink-0 text-gray-400 dark:text-emt-muted transition-transform ${open ? 'rotate-180' : ''}`}
+                        className={`shrink-0 text-fg-subtle transition-transform ${open ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {open && (
@@ -321,11 +325,11 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                           <DictionaryRow key={item.term} item={item} color={section.color} borderClass={`border-b ${section.border}`} />
                         ))}
                         <button
-                          onClick={() => startDictionaryTrainer(section.terms.map((t) => ({ front: t.term, back: t.def })))}
+                          onClick={() => startDictionaryTrainer(section.terms.map((term) => ({ front: term.term, back: term.def })))}
                           className={`w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold ${section.color} active:scale-[0.98] transition-transform`}
                         >
                           <Brain size={16} />
-                          שינון הפרק הזה
+                          {t('refTrainThisChapter')}
                         </button>
                       </div>
                     )}
@@ -334,9 +338,9 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
               })}
 
               <div>
-                <h3 className="flex items-center gap-1.5 text-xs font-black tracking-widest text-gray-500 dark:text-emt-muted mb-2 pr-1">
+                <h3 className="flex items-center gap-1.5 text-xs font-black tracking-widest text-fg-muted mb-2 ps-1">
                   <Syringe size={14} />
-                  ונפלונים וציוד חדירה ורידית
+                  {t('refVenflonTitle')}
                 </h3>
                 <VenflonTable />
               </div>
@@ -351,20 +355,20 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                        active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0">
-              <Brain size={20} className="text-sky-400" />
+              <Brain size={20} className="text-sky-700 dark:text-sky-400" />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">מצב שינון</span>
-              <span className="text-sky-600/60 dark:text-sky-300/50 text-xs mt-0.5">
-                {ALL_ABBREVIATIONS.length} מושגים · {masteredCount} בשליטה מלאה
+              <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">{t('refTrainingMode')}</span>
+              <span className="text-sky-700 dark:text-sky-300/50 text-xs mt-0.5">
+                {t('refTermsMastered', { n: ALL_ABBREVIATIONS.length, m: masteredCount })}
               </span>
             </div>
-            <div className="mr-auto text-sky-400/40 text-lg">←</div>
+            <div className="ms-auto text-sky-700 dark:text-sky-500/50 text-lg ltr:rotate-180">←</div>
           </button>
 
           {ABBREVIATION_CATEGORIES.map((cat) => (
               <div key={cat.id}>
-                <h3 className={`text-xs font-black uppercase tracking-widest ${cat.color} mb-2 pr-1`}>
+                <h3 className={`text-xs font-black uppercase tracking-widest ${cat.color} mb-2 ps-1`}>
                   {cat.title}
                 </h3>
                 <div className={`rounded-2xl border ${cat.border} ${cat.bg} overflow-hidden`}>

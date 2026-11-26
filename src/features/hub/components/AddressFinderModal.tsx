@@ -24,7 +24,7 @@ const BENEFITS = [
 
 function BetaTag() {
   return (
-    <span className="text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+    <span className="text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40">
       בטא
     </span>
   );
@@ -213,14 +213,14 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2 min-w-0">
-          <MapPinned size={22} className="text-rose-400 shrink-0" />
+          <MapPinned size={22} className="text-rose-700 dark:text-rose-400 shrink-0" />
           <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight truncate">איתור כתובת מהיר</h2>
           <BetaTag />
         </div>
         <HapticButton
           onClick={onClose}
           pressScale={0.88}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border flex items-center justify-center text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border flex items-center justify-center text-gray-600 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
           aria-label="סגור"
         >
           <X size={20} />
@@ -231,7 +231,7 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
       <form onSubmit={search} className="relative z-10 shrink-0 px-3 pb-2.5 border-b border-gray-200 dark:border-emt-border" role="search">
         <div className="flex items-stretch gap-1.5 h-12">
           <div className="relative flex-1 min-w-0">
-            <MapPin size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-rose-400" />
+            <MapPin size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-rose-700 dark:text-rose-400" />
             <input
               ref={inputRef}
               value={query}
@@ -297,7 +297,7 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
             גוגל
           </a>
         </div>
-        {message && <p className="text-sm font-semibold text-rose-400 px-1 pt-1.5">{message}</p>}
+        {message && <p className="text-sm font-semibold text-rose-700 dark:text-rose-400 px-1 pt-1.5">{message}</p>}
         {/* location allowed but only rough: "precise location" is off for the browser */}
         {loc === 'granted' && roughHint && accuracy != null && accuracy > 300 && (
           <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm" role="status">
@@ -313,7 +313,7 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
         {(loc === 'denied' || loc === 'unavailable') && (
           <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm" role="alert">
             <div className="flex items-start gap-2">
-              <Navigation size={16} className="shrink-0 mt-0.5 text-amber-500 dark:text-amber-300" />
+              <Navigation size={16} className="shrink-0 mt-0.5 text-amber-800 dark:text-amber-300" />
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-gray-900 dark:text-emt-light">כדי שהשירות יעבוד, צריך להפעיל את המיקום בטלפון</p>
                 <p className="text-gray-600 dark:text-emt-muted leading-snug mt-0.5">
@@ -339,10 +339,10 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                   </ol>
                 )}
                 <div className="flex gap-2 mt-2">
-                  <button type="button" onClick={askLocation} className="px-3 py-1.5 rounded-lg bg-amber-500 text-white font-bold text-xs active:opacity-80">
+                  <button type="button" onClick={askLocation} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold text-xs active:opacity-80">
                     נסה שוב
                   </button>
-                  <button type="button" onClick={() => setHowTo(v => !v)} className="px-3 py-1.5 rounded-lg border border-amber-400/50 text-amber-700 dark:text-amber-200 font-bold text-xs">
+                  <button type="button" onClick={() => setHowTo(v => !v)} className="px-3 py-1.5 rounded-lg border border-amber-400/50 text-amber-800 dark:text-amber-200 font-bold text-xs">
                     {howTo ? 'הסתר הסבר' : 'איך מפעילים?'}
                   </button>
                 </div>
@@ -363,13 +363,13 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                 onClick={() => open(r)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-right border-t first:border-t-0 border-gray-100 dark:border-emt-border active:bg-rose-400/10"
               >
-                <MapPin size={18} className="text-rose-400 shrink-0" />
+                <MapPin size={18} className="text-rose-700 dark:text-rose-400 shrink-0" />
                 <span className="min-w-0">
                   <span className="block font-bold text-gray-900 dark:text-emt-light truncate">{r.line1}</span>
-                  {r.line2 && <span className="block text-xs text-gray-500 dark:text-emt-muted">{r.line2}</span>}
+                  {r.line2 && <span className="block text-xs text-gray-600 dark:text-emt-muted">{r.line2}</span>}
                   {/* the map knows the street but not the number typed: say so before the tap */}
                   {!r.exact && r.qNum && !r.housenumber && (
-                    <span className="block text-xs font-semibold text-amber-600 dark:text-amber-300">מספר {r.qNum} לא רשום במפה, יסומן הרחוב</span>
+                    <span className="block text-xs font-semibold text-amber-800 dark:text-amber-300">מספר {r.qNum} לא רשום במפה, יסומן הרחוב</span>
                   )}
                 </span>
               </button>
@@ -390,7 +390,7 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
         {/* the first open downloads the map page, which can take a few seconds */}
         {mapLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-emt-dark" role="status">
-            <Loader2 size={34} className="animate-spin text-rose-400" />
+            <Loader2 size={34} className="animate-spin text-rose-700 dark:text-rose-400" />
             <p className="text-gray-600 dark:text-emt-muted font-semibold">טוען את המפה…</p>
           </div>
         )}
@@ -413,29 +413,29 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                 className="mx-auto w-24 h-24 rounded-3xl flex items-center justify-center border border-rose-400/35 mb-5"
                 style={{ background: 'linear-gradient(135deg, rgba(251,113,133,0.22) 0%, rgba(225,29,72,0.10) 100%)', boxShadow: '0 0 48px rgba(244,63,94,0.22)' }}
               >
-                <MapPinned size={50} className="text-rose-400" />
+                <MapPinned size={50} className="text-rose-700 dark:text-rose-400" />
               </div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <h2 className="text-gray-900 dark:text-emt-light font-extrabold text-3xl leading-tight">איתור כתובת מהיר</h2>
                 <BetaTag />
               </div>
-              <p className="text-gray-500 dark:text-emt-muted text-base text-center mb-6 leading-relaxed">
+              <p className="text-gray-600 dark:text-emt-muted text-base text-center mb-6 leading-relaxed">
                 לכתובות שקשה למצוא: מתחמים, בניינים פנימיים וכניסות מאחור
               </p>
               <div className="flex flex-col gap-3 pb-2">
                 {BENEFITS.map(({ icon: Icon, title, desc }) => (
                   <div key={title} className="flex items-center gap-4 rounded-2xl px-4 py-3.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-rose-400/12 border border-rose-400/30">
-                      <Icon size={24} className="text-rose-400" />
+                      <Icon size={24} className="text-rose-700 dark:text-rose-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-gray-900 dark:text-emt-light font-bold text-base leading-tight">{title}</p>
-                      <p className="text-gray-500 dark:text-emt-muted text-sm leading-relaxed mt-1">{desc}</p>
+                      <p className="text-gray-600 dark:text-emt-muted text-sm leading-relaxed mt-1">{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="text-gray-400 dark:text-emt-muted text-xs text-center mt-4 leading-relaxed">
+              <p className="text-gray-600 dark:text-emt-muted text-xs text-center mt-4 leading-relaxed">
                 השירות בניסוי. המידע מגיע ממפות פתוחות ומהעיריות ועלול להיות חסר, אז בקריאה דחופה כדאי לאמת גם מול המוקד.
               </p>
             </div>

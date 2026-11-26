@@ -6,6 +6,7 @@ import { ALL_ABBREVIATIONS, type MedicalAbbreviation } from '../data/medicalAbbr
 import { useAbbreviationSrsStore, MAX_BOX, type TermProgress } from '../../../store/abbreviationSrsStore';
 import { speakEnglish } from '../../../utils/tts';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage } from '../../../i18n';
 
 interface Props {
   onClose: () => void;
@@ -38,6 +39,8 @@ function ConfettiParticle({ x, color, delay, size }: { x: number; color: string;
 }
 
 export default function AbbreviationFlashcards({ onClose }: Props) {
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const { progress, markRemembered, markForgotten } = useAbbreviationSrsStore();
   const totalCards = ALL_ABBREVIATIONS.length;
 
@@ -108,9 +111,9 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
   };
 
   return (
-    <div dir="rtl" className="fixed inset-0 z-[80] flex flex-col">
+    <div dir={dir} className="fixed inset-0 z-[80] flex flex-col">
       {/* Blurred dark backdrop */}
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-2xl" />
+      <div className="absolute inset-0 bg-page/90 dark:bg-black/75 backdrop-blur-2xl" />
 
       <div className="relative flex flex-col flex-1 ios-safe-header safe-area-bottom overflow-hidden">
 
@@ -118,14 +121,14 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
-              <Brain size={18} className="text-sky-300" />
+              <Brain size={18} className="text-sky-700 dark:text-sky-300" />
             </div>
-            <h2 className="text-white font-bold text-xl tracking-tight">שינון מושגים רפואיים</h2>
+            <h2 className="text-fg font-bold text-xl tracking-tight">{t('learnAbbrTitle')}</h2>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 hover:text-white active:scale-90 transition-transform"
-            aria-label="סגור"
+            className="w-10 h-10 rounded-full bg-fg/10 border border-fg/15 flex items-center justify-center text-fg/60 hover:text-fg active:scale-90 transition-transform"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
@@ -135,13 +138,13 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
           <>
             {/* ── Progress bar ── */}
             <div className="px-4 pt-2 pb-4">
-              <div className="flex justify-between text-xs text-white/50 mb-1.5">
-                <span>זכרתי {remembered} מתוך {totalCards}</span>
-                <span>{deck.length} נותרו בחפיסה</span>
+              <div className="flex justify-between text-xs text-fg-muted mb-1.5">
+                <span>{t('learnAbbrRememberedOf', { n: remembered, total: totalCards })}</span>
+                <span>{t('learnFlashLeftInDeck', { n: deck.length })}</span>
               </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-2 rounded-full bg-fg/10 overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-l from-green-400 to-sky-500"
+                  className={`h-full rounded-full ${dir === 'rtl' ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-green-400 to-sky-500`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}
                   transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -170,23 +173,23 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                     {/* Front face — הקיצור באנגלית */}
                     <div
                       style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                      className="absolute inset-0 rounded-3xl bg-white/8 backdrop-blur-xl border border-white/15 flex flex-col items-center justify-center p-7 shadow-2xl"
+                      className="absolute inset-0 rounded-3xl bg-surface/80 dark:bg-fg/[0.08] backdrop-blur-xl border border-line dark:border-fg/15 flex flex-col items-center justify-center p-7 shadow-2xl"
                     >
-                      <p className="text-white/35 text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
-                        מה המשמעות?
+                      <p className="text-fg-subtle text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
+                        {t('learnAbbrWhatMeaning')}
                       </p>
-                      <p className="text-white font-black text-5xl text-center leading-snug font-mono" dir="ltr">
+                      <p className="text-fg font-black text-5xl text-center leading-snug font-mono" dir="ltr">
                         {currentCard.abbr}
                       </p>
                       <button
                         onClick={handleSpeak}
-                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-400/30 text-sky-300 text-sm font-semibold active:scale-90 transition-transform"
-                        aria-label="השמע הגייה"
+                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-400/30 text-sky-700 dark:text-sky-300 text-sm font-semibold active:scale-90 transition-transform"
+                        aria-label={t('learnAbbrPlayAria')}
                       >
                         <Volume2 size={16} />
-                        השמע
+                        {t('learnAbbrPlay')}
                       </button>
-                      <p className="text-white/25 text-xs mt-4">הקש לחשיפת התשובה ↓</p>
+                      <p className="text-fg-subtle text-xs mt-4">{t('learnFlashTapReveal')}</p>
                     </div>
 
                     {/* Back face — המשמעות וההגייה */}
@@ -196,26 +199,26 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                         WebkitBackfaceVisibility: 'hidden',
                         transform: 'rotateY(180deg)',
                       }}
-                      className="absolute inset-0 rounded-3xl bg-sky-950/70 backdrop-blur-xl border border-sky-400/25 flex flex-col items-center justify-center p-7 shadow-2xl"
+                      className="absolute inset-0 rounded-3xl bg-sky-100 dark:bg-sky-950/70 backdrop-blur-xl border border-sky-400/25 flex flex-col items-center justify-center p-7 shadow-2xl"
                     >
-                      <p className="text-sky-300/70 text-[10px] font-semibold uppercase tracking-[0.2em] mb-3">
-                        תשובה
+                      <p className="text-sky-700 dark:text-sky-300/70 text-[10px] font-semibold uppercase tracking-[0.2em] mb-3">
+                        {t('learnFlashAnswer')}
                       </p>
-                      <p className="text-white font-black text-2xl text-center leading-relaxed">
+                      <p dir="rtl" className="text-fg font-black text-2xl text-center leading-relaxed">
                         {currentCard.he}
                       </p>
-                      <p className="text-sky-200/80 text-base text-center mt-3">
-                        הגייה: {currentCard.phonetic}
+                      <p className="text-sky-800 dark:text-sky-200/80 text-base text-center mt-3">
+                        {t('learnAbbrPronunciation', { p: currentCard.phonetic })}
                       </p>
                       {/* רמת שליטה (קופסת Leitner) */}
-                      <div className="flex items-center gap-1.5 mt-5" aria-label={`רמת שליטה ${currentBox} מתוך ${MAX_BOX}`}>
+                      <div className="flex items-center gap-1.5 mt-5" aria-label={t('learnAbbrMasteryAria', { n: currentBox, max: MAX_BOX })}>
                         {Array.from({ length: MAX_BOX }, (_, i) => (
                           <div
                             key={i}
-                            className={`w-2 h-2 rounded-full ${i < currentBox ? 'bg-green-400' : 'bg-white/15'}`}
+                            className={`w-2 h-2 rounded-full ${i < currentBox ? 'bg-green-500 dark:bg-green-400' : 'bg-fg/15'}`}
                           />
                         ))}
-                        <span className="text-white/35 text-[10px] mr-1.5">רמת שליטה</span>
+                        <span className="text-fg-subtle text-[10px] ms-1.5">{t('learnAbbrMastery')}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -226,9 +229,9 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                 key={isFlipped ? 'flipped' : 'not-flipped'}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-white/30 text-sm mt-5 text-center"
+                className="text-fg-subtle text-sm mt-5 text-center"
               >
-                {isFlipped ? 'האם זכרת?' : 'הקש על הכרטיס לחשיפת התשובה'}
+                {isFlipped ? t('learnFlashDidYouRemember') : t('learnFlashTapCard')}
               </motion.p>
             </div>
 
@@ -240,8 +243,8 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                 pressScale={0.95}
                 className="flex-1 h-16 rounded-2xl bg-red-500/15 border border-red-500/35 flex flex-col items-center justify-center gap-1 transition-colors hover:bg-red-500/25"
               >
-                <XCircle size={22} className="text-red-400" />
-                <span className="text-red-300 font-semibold text-sm">לא זכרתי</span>
+                <XCircle size={22} className="text-red-700 dark:text-red-400" />
+                <span className="text-red-700 dark:text-red-300 font-semibold text-sm">{t('learnFlashForgot')}</span>
               </HapticButton>
 
               <HapticButton
@@ -250,8 +253,8 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                 pressScale={0.95}
                 className="flex-1 h-16 rounded-2xl bg-green-500/15 border border-green-500/35 flex flex-col items-center justify-center gap-1 transition-colors hover:bg-green-500/25"
               >
-                <CheckCircle size={22} className="text-green-400" />
-                <span className="text-green-300 font-semibold text-sm">זכרתי!</span>
+                <CheckCircle size={22} className="text-green-800 dark:text-green-400" />
+                <span className="text-green-800 dark:text-green-300 font-semibold text-sm">{t('learnFlashRemembered')}</span>
               </HapticButton>
             </div>
           </>
@@ -273,17 +276,17 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                 transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
                 className="w-28 h-28 rounded-full bg-green-500/20 border-2 border-green-400/40 flex items-center justify-center shadow-[0_0_60px_rgba(34,197,94,0.3)]"
               >
-                <CheckCircle size={52} className="text-green-400" />
+                <CheckCircle size={52} className="text-green-800 dark:text-green-400" />
               </motion.div>
 
               <div>
-                <h3 className="text-white font-black text-4xl mb-2">כל הכבוד!</h3>
-                <p className="text-white/55 text-lg">
-                  עברת את כל {totalCards} המושגים בהצלחה
+                <h3 className="text-fg font-black text-4xl mb-2">{t('learnFlashWellDone')}</h3>
+                <p className="text-fg-muted text-lg">
+                  {t('learnAbbrAllTerms', { n: totalCards })}
                 </p>
                 {sessionWrong > 0 && (
-                  <p className="text-white/40 text-sm mt-2">
-                    {sessionWrong} טעויות באימון — המושגים האלו יופיעו יותר בפעם הבאה
+                  <p className="text-fg-subtle text-sm mt-2">
+                    {t('learnAbbrMistakes', { n: sessionWrong })}
                   </p>
                 )}
               </div>
@@ -293,10 +296,10 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                   onClick={restart}
                   hapticPattern={8}
                   pressScale={0.95}
-                  className="px-6 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold flex items-center gap-2 text-base"
+                  className="px-6 py-3.5 rounded-2xl bg-fg/10 border border-fg/20 text-fg font-semibold flex items-center gap-2 text-base"
                 >
                   <RotateCcw size={18} />
-                  שוב
+                  {t('learnFlashAgain')}
                 </HapticButton>
 
                 <HapticButton
@@ -305,7 +308,7 @@ export default function AbbreviationFlashcards({ onClose }: Props) {
                   pressScale={0.95}
                   className="px-8 py-3.5 rounded-2xl bg-green-500 text-white font-bold text-base shadow-lg shadow-green-500/30"
                 >
-                  סיום
+                  {t('done')}
                 </HapticButton>
               </div>
             </motion.div>

@@ -9,28 +9,29 @@ import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
 import { usePwaInstall } from '../pwa/PwaInstallContext';
 import { trackInteraction } from '../../utils/analytics';
-import FlashcardTrainer, { type FlashcardItem } from '../../components/FlashcardTrainer';
+import FlashcardTrainer from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
 import MedicalAbbreviationsModal from './components/MedicalAbbreviationsModal';
 import AddressFinderModal from './components/AddressFinderModal';
+import { SIMULATOR_FLASHCARDS } from './data/simulatorFlashcards';
+import { useTranslation, useLanguage, translate } from '../../i18n';
+import type { TranslationKey } from '../../i18n';
 
-const SIMULATOR_FLASHCARDS: FlashcardItem[] = [
-  { front: 'קצב לחיצות CPR', back: '100–120 לחיצות לדקה' },
-  { front: 'עומק לחיצות CPR — מבוגר', back: '5–6 ס"מ' },
-  { front: 'עומק לחיצות CPR — ילד (מעל גיל שנה)', back: '≈ 5 ס"מ (שליש עומק החזה)' },
-  { front: 'יחס לחיצות:נשימות — מחייה אחד', back: '30:2' },
-  { front: 'יחס לחיצות:נשימות — שני מחיים (ילד)', back: '15:2' },
-  { front: 'קצבים בעלי דפיברילציה', back: 'VF · pVT (פרפור חדרים / טכיקרדיה חדרית ללא דופק)' },
-  { front: 'אנרגיה ראשונה לדפיברילציה (דו-פאזי)', back: '150–200 ג\'ול (לפי הוראת היצרן)' },
-  { front: 'כל כמה זמן מזריקים אדרנלין ב-CPR?', back: 'כל 3–5 דקות (1 מ"ג IV/IO)' },
-  { front: 'אינדיקציה ל-RSI בשדה', back: 'חסימת דרכי אוויר, GCS ≤ 8, נשימה לא מספיקה' },
-  { front: 'ציון APGAR — 5 פרמטרים', back: 'Appearance · Pulse · Grimace · Activity · Respiration' },
-  { front: 'מהו שוק חסימתי (Obstructive Shock)?', back: 'חסימה פיזית לזרימת דם: טמפונדה, פנאומוטורקס מתח, תסחיף ריאתי' },
-  { front: 'טריאס בק — סימני טמפונדה', back: 'צלילות לב מופחתת · ורידי צוואר נפוחים · לחץ דם נמוך' },
-  { front: 'Glasgow Coma Scale — טווח', back: '3 (מינימום) עד 15 (תקין)' },
-  { front: 'סימני שוק — 5 עיקריים', back: 'דופק מהיר וחלש · לחץ דם נמוך · חיוורון/הזעה · בלבול · שתן מועט' },
-  { front: 'מינון אסקורין (Aspirin) ב-ACS', back: '300 מ"ג ללעיסה' },
-];
+// Analytics event names stay in Hebrew so the reports remain continuous whatever the UI language.
+const TRACK = {
+  addressFinder: 'איתור כתובת מהיר · פתיחה', // i18n-ok: analytics event name
+  campaign: 'פתח קמפיין חנויות', // i18n-ok: analytics event name
+  concepts: 'מושגים שלמדתי', // i18n-ok: analytics event name
+  goldenHour: 'שעת הזהב · פתיחה מהאפליקציה', // i18n-ok: analytics event name
+  whatsapp: 'הצטרפות לוואטסאפ', // i18n-ok: analytics event name
+  payBox: 'תרומה לקמפיין — PayBox', // i18n-ok: analytics event name
+  bit: 'תרומה לקמפיין — ביט', // i18n-ok: analytics event name
+  personalPayBox: 'תרומה — בנימה אישית PayBox', // i18n-ok: analytics event name
+  personalBit: 'תרומה — בנימה אישית ביט', // i18n-ok: analytics event name
+  poison: 'מרכזי הרעלות', // i18n-ok: analytics event name
+  breathing: 'מסנכרן נשימות', // i18n-ok: analytics event name
+};
+const heName = (key: TranslationKey) => translate(key, undefined, 'he');
 
 interface Props {
   isOpen: boolean;
@@ -59,8 +60,8 @@ interface Props {
 
 type HubItem = {
   id: string;
-  label: string;
-  subtitle?: string;
+  labelKey: TranslationKey;
+  subtitleKey?: TranslationKey;
   icon: LucideIcon;
   color: string;
   border: string;
@@ -71,31 +72,31 @@ type HubItem = {
 const HUB_ITEMS: HubItem[] = [
   {
     id: 'address-finder',
-    label: 'איתור כתובת מהיר',
+    labelKey: 'hubItemAddressFinder',
     icon: MapPinned,
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/40',
     bg: 'bg-rose-400/10',
   },
   {
     id: 'hospital-load',
-    label: 'עומסים בבתי חולים',
+    labelKey: 'hubItemHospitalLoad',
     icon: Gauge,
-    color: 'text-cyan-300',
+    color: 'text-cyan-700 dark:text-cyan-300',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
   },
   {
     id: 'concepts',
-    label: 'מרכז ידע אישי',
+    labelKey: 'hubItemConcepts',
     icon: Sparkles,
-    color: 'text-purple-300',
+    color: 'text-purple-700 dark:text-purple-300',
     border: 'border-purple-400/35',
     bg: 'bg-purple-400/10',
   },
   {
     id: 'calculators',
-    label: 'מחשבונים',
+    labelKey: 'calculators',
     icon: Calculator,
     color: 'text-emt-green',
     border: 'border-emt-green/30',
@@ -103,147 +104,147 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'medication-scanner',
-    label: 'מידע על תרופות',
+    labelKey: 'hubItemMedScanner',
     icon: ScanSearch,
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
   },
   {
     id: 'daily-challenge',
-    label: 'האתגר היומי',
-    subtitle: 'BLS + ALS · שאלות יומיות',
+    labelKey: 'hubItemDailyChallenge',
+    subtitleKey: 'hubItemDailyChallengeSub',
     icon: Trophy,
-    color: 'text-yellow-400',
+    color: 'text-yellow-800 dark:text-yellow-400',
     border: 'border-yellow-400/40',
     bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
   },
   {
     id: 'medical-terms',
-    label: 'מושגים רפואיים',
-    subtitle: 'קיצורים · מילון · שינון',
+    labelKey: 'hubItemMedicalTerms',
+    subtitleKey: 'hubItemMedicalTermsSub',
     icon: GraduationCap,
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
   {
     id: 'medhistory',
-    label: 'מחלות רקע נפוצות',
+    labelKey: 'hubItemMedHistory',
     icon: Stethoscope,
-    color: 'text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
   },
   {
     id: 'medications-classification',
-    label: 'קבוצות תרופות',
+    labelKey: 'hubItemMedGroups',
     icon: Pill,
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
   },
   {
     id: 'common-meds',
-    label: 'תרופות נפוצות',
+    labelKey: 'hubItemCommonMeds',
     icon: Pill,
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
   },
   {
     id: 'clinical',
-    label: 'טבלת מדדים',
+    labelKey: 'hubItemVitalsTable',
     icon: BookOpen,
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
   },
   {
     id: 'hospitals',
-    label: 'מידע בתי חולים',
+    labelKey: 'hubItemHospitals',
     icon: Building2,
-    color: 'text-cyan-400',
+    color: 'text-cyan-700 dark:text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
   },
   {
     id: 'realtime-translate',
-    label: 'תרגום רפואי',
-    subtitle: 'כולל כתוביות לכבדי שמיעה',
+    labelKey: 'hubItemTranslate',
+    subtitleKey: 'hubItemTranslateSub',
     icon: Languages,
-    color: 'text-orange-400',
+    color: 'text-orange-700 dark:text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/10',
   },
   {
     id: 'updates',
-    label: 'שיתוף האפליקציה',
+    labelKey: 'hubItemShareApp',
     icon: Share2,
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
   },
   {
     id: 'install-app',
-    label: 'התקנת האפליקציה',
+    labelKey: 'hubItemInstallApp',
     icon: Download,
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
   {
     id: 'poison-centers',
-    label: 'מרכזי הרעלות – חומרים מסוכנים',
+    labelKey: 'hubItemPoison',
     icon: Skull,
-    color: 'text-lime-400',
+    color: 'text-lime-800 dark:text-lime-400',
     border: 'border-lime-400/30',
     bg: 'bg-lime-400/10',
   },
   {
     id: 'settings',
-    label: 'הגדרות',
+    labelKey: 'hubItemSettings',
     icon: Settings,
-    color: 'text-gray-500 dark:text-emt-muted',
-    border: 'border-gray-200 dark:border-emt-border',
-    bg: 'bg-gray-100 dark:bg-emt-gray',
+    color: 'text-fg-muted',
+    border: 'border-line',
+    bg: 'bg-surface-2',
   },
   {
     id: 'accessibility',
-    label: 'נגישות',
+    labelKey: 'hubItemAccessibility',
     icon: Accessibility,
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
   },
   {
     id: 'breathing',
-    label: 'מסנכרן נשימות – מסך הרגעה לילד',
+    labelKey: 'hubItemBreathing',
     icon: Wind,
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
   {
     id: 'after-call',
-    label: 'אחרי קריאה קשה',
-    subtitle: 'נשימות · תחקיר אישי · תמיכה',
+    labelKey: 'hubItemAfterCall',
+    subtitleKey: 'hubItemAfterCallSub',
     icon: HeartHandshake,
-    color: 'text-violet-300',
+    color: 'text-violet-700 dark:text-violet-300',
     border: 'border-violet-400/35',
     bg: 'bg-violet-400/10',
   },
   {
     id: 'kit-standards',
-    label: 'תקנים לתיקי כונן',
+    labelKey: 'hubItemKitStandards',
     icon: ClipboardList,
-    color: 'text-indigo-400',
+    color: 'text-indigo-700 dark:text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
   },
   {
     id: 'defibrillator',
-    label: 'מצא דפיברילטור קרוב',
+    labelKey: 'hubItemDefib',
     icon: MapPin,
     color: 'text-emt-red',
     border: 'border-emt-red/30',
@@ -252,55 +253,55 @@ const HUB_ITEMS: HubItem[] = [
   },
   {
     id: 'whatsapp-community',
-    label: 'קהילת חובש +',
-    subtitle: 'הצטרפו לקהילה שלנו',
+    labelKey: 'hubItemCommunity',
+    subtitleKey: 'hubItemCommunitySub',
     icon: Users,
-    color: 'text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/10',
   },
   {
     id: 'simulators',
-    label: 'סימולטורים ללמידה',
-    subtitle: 'אימון ושמירה על כשירות',
+    labelKey: 'hubItemSimulators',
+    subtitleKey: 'hubItemSimulatorsSub',
     icon: HeartPulse,
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
   },
   {
     id: 'soul-departure',
-    label: 'תפילה ליציאת נשמה',
-    subtitle: 'הנחיות ותפילות',
+    labelKey: 'hubItemSoulDeparture',
+    subtitleKey: 'hubItemSoulDepartureSub',
     icon: Star,
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
   },
   {
     id: 'daily-push',
-    label: 'פוש יומי',
-    subtitle: 'תזכורת יומית מותאמת אישית',
+    labelKey: 'hubItemDailyPush',
+    subtitleKey: 'hubItemDailyPushSub',
     icon: Bell,
-    color: 'text-pink-400',
+    color: 'text-pink-700 dark:text-pink-400',
     border: 'border-pink-400/30',
     bg: 'bg-pink-400/10',
   },
   {
     id: 'golden-hour',
-    label: 'שעת הזהב',
-    subtitle: 'משחק · תרגול פרוטוקולים',
+    labelKey: 'hubItemGoldenHour',
+    subtitleKey: 'hubItemGoldenHourSub',
     icon: Ambulance,
-    color: 'text-amber-300',
+    color: 'text-amber-800 dark:text-amber-300',
     border: 'border-amber-400/40',
     bg: 'bg-amber-400/10',
     href: 'https://protocol-runner.vercel.app/?src=app',
   },
   {
     id: 'campaign',
-    label: 'חובש + עולה לחנויות!',
+    labelKey: 'hubItemCampaign',
     icon: Rocket,
-    color: 'text-sky-300',
+    color: 'text-sky-700 dark:text-sky-300',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
@@ -342,27 +343,29 @@ function loadHubOrder(): string[] {
 
 function DraggableHubRow({ item }: { item: HubItem }) {
   const controls = useDragControls();
-  const { icon: Icon, label, subtitle, color, border, bg } = item;
+  const t = useTranslation();
+  const { icon: Icon, labelKey, subtitleKey, color, border, bg } = item;
   return (
     <Reorder.Item
       value={item}
       dragListener={false}
       dragControls={controls}
       className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 select-none`}
+      // theme-ok: drop shadow while dragging
       whileDrag={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 10 }}
     >
       <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${bg} border ${border}`}>
         <Icon size={22} className={color} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`${color} font-bold text-base`}>{label}</p>
-        {subtitle && <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{subtitle}</p>}
+        <p className={`${color} font-bold text-base`}>{t(labelKey)}</p>
+        {subtitleKey && <p className="text-fg-muted text-xs mt-0.5">{t(subtitleKey)}</p>}
       </div>
       <div
         onPointerDown={(e) => controls.start(e)}
         className="p-2 -m-2 cursor-grab active:cursor-grabbing touch-none"
       >
-        <GripVertical size={22} className="text-gray-400 dark:text-emt-muted" />
+        <GripVertical size={22} className="text-fg-subtle" />
       </div>
     </Reorder.Item>
   );
@@ -414,6 +417,8 @@ export default function HubModal({
   const [showBitThankYou, setShowBitThankYou] = useState(false);
   const campaignScrollRef = useRef<HTMLDivElement>(null);
   const { openFullModal } = usePwaInstall();
+  const t = useTranslation();
+  const { isEn } = useLanguage();
 
   const handleCampaignScroll = useCallback(() => {
     if (_personalCardShown) return;
@@ -438,39 +443,45 @@ export default function HubModal({
   useModalBackHandler(showCampaign, () => setShowCampaign(false));
   if (!isOpen) return null;
 
-  const HUB_TRACKING: Record<string, [string, string]> = {
-    'daily-challenge':            ['האתגר היומי',             'learning'],
-    calculators:                  ['מחשבונים',                'calculators'],
-    settings:                     ['הגדרות',                  'utility'],
-    clinical:                     ['טבלת מדדים',              'medical_knowledge'],
-    medhistory:                   ['מחלות רקע נפוצות',        'medical_knowledge'],
-    'medical-terms':              ['מושגים רפואיים',           'medical_knowledge'],
-    hospitals:                    ['מידע בתי חולים',           'emergency_info'],
-    updates:                      ['שיתוף האפליקציה',          'utility'],
-    'kit-standards':              ['תקנים לתיקי כונן',         'tools'],
-    'medications-classification': ['קבוצות תרופות',            'medical_knowledge'],
-    'common-meds':                ['תרופות נפוצות',            'medical_knowledge'],
-    'realtime-translate':         ['תרגום רפואי',              'tools'],
-    'poison-centers':             ['מרכזי הרעלות',             'emergency_info'],
-    accessibility:                ['נגישות',                  'utility'],
-    breathing:                    ['מסנכרן נשימות',            'tools'],
-    'medication-scanner':         ['מידע על תרופות',           'tools'],
-    simulators:                   ['סימולטורים ללמידה',        'community_learning'],
-    'soul-departure':             ['תפילה ליציאת נשמה',        'tools'],
-    'install-app':                ['התקנת האפליקציה',          'utility'],
-    'whatsapp-community':         ['קהילת חובש +',             'community_learning'],
-    'daily-push':                 ['פוש יומי',                'utility'],
-    'hospital-load':              ['עומסים בבתי חולים',        'emergency_info'],
-    'after-call':                 ['אחרי קריאה קשה',           'wellness'],
+  const HUB_TRACKING: Record<string, string> = {
+    'daily-challenge':            'learning',
+    calculators:                  'calculators',
+    settings:                     'utility',
+    clinical:                     'medical_knowledge',
+    medhistory:                   'medical_knowledge',
+    'medical-terms':              'medical_knowledge',
+    hospitals:                    'emergency_info',
+    updates:                      'utility',
+    'kit-standards':              'tools',
+    'medications-classification': 'medical_knowledge',
+    'common-meds':                'medical_knowledge',
+    'realtime-translate':         'tools',
+    'poison-centers':             'emergency_info',
+    accessibility:                'utility',
+    breathing:                    'tools',
+    'medication-scanner':         'tools',
+    simulators:                   'community_learning',
+    'soul-departure':             'tools',
+    'install-app':                'utility',
+    'whatsapp-community':         'community_learning',
+    'daily-push':                 'utility',
+    'hospital-load':              'emergency_info',
+    'after-call':                 'wellness',
+  };
+  const trackName = (id: string) => {
+    if (id === 'poison-centers') return TRACK.poison;
+    if (id === 'breathing') return TRACK.breathing;
+    const item = HUB_ITEMS.find(i => i.id === id);
+    return item ? heName(item.labelKey) : id;
   };
 
   const handleItemClick = (id: string) => {
-    const tracking = HUB_TRACKING[id];
-    if (tracking) trackInteraction(tracking[0], tracking[1]);
+    const category = HUB_TRACKING[id];
+    if (category) trackInteraction(trackName(id), category);
 
-    if (id === 'address-finder') { trackInteraction('איתור כתובת מהיר · פתיחה', 'emergency_info'); setShowAddressFinder(true); return; }
-    if (id === 'campaign')     { trackInteraction('פתח קמפיין חנויות', 'support'); setShowCampaign(true); return; }
-    if (id === 'concepts')     { trackInteraction('מושגים שלמדתי', 'learning'); setShowConcepts(true); return; }
+    if (id === 'address-finder') { trackInteraction(TRACK.addressFinder, 'emergency_info'); setShowAddressFinder(true); return; }
+    if (id === 'campaign')     { trackInteraction(TRACK.campaign, 'support'); setShowCampaign(true); return; }
+    if (id === 'concepts')     { trackInteraction(TRACK.concepts, 'learning'); setShowConcepts(true); return; }
     if (id === 'medical-terms') { setShowMedicalTerms(true); return; }
     if (id === 'calculators')  onCalculatorsOpen();
     if (id === 'settings')     onSettingsOpen();
@@ -478,22 +489,9 @@ export default function HubModal({
     if (id === 'medhistory')   onMedicalHistoryOpen();
     if (id === 'hospitals')    onHospitalsOpen();
     if (id === 'updates') {
-      const shareText = `מע"ר? חובש? פרמדיק? 🚑
-מצאתי את האפליקציה המושלמת לשטח - 'חובש +'. אפליקציה חינמית לחלוטין וללא פרסומות שיש בה הכל:
-🔥 מחשבון כוויות, חמצן ואפגר
-🗣️ תרגום רפואי בזמן אמת למטופלים
-🎒 פירוט תקני ציוד (BLS וכו')
-📍 ניווט מהיר ישירות לחדרי מיון
-💊 מידע על תרופות, מרכזי הרעלות ועוד
-🧪 מחשבוני מינונים מתקדמים (ALS)
-⏱️ טיימרים אינטראקטיביים למדידת דופק ונשימה
-🏆 האתגר היומי לשמירה על כשירות
-🎵 מטרונום לקצב לחיצות CPR
-
-ממליץ בחום שזה יהיה על הטלפון שלכם במשמרת הבאה. להורדה/כניסה:
-https://hovesh-plus.vercel.app/`;
+      const shareText = t('hubShareText', { url: 'https://hovesh-plus.vercel.app/' });
       if (navigator.share) {
-        navigator.share({ title: 'חובש+', text: shareText }).catch(() => {});
+        navigator.share({ title: t('hubShareTitle'), text: shareText }).catch(() => {});
       } else {
         navigator.clipboard?.writeText(shareText).catch(() => {});
       }
@@ -517,10 +515,10 @@ https://hovesh-plus.vercel.app/`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-emt-dark overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col bg-page overflow-hidden">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
-        <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מרכז כלים</h2>
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
+        <h2 className="text-fg font-bold text-xl">{t('hubTitle')}</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setEditMode(e => !e)}
@@ -529,17 +527,17 @@ https://hovesh-plus.vercel.app/`;
                 ? 'bg-emt-green/15 border-emt-green/40 text-emt-green'
                 : 'bg-emt-green/5 dark:bg-emt-green/10 border-emt-green/40 text-emt-green/70 hover:text-emt-green'
               }`}
-            aria-label={editMode ? 'סיום עריכה' : 'סדר כלים'}
+            aria-label={editMode ? t('hubEditDone') : t('hubReorder')}
           >
             {editMode ? <Check size={18} /> : <Pencil size={18} />}
           </button>
           <HapticButton
             onClick={onClose}
             pressScale={0.88}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center
-                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-            aria-label="סגור"
+                       text-fg-muted hover:text-fg"
+            aria-label={t('close')}
           >
             <X size={20} />
           </HapticButton>
@@ -549,7 +547,7 @@ https://hovesh-plus.vercel.app/`;
       {/* Edit mode hint */}
       {editMode && (
         <div className="shrink-0 px-4 py-2 bg-emt-green/5 border-b border-emt-green/20">
-          <p className="text-xs text-emt-green/80 text-center font-medium">החזק את הידית ⠿ וגרור • לחץ ✓ לסיום</p>
+          <p className="text-xs text-emt-green text-center font-medium">{t('hubDragHint')}</p>
         </div>
       )}
 
@@ -569,7 +567,7 @@ https://hovesh-plus.vercel.app/`;
           </Reorder.Group>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {orderedItems.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
+            {orderedItems.map(({ id, labelKey, subtitleKey, icon: Icon, color, border, bg, href }) => {
               if (id === 'hospital-load') {
                 return (
                   <div key={id} className="relative">
@@ -602,13 +600,13 @@ https://hovesh-plus.vercel.app/`;
                       <div
                         className="absolute inset-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-[14px] p-3 text-center"
                         style={{
-                          background: 'linear-gradient(160deg, rgba(2,11,24,0.93) 0%, rgba(14,165,233,0.15) 100%)',
+                          background: 'linear-gradient(160deg, rgb(var(--surface) / 0.93) 0%, rgba(14,165,233,0.15) 100%)',
                           backdropFilter: 'blur(14px)',
                           WebkitBackdropFilter: 'blur(14px)',
                         }}
                       >
-                        <Gauge size={28} className="text-cyan-300" />
-                        <span className="text-cyan-200 font-bold text-sm leading-tight">עומסים בבתי חולים</span>
+                        <Gauge size={28} className="text-cyan-700 dark:text-cyan-300" />
+                        <span className="text-cyan-800 dark:text-cyan-200 font-bold text-sm leading-tight">{t('hubItemHospitalLoad')}</span>
                       </div>
                     </motion.button>
                   </div>
@@ -628,8 +626,8 @@ https://hovesh-plus.vercel.app/`;
                       boxShadow: '0 0 18px rgba(168,85,247,0.12)',
                     }}
                   >
-                    <Sparkles size={28} className="text-purple-300 relative z-10" />
-                    <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
+                    <Sparkles size={28} className="text-purple-700 dark:text-purple-300 relative z-10" />
+                    <span className="text-purple-800 dark:text-purple-100 font-bold text-sm leading-tight relative z-10">{t('hubItemConcepts')}</span>
                   </motion.button>
                 );
               }
@@ -646,28 +644,28 @@ https://hovesh-plus.vercel.app/`;
               const content = (
                 <div className="relative flex flex-col items-center justify-center gap-2 w-full h-full px-1">
                   <Icon size={36} className={color} />
-                  <span className={`text-sm font-bold ${color} text-center leading-tight`}>{label}</span>
-                  {subtitle && (
-                    <span className="text-xs text-gray-500 dark:text-emt-muted text-center leading-tight">{subtitle}</span>
+                  <span className={`text-sm font-bold ${color} text-center leading-tight`}>{t(labelKey)}</span>
+                  {subtitleKey && (
+                    <span className="text-xs text-fg-muted text-center leading-tight">{t(subtitleKey)}</span>
                   )}
                   {id === 'address-finder' && (
                     // diagonal "beta" ribbon across the top-left corner of the tile
                     <span
-                      aria-label="בטא"
+                      aria-label={t('hubBeta')}
                       className="pointer-events-none absolute top-[14px] -left-[30px] w-[110px] -rotate-45 text-center text-[11px] font-extrabold tracking-wider py-[3px] text-amber-950"
                       style={{ background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)', boxShadow: '0 2px 8px rgba(245,158,11,0.45)' }}
                     >
-                      בטא
+                      {t('hubBeta')}
                     </span>
                   )}
                   {id === 'install-app' && (
-                    <span className="text-xs text-slate-400 text-center leading-tight">
-                      גישה ללא רשת
+                    <span className="text-xs text-fg-subtle text-center leading-tight">
+                      {t('hubOfflineAccess')}
                     </span>
                   )}
                   {!enabled && (
-                    <span className="text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
-                      בקרוב
+                    <span className="text-xs font-semibold bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
+                      {t('hubComingSoon')}
                     </span>
                   )}
                 </div>
@@ -681,7 +679,7 @@ https://hovesh-plus.vercel.app/`;
                     target="_blank"
                     rel="noopener noreferrer"
                     className={sharedClass}
-                    onClick={() => id === 'golden-hour' ? trackInteraction('שעת הזהב · פתיחה מהאפליקציה', 'learning') : trackInteraction('מצא דפיברילטור קרוב', 'emergency_info')}
+                    onClick={() => id === 'golden-hour' ? trackInteraction(TRACK.goldenHour, 'learning') : trackInteraction(heName('hubItemDefib'), 'emergency_info')}
                   >
                     {content}
                   </a>
@@ -705,36 +703,36 @@ https://hovesh-plus.vercel.app/`;
 
         {/* Feedback button */}
         <HapticButton
-          onClick={() => { trackInteraction('שליחת משוב', 'utility'); onFeedbackOpen(); }}
+          onClick={() => { trackInteraction(heName('hubSendFeedback'), 'utility'); onFeedbackOpen(); }}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl
                      border border-emt-red/30 bg-emt-red/10
                      text-emt-red font-bold text-base"
         >
           <MessageSquare size={22} />
-          שליחת משוב
+          {t('hubSendFeedback')}
         </HapticButton>
 
       </div>
 
       {/* Simulators Modal */}
       {showSimulators && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-page">
           {/* Header */}
-          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
             <div className="flex items-center gap-2">
-              <HeartPulse size={22} className="text-rose-400" />
+              <HeartPulse size={22} className="text-rose-700 dark:text-rose-400" />
               <div>
-                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">סימולטורים ללמידה</h2>
-                <p className="text-gray-500 dark:text-emt-muted text-xs">אימון ושמירה על כשירות</p>
+                <h2 className="text-fg font-bold text-xl leading-tight">{t('hubItemSimulators')}</h2>
+                <p className="text-fg-muted text-xs">{t('hubItemSimulatorsSub')}</p>
               </div>
             </div>
             <HapticButton
               onClick={() => setShowSimulators(false)}
               pressScale={0.88}
-              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+              className="w-10 h-10 rounded-full bg-surface-2 border border-line
                          flex items-center justify-center
-                         text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-              aria-label="סגור"
+                         text-fg-muted hover:text-fg"
+              aria-label={t('close')}
             >
               <X size={20} />
             </HapticButton>
@@ -751,73 +749,69 @@ https://hovesh-plus.vercel.app/`;
                          backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center shrink-0">
-                <Brain size={20} className="text-rose-400" />
+                <Brain size={20} className="text-rose-700 dark:text-rose-400" />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-rose-200 font-bold text-base leading-tight">אימון שינון — פרוטוקולים</span>
-                <span className="text-rose-300/50 text-xs mt-0.5">{SIMULATOR_FLASHCARDS.length} כרטיסיות · CPR, שוק, תרופות</span>
+                <span className="text-rose-700 dark:text-rose-200 font-bold text-base leading-tight">{t('hubSimFlashTitle')}</span>
+                <span className="text-rose-700 dark:text-rose-300/50 text-xs mt-0.5">{t('hubSimFlashSub', { count: SIMULATOR_FLASHCARDS.length })}</span>
               </div>
-              <div className="mr-auto text-rose-400/40 text-lg">←</div>
+              <div className="ms-auto text-rose-700 dark:text-rose-400/40 text-lg">{isEn ? '→' : '←'}</div>
             </HapticButton>
 
             {[
               {
-                label: 'סימולטור החייאה',
-                sublabel: 'Lifesaver — תרגול CPR אינטראקטיבי',
+                labelKey: 'hubSimCpr' as TranslationKey,
+                subKey: 'hubSimCprSub' as TranslationKey,
                 url: 'https://life-saver.org.uk/',
-                trackName: 'סימולטור החייאה',
-                color: 'text-rose-400',
+                color: 'text-rose-700 dark:text-rose-400',
                 border: 'border-rose-400/30',
                 bg: 'bg-rose-400/5',
                 iconBg: 'bg-rose-400/20 border-rose-400/40',
               },
               {
-                label: "סימולטור אק\"ג וקצבי לב",
-                sublabel: 'SkillStat — סימולטור אק"ג אינטראקטיבי',
+                labelKey: 'hubSimEcg' as TranslationKey,
+                subKey: 'hubSimEcgSub' as TranslationKey,
                 url: 'https://www.skillstat.com/tools/ecg-simulator/',
-                trackName: 'סימולטור אק"ג וקצבי לב',
-                color: 'text-sky-400',
+                color: 'text-sky-700 dark:text-sky-400',
                 border: 'border-sky-400/30',
                 bg: 'bg-sky-400/5',
                 iconBg: 'bg-sky-400/20 border-sky-400/40',
               },
               {
-                label: 'תרגול מקרים והחייאה',
-                sublabel: 'RevivR (BHF) — תרגול בהדרכה',
+                labelKey: 'hubSimCases' as TranslationKey,
+                subKey: 'hubSimCasesSub' as TranslationKey,
                 url: 'https://revivr.bhf.org.uk/',
-                trackName: 'תרגול מקרים והחייאה',
-                color: 'text-emerald-400',
+                color: 'text-emerald-700 dark:text-emerald-400',
                 border: 'border-emerald-400/30',
                 bg: 'bg-emerald-400/5',
                 iconBg: 'bg-emerald-400/20 border-emerald-400/40',
               },
               {
-                label: 'אימון זיהוי מחלות',
-                sublabel: 'נחש את המחלה — אבחון קליני',
+                labelKey: 'hubSimDisease' as TranslationKey,
+                subKey: 'hubSimDiseaseSub' as TranslationKey,
                 url: 'https://diseaseguess.azurewebsites.net/welcome',
-                trackName: 'אימון זיהוי מחלות',
-                color: 'text-violet-400',
+                color: 'text-violet-700 dark:text-violet-400',
                 border: 'border-violet-400/30',
                 bg: 'bg-violet-400/5',
                 iconBg: 'bg-violet-400/20 border-violet-400/40',
               },
-            ].map(({ label, sublabel, url, trackName, color, border, bg, iconBg }) => (
+            ].map(({ labelKey, subKey, url, color, border, bg, iconBg }) => (
               <a
                 key={url}
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-95 transition-transform text-right`}
-                onClick={() => trackInteraction(trackName, 'community_learning')}
+                className={`flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-95 transition-transform text-start`}
+                onClick={() => trackInteraction(heName(labelKey), 'community_learning')}
               >
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${iconBg}`}>
                   <HeartPulse size={22} className={color} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`${color} font-bold text-base leading-tight`}>{label}</p>
-                  <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5 leading-tight">{sublabel}</p>
+                  <p className={`${color} font-bold text-base leading-tight`}>{t(labelKey)}</p>
+                  <p className="text-fg-muted text-xs mt-0.5 leading-tight">{t(subKey)}</p>
                 </div>
-                <ExternalLink size={16} className="text-gray-400 dark:text-emt-muted shrink-0" />
+                <ExternalLink size={16} className="text-fg-subtle shrink-0" />
               </a>
             ))}
           </div>
@@ -831,12 +825,12 @@ https://hovesh-plus.vercel.app/`;
       {/* WhatsApp Community — full-screen page */}
       {showWhatsAppCommunity && (
         <div
-          className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #071207 0%, #040a04 55%, #020602 100%)' }}
+          className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-page"
+          style={{ backgroundImage: 'linear-gradient(160deg, rgba(37,211,102,0.10) 0%, rgba(37,211,102,0.03) 55%, transparent 100%)' }}
         >
           {/* Ambient glows — decorative, non-interactive */}
           <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-green-500/12 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-32 -right-16 w-56 h-56 rounded-full bg-green-600/8 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-32 -end-16 w-56 h-56 rounded-full bg-green-600/8 blur-3xl" />
 
           {/* Header */}
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
@@ -844,8 +838,8 @@ https://hovesh-plus.vercel.app/`;
             <HapticButton
               onClick={() => setShowWhatsAppCommunity(false)}
               pressScale={0.88}
-              className="w-10 h-10 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400"
-              aria-label="סגור"
+              className="w-10 h-10 rounded-full bg-fg/5 border border-fg/10 flex items-center justify-center text-fg-muted"
+              aria-label={t('close')}
             >
               <X size={20} />
             </HapticButton>
@@ -860,67 +854,67 @@ https://hovesh-plus.vercel.app/`;
                 className="w-24 h-24 rounded-3xl flex items-center justify-center border border-green-400/35 mb-5"
                 style={{
                   background: 'linear-gradient(135deg, rgba(37,211,102,0.18) 0%, rgba(18,140,126,0.10) 100%)',
-                  boxShadow: '0 0 48px rgba(37,211,102,0.22), 0 8px 32px rgba(0,0,0,0.4)',
+                  boxShadow: '0 0 48px rgba(37,211,102,0.22)',
                 }}
               >
-                <Users size={46} className="text-green-400" />
+                <Users size={46} className="text-green-800 dark:text-green-400" />
               </div>
-              <h1 className="text-white font-bold text-2xl leading-tight mb-1">
-                קהילת חובש + 🚑
+              <h1 className="text-fg font-bold text-2xl leading-tight mb-1">
+                {t('hubWaTitle')}
               </h1>
-              <p className="text-green-400/75 text-sm font-medium tracking-wide">
-                ערוץ עדכונים רשמי · WhatsApp
+              <p className="text-green-800 dark:text-green-400/75 text-sm font-medium tracking-wide">
+                {t('hubWaSub')}
               </p>
             </div>
 
             {/* Intro banner */}
             <div
-              className="mx-4 mb-4 rounded-2xl border border-green-400/18 p-4"
+              className="mx-4 mb-4 rounded-2xl border border-green-500/25 p-4"
               style={{ background: 'rgba(37,211,102,0.055)' }}
             >
-              <p className="text-gray-200 text-sm leading-relaxed text-center">
-                הצטרפו לערוץ העדכונים הרשמי של אפליקציית{' '}
-                <span className="text-green-400 font-bold">חובש +</span>
-                {' '}— המקום שבו חובשים, פרמדיקים ומע"רים מכל הארגונים מקבלים ערך מוסף ישירות לטלפון.
+              <p className="text-fg/85 text-sm leading-relaxed text-center">
+                {t('hubWaIntroBefore')}{' '}
+                <span className="text-green-800 dark:text-green-400 font-bold">{t('hubAppName')}</span>
+                {' '}{t('hubWaIntroAfter')}
               </p>
             </div>
 
             {/* Benefit cards */}
             <div className="px-4 flex flex-col gap-3">
-              {[
+              {([
                 {
                   emoji: '💡',
-                  title: 'טיפים מקצועיים לשטח',
-                  desc: 'פרוטוקולים, תזכורות קליניות ועצות מניסיון שיחסכו לכם שניות קריטיות בשטח',
-                  glow: 'rgba(250,204,21,0.06)',
-                  border: 'rgba(250,204,21,0.15)',
+                  titleKey: 'hubWaTipsTitle',
+                  descKey: 'hubWaTipsDesc',
+                  glow: 'rgba(250,204,21,0.07)',
+                  border: 'rgba(234,179,8,0.25)',
                 },
                 {
                   emoji: '🆕',
-                  title: 'עדכונים לפני כולם',
-                  desc: 'גלו כלים ומחשבונים חדשים ראשונים, עם הסברים ודוגמאות שימוש מיד בשחרור',
-                  glow: 'rgba(56,189,248,0.06)',
-                  border: 'rgba(56,189,248,0.15)',
+                  titleKey: 'hubWaFirstTitle',
+                  descKey: 'hubWaFirstDesc',
+                  glow: 'rgba(56,189,248,0.07)',
+                  border: 'rgba(56,189,248,0.25)',
                 },
                 {
                   emoji: '🤝',
-                  title: 'קהילה מכל הארגונים',
-                  desc: 'מד"א · איחוד הצלה · צה"ל · מתנדבים — כולם במקום אחד',
-                  glow: 'rgba(167,139,250,0.06)',
-                  border: 'rgba(167,139,250,0.15)',
+                  titleKey: 'hubWaOrgsTitle',
+                  descKey: 'hubWaOrgsDesc',
+                  glow: 'rgba(167,139,250,0.07)',
+                  border: 'rgba(167,139,250,0.25)',
                 },
-              ].map(({ emoji, title, desc, glow, border }) => (
+              ] as const).map(({ emoji, titleKey, descKey, glow, border }) => (
                 <div
-                  key={title}
+                  key={titleKey}
                   className="flex items-start gap-3 rounded-2xl p-4"
                   style={{ background: glow, border: `1px solid ${border}` }}
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-fg/5 border border-fg/10">
                     {emoji}
                   </div>
                   <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-white font-bold text-sm leading-tight">{title}</span>
-                    <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
+                    <span className="text-fg font-bold text-sm leading-tight">{t(titleKey)}</span>
+                    <span className="text-fg-muted text-xs leading-relaxed">{t(descKey)}</span>
                   </div>
                 </div>
               ))}
@@ -931,20 +925,21 @@ https://hovesh-plus.vercel.app/`;
           {/* Sticky CTA — floats above scroll with gradient fade */}
           <div
             className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
-            style={{ background: 'linear-gradient(to top, #020602 65%, transparent)' }}
+            style={{ background: 'linear-gradient(to top, rgb(var(--page)) 65%, transparent)' }}
           >
             <a
               href="https://whatsapp.com/channel/0029Vb83OlqCBtxAbvGHzH1J"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackInteraction('הצטרפות לוואטסאפ', 'community_learning')}
+              onClick={() => trackInteraction(TRACK.whatsapp, 'community_learning')}
+              // theme-ok: white text on the green WhatsApp gradient button
               className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
               style={{
                 background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
                 boxShadow: '0 4px 30px rgba(37,211,102,0.45)',
               }}
             >
-              הצטרפות לערוץ הוואטסאפ
+              {t('hubWaJoin')}
             </a>
           </div>
         </div>
@@ -953,12 +948,12 @@ https://hovesh-plus.vercel.app/`;
       {/* Campaign Landing Page */}
       {showCampaign && (
         <div
-          className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #020b18 0%, #050d1f 50%, #010810 100%)' }}
+          className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-page"
+          style={{ backgroundImage: 'linear-gradient(160deg, rgba(14,165,233,0.10) 0%, rgba(37,99,235,0.04) 50%, transparent 100%)' }}
         >
           {/* Ambient glows */}
           <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-sky-500/10 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-40 -right-20 w-64 h-64 rounded-full bg-blue-600/8 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-40 -end-20 w-64 h-64 rounded-full bg-blue-600/8 blur-3xl" />
 
           {/* Header */}
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3">
@@ -966,8 +961,8 @@ https://hovesh-plus.vercel.app/`;
             <HapticButton
               onClick={() => setShowCampaign(false)}
               pressScale={0.88}
-              className="w-10 h-10 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400"
-              aria-label="סגור"
+              className="w-10 h-10 rounded-full bg-fg/5 border border-fg/10 flex items-center justify-center text-fg-muted"
+              aria-label={t('close')}
             >
               <X size={20} />
             </HapticButton>
@@ -989,7 +984,7 @@ https://hovesh-plus.vercel.app/`;
                 className="w-24 h-24 rounded-3xl flex items-center justify-center border border-sky-400/35 mb-5 relative"
                 style={{
                   background: 'linear-gradient(135deg, rgba(14,165,233,0.22) 0%, rgba(37,99,235,0.12) 100%)',
-                  boxShadow: '0 0 56px rgba(56,189,248,0.30), 0 8px 32px rgba(0,0,0,0.5)',
+                  boxShadow: '0 0 56px rgba(56,189,248,0.30)',
                 }}
               >
                 <motion.span
@@ -1003,24 +998,24 @@ https://hovesh-plus.vercel.app/`;
                   }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
-                <Rocket size={46} className="text-sky-300" />
+                <Rocket size={46} className="text-sky-700 dark:text-sky-300" />
               </motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-white font-bold text-2xl leading-tight mb-1"
+                className="text-fg font-bold text-2xl leading-tight mb-1"
               >
-                חובש + עולה לחנויות! 🚀
+                {t('hubCampaignTitle')}
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-sky-400/80 text-sm font-medium tracking-wide"
+                className="text-sky-700 dark:text-sky-400/80 text-sm font-medium tracking-wide"
               >
-                App Store · Google Play · בעזרתכם
+                {t('hubCampaignSub')}
               </motion.p>
             </div>
 
@@ -1029,68 +1024,69 @@ https://hovesh-plus.vercel.app/`;
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="mx-4 mb-4 rounded-2xl border border-sky-400/18 p-4"
+              className="mx-4 mb-4 rounded-2xl border border-sky-400/25 p-4"
               style={{ background: 'rgba(14,165,233,0.07)' }}
             >
-              <p className="text-gray-200 text-sm leading-relaxed text-center">
-                האפליקציה שאתם כבר אוהבים — <span className="text-sky-300 font-bold">חינמית לחלוטין, ללא פרסומות</span> — עומדת לעלות לחנויות הרשמיות.
-                כדי לממש את זה, אנחנו צריכים את העזרה שלכם.
+              <p className="text-fg/85 text-sm leading-relaxed text-center">
+                {t('hubCampaignIntroBefore')}{' '}
+                <span className="text-sky-700 dark:text-sky-300 font-bold">{t('hubCampaignIntroHighlight')}</span>
+                {' '}{t('hubCampaignIntroAfter')}
               </p>
             </motion.div>
 
             {/* Reason cards */}
             <div className="px-4 flex flex-col gap-3">
-              {[
+              {([
                 {
                   emoji: '📱',
-                  title: 'גישה לכל חובש דרך החנויות',
-                  desc: 'כיום האפליקציה זמינה רק דרך הדפדפן. עלייה ל-App Store ו-Google Play תאפשר לחובשים, פרמדיקים ומע"רים להוריד אותה בקלות — בדיוק כמו כל אפליקציה אחרת.',
+                  titleKey: 'hubCampaignAccessTitle',
+                  descKey: 'hubCampaignAccessDesc',
                   glow: 'rgba(14,165,233,0.07)',
-                  border: 'rgba(56,189,248,0.18)',
+                  border: 'rgba(56,189,248,0.25)',
                 },
                 {
                   emoji: '🔔',
-                  title: 'עדכונים אוטומטיים שמצילים חיים',
-                  desc: 'משתמשי החנות יקבלו עדכוני פרוטוקול ותכנים חדשים ישירות לטלפון — ללא צורך לזכור לפתוח דפדפן מחדש. כל עדכון יכול להשפיע על החלטה בשטח.',
+                  titleKey: 'hubCampaignUpdatesTitle',
+                  descKey: 'hubCampaignUpdatesDesc',
                   glow: 'rgba(37,99,235,0.07)',
-                  border: 'rgba(99,102,241,0.18)',
+                  border: 'rgba(99,102,241,0.25)',
                 },
                 {
                   emoji: '💰',
-                  title: 'יש הרבה עלויות מאחורי הקלעים',
-                  desc: 'חשבון מפתח ב-Apple ו-Google, שרתים, תשתיות ואישורים — כולם עולים כסף. הפיתוח נעשה מאהבה, אבל התשתית דורשת מימון.',
-                  glow: 'rgba(250,204,21,0.05)',
-                  border: 'rgba(250,204,21,0.15)',
+                  titleKey: 'hubCampaignCostsTitle',
+                  descKey: 'hubCampaignCostsDesc',
+                  glow: 'rgba(250,204,21,0.06)',
+                  border: 'rgba(234,179,8,0.25)',
                 },
                 {
                   emoji: '💚',
-                  title: 'חינמי לנצח — זה החזון',
-                  desc: 'התרומה שלכם לא קונה פרימיום — היא מבטיחה שהאפליקציה תישאר חינמית וללא פרסומות לכל חובש, . אתם משקיעים בתשתית, לא בתוכן נעול.',
+                  titleKey: 'hubCampaignFreeTitle',
+                  descKey: 'hubCampaignFreeDesc',
                   glow: 'rgba(52,211,153,0.06)',
-                  border: 'rgba(52,211,153,0.15)',
+                  border: 'rgba(16,185,129,0.25)',
                 },
                 {
                   emoji: '🏆',
-                  title: 'השפעה מדידה — אלפי חובשים',
-                  desc: 'כבר עכשיו אלפי אנשי צוות משתמשים בחובש + בכל משמרת. עלייה לחנויות תכפיל את המספר הזה — וכל אחד מהם יכול להציל חיים עם הכלים הנכונים.',
-                  glow: 'rgba(244,114,182,0.05)',
-                  border: 'rgba(244,114,182,0.15)',
+                  titleKey: 'hubCampaignImpactTitle',
+                  descKey: 'hubCampaignImpactDesc',
+                  glow: 'rgba(244,114,182,0.06)',
+                  border: 'rgba(236,72,153,0.25)',
                 },
-              ].map(({ emoji, title, desc, glow, border }, i) => (
+              ] as const).map(({ emoji, titleKey, descKey, glow, border }, i) => (
                 <motion.div
-                  key={title}
+                  key={titleKey}
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + i * 0.07 }}
                   className="flex items-start gap-3 rounded-2xl p-4"
                   style={{ background: glow, border: `1px solid ${border}` }}
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-white/5 border border-white/8">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-2xl bg-fg/5 border border-fg/10">
                     {emoji}
                   </div>
                   <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-white font-bold text-sm leading-tight">{title}</span>
-                    <span className="text-gray-400 text-xs leading-relaxed">{desc}</span>
+                    <span className="text-fg font-bold text-sm leading-tight">{t(titleKey)}</span>
+                    <span className="text-fg-muted text-xs leading-relaxed">{t(descKey)}</span>
                   </div>
                 </motion.div>
               ))}
@@ -1101,14 +1097,15 @@ https://hovesh-plus.vercel.app/`;
           {/* Sticky CTA */}
           <div
             className="absolute bottom-0 inset-x-0 px-4 pb-8 pt-6"
-            style={{ background: 'linear-gradient(to top, #010810 65%, transparent)' }}
+            style={{ background: 'linear-gradient(to top, rgb(var(--page)) 65%, transparent)' }}
           >
             <div className="flex gap-2">
               <a
                 href="https://links.payboxapp.com/ikLxTdoky1b"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackInteraction('תרומה לקמפיין — PayBox', 'support')}
+                onClick={() => trackInteraction(TRACK.payBox, 'support')}
+                // theme-ok: white text on a coloured gradient button
                 className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                 style={{
                   background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
@@ -1119,20 +1116,21 @@ https://hovesh-plus.vercel.app/`;
               </a>
               <button
                 onClick={() => {
-                  trackInteraction('תרומה לקמפיין — ביט', 'support');
+                  trackInteraction(TRACK.bit, 'support');
                   setShowBitSheet(true);
                 }}
+                // theme-ok: white text on a coloured gradient button
                 className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                 style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                   boxShadow: '0 4px 24px rgba(124,58,237,0.45)',
                 }}
               >
-                ביט
+                {t('hubBit')}
               </button>
             </div>
-            <p className="text-center text-gray-600 text-xs mt-2">
-              תרומה חד-פעמית · מאובטח · כל סכום עוזר
+            <p className="text-center text-fg-muted text-xs mt-2">
+              {t('hubCampaignFooter')}
             </p>
           </div>
 
@@ -1144,20 +1142,19 @@ https://hovesh-plus.vercel.app/`;
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 120, opacity: 0 }}
                 transition={{ type: 'spring', damping: 16, stiffness: 260, mass: 0.9 }}
-                className="absolute bottom-0 inset-x-0 z-20 rounded-t-3xl px-5 pt-6 pb-10"
+                className="absolute bottom-0 inset-x-0 z-20 rounded-t-3xl px-5 pt-6 pb-10 bg-surface"
                 style={{
-                  background: 'linear-gradient(160deg, #1e1b4b 0%, #0f172a 60%, #020b18 100%)',
-                  borderTop: '1px solid rgba(234, 179, 8, 0.35)',
-                  borderLeft: '1px solid rgba(234, 179, 8, 0.15)',
-                  borderRight: '1px solid rgba(234, 179, 8, 0.15)',
+                  borderTop: '1px solid rgba(234, 179, 8, 0.45)',
+                  borderLeft: '1px solid rgba(234, 179, 8, 0.2)',
+                  borderRight: '1px solid rgba(234, 179, 8, 0.2)',
                   boxShadow: '0 -8px 48px rgba(234, 179, 8, 0.18), 0 -1px 0 rgba(234, 179, 8, 0.3)',
                 }}
               >
                 {/* Close button */}
                 <button
                   onClick={() => setShowPersonalCard(false)}
-                  className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-gray-400 active:scale-90 transition-transform"
-                  aria-label="סגור"
+                  className="absolute top-4 end-4 w-8 h-8 rounded-full bg-fg/5 border border-fg/10 flex items-center justify-center text-fg-muted active:scale-90 transition-transform"
+                  aria-label={t('close')}
                 >
                   <X size={15} />
                 </button>
@@ -1168,15 +1165,12 @@ https://hovesh-plus.vercel.app/`;
                   style={{ width: 40, height: 3, background: 'rgba(234, 179, 8, 0.7)' }}
                 />
 
-                <h2 className="text-white font-bold text-xl text-center mb-3 leading-tight">
-                  ועכשיו, בנימה אישית... ❤️
+                <h2 className="text-fg font-bold text-xl text-center mb-3 leading-tight">
+                  {t('hubPersonalTitle')}
                 </h2>
 
-                <p className="text-gray-300 text-sm leading-relaxed text-center mb-5 px-1" dir="rtl">
-                   כאן דניאל , המפתח של חובש +. כבר כמה חודשים שאלפי חובשים וחובשות משתמשים באפליקציה.
-                  האפליקציה הזו היא פרויקט של הלב, ללא מטרות רווח וללא פרסומות. כדי שנוכל להמשיך
-                  לגדול ולהגיע לכל חובש בארץ, אני מזמין אותכם להיות שותפים. תרומה של 50 או 100 ש״ח תעזור
-                  לנו לכסות את עלויות התחזוקה ולהעלות את האפליקציה לחנויות. בואו נעשה את זה ביחד!
+                <p className="text-fg/80 text-sm leading-relaxed text-center mb-5 px-1">
+                  {t('hubPersonalBody')}
                 </p>
 
                 <div className="flex gap-2">
@@ -1184,7 +1178,8 @@ https://hovesh-plus.vercel.app/`;
                     href="https://links.payboxapp.com/ikLxTdoky1b"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => trackInteraction('תרומה — בנימה אישית PayBox', 'support')}
+                    onClick={() => trackInteraction(TRACK.personalPayBox, 'support')}
+                    // theme-ok: white text on a coloured gradient button
                     className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                     style={{
                       background: 'linear-gradient(135deg, #b45309 0%, #ca8a04 50%, #d97706 100%)',
@@ -1195,16 +1190,17 @@ https://hovesh-plus.vercel.app/`;
                   </a>
                   <button
                     onClick={() => {
-                      trackInteraction('תרומה — בנימה אישית ביט', 'support');
+                      trackInteraction(TRACK.personalBit, 'support');
                       setShowBitSheet(true);
                     }}
+                    // theme-ok: white text on a coloured gradient button
                     className="flex-1 py-4 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                       boxShadow: '0 4px 24px rgba(124,58,237,0.45)',
                     }}
                   >
-                    ביט
+                    {t('hubBit')}
                   </button>
                 </div>
               </motion.div>
@@ -1219,6 +1215,7 @@ https://hovesh-plus.vercel.app/`;
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
+                  // theme-ok: backdrop dims the page in both modes
                   className="absolute inset-0 z-30 bg-black/50"
                   onClick={() => setShowBitSheet(false)}
                 />
@@ -1227,31 +1224,31 @@ https://hovesh-plus.vercel.app/`;
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-                  className="absolute inset-x-0 bottom-0 z-40 rounded-t-3xl px-6 pt-6 pb-10"
+                  className="absolute inset-x-0 bottom-0 z-40 rounded-t-3xl px-6 pt-6 pb-10 bg-surface"
                   style={{
-                    background: 'linear-gradient(160deg, #2e1065 0%, #1e1b4b 40%, #0f172a 100%)',
-                    borderTop: '1px solid rgba(167,139,250,0.35)',
+                    backgroundImage: 'linear-gradient(160deg, rgba(124,58,237,0.16) 0%, rgba(79,70,229,0.06) 50%, transparent 100%)',
+                    borderTop: '1px solid rgba(167,139,250,0.45)',
                   }}
-                  dir="rtl"
                 >
-                  <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-white/20" />
+                  <div className="mx-auto mb-5 w-10 h-1 rounded-full bg-fg/20" />
                   <button
                     onClick={() => setShowBitSheet(false)}
-                    className="absolute top-5 left-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                    className="absolute top-5 end-5 w-8 h-8 rounded-full bg-fg/10 flex items-center justify-center"
+                    aria-label={t('close')}
                   >
-                    <X size={16} className="text-white/70" />
+                    <X size={16} className="text-fg/70" />
                   </button>
 
-                  <h2 className="text-white font-bold text-xl text-center mb-1">העברה דרך ביט</h2>
-                  <p className="text-violet-300 text-sm text-center mb-4">
-                    תרמו למספר הזה:
+                  <h2 className="text-fg font-bold text-xl text-center mb-1">{t('hubBitSheetTitle')}</h2>
+                  <p className="text-violet-700 dark:text-violet-300 text-sm text-center mb-4">
+                    {t('hubBitSheetSub')}
                   </p>
 
                   <div
                     className="rounded-2xl flex items-center justify-between px-5 py-4 mb-4"
                     style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
                   >
-                    <span className="text-white font-black text-2xl tracking-widest shrink-0" dir="ltr">
+                    <span className="text-fg font-black text-2xl tracking-widest shrink-0" dir="ltr">
                       054-932-2310
                     </span>
                     <button
@@ -1262,31 +1259,31 @@ https://hovesh-plus.vercel.app/`;
                         setShowBitThankYou(true);
                         setTimeout(() => setShowBitThankYou(false), 4500);
                       }}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
-                      style={{
-                        background: campaignBitCopied ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.3)',
-                        color: campaignBitCopied ? '#86efac' : '#c4b5fd',
-                        border: `1px solid ${campaignBitCopied ? 'rgba(34,197,94,0.4)' : 'rgba(167,139,250,0.4)'}`,
-                      }}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${
+                        campaignBitCopied
+                          ? 'bg-green-500/20 border-green-500/40 text-green-800 dark:text-green-300'
+                          : 'bg-violet-500/25 border-violet-400/40 text-violet-700 dark:text-violet-200'
+                      }`}
                     >
                       {campaignBitCopied ? <Check size={15} /> : <Copy size={15} />}
-                      {campaignBitCopied ? 'הועתק!' : 'העתק'}
+                      {campaignBitCopied ? t('hubBitCopied') : t('copy')}
                     </button>
                   </div>
 
                   <button
                     onClick={() => { window.location.href = 'bit://'; }}
+                    // theme-ok: white text on a coloured gradient button
                     className="w-full py-3.5 rounded-2xl text-white font-bold text-base text-center active:scale-95 transition-transform mb-4"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%)',
                       boxShadow: '0 4px 20px rgba(124,58,237,0.45)',
                     }}
                   >
-                    פתח ביט
+                    {t('hubOpenBit')}
                   </button>
 
-                  <p className="text-white/40 text-xs text-center leading-relaxed">
-                    כל סכום עוזר מאוד ❤️
+                  <p className="text-fg/50 text-xs text-center leading-relaxed">
+                    {t('hubAnyAmount')}
                   </p>
 
                   {/* Thank-you toast after copy */}
@@ -1303,10 +1300,10 @@ https://hovesh-plus.vercel.app/`;
                           border: '1px solid rgba(34,197,94,0.35)',
                         }}
                       >
-                        <p className="text-green-300 font-semibold text-sm leading-relaxed" dir="rtl">
-                          תודה רבה לך על התרומה 🙏<br />
-                          תזכור שכל סכום עוזר לנו להמשיך לפתח ולהציל חיים.<br />
-                          <span className="text-green-400/80 font-normal text-xs">זה אומר לנו המון ❤️</span>
+                        <p className="text-green-800 dark:text-green-300 font-semibold text-sm leading-relaxed">
+                          {t('hubThanks1')}<br />
+                          {t('hubThanks2')}<br />
+                          <span className="text-green-800 dark:text-green-400/80 font-normal text-xs">{t('hubThanks3')}</span>
                         </p>
                       </motion.div>
                     )}

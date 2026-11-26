@@ -26,9 +26,9 @@ export default function NumericKeypad({
   return (
     <div className="flex flex-col gap-3 w-full" dir="ltr">
       {/* Display */}
-      <div className="bg-black/40 border border-emt-border rounded-2xl px-4 py-3 text-center">
+      <div className="bg-surface-2 border border-line rounded-2xl px-4 py-3 text-center">
         <p
-          className="text-emt-light font-mono font-bold tabular-nums leading-none"
+          className="text-fg font-mono font-bold tabular-nums leading-none"
           style={{ fontSize: 'clamp(2.5rem, 10vw, 4rem)' }}
         >
           {multiplier} × {displayInput}
@@ -41,9 +41,9 @@ export default function NumericKeypad({
           <button
             key={d}
             onClick={() => onDigit(d)}
-            className="bg-white/10 hover:bg-white/20 active:scale-90
-                       text-emt-light text-2xl font-semibold rounded-2xl py-4
-                       transition-all duration-100 border border-emt-border
+            className="bg-fg/10 hover:bg-fg/20 active:scale-90
+                       text-fg text-2xl font-semibold rounded-2xl py-4
+                       transition-all duration-100 border border-line
                        backdrop-blur-sm"
           >
             {d}
@@ -53,10 +53,10 @@ export default function NumericKeypad({
         {/* Bottom row: backspace | 0 | = */}
         <button
           onClick={onBackspace}
-          className="bg-white/10 hover:bg-white/20 active:scale-90
-                     text-emt-muted rounded-2xl py-4
+          className="bg-fg/10 hover:bg-fg/20 active:scale-90
+                     text-fg-muted rounded-2xl py-4
                      flex items-center justify-center
-                     transition-all duration-100 border border-emt-border
+                     transition-all duration-100 border border-line
                      backdrop-blur-sm"
         >
           <Delete size={22} />
@@ -64,9 +64,9 @@ export default function NumericKeypad({
 
         <button
           onClick={() => onDigit('0')}
-          className="bg-white/10 hover:bg-white/20 active:scale-90
-                     text-emt-light text-2xl font-semibold rounded-2xl py-4
-                     transition-all duration-100 border border-emt-border
+          className="bg-fg/10 hover:bg-fg/20 active:scale-90
+                     text-fg text-2xl font-semibold rounded-2xl py-4
+                     transition-all duration-100 border border-line
                      backdrop-blur-sm"
         >
           0
@@ -74,8 +74,7 @@ export default function NumericKeypad({
 
         <button
           onClick={handleCalculate}
-          className="bg-emt-green hover:bg-green-700 active:scale-90
-                     text-white text-2xl font-black rounded-2xl py-4
+          className="bg-emt-green hover:bg-green-700 active:scale-90 text-white text-2xl font-black rounded-2xl py-4
                      transition-all duration-100"
           style={{ boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}
         >

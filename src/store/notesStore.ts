@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { translate } from '../i18n';
 
 export interface Note {
   id: string;
@@ -58,7 +59,7 @@ export const useNotesStore = create<NotesState>()(
       addFolder: (name) => {
         const id = `f${Date.now()}`;
         set((s) => ({
-          folders: [...s.folders, { id, name: name.trim() || 'קבוצה', createdAt: Date.now() }],
+          folders: [...s.folders, { id, name: name.trim() || translate('homeNotesDefaultFolder'), createdAt: Date.now() }],
         }));
         return id;
       },

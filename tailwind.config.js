@@ -8,7 +8,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        'emt-red':    '#EF233C',   // vibrant medical red — actions, running
+        // Theme tokens – follow the dark/light switch (defined in src/index.css).
+        page:          'rgb(var(--page) / <alpha-value>)',
+        surface:       'rgb(var(--surface) / <alpha-value>)',
+        'surface-2':   'rgb(var(--surface-2) / <alpha-value>)',
+        'surface-3':   'rgb(var(--surface-3) / <alpha-value>)',
+        fg:            'rgb(var(--fg) / <alpha-value>)',
+        'fg-muted':    'rgb(var(--fg-muted) / <alpha-value>)',
+        'fg-subtle':   'rgb(var(--fg-subtle) / <alpha-value>)',
+        line:          'rgb(var(--line) / <alpha-value>)',
+        'line-strong': 'rgb(var(--line-strong) / <alpha-value>)',
+
+        // Fixed brand colours – same in both modes. Do not use the dark-only
+        // neutrals below (emt-dark/gray/light/border/muted) in new code; use
+        // the tokens above.
+        'emt-red':   '#EF233C',   // vibrant medical red — actions, running
         'emt-green':  '#22C55E',   // green-500 — success, results
         'emt-yellow': '#F59E0B',   // amber-500 — metronome
         'emt-blue':   '#60A5FA',   // blue-400 — O2 calc accent

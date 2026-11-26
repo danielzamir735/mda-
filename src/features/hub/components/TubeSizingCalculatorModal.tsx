@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { X, Wind, AlertCircle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation } from '../../../i18n';
+
+type T = ReturnType<typeof useTranslation>;
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -20,33 +23,33 @@ interface LmaResult {
   cuffVolume: string;
 }
 
-function calcTube(ageMo: number | null, weightKg: number | null): TubeResult | null {
+function calcTube(t: T, ageMo: number | null, weightKg: number | null): TubeResult | null {
   if (ageMo === null && weightKg === null) return null;
 
   // Preterm / very low weight
   if (weightKg !== null && weightKg < 1) {
     return {
-      label: 'פג',
+      label: t('calcTubePreterm'),
       withCuff: '–',
-      withoutCuff: '2.5 מ"מ',
-      depth: 'מנשך 8',
-      note: 'גודל ללא בלונית — הוסף 0.5 לגודל עם בלונית',
+      withoutCuff: t('calcMm', { v: '2.5' }),
+      depth: t('calcDepthAtLip', { v: '8' }),
+      note: t('calcTubePretermNote'),
     };
   }
   if (weightKg !== null && weightKg < 3) {
     return {
-      label: 'ילוד',
+      label: t('calcTubeNewborn'),
       withCuff: '–',
-      withoutCuff: '3.0 מ"מ',
-      depth: 'מנשך 9',
+      withoutCuff: t('calcMm', { v: '3.0' }),
+      depth: t('calcDepthAtLip', { v: '9' }),
     };
   }
   if (weightKg !== null && weightKg < 5 && (ageMo === null || ageMo < 2)) {
     return {
-      label: 'ילוד ≥ 3 ק"ג',
-      withCuff: '3.0 מ"מ',
-      withoutCuff: '3.5 מ"מ',
-      depth: 'מנשך 9–10',
+      label: t('calcTubeNewborn3kg'),
+      withCuff: t('calcMm', { v: '3.0' }),
+      withoutCuff: t('calcMm', { v: '3.5' }),
+      depth: t('calcDepthAtLip', { v: '9–10' }),
     };
   }
 
@@ -55,10 +58,10 @@ function calcTube(ageMo: number | null, weightKg: number | null): TubeResult | n
 
   if (ageMo !== null && ageMo <= 12) {
     return {
-      label: 'תינוק עד שנה',
-      withCuff: '3.5 מ"מ',
-      withoutCuff: '4.0 מ"מ',
-      depth: 'מנשך 10.5–12',
+      label: t('calcTubeInfant'),
+      withCuff: t('calcMm', { v: '3.5' }),
+      withoutCuff: t('calcMm', { v: '4.0' }),
+      depth: t('calcDepthAtLip', { v: '10.5–12' }),
     };
   }
 
@@ -67,25 +70,31 @@ function calcTube(ageMo: number | null, weightKg: number | null): TubeResult | n
     const withoutCuff = parseFloat(((ageYr / 4) + 4).toFixed(1));
     const depth = parseFloat(((ageYr / 2) + 12).toFixed(1));
     return {
-      label: `ילד ${ageYr.toFixed(0)} שנים`,
-      withCuff: `${withCuff} מ"מ`,
-      withoutCuff: `${withoutCuff} מ"מ`,
-      depth: `${depth} ס"מ | או: טובוס × 3`,
-      note: 'נוסחה: (גיל/4)+3.5 עם בלונית | (גיל/4)+4 ללא בלונית',
+      label: t('calcTubeChildYears', { n: ageYr.toFixed(0) }),
+      withCuff: t('calcMm', { v: withCuff }),
+      withoutCuff: t('calcMm', { v: withoutCuff }),
+      depth: t('calcDepthFormula', { d: depth }),
+      note: t('calcTubeFormulaNote'),
     };
   }
 
   return null;
 }
 
-function calcLma(weightKg: number): LmaResult {
-  if (weightKg <= 5) return { size: '1', cuffVolume: '5 מ"ל' };
-  if (weightKg <= 10) return { size: '1.5', cuffVolume: '7 מ"ל' };
-  if (weightKg <= 20) return { size: '2', cuffVolume: '10 מ"ל' };
-  if (weightKg <= 30) return { size: '2.5', cuffVolume: '15 מ"ל' };
-  if (weightKg <= 50) return { size: '3', cuffVolume: '20 מ"ל' };
-  if (weightKg <= 70) return { size: '4', cuffVolume: '30 מ"ל' };
-  return { size: '5', cuffVolume: '40 מ"ל' };
+// [max weight kg, LMA size, cuff volume mL]
+const LMA_TABLE: [number, string, number, string][] = [
+  [5, '1', 5, '0–5'],
+  [10, '1.5', 7, '5–10'],
+  [20, '2', 10, '10–20'],
+  [30, '2.5', 15, '20–30'],
+  [50, '3', 20, '30–50'],
+  [70, '4', 30, '50–70'],
+  [Infinity, '5', 40, '70–100'],
+];
+
+function calcLma(t: T, weightKg: number): LmaResult {
+  const row = LMA_TABLE.find(([max]) => weightKg <= max)!;
+  return { size: row[1], cuffVolume: t('calcMl', { v: row[2] }) };
 }
 
 function estimateWeightFromAge(ageMo: number): number {
@@ -98,9 +107,9 @@ function estimateWeightFromAge(ageMo: number): number {
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-emt-border last:border-0">
-      <p className="text-sm text-gray-500 dark:text-emt-muted">{label}</p>
-      <p className={`font-bold text-base ${highlight ? 'text-sky-400' : 'text-gray-900 dark:text-emt-light'}`}>{value}</p>
+    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-0">
+      <p className="text-sm text-fg-muted">{label}</p>
+      <p className={`font-bold text-base text-end ${highlight ? 'text-sky-700 dark:text-sky-400' : 'text-fg'}`}>{value}</p>
     </div>
   );
 }
@@ -109,6 +118,7 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 
 export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
   const [ageInput, setAgeInput] = useState('');
   const [ageUnit, setAgeUnit] = useState<'months' | 'years'>('years');
   const [weightInput, setWeightInput] = useState('');
@@ -130,23 +140,23 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
     }
   }
 
-  const tubeResult = calculated ? calcTube(ageMo, w) : null;
-  const lmaResult = calculated && w > 0 ? calcLma(w) : null;
+  const tubeResult = calculated ? calcTube(t, ageMo, w) : null;
+  const lmaResult = calculated && w > 0 ? calcLma(t, w) : null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Wind size={22} className="text-sky-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">גדלי טובוס ו-LMA</h2>
+          <Wind size={22} className="text-sky-700 dark:text-sky-400" />
+          <h2 className="text-fg font-bold text-xl">{t('calcTubeTitle')}</h2>
         </div>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-          aria-label="סגור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
@@ -154,26 +164,26 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         {/* Input card */}
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 flex flex-col gap-4">
+        <div className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-4">
 
           {/* Age input */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">גיל הילד</label>
+            <label className="text-xs font-bold text-fg">{t('calcChildAge')}</label>
             <input
               type="number"
               inputMode="decimal"
-              placeholder="הזן גיל"
+              placeholder={t('calcEnterAge')}
               value={ageInput}
               onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
-              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+              className="w-full rounded-xl border-2 border-line bg-surface
+                         px-3 py-2.5 text-fg text-base placeholder-fg-subtle
                          focus:outline-none focus:border-sky-400 transition-colors"
             />
           </div>
 
           {/* Age unit toggle */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">יחידת גיל</label>
+            <label className="text-xs font-bold text-fg">{t('calcAgeUnit')}</label>
             <div className="grid grid-cols-2 gap-2">
               {(['years', 'months'] as const).map(u => (
                 <button
@@ -181,11 +191,12 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
                   onClick={() => { setAgeUnit(u); setCalculated(false); }}
                   className={`py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${
                     ageUnit === u
+                      // theme-ok: white text on the selected sky button
                       ? 'bg-sky-400 text-white border-sky-400 shadow-sm'
-                      : 'bg-white dark:bg-emt-gray text-gray-500 dark:text-emt-muted border-gray-200 dark:border-emt-border'
+                      : 'bg-surface text-fg-muted border-line'
                   }`}
                 >
-                  {u === 'years' ? 'שנים' : 'חודשים'}
+                  {u === 'years' ? t('calcUnitYears') : t('calcUnitMonths')}
                 </button>
               ))}
             </div>
@@ -194,40 +205,41 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
           {/* Weight input */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+              <label className="text-xs font-bold text-fg">{t('calcWeightKgLabel')}</label>
               {isEstimated && estimatedWeight && (
-                <span className="text-xs font-bold text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
-                  הערכה: ~{estimatedWeight} ק"ג
+                <span className="text-xs font-bold text-amber-800 dark:text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
+                  {t('calcEstimateBadge', { w: estimatedWeight })}
                 </span>
               )}
             </div>
             <input
               type="number"
               inputMode="decimal"
-              placeholder={estimatedWeight ? `~${estimatedWeight} (הערכה לפי גיל)` : 'הזן משקל'}
+              placeholder={estimatedWeight ? t('calcEstimatePlaceholder', { w: estimatedWeight }) : t('calcEnterWeight')}
               value={weightInput}
               onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
-              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+              className="w-full rounded-xl border-2 border-line bg-surface
+                         px-3 py-2.5 text-fg text-base placeholder-fg-subtle
                          focus:outline-none focus:border-sky-400 transition-colors"
             />
           </div>
 
           {isEstimated && (
             <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
-              <AlertCircle size={13} className="text-emt-yellow shrink-0 mt-0.5" />
-              <p className="text-emt-yellow text-xs font-medium">משקל מוערך לפי גיל — הזן משקל מדויק לתוצאות מיטביות.</p>
+              <AlertCircle size={13} className="text-amber-800 dark:text-emt-yellow shrink-0 mt-0.5" />
+              <p className="text-amber-800 dark:text-emt-yellow text-xs font-medium">{t('calcEstimatedWarning')}</p>
             </div>
           )}
 
           <button
             onClick={handleCalculate}
             disabled={!displayWeight || displayWeight <= 0}
+            // theme-ok: white text on the sky button
             className="w-full rounded-xl bg-sky-400 text-white font-bold text-base py-3 mt-1
                        active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                        shadow-md shadow-sky-400/25"
           >
-            חשב גדלים
+            {t('calcCalculateSizes')}
           </button>
         </div>
 
@@ -235,14 +247,14 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
         {tubeResult && (
           <div className="rounded-2xl border border-sky-400/30 bg-sky-400/5 p-4 flex flex-col gap-0">
             <div className="flex items-center gap-2 mb-3">
-              <Wind size={16} className="text-sky-400" />
-              <p className="text-sky-400 font-bold text-base">טובוס ETT — {tubeResult.label}</p>
+              <Wind size={16} className="text-sky-700 dark:text-sky-400" />
+              <p className="text-sky-700 dark:text-sky-400 font-bold text-base">{t('calcEttHeader', { label: tubeResult.label })}</p>
             </div>
-            <Row label="עם בלונית (cuffed)" value={tubeResult.withCuff} highlight />
-            <Row label="ללא בלונית (uncuffed)" value={tubeResult.withoutCuff} highlight />
-            <Row label="עומק הכנסה (מנשך)" value={tubeResult.depth} />
+            <Row label={t('calcCuffed')} value={tubeResult.withCuff} highlight />
+            <Row label={t('calcUncuffed')} value={tubeResult.withoutCuff} highlight />
+            <Row label={t('calcInsertionDepth')} value={tubeResult.depth} />
             {tubeResult.note && (
-              <p className="text-xs text-gray-400 dark:text-emt-muted mt-2 leading-relaxed">{tubeResult.note}</p>
+              <p className="text-xs text-fg-muted mt-2 leading-relaxed">{tubeResult.note}</p>
             )}
           </div>
         )}
@@ -251,35 +263,27 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
         {lmaResult && (
           <div className="rounded-2xl border border-violet-400/30 bg-violet-400/5 p-4 flex flex-col gap-0">
             <div className="flex items-center gap-2 mb-3">
-              <Wind size={16} className="text-violet-400" />
-              <p className="text-violet-400 font-bold text-base">LMA — לפי משקל {w} ק"ג</p>
+              <Wind size={16} className="text-violet-700 dark:text-violet-400" />
+              <p className="text-violet-700 dark:text-violet-400 font-bold text-base">{t('calcLmaHeader', { w })}</p>
             </div>
-            <Row label="גודל LMA" value={lmaResult.size} highlight />
-            <Row label="נפח בלונית" value={lmaResult.cuffVolume} />
+            <Row label={t('calcLmaSize')} value={lmaResult.size} highlight />
+            <Row label={t('calcCuffVolume')} value={lmaResult.cuffVolume} />
           </div>
         )}
 
         {/* Reference table */}
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4">
-          <p className="text-gray-900 dark:text-emt-light font-bold text-sm mb-3">טבלת עזר — LMA לפי משקל</p>
-          {[
-            ['0–5 ק"ג', '1', '5 מ"ל'],
-            ['5–10 ק"ג', '1.5', '7 מ"ל'],
-            ['10–20 ק"ג', '2', '10 מ"ל'],
-            ['20–30 ק"ג', '2.5', '15 מ"ל'],
-            ['30–50 ק"ג', '3', '20 מ"ל'],
-            ['50–70 ק"ג', '4', '30 מ"ל'],
-            ['70–100 ק"ג', '5', '40 מ"ל'],
-          ].map(([wRange, size, vol]) => (
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <p className="text-fg font-bold text-sm mb-3">{t('calcLmaTableTitle')}</p>
+          {LMA_TABLE.map(([, size, vol, wRange]) => (
             <div
               key={wRange}
-              className={`flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-emt-border last:border-0 ${
-                lmaResult?.size === size ? 'text-violet-400' : 'text-gray-700 dark:text-emt-light'
+              className={`flex items-center justify-between py-1.5 border-b border-line last:border-0 ${
+                lmaResult?.size === size ? 'text-violet-700 dark:text-violet-400' : 'text-fg'
               }`}
             >
-              <p className="text-xs">{wRange}</p>
-              <p className="text-xs font-bold">גודל {size}</p>
-              <p className="text-xs">{vol}</p>
+              <p className="text-xs">{t('calcKgValue', { w: wRange })}</p>
+              <p className="text-xs font-bold">{t('calcSizeN', { size })}</p>
+              <p className="text-xs">{t('calcMl', { v: vol })}</p>
             </div>
           ))}
         </div>
