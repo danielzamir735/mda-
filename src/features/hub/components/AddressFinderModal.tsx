@@ -100,6 +100,37 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
 
   useModalBackHandler(isOpen, onClose);
 
+  // Location. The app asks for it itself as soon as the map is on screen, so the browser's own prompt opens at
+  // once and names the app. A browser never shows that prompt again after the user blocked it, so then a note
+  // explains how to allow it, with a button that asks again. Once allowed, the map is told to go to the user.
+  const [loc, setLoc] = useState<'asking' | 'granted' | 'denied' | 'unavailable'>('asking');
+  const [howTo, setHowTo] = useState(false);
+  const askLocation = () => {
+    if (!navigator.geolocation) { setLoc('unavailable'); return; }
+    setLoc('asking');
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        setLoc('granted'); setHowTo(false);
+        const win = frameRef.current?.contentWindow;
+        if (win) win.postMessage({ type: 'ef-locate' }, MAP_ORIGIN);
+      },
+      err => setLoc(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  };
+  useEffect(() => {
+    if (showIntro) return; // first the explanation, then the browser's question
+    askLocation();
+    // a permission changed in the browser's settings while the map is open is picked up at once
+    let status: PermissionStatus | null = null;
+    navigator.permissions?.query({ name: 'geolocation' }).then(s => {
+      status = s;
+      s.onchange = () => { if (s.state === 'granted') askLocation(); else if (s.state === 'denied') setLoc('denied'); };
+    }).catch(() => { /* not supported (older Safari): the error from asking is enough */ });
+    return () => { if (status) status.onchange = null; };
+  }, [showIntro]);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   // suggestions from the first letters typed
   const onType = (v: string) => {
     setQuery(v); setPicked(null); setMessage('');
@@ -233,6 +264,53 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
           </a>
         </div>
         {message && <p className="text-sm font-semibold text-rose-400 px-1 pt-1.5">{message}</p>}
+        {/* location blocked: the browser will not ask again by itself, so say how to allow it */}
+        {(loc === 'denied' || loc === 'unavailable') && (
+          <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm" role="alert">
+            <div className="flex items-start gap-2">
+              <Navigation size={16} className="shrink-0 mt-0.5 text-amber-500 dark:text-amber-300" />
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-gray-900 dark:text-emt-light">
+                  {loc === 'denied' ? 'הגישה למיקום חסומה בדפדפן' : 'לא הצלחתי לקבל את המיקום שלך'}
+                </p>
+                <p className="text-gray-600 dark:text-emt-muted leading-snug mt-0.5">
+                  {loc === 'denied'
+                    ? 'בלי מיקום המפה לא תראה איפה אתה ביחס לבניין. אפשר לחפש כתובת גם כך.'
+                    : 'כדאי לבדוק שהמיקום (GPS) בטלפון פועל.'}
+                </p>
+                {loc === 'denied' && howTo && (
+                  <ol className="list-decimal pr-4 mt-1.5 space-y-0.5 text-gray-700 dark:text-emt-light">
+                    {isIOS ? (
+                      <>
+                        <li>פותחים את <b>הגדרות</b> בטלפון</li>
+                        <li><b>פרטיות ואבטחה</b> ← <b>שירותי מיקום</b>: לוודא שפועל</li>
+                        <li>באותו מסך: <b>אתרי Safari</b> (או הדפדפן שבו פתחת) ← <b>בעת השימוש ביישום</b></li>
+                        <li>חוזרים לכאן ולוחצים <b>נסה שוב</b></li>
+                      </>
+                    ) : (
+                      <>
+                        <li>לוחצים על סמל המנעול או ההגדרות ליד כתובת האתר למעלה</li>
+                        <li><b>הרשאות</b> ← <b>מיקום</b> ← <b>אישור</b></li>
+                        <li>אם אין: <b>הגדרות</b> בטלפון ← <b>מיקום</b> ← הדפדפן ← <b>אישור</b></li>
+                        <li>חוזרים לכאן ולוחצים <b>נסה שוב</b></li>
+                      </>
+                    )}
+                  </ol>
+                )}
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={askLocation} className="px-3 py-1.5 rounded-lg bg-amber-500 text-white font-bold text-xs active:opacity-80">
+                    נסה שוב
+                  </button>
+                  {loc === 'denied' && (
+                    <button type="button" onClick={() => setHowTo(v => !v)} className="px-3 py-1.5 rounded-lg border border-amber-400/50 text-amber-700 dark:text-amber-200 font-bold text-xs">
+                      {howTo ? 'הסתר הסבר' : 'איך מאשרים?'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* suggestions open over the map */}
         {suggestions.length > 0 && (
           <div className="absolute right-3 left-3 top-full mt-1 rounded-xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden shadow-xl" role="listbox" aria-label="הצעות כתובת">

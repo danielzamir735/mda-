@@ -1239,8 +1239,10 @@ function boot(){
     map.once('idle', ready); setTimeout(ready, 12000);
     // the app sends each address it finds; the map goes there without loading again
     window.addEventListener('message', e => {
-      if (e.source !== window.parent || !e.data || e.data.type !== 'ef-goto') return;
-      openFrom(new URLSearchParams(String(e.data.query || '')));
+      if (e.source !== window.parent || !e.data) return;
+      if (e.data.type === 'ef-goto') openFrom(new URLSearchParams(String(e.data.query || '')));
+      // the app got the location permission (perhaps after the map already asked and was refused): start again
+      if (e.data.type === 'ef-locate'){ if (!target) follow = true; startWatch(); }
     });
   }
   if (!openFrom(sp) && EMBED){
