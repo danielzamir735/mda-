@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { Play, VolumeX, Volume2, Plus, Minus, MapPinned } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
@@ -73,67 +73,29 @@ function CompactMetronomeCard() {
   );
 }
 
+// Same card as the timers and the metronome: the app's surface, a round mark in the tool's colour, a bold title
 function AddressFinderTile() {
   const t = useTranslation();
   const [open, setOpen] = useState(false);
-  const gridId = useId();
   return (
     <>
       <button
         // i18n-ok: analytics event label, kept stable across languages
         onClick={() => { trackInteraction('איתור כתובת מהיר · פתיחה מהבית', 'emergency_info'); setOpen(true); }}
-        // theme-ok: premium tile — white text on its own deep rose gradient in both modes
-        className="group relative flex-1 min-h-0 w-full overflow-hidden rounded-3xl p-3 text-white
-                   flex flex-col items-center justify-center gap-1.5 active:scale-[0.97] transition-transform"
-        style={{
-          background: 'radial-gradient(130% 100% at 85% 0%, #fb7185 0%, #e11d48 42%, #881337 100%)',
-          // theme-ok: premium address tile, white over its own rose gradient
-          boxShadow: '0 10px 26px -6px rgba(225,29,72,0.55), inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -10px 24px rgba(76,5,25,0.35)',
-        }}
+        className="flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-1 rounded-3xl p-2
+                   bg-surface border border-line active:scale-[0.97] transition-transform"
+        style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)' }}
       >
-        {/* faint street-map texture */}
-        <svg aria-hidden="true" className="pointer-events-none absolute inset-0 w-full h-full opacity-[0.16]">
-          <defs>
-            <pattern id={gridId} width="26" height="26" patternUnits="userSpaceOnUse">
-              {/* theme-ok: premium address tile, white over its own rose gradient */}
-              <path d="M26 0H0V26" fill="none" stroke="white" strokeWidth="0.7" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#${gridId})`} />
-          {/* theme-ok: premium address tile, white over its own rose gradient */}
-          <path d="M-10 70 C 40 40, 90 95, 220 30" fill="none" stroke="white" strokeWidth="3" />
-          {/* theme-ok: premium address tile, white over its own rose gradient */}
-          <path d="M60 -10 L 110 200" fill="none" stroke="white" strokeWidth="2" />
-        </svg>
-        {/* soft top sheen */}
         <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
-          // theme-ok: premium address tile, white over its own rose gradient
-          style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.16), transparent)' }}
-        />
-
-        <span
-          // theme-ok: premium address tile, white over its own rose gradient
-          className="relative w-12 h-12 rounded-2xl flex items-center justify-center bg-white/15 border border-white/35 backdrop-blur-sm shadow-lg"
+          className="w-14 h-14 shrink-0 rounded-full flex items-center justify-center
+                     bg-rose-600/10 border-2 border-rose-600/70 dark:border-rose-500/70 text-rose-700 dark:text-rose-400"
         >
-          <span
-            aria-hidden="true"
-            // theme-ok: premium address tile, white over its own rose gradient
-            className="absolute inset-0 rounded-2xl bg-white/25 animate-ping motion-reduce:hidden"
-            style={{ animationDuration: '2.6s' }}
-          />
-          <MapPinned size={26} strokeWidth={2.2} className="relative drop-shadow" />
+          <MapPinned size={26} strokeWidth={2} />
         </span>
-        <span className="relative font-black text-[1.05rem] leading-tight text-center tracking-tight drop-shadow-sm">
+        <span className="text-fg font-black text-lg tracking-wide text-center w-full leading-tight">
           {t('homeAddressFinder')}
         </span>
-        <span
-          // theme-ok: premium address tile, white over its own rose gradient
-          className="relative text-white/80 text-[0.7rem] font-medium leading-tight text-center"
-        >
-          {t('homeAddressFinderSub')}
-        </span>
+        <span className="text-fg-subtle text-xs font-medium leading-tight text-center">{t('homeAddressFinderSub')}</span>
       </button>
       {open && <AddressFinderModal isOpen onClose={() => setOpen(false)} />}
     </>
