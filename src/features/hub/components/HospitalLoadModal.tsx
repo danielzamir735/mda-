@@ -25,23 +25,9 @@ const RATE_LIMIT_MS = 30 * 60 * 1000; // one report per hospital+department per 
 const STALE_MS = 3 * 60 * 60 * 1000; // reports older than 3h are shown as stale
 
 // English display names; the Hebrew name stays the stored/database key.
-const HOSPITAL_EN: Record<string, string> = {
-  'רמב"ם': 'Rambam', // i18n-ok: lookup key
-  'בלינסון': 'Beilinson', // i18n-ok: lookup key
-  'איכילוב': 'Ichilov', // i18n-ok: lookup key
-  'תל השומר שיבא': 'Sheba Tel HaShomer', // i18n-ok: lookup key
-  'הדסה עין כרם': 'Hadassah Ein Kerem', // i18n-ok: lookup key
-  'שערי צדק': 'Shaare Zedek', // i18n-ok: lookup key
-  'סורוקה': 'Soroka', // i18n-ok: lookup key
-};
-const CITY_EN: Record<string, string> = {
-  'חיפה': 'Haifa', // i18n-ok: lookup key
-  'פתח תקווה': 'Petah Tikva', // i18n-ok: lookup key
-  'תל אביב': 'Tel Aviv', // i18n-ok: lookup key
-  'רמת גן': 'Ramat Gan', // i18n-ok: lookup key
-  'ירושלים': 'Jerusalem', // i18n-ok: lookup key
-  'באר שבע': 'Beersheba', // i18n-ok: lookup key
-};
+const HOSPITAL_BY_NAME = new Map(ER_LOAD_HOSPITALS.map(h => [h.name, h]));
+const MAJOR_HOSPITALS = ER_LOAD_HOSPITALS.filter(h => h.major);
+const OTHER_HOSPITALS = ER_LOAD_HOSPITALS.filter(h => !h.major);
 const DEPT_KEY: Record<ErDepartment, TranslationKey> = { general: 'refErGeneral', pediatric: 'refErPediatric' };
 const LEVEL_KEY: Record<ErLoadLevel, TranslationKey> = { 1: 'refLoadLight', 2: 'refLoadMedium', 3: 'refLoadHeavy' };
 
@@ -105,8 +91,8 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
   const t = useTranslation();
   const { isEn } = useLanguage();
-  const hospitalName = (name: string) => (isEn && HOSPITAL_EN[name]) || name;
-  const cityName = (city: string) => (isEn && CITY_EN[city]) || city;
+  const hospitalName = (name: string) => (isEn && HOSPITAL_BY_NAME.get(name)?.en?.[0]) || name;
+  const cityOf = (name: string, city: string) => (isEn && HOSPITAL_BY_NAME.get(name)?.en?.[1]) || city;
 
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -233,31 +219,37 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
           <p className="text-fg-muted text-sm leading-relaxed px-1">
             {t('refPickHospitalsIntro')}
           </p>
-          <div className="flex flex-col gap-2">
-            {ER_LOAD_HOSPITALS.map(({ name, city }) => {
-              const picked = pickerSelection.includes(name);
-              return (
-                <button
-                  key={name}
-                  onClick={() => togglePick(name)}
-                  className={`flex items-center justify-between w-full rounded-2xl border p-4 transition-colors text-start
-                    ${picked
-                      ? 'border-cyan-400/50 bg-cyan-400/10'
-                      : 'border-line bg-surface'}`}
-                >
-                  <div>
-                    <p className="text-fg font-bold text-sm">{hospitalName(name)}</p>
-                    <p className="text-fg-muted text-xs mt-0.5">{cityName(city)}</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0
-                    ${picked ? 'border-cyan-400 bg-cyan-400' : 'border-line-strong'}`}>
-                    {/* theme-ok: white check on the cyan circle */}
-                    {picked && <Check size={14} className="text-white" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {([
+            ['refErMajorHospitals', MAJOR_HOSPITALS],
+            ['refErMoreHospitals', OTHER_HOSPITALS],
+          ] as const).map(([titleKey, list]) => (
+            <div key={titleKey} className="flex flex-col gap-2">
+              <p className="text-fg-muted text-xs font-bold px-1 mt-1">{t(titleKey)}</p>
+              {list.map(({ name, city }) => {
+                const picked = pickerSelection.includes(name);
+                return (
+                  <button
+                    key={name}
+                    onClick={() => togglePick(name)}
+                    className={`flex items-center justify-between w-full rounded-2xl border p-4 transition-colors text-start
+                      ${picked
+                        ? 'border-cyan-400/50 bg-cyan-400/10'
+                        : 'border-line bg-surface'}`}
+                  >
+                    <div>
+                      <p className="text-fg font-bold text-sm">{hospitalName(name)}</p>
+                      <p className="text-fg-muted text-xs mt-0.5">{cityOf(name, city)}</p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0
+                      ${picked ? 'border-cyan-400 bg-cyan-400' : 'border-line-strong'}`}>
+                      {/* theme-ok: white check on the cyan circle */}
+                      {picked && <Check size={14} className="text-white" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
       ) : (
         // ── Dashboard ─────────────────────────────────────────────────────

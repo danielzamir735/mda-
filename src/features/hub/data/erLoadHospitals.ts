@@ -1,22 +1,25 @@
-// Curated list of major medical centers for the ER-load reporting feature.
-// Deliberately limited to large hospitals (same set as LEVEL_A in
-// HospitalsModal.tsx) — a crowd-sourced report feature only works once enough
-// people are actually reporting, and that critical mass is far more likely at
-// a handful of major centers than spread across all ~30 hospitals in Israel.
+import { LEVEL_A, LEVEL_B } from './hospitals';
+import type { Hospital } from '../components/HospitalAccordionItem';
+
+// Hospitals people can report ER load on: every hospital in the hospital info
+// screen that has an ER. The large trauma centers (LEVEL_A) are marked `major`
+// and listed first, since that is where most reports will come from.
+// The Hebrew name is the key stored in er_load_reports.hospital_name.
 
 export interface ErLoadHospital {
   name: string;
   city: string;
+  /** English display name and city */
+  en?: [name: string, city: string];
+  major: boolean;
 }
 
+// a hospital with no ER number (a mental-health center) has no ER to report on
+const hasEr = (h: Hospital) => Boolean(h.er) && h.er !== '-';
+
 export const ER_LOAD_HOSPITALS: ErLoadHospital[] = [
-  { name: 'רמב"ם', city: 'חיפה' },
-  { name: 'בלינסון', city: 'פתח תקווה' },
-  { name: 'איכילוב', city: 'תל אביב' },
-  { name: 'תל השומר שיבא', city: 'רמת גן' },
-  { name: 'הדסה עין כרם', city: 'ירושלים' },
-  { name: 'שערי צדק', city: 'ירושלים' },
-  { name: 'סורוקה', city: 'באר שבע' },
+  ...LEVEL_A.filter(hasEr).map(({ name, city, en }) => ({ name, city, en, major: true })),
+  ...LEVEL_B.filter(hasEr).map(({ name, city, en }) => ({ name, city, en, major: false })),
 ];
 
 export type ErDepartment = 'general' | 'pediatric';
