@@ -673,7 +673,7 @@ export default function HubModal({
         {/* WhatsApp channel banner */}
         {!editMode && !waBannerHidden && (
           <div
-            className="relative shrink-0 rounded-2xl overflow-hidden"
+            className="relative shrink-0 rounded-2xl overflow-hidden flex items-stretch"
             style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 20px rgba(37,211,102,0.30)' }}
           >
             {/* one light sweep when the hub opens, so the eye lands on the banner */}
@@ -691,7 +691,7 @@ export default function HubModal({
             <button
               onClick={() => { trackInteraction(TRACK.waBanner, 'community_learning'); setShowWhatsAppCommunity(true); }}
               // theme-ok: white text on the green WhatsApp gradient banner
-              className="relative w-full flex items-center gap-3 ps-3 pe-8 py-3 text-start text-white active:scale-[0.98] transition-transform"
+              className="relative flex-1 min-w-0 flex items-center gap-3 ps-3 pe-2 py-3 text-start text-white active:scale-[0.98] transition-transform"
             >
               <div
                 // theme-ok: translucent white circle on the green WhatsApp gradient
@@ -713,13 +713,15 @@ export default function HubModal({
                 {t('hubWaBannerCta')} {isEn ? '→' : '←'}
               </span>
             </button>
+            {/* Close: its own full-height column (44px wide), so a tap on it can't
+                land on the join area. One tap hides the banner for good. */}
             <button
               onClick={hideWaBanner}
-              // theme-ok: white icon on the green WhatsApp gradient banner
-              className="absolute top-1 end-1 w-7 h-7 rounded-full flex items-center justify-center text-white/75 hover:text-white"
+              // theme-ok: white icon on the green WhatsApp gradient banner, divided by a white hairline
+              className="relative shrink-0 w-11 flex items-center justify-center text-white/80 hover:text-white active:bg-white/15 border-s border-white/20"
               aria-label={t('hubWaBannerDismiss')}
             >
-              <X size={14} />
+              <X size={18} />
             </button>
           </div>
         )}
