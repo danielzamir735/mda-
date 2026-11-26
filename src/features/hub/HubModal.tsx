@@ -30,6 +30,8 @@ const TRACK = {
   personalBit: 'תרומה — בנימה אישית ביט', // i18n-ok: analytics event name
   poison: 'מרכזי הרעלות', // i18n-ok: analytics event name
   breathing: 'מסנכרן נשימות', // i18n-ok: analytics event name
+  waBanner: 'באנר וואטסאפ · פתיחה', // i18n-ok: analytics event name
+  folderPrefix: 'תיקייה · ', // i18n-ok: analytics event name
 };
 const heName = (key: TranslationKey) => translate(key, undefined, 'he');
 
@@ -307,21 +309,123 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call']);
+// תיקיות במרכז הכלים: כמה כלים קרובים מוצגים כאריח אחד, ולחיצה עליו פותחת רשימה של הכלים שבתוכו
+// placeAtLast: the folder takes the place of its last tool instead of its first,
+// so a folder of rarely used tools stays near the bottom of the list
+type HubFolder = HubItem & { children: string[]; placeAtLast?: boolean };
 
-// v3: bumped so the new hospital-load tile lands in its intended top-right
-// slot for existing users too — loadHubOrder() otherwise appends any id
-// missing from a saved order to the end, not the front.
-const HUB_STORAGE_KEY = 'hub_order_v3';
-const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
+const HUB_FOLDERS: HubFolder[] = [
+  {
+    id: 'folder-hospitals',
+    labelKey: 'hubFolderHospitals',
+    subtitleKey: 'hubFolderHospitalsSub',
+    icon: Building2,
+    color: 'text-cyan-300',
+    border: 'border-cyan-400/30',
+    bg: 'bg-cyan-400/10',
+    children: ['hospital-load', 'hospitals'],
+  },
+  {
+    id: 'folder-learning',
+    labelKey: 'hubFolderLearning',
+    subtitleKey: 'hubFolderLearningSub',
+    icon: Trophy,
+    color: 'text-yellow-400',
+    border: 'border-yellow-400/40',
+    bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+    children: ['daily-challenge', 'simulators', 'golden-hour', 'concepts'],
+  },
+  {
+    id: 'folder-meds',
+    labelKey: 'hubFolderMeds',
+    subtitleKey: 'hubFolderMedsSub',
+    icon: Pill,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+    children: ['medication-scanner', 'medications-classification', 'common-meds'],
+  },
+  {
+    id: 'folder-knowledge',
+    labelKey: 'hubFolderKnowledge',
+    subtitleKey: 'hubFolderKnowledgeSub',
+    icon: BookOpen,
+    color: 'text-blue-400',
+    border: 'border-blue-400/30',
+    bg: 'bg-blue-400/10',
+    children: ['clinical', 'medhistory', 'medical-terms', 'kit-standards'],
+  },
+  {
+    id: 'folder-app',
+    labelKey: 'hubFolderApp',
+    subtitleKey: 'hubFolderAppSub',
+    icon: Settings,
+    color: 'text-fg-muted',
+    border: 'border-line',
+    bg: 'bg-surface-2',
+    children: ['settings', 'accessibility', 'daily-push', 'install-app', 'updates'],
+    placeAtLast: true,
+  },
+];
+
+const FOLDER_BY_ID = new Map(HUB_FOLDERS.map(f => [f.id, f]));
+// tool inside a folder -> its folder id
+const FOLDER_OF_CHILD = new Map(HUB_FOLDERS.flatMap(f => f.children.map(c => [c, f.id] as const)));
+const ITEM_BY_ID = new Map(HUB_ITEMS.map(item => [item.id, item]));
+
+// Replaces each tool that lives in a folder with that folder, once, at the
+// place of its first tool (or its last one, for placeAtLast folders).
+function groupIntoFolders(ids: string[]): string[] {
+  const out: string[] = [];
+  ids.forEach((id, i) => {
+    const folderId = FOLDER_OF_CHILD.get(id);
+    if (!folderId) { if (!out.includes(id)) out.push(id); return; }
+    if (out.includes(folderId)) return;
+    const isLastChild = !ids.slice(i + 1).some(rest => FOLDER_OF_CHILD.get(rest) === folderId);
+    if (!FOLDER_BY_ID.get(folderId)!.placeAtLast || isLastChild) out.push(folderId);
+  });
+  return out;
+}
+
+// the main list: every tool that is not in a folder, plus the folders
+const TOP_ITEMS: HubItem[] = groupIntoFolders(HUB_ITEMS.map(item => item.id))
+  .map(id => FOLDER_BY_ID.get(id) ?? ITEM_BY_ID.get(id)!);
+
+const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call', ...HUB_FOLDERS.map(f => f.id)]);
+
+// v4: tools grouped into folders. A v3 order is migrated by replacing each
+// grouped tool with its folder, at the place of the first one.
+const HUB_STORAGE_KEY = 'hub_order_v4';
+const LEGACY_HUB_STORAGE_KEY = 'hub_order_v3';
+const DEFAULT_HUB_ORDER = TOP_ITEMS.map(item => item.id);
 
 const NEW_ON_TOP = ['address-finder'];
+
+// The WhatsApp banner at the top of the hub disappears once the viewer joins or hides it.
+const WA_BANNER_KEY = 'hub_wa_banner_hidden_v1';
+function loadWaBannerHidden(): boolean {
+  try { return localStorage.getItem(WA_BANNER_KEY) === '1'; } catch { return false; }
+}
+function saveWaBannerHidden() {
+  try { localStorage.setItem(WA_BANNER_KEY, '1'); } catch { /* storage unavailable */ }
+}
 // tools moved down once for users who already have a saved order (golden hour gave its top spot to the address finder)
 const DEMOTED_ONCE: { key: string; ids: string[] } = { key: 'hub_demoted_v1', ids: ['golden-hour'] };
 
+function migrateLegacyOrder(ids: string[]): string[] {
+  return groupIntoFolders(ids);
+}
+
 function loadHubOrder(): string[] {
   try {
-    const saved = localStorage.getItem(HUB_STORAGE_KEY);
+    let saved = localStorage.getItem(HUB_STORAGE_KEY);
+    if (!saved) {
+      const legacy = localStorage.getItem(LEGACY_HUB_STORAGE_KEY);
+      if (legacy) {
+        saved = JSON.stringify(migrateLegacyOrder(JSON.parse(legacy)));
+        localStorage.setItem(HUB_STORAGE_KEY, saved);
+      }
+    }
     if (saved) {
       const parsed: string[] = JSON.parse(saved);
       const valid = parsed.filter(id => DEFAULT_HUB_ORDER.includes(id));
@@ -398,10 +502,15 @@ export default function HubModal({
   const [showAddressFinder, setShowAddressFinder] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
+  const [waBannerHidden, setWaBannerHidden] = useState(loadWaBannerHidden);
+  const hideWaBanner = () => { saveWaBannerHidden(); setWaBannerHidden(true); };
   const [editMode, setEditMode] = useState(false);
   const [hubOrder, setHubOrder] = useState<string[]>(() => loadHubOrder());
 
-  const orderedItems = hubOrder.map(id => HUB_ITEMS.find(item => item.id === id)!).filter(Boolean);
+  const [openFolderId, setOpenFolderId] = useState<string | null>(null);
+  const openFolder = openFolderId ? FOLDER_BY_ID.get(openFolderId) ?? null : null;
+
+  const orderedItems = hubOrder.map(id => TOP_ITEMS.find(item => item.id === id)!).filter(Boolean);
 
   const handleHubReorder = (newItems: HubItem[]) => {
     const newOrder = newItems.map(item => item.id);
@@ -433,10 +542,12 @@ export default function HubModal({
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
-    if (!isOpen) { setShowSimulators(false); setShowAddressFinder(false); }
+    if (!isOpen) { setShowSimulators(false); setShowAddressFinder(false); setOpenFolderId(null); }
   }, [isOpen]);
 
   useModalBackHandler(isOpen, onClose);
+  // Back from a folder returns to the tools menu
+  useModalBackHandler(openFolderId !== null, () => setOpenFolderId(null));
   // Give simulators its own back-button layer so back returns to the tools menu, not home
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
   useModalBackHandler(showWhatsAppCommunity, () => setShowWhatsAppCommunity(false));
@@ -476,6 +587,9 @@ export default function HubModal({
   };
 
   const handleItemClick = (id: string) => {
+    const folder = FOLDER_BY_ID.get(id);
+    if (folder) { trackInteraction(TRACK.folderPrefix + heName(folder.labelKey), 'hub_folder'); setOpenFolderId(id); return; }
+
     const category = HUB_TRACKING[id];
     if (category) trackInteraction(trackName(id), category);
 
@@ -554,6 +668,42 @@ export default function HubModal({
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
 
+        {/* WhatsApp channel banner */}
+        {!editMode && !waBannerHidden && (
+          <div
+            className="relative shrink-0 rounded-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 20px rgba(37,211,102,0.30)' }}
+          >
+            <button
+              onClick={() => { trackInteraction(TRACK.waBanner, 'community_learning'); setShowWhatsAppCommunity(true); }}
+              // theme-ok: white text on the green WhatsApp gradient banner
+              className="w-full flex items-center gap-3 p-4 pe-12 text-start text-white active:scale-[0.98] transition-transform"
+            >
+              <div
+                // theme-ok: translucent white circle on the green WhatsApp gradient
+                className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shrink-0"
+              >
+                <Users size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-base leading-tight">{t('hubWaBannerTitle')}</p>
+                <p
+                  // theme-ok: white text on the green WhatsApp gradient
+                  className="text-white/85 text-xs mt-0.5 leading-tight"
+                >{t('hubWaBannerSub')}</p>
+              </div>
+            </button>
+            <button
+              onClick={hideWaBanner}
+              // theme-ok: white icon on the green WhatsApp gradient banner
+              className="absolute top-2 end-2 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white"
+              aria-label={t('hubWaBannerDismiss')}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {editMode ? (
           <Reorder.Group
             axis="y"
@@ -568,7 +718,7 @@ export default function HubModal({
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {orderedItems.map(({ id, labelKey, subtitleKey, icon: Icon, color, border, bg, href }) => {
-              if (id === 'hospital-load') {
+              if (id === 'folder-hospitals') {
                 return (
                   <div key={id} className="relative">
                     <motion.div
@@ -585,7 +735,7 @@ export default function HubModal({
                       transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
                     />
                     <motion.button
-                      onClick={() => handleItemClick('hospital-load')}
+                      onClick={() => handleItemClick('folder-hospitals')}
                       className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
                     >
                       <motion.div
@@ -605,30 +755,12 @@ export default function HubModal({
                           WebkitBackdropFilter: 'blur(14px)',
                         }}
                       >
-                        <Gauge size={28} className="text-cyan-700 dark:text-cyan-300" />
-                        <span className="text-cyan-800 dark:text-cyan-200 font-bold text-sm leading-tight">{t('hubItemHospitalLoad')}</span>
+                        <Building2 size={28} className="text-cyan-700 dark:text-cyan-300" />
+                        <span className="text-cyan-800 dark:text-cyan-200 font-bold text-sm leading-tight">{t(labelKey)}</span>
+                        {subtitleKey && <span className="text-cyan-900/60 dark:text-cyan-100/60 text-xs leading-tight">{t(subtitleKey)}</span>}
                       </div>
                     </motion.button>
                   </div>
-                );
-              }
-
-              if (id === 'concepts') {
-                return (
-                  <motion.button
-                    key={id}
-                    onClick={() => handleItemClick('concepts')}
-                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
-                    style={{
-                      background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
-                      backdropFilter: 'blur(14px)',
-                      WebkitBackdropFilter: 'blur(14px)',
-                      boxShadow: '0 0 18px rgba(168,85,247,0.12)',
-                    }}
-                  >
-                    <Sparkles size={28} className="text-purple-700 dark:text-purple-300 relative z-10" />
-                    <span className="text-purple-800 dark:text-purple-100 font-bold text-sm leading-tight relative z-10">{t('hubItemConcepts')}</span>
-                  </motion.button>
                 );
               }
 
@@ -713,6 +845,73 @@ export default function HubModal({
         </HapticButton>
 
       </div>
+
+      {/* Folder — list of the tools grouped under one tile */}
+      {openFolder && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+            <div className="flex items-center gap-2 min-w-0">
+              <openFolder.icon size={22} className={`${openFolder.color} shrink-0`} />
+              <div className="min-w-0">
+                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">{t(openFolder.labelKey)}</h2>
+                <p className="text-gray-500 dark:text-emt-muted text-xs truncate">{openFolder.subtitleKey && t(openFolder.subtitleKey)}</p>
+              </div>
+            </div>
+            <HapticButton
+              onClick={() => setOpenFolderId(null)}
+              pressScale={0.88}
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                         flex items-center justify-center shrink-0
+                         text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+              aria-label={t('hubFolderBack')}
+            >
+              <X size={20} />
+            </HapticButton>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            {openFolder.children.map(childId => {
+              const child = ITEM_BY_ID.get(childId);
+              if (!child) return null;
+              const { icon: Icon, labelKey, subtitleKey, color, border, bg, href } = child;
+              const rowClass = `flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-[0.98] transition-transform text-start`;
+              const rowContent = (
+                <>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${bg} border ${border}`}>
+                    <Icon size={22} className={color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`${color} font-bold text-base leading-tight`}>{t(labelKey)}</p>
+                    {subtitleKey && <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5 leading-tight">{t(subtitleKey)}</p>}
+                  </div>
+                  {href
+                    ? <ExternalLink size={16} className="text-gray-400 dark:text-emt-muted shrink-0" />
+                    : <span className="text-gray-400 dark:text-emt-muted text-lg shrink-0">{isEn ? '→' : '←'}</span>}
+                </>
+              );
+              if (href) {
+                return (
+                  <a
+                    key={childId}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={rowClass}
+                    onClick={() => trackInteraction(childId === 'golden-hour' ? TRACK.goldenHour : heName(labelKey), 'learning')}
+                  >
+                    {rowContent}
+                  </a>
+                );
+              }
+              return (
+                <HapticButton key={childId} pressScale={0.97} onClick={() => handleItemClick(childId)} className={rowClass}>
+                  {rowContent}
+                </HapticButton>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Simulators Modal */}
       {showSimulators && (
@@ -931,7 +1130,7 @@ export default function HubModal({
               href="https://whatsapp.com/channel/0029Vb83OlqCBtxAbvGHzH1J"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackInteraction(TRACK.whatsapp, 'community_learning')}
+              onClick={() => { trackInteraction(TRACK.whatsapp, 'community_learning'); hideWaBanner(); }}
               // theme-ok: white text on the green WhatsApp gradient button
               className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
               style={{
