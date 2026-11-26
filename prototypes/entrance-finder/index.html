@@ -983,7 +983,9 @@ async function hereFix(t, seq){
   if (nn(r.houseNumber) !== nn(t.num).replace(/[א-ת]$/, '') && nn(r.houseNumber) !== nn(t.num)){
     // HERE does not know the number either, only a neighbour on the same street: a pin there beats the middle of
     // the street, but no building is painted red, and Waze and Google stay offered for the exact house
-    const sameStreet = !t.street || streetHolds(r.street, streetKey(t.street));
+    // the same street, word for word (the loose match for names a city cuts short would take יהודה הנשיא for הנשיאים)
+    const hw = streetKey(r.street).split(' ').filter(Boolean), tw = streetKey(t.street).split(' ').filter(Boolean);
+    const sameStreet = !t.street || (!!hw.length && (tw.every(w => hw.includes(w)) || hw.every(w => tw.includes(w))));
     if (!sameStreet || !Number.isFinite(want) || !Number.isFinite(got) || Math.abs(want - got) > 10) return false;
     t.lat = r.lat; t.lng = r.lng;
     dest = r.access ? {lat:r.access.lat, lng:r.access.lng} : {lat:t.lat, lng:t.lng};
