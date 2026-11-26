@@ -82,23 +82,72 @@ function AddressFinderTile() {
       <button
         // i18n-ok: analytics event label, kept stable across languages
         onClick={() => { trackInteraction('איתור כתובת מהיר · פתיחה מהבית', 'emergency_info'); setOpen(true); }}
-        className="flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-1 rounded-3xl p-2
+        className="relative overflow-hidden flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-1 rounded-3xl p-2
                    bg-surface border border-line active:scale-[0.97] transition-transform"
         style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)' }}
       >
+        <CityMapSketch />
         <span
-          className="w-14 h-14 shrink-0 rounded-full flex items-center justify-center
-                     bg-rose-600/10 border-2 border-rose-600/70 dark:border-rose-500/70 text-rose-700 dark:text-rose-400"
+          className="relative w-14 h-14 shrink-0 rounded-full flex items-center justify-center
+                     bg-surface border-2 border-rose-600/70 dark:border-rose-500/70 text-rose-700 dark:text-rose-400"
         >
           <MapPinned size={26} strokeWidth={2} />
         </span>
-        <span className="text-fg font-black text-lg tracking-wide text-center w-full leading-tight">
+        <span className="relative text-fg font-black text-lg tracking-wide text-center w-full leading-tight">
           {t('homeAddressFinder')}
         </span>
-        <span className="text-fg-subtle text-xs font-medium leading-tight text-center">{t('homeAddressFinderSub')}</span>
+        <span className="relative text-fg-subtle text-xs font-medium leading-tight text-center">{t('homeAddressFinderSub')}</span>
       </button>
       {open && <AddressFinderModal isOpen onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+// A faint line drawing of city streets and building outlines behind the address tile.
+// Drawn in the text colour at low opacity, so it suits both themes, and fades out toward the middle so the title stays clear.
+function CityMapSketch() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 200 200"
+      preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0 w-full h-full text-fg opacity-[0.13]"
+      style={{
+        WebkitMaskImage: 'radial-gradient(ellipse 62% 55% at 50% 50%, transparent 35%, black 100%)',
+        maskImage: 'radial-gradient(ellipse 62% 55% at 50% 50%, transparent 35%, black 100%)',
+      }}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* main roads */}
+      <path d="M-10 62 C 40 56, 80 70, 120 58 S 190 48, 215 54" strokeWidth="5" />
+      <path d="M58 -10 L 70 80 L 62 210" strokeWidth="4" />
+      <path d="M-10 150 L 210 128" strokeWidth="3.5" />
+      <path d="M150 -10 C 140 50, 160 110, 146 210" strokeWidth="3" />
+      {/* side streets */}
+      <path d="M0 105 L 66 100 M 74 99 L 148 92 M 154 90 L 205 86" strokeWidth="1.6" />
+      <path d="M105 60 L 110 140 M 28 60 L 22 148 M 182 52 L 188 132" strokeWidth="1.6" />
+      <path d="M100 145 L 96 205 M 20 155 L 26 205" strokeWidth="1.4" />
+      {/* roundabout */}
+      <circle cx="68" cy="66" r="9" strokeWidth="2" />
+      {/* building outlines */}
+      <g strokeWidth="1.1">
+        <path d="M6 72 h16 v22 h-16 z M 30 70 h18 v13 h-18 z M 32 87 h14 v10 h-14 z" />
+        <path d="M80 72 h18 v20 h-18 z M 116 68 h22 v12 h-22 z M 118 84 h12 v12 h-12 z" />
+        <path d="M160 64 h14 v16 h-14 z M 160 70 h14 M 190 62 h14 v20 h-14 z" />
+        <path d="M6 112 h12 v28 h-12 z M 32 110 h20 v12 h-20 z M 34 126 h16 v10 h-16 z" />
+        <path d="M80 108 h16 v24 h-16 z M 116 104 h24 v10 h-24 z M 120 118 h14 v14 h-14 z" />
+        <path d="M158 100 h20 v22 h-20 z M 192 96 h14 v26 h-14 z" />
+        <path d="M6 10 h20 v14 h-20 z M 30 8 h20 v30 h-20 z M 76 6 h26 v14 h-26 z M 78 26 h14 v18 h-14 z" />
+        <path d="M112 10 h28 v12 h-28 z M 116 28 h16 v16 h-16 z M 162 8 h22 v28 h-22 z" />
+        <path d="M34 160 h20 v14 h-20 z M 36 180 h14 v14 h-14 z M 70 156 h18 v28 h-18 z" />
+        <path d="M108 148 h26 v14 h-26 z M 112 168 h16 v24 h-16 z M 158 140 h20 v18 h-20 z M 156 166 h28 v12 h-28 z" />
+      </g>
+      {/* trees in a park */}
+      <path d="M8 160 q 4 -6 8 0 t 8 0 M 8 176 q 4 -6 8 0 t 8 0" strokeWidth="1" />
+    </svg>
   );
 }
 
