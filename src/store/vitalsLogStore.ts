@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/** FAST answers are stored in Hebrew whatever the UI language, so old records keep working. */
+export const FAST_NORMAL = 'תקין'; // i18n-ok: stored data value, shown via t('normal')
+export const FAST_ABNORMAL = 'לא תקין'; // i18n-ok: stored data value, shown via t('abnormal')
+
 export interface ShockLog {
   time: string;     // HH:mm:ss at moment of shock
   elapsed: string;  // MM:SS elapsed since CPR start

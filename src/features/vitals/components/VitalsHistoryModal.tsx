@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { X, Trash2, Pencil, Zap, ChevronDown, ChevronUp, User, Plus } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import { useVitalsLogStore } from '../../../store/vitalsLogStore';
+import { useVitalsLogStore, FAST_NORMAL, FAST_ABNORMAL } from '../../../store/vitalsLogStore';
 import type { VitalsLog } from '../../../store/vitalsLogStore';
-import { useTranslation } from '../../../hooks/useTranslation';
+import { useTranslation } from '../../../i18n';
 import EditVitalsModal from './EditVitalsModal';
 import AddVitalsModal from './AddVitalsModal';
 import { CprTimeline } from '../../metronome/CPRTimerOverlay';
@@ -17,29 +17,29 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
 
   return (
     <div
-      className="bg-gray-100 dark:bg-emt-gray border rounded-2xl p-4"
+      className="bg-surface-2 border rounded-2xl p-4"
       style={{
         borderColor: 'rgba(245,158,11,0.35)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2), 0 0 12px rgba(245,158,11,0.08)',
+        boxShadow: '0 2px 8px rgb(0 0 0 / 0.2), 0 0 12px rgba(245,158,11,0.08)',
       }}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <Zap size={13} className="text-yellow-400" fill="currentColor" />
-          <p className="text-yellow-400/80 text-xs font-black uppercase tracking-wide">{t('cprLabel')}</p>
-          <p className="text-gray-500 dark:text-emt-muted text-xs">· {log.timestamp}</p>
+          <Zap size={13} className="text-amber-500 dark:text-yellow-400" fill="currentColor" />
+          <p className="text-amber-600 dark:text-yellow-400/80 text-xs font-black uppercase tracking-wide">{t('cprLabel')}</p>
+          <p className="text-fg-muted text-xs">· {log.timestamp}</p>
         </div>
         <div className="flex items-center gap-1">
           {canExpand && (
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="p-1.5 text-yellow-400/60 hover:text-yellow-400 transition-colors"
+              className="p-1.5 text-amber-600/70 dark:text-yellow-400/60 hover:text-amber-600 dark:hover:text-yellow-400 transition-colors"
               aria-label={expanded ? t('collapse') : t('expand')}
             >
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
           )}
-          <button onClick={onDelete} className="p-1.5 text-gray-400 dark:text-emt-muted hover:text-emt-red transition-colors" aria-label={t('delete')}>
+          <button onClick={onDelete} className="p-1.5 text-fg-subtle hover:text-emt-red transition-colors" aria-label={t('delete')}>
             <Trash2 size={16} />
           </button>
         </div>
@@ -47,12 +47,12 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <div>
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sessionDuration')}</p>
-          <p className="text-gray-900 dark:text-emt-light font-black text-xl leading-tight tabular-nums">{log.cprDuration || '—'}</p>
+          <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sessionDuration')}</p>
+          <p className="text-fg font-black text-xl leading-tight tabular-nums">{log.cprDuration || '—'}</p>
         </div>
         <div>
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('electricShocks')}</p>
-          <p className="font-black text-xl leading-tight" style={{ color: (log.cprShocks ?? 0) > 0 ? '#fb923c' : '#6b7280' }}>
+          <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('electricShocks')}</p>
+          <p className={`font-black text-xl leading-tight ${(log.cprShocks ?? 0) > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-fg-subtle'}`}>
             {log.cprShocks ?? 0}
           </p>
         </div>
@@ -60,12 +60,12 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
 
       {expanded && hasShocks && (
         <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.18)' }}>
-          <p className="text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">
+          <p className="text-amber-600/80 dark:text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">
             {t('shockLog')}
           </p>
           <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'rgba(245,158,11,0.2)' }}>
             <div
-              className="grid text-[0.6rem] font-black text-amber-400/50 uppercase tracking-wider bg-black/10 dark:bg-black/30 px-3 py-1.5"
+              className="grid text-[0.6rem] font-black text-amber-600/80 dark:text-amber-400/50 uppercase tracking-wider bg-black/10 dark:bg-black/30 px-3 py-1.5"
               style={{ gridTemplateColumns: '1.5rem 1fr 1fr 1fr' }}
             >
               <span>#</span>
@@ -83,10 +83,10 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
                   backgroundColor: i % 2 === 0 ? 'rgba(245,158,11,0.04)' : 'transparent',
                 }}
               >
-                <span className="font-black text-orange-400">{i + 1}</span>
-                <span className="text-gray-900 dark:text-emt-light">{shock.time}</span>
-                <span className="text-gray-500 dark:text-emt-muted">{shock.elapsed}</span>
-                <span className="text-gray-400 dark:text-emt-muted/60">
+                <span className="font-black text-orange-500 dark:text-orange-400">{i + 1}</span>
+                <span className="text-fg">{shock.time}</span>
+                <span className="text-fg-muted">{shock.elapsed}</span>
+                <span className="text-fg-subtle/60">
                   {shock.gap !== '—' ? `+${shock.gap}` : '—'}
                 </span>
               </div>
@@ -97,7 +97,7 @@ function CPRLogCard({ log, onDelete }: { log: VitalsLog; onDelete: () => void })
 
       {expanded && hasTimeline && (
         <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(245,158,11,0.18)' }}>
-          <p className="text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">ציר זמן</p>
+          <p className="text-amber-600/80 dark:text-yellow-400/50 text-[0.62rem] font-black uppercase tracking-wider mb-2">{t('homeCprTimeline')}</p>
           <CprTimeline events={log.cprEvents!} startAt={log.cprStartAt!} />
         </div>
       )}
@@ -119,21 +119,21 @@ function LogCard({ log, onDelete, onEdit }: {
   const showSeparateDate = !!log.examinationTime;
 
   return (
-    <div className="bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-4"
-      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+    <div className="bg-surface-2 border border-line rounded-2xl p-4"
+      style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.1)' }}>
       {/* Timestamp + actions */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-0">
-          <span className="text-gray-900 dark:text-emt-light text-sm font-black tabular-nums">{primaryTime}</span>
+          <span className="text-fg text-sm font-black tabular-nums">{primaryTime}</span>
           {showSeparateDate && (
-            <span className="text-gray-400 dark:text-emt-muted/70 text-[0.6rem] font-medium">{date}</span>
+            <span className="text-fg-subtle/70 text-[0.6rem] font-medium">{date}</span>
           )}
         </div>
         <div className="flex gap-1">
-          <button onClick={onEdit} className="p-1.5 text-gray-400 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('edit')}>
+          <button onClick={onEdit} className="p-1.5 text-fg-subtle hover:text-fg transition-colors" aria-label={t('edit')}>
             <Pencil size={16} />
           </button>
-          <button onClick={onDelete} className="p-1.5 text-gray-400 dark:text-emt-muted hover:text-emt-red transition-colors" aria-label={t('delete')}>
+          <button onClick={onDelete} className="p-1.5 text-fg-subtle hover:text-emt-red transition-colors" aria-label={t('delete')}>
             <Trash2 size={16} />
           </button>
         </div>
@@ -143,45 +143,45 @@ function LogCard({ log, onDelete, onEdit }: {
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         {log.bloodPressure && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('bloodPressure')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.bloodPressure}</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('bloodPressure')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.bloodPressure}</p>
           </div>
         )}
         {log.heartRate && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('heartRate')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.heartRate}</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('heartRate')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.heartRate}</p>
           </div>
         )}
         {log.breathing && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('breathing')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.breathing}</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('breathing')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.breathing}</p>
           </div>
         )}
         {log.bloodSugar && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sugarLabel')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.bloodSugar}</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('sugarLabel')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.bloodSugar}</p>
           </div>
         )}
         {log.saturation && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('saturationLabel')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.saturation}%</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('saturationLabel')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.saturation}%</p>
           </div>
         )}
         {log.temperature && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('temperatureLabel')}</p>
-            <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{log.temperature}°C</p>
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">{t('temperatureLabel')}</p>
+            <p className="text-fg font-black text-lg leading-tight">{log.temperature}°C</p>
           </div>
         )}
         {log.fastTest && (
           <div>
-            <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
-            <p className={`font-black text-lg leading-tight ${log.fastTest === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
-              {log.fastTest === 'תקין' ? t('normal') : log.fastTest === 'לא תקין' ? t('abnormal') : log.fastTest}
+            <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide">FAST</p>
+            <p className={`font-black text-lg leading-tight ${log.fastTest === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
+              {log.fastTest === FAST_NORMAL ? t('normal') : log.fastTest === FAST_ABNORMAL ? t('abnormal') : log.fastTest}
             </p>
           </div>
         )}
@@ -189,24 +189,24 @@ function LogCard({ log, onDelete, onEdit }: {
 
       {/* FAST expanded details */}
       {(log.fastMotorStrength || log.fastFacialDroop || log.fastSymptomTime) && (
-        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-emt-border flex flex-wrap gap-x-4 gap-y-1">
+        <div className="mt-2 pt-2 border-t border-line flex flex-wrap gap-x-4 gap-y-1">
           {log.fastMotorStrength && (
-            <span className="text-xs text-gray-500 dark:text-emt-muted">
-              {t('fastMotorStrength')}: <span className={`font-bold ${log.fastMotorStrength === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
-                {log.fastMotorStrength === 'תקין' ? t('normal') : t('abnormal')}
+            <span className="text-xs text-fg-muted">
+              {t('fastMotorStrength')}: <span className={`font-bold ${log.fastMotorStrength === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
+                {log.fastMotorStrength === FAST_NORMAL ? t('normal') : t('abnormal')}
               </span>
             </span>
           )}
           {log.fastFacialDroop && (
-            <span className="text-xs text-gray-500 dark:text-emt-muted">
-              {t('fastFacialDroop')}: <span className={`font-bold ${log.fastFacialDroop === 'תקין' ? 'text-emt-green' : 'text-emt-red'}`}>
-                {log.fastFacialDroop === 'תקין' ? t('normal') : t('abnormal')}
+            <span className="text-xs text-fg-muted">
+              {t('fastFacialDroop')}: <span className={`font-bold ${log.fastFacialDroop === FAST_NORMAL ? 'text-green-600 dark:text-emt-green' : 'text-emt-red'}`}>
+                {log.fastFacialDroop === FAST_NORMAL ? t('normal') : t('abnormal')}
               </span>
             </span>
           )}
           {log.fastSymptomTime && (
-            <span className="text-xs text-gray-500 dark:text-emt-muted">
-              {t('fastSymptomTime')}: <span className="font-bold text-gray-900 dark:text-emt-light">{log.fastSymptomTime}</span>
+            <span className="text-xs text-fg-muted">
+              {t('fastSymptomTime')}: <span className="font-bold text-fg">{log.fastSymptomTime}</span>
             </span>
           )}
         </div>
@@ -214,9 +214,9 @@ function LogCard({ log, onDelete, onEdit }: {
 
       {/* Notes — full-width below grid */}
       {log.notes && (
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-emt-border">
-          <p className="text-gray-500 dark:text-emt-muted text-[0.62rem] font-bold uppercase tracking-wide mb-1">{t('notesLabel')}</p>
-          <p className="text-gray-900 dark:text-emt-light text-sm font-medium whitespace-pre-wrap">{log.notes}</p>
+        <div className="mt-3 pt-3 border-t border-line">
+          <p className="text-fg-muted text-[0.62rem] font-bold uppercase tracking-wide mb-1">{t('notesLabel')}</p>
+          <p className="text-fg text-sm font-medium whitespace-pre-wrap">{log.notes}</p>
         </div>
       )}
     </div>
@@ -250,38 +250,38 @@ export default function VitalsHistoryModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
-      <div className="ios-safe-header flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-emt-border shrink-0">
-        <button onClick={onClose} className="p-2 text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('close')}>
+    <div className="fixed inset-0 z-50 bg-page flex flex-col animate-fade-scale">
+      <div className="ios-safe-header flex items-center justify-between px-4 py-4 border-b border-line shrink-0">
+        <button onClick={onClose} className="p-2 text-fg-muted hover:text-fg transition-colors" aria-label={t('close')}>
           <X size={24} />
         </button>
-        <h1 className="text-gray-900 dark:text-emt-light font-black text-xl">{t('vitalsHistory')}</h1>
+        <h1 className="text-fg font-black text-xl">{t('vitalsHistory')}</h1>
         <div className="w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
         {logs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-500 dark:text-emt-muted text-base font-medium">{t('noSavedVitals')}</p>
+            <p className="text-fg-muted text-base font-medium">{t('noSavedVitals')}</p>
           </div>
         ) : (
           patientGroups.map((group) => (
             <div
               key={group.name || '__general__'}
-              className="rounded-2xl border border-gray-200 dark:border-emt-border overflow-hidden"
-              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+              className="rounded-2xl border border-line overflow-hidden"
+              style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)' }}
             >
               {/* Patient header */}
-              <div className="flex items-center justify-between bg-gray-100 dark:bg-emt-gray px-4 py-3">
+              <div className="flex items-center justify-between bg-surface-2 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <User size={14} className="text-gray-400 dark:text-emt-muted shrink-0" />
-                  <span className="text-gray-900 dark:text-emt-light font-black text-base">
+                  <User size={14} className="text-fg-subtle shrink-0" />
+                  <span className="text-fg font-black text-base">
                     {group.name || t('generalGroup')}
                   </span>
                 </div>
                 <button
                   onClick={() => setAddingForPatient(group.name)}
-                  className="flex items-center gap-1 text-emt-green text-xs font-bold px-2.5 py-1.5 rounded-xl bg-emt-green/10 active:bg-emt-green/20 transition-colors shrink-0"
+                  className="flex items-center gap-1 text-green-600 dark:text-emt-green text-xs font-bold px-2.5 py-1.5 rounded-xl bg-emt-green/10 active:bg-emt-green/20 transition-colors shrink-0"
                 >
                   <Plus size={12} />
                   {t('addRecord')}

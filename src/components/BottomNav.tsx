@@ -1,5 +1,5 @@
 import { FileText, Images, Calculator, LayoutGrid, Heart, Globe } from 'lucide-react';
-import { useTranslation } from '../hooks/useTranslation';
+import { useTranslation } from '../i18n';
 import HapticButton from './HapticButton';
 
 interface Props {
@@ -16,7 +16,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpe
 
   return (
     <nav
-      className="shrink-0 flex items-center gap-2 px-2 min-h-[4rem] bg-white dark:bg-[#0D0D10] border-t border-gray-200 dark:border-emt-border"
+      className="shrink-0 flex items-center gap-2 px-2 min-h-[4rem] bg-surface border-t border-line"
     >
       <style>{`
         @keyframes heartbeat {
@@ -37,13 +37,13 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpe
         onClick={() => onSupportOpen?.()}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-400"
-        aria-label="תמיכה"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-rose-500 dark:text-rose-400"
+        aria-label={t('homeNavSupport')}
       >
         <span className="animate-heartbeat">
           <Heart size={24} strokeWidth={1.5} fill="currentColor" />
         </span>
-        <span className="text-[0.65rem] font-semibold">Support</span>
+        <span className="text-[0.65rem] font-semibold">{t('homeNavSupport')}</span>
       </HapticButton>
 
       <HapticButton
@@ -94,7 +94,7 @@ export default function BottomNav({ onGalleryOpen, onNotesOpen, onCalculatorsOpe
         onClick={onHubOpen}
         pressScale={0.88}
         hapticPattern={10}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-400"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-amber-600 dark:text-amber-400"
         aria-label={t('hub')}
       >
         <LayoutGrid size={24} strokeWidth={1.5} />

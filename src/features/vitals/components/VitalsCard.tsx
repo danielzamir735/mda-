@@ -4,7 +4,7 @@ import { Play, Plus, Minus } from 'lucide-react';
 import { useVitalsTimer } from '../hooks/useVitalsTimer';
 import AlertOverlay from './AlertOverlay';
 import { HEART_DURATIONS, BREATH_DURATIONS } from '../../../store/settingsStore';
-import { useTranslation } from '../../../hooks/useTranslation';
+import { useTranslation } from '../../../i18n';
 import { useHaptics } from '../../../hooks/useHaptics';
 
 interface Props {
@@ -55,13 +55,13 @@ export default function VitalsCard({
         'transition-all duration-300',
         !isRunning ? 'cursor-pointer select-none' : '',
         isRunning
-          ? 'bg-rose-50 dark:bg-[#180408] border-2 border-emt-red'
-          : 'bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border',
+          ? 'bg-rose-50 dark:bg-rose-950/40 border-2 border-emt-red'
+          : 'bg-surface border border-line',
       ].join(' ')}
       style={isRunning ? {
-        boxShadow: '0 0 32px rgba(239,35,60,0.22), 0 2px 12px rgba(0,0,0,0.6)',
+        boxShadow: '0 0 32px rgba(239,35,60,0.22), 0 2px 12px rgb(0 0 0 / 0.25)',
       } : {
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)',
       }}
       onClick={!isRunning ? start : undefined}
     >
@@ -69,7 +69,7 @@ export default function VitalsCard({
       {createPortal(
         <AlertOverlay
           visible={isRunning}
-          text={isHeartRate ? 'האם סדיר ונימוש?' : 'סימני מצוקה נשימתית?'}
+          text={isHeartRate ? t('homeAlertPulseRegular') : t('homeAlertRespDistress')}
         />,
         document.body,
       )}
@@ -78,7 +78,7 @@ export default function VitalsCard({
       {!isRunning && (
         <>
           {hasLastResult && (
-            <p className="absolute top-3 inset-x-0 text-center text-gray-900 dark:text-emt-light text-lg font-bold tracking-wide">
+            <p className="absolute top-3 inset-x-0 text-center text-fg text-lg font-bold tracking-wide">
               {t('lastMeasurement')}: {lastResult}
             </p>
           )}
@@ -92,7 +92,7 @@ export default function VitalsCard({
               fill="currentColor"
             />
           </div>
-          <p className="text-gray-900 dark:text-emt-light font-black text-2xl">{label}</p>
+          <p className="text-fg font-black text-2xl">{label}</p>
 
           {/* Duration row with +/- buttons */}
           <div
@@ -103,21 +103,21 @@ export default function VitalsCard({
               onClick={() => { if (canDecrease) { vibrate(20); onDurationChange(validDurations[idx - 1]); } }}
               disabled={!canDecrease}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                         bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                         text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                         bg-surface-3 border border-line-strong
+                         text-fg-muted active:scale-90 transition-transform
                          disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <Minus size={16} />
             </button>
-            <p className="text-gray-900 dark:text-white text-2xl font-bold min-w-[5ch] text-center">
+            <p className="text-fg text-2xl font-bold min-w-[5ch] text-center">
               {duration} {t('seconds')}
             </p>
             <button
               onClick={() => { if (canIncrease) { vibrate(20); onDurationChange(validDurations[idx + 1]); } }}
               disabled={!canIncrease}
               className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center
-                         bg-gray-200 dark:bg-emt-border/30 border border-gray-300 dark:border-emt-border
-                         text-gray-500 dark:text-emt-muted active:scale-90 transition-transform
+                         bg-surface-3 border border-line-strong
+                         text-fg-muted active:scale-90 transition-transform
                          disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <Plus size={16} />
@@ -140,7 +140,7 @@ export default function VitalsCard({
             {timeLeft}
           </span>
 
-          <p className="text-emt-muted text-sm font-medium">{t('seconds')}</p>
+          <p className="text-fg-muted text-sm font-medium">{t('seconds')}</p>
 
           <button
             onClick={(e) => { e.stopPropagation(); stop(); }}

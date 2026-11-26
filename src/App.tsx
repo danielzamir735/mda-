@@ -10,21 +10,20 @@ import FullInstallModal from './features/pwa/FullInstallModal';
 import MigrationBanner from './components/MigrationBanner';
 import HapticButton from './components/HapticButton';
 import { isSentryEnabled, reportError } from './lib/sentry';
+import { useTranslation, useLanguage } from './i18n';
 
 function CrashFallback() {
   // Independent of AppInner's tree, so this still reflects the user's real
   // language/direction even though AppInner (which threw) never rendered.
-  const language = useSettingsStore((s) => s.language);
-  const isEnglish = language === 'en';
+  const { dir } = useLanguage();
+  const t = useTranslation();
   const knownAboutIt = isSentryEnabled();
 
-  const message = isEnglish
-    ? `Oops, something went wrong.${knownAboutIt ? " We already know about it." : ''}`
-    : `אופס, משהו השתבש.${knownAboutIt ? ' אנחנו כבר יודעים על זה.' : ''}`;
-  const buttonLabel = isEnglish ? 'Reload the page' : 'רענן את הדף';
+  const message = t('homeCrashMessage') + (knownAboutIt ? ' ' + t('homeCrashKnown') : '');
+  const buttonLabel = t('homeCrashReload');
 
   return (
-    <div dir={isEnglish ? 'ltr' : 'rtl'} className="p-6 text-center">
+    <div dir={dir} className="p-6 text-center text-fg">
       <p className="mb-4">{message}</p>
       <HapticButton
         onClick={() => window.location.reload()}
