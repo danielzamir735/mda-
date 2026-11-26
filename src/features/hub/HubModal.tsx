@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Resets on every page load — prevents re-showing within the same tab session
 let _personalCardShown = false;
-import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls, useReducedMotion } from 'framer-motion';
 import { useModalBackHandler } from '../../hooks/useModalBackHandler';
 import HapticButton from '../../components/HapticButton';
 import type { LucideIcon } from 'lucide-react';
@@ -13,6 +13,7 @@ import FlashcardTrainer from '../../components/FlashcardTrainer';
 import ConceptsModal from './components/ConceptsModal';
 import MedicalAbbreviationsModal from './components/MedicalAbbreviationsModal';
 import AddressFinderModal from './components/AddressFinderModal';
+import WhatsAppIcon from '../../components/WhatsAppIcon';
 import { SIMULATOR_FLASHCARDS } from './data/simulatorFlashcards';
 import { useTranslation, useLanguage, translate } from '../../i18n';
 import type { TranslationKey } from '../../i18n';
@@ -353,7 +354,7 @@ const HUB_FOLDERS: HubFolder[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
-    children: ['clinical', 'medhistory', 'medical-terms', 'kit-standards'],
+    children: ['clinical', 'medhistory', 'medical-terms'],
   },
   {
     id: 'folder-app',
@@ -504,6 +505,7 @@ export default function HubModal({
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
   const [waBannerHidden, setWaBannerHidden] = useState(loadWaBannerHidden);
   const hideWaBanner = () => { saveWaBannerHidden(); setWaBannerHidden(true); };
+  const reduceMotion = useReducedMotion();
   const [editMode, setEditMode] = useState(false);
   const [hubOrder, setHubOrder] = useState<string[]>(() => loadHubOrder());
 
@@ -674,32 +676,50 @@ export default function HubModal({
             className="relative shrink-0 rounded-2xl overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 20px rgba(37,211,102,0.30)' }}
           >
+            {/* one light sweep when the hub opens, so the eye lands on the banner */}
+            {!reduceMotion && (
+              <motion.div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 w-1/3"
+                // theme-ok: white light sweep over the green WhatsApp banner
+                style={{ background: 'linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)' }}
+                initial={{ left: '-40%' }}
+                animate={{ left: '110%' }}
+                transition={{ duration: 1.1, delay: 0.5, ease: 'easeInOut' }}
+              />
+            )}
             <button
               onClick={() => { trackInteraction(TRACK.waBanner, 'community_learning'); setShowWhatsAppCommunity(true); }}
               // theme-ok: white text on the green WhatsApp gradient banner
-              className="w-full flex items-center gap-3 p-4 pe-12 text-start text-white active:scale-[0.98] transition-transform"
+              className="relative w-full flex items-center gap-3 ps-3 pe-8 py-3 text-start text-white active:scale-[0.98] transition-transform"
             >
               <div
                 // theme-ok: translucent white circle on the green WhatsApp gradient
                 className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shrink-0"
               >
-                <Users size={22} />
+                <WhatsAppIcon size={24} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-base leading-tight">{t('hubWaBannerTitle')}</p>
+                <p className="font-bold text-[0.95rem] leading-tight">{t('hubWaBannerTitle')}</p>
                 <p
                   // theme-ok: white text on the green WhatsApp gradient
                   className="text-white/85 text-xs mt-0.5 leading-tight"
                 >{t('hubWaBannerSub')}</p>
               </div>
+              <span
+                // theme-ok: white pill with WhatsApp-green text, a button on the green banner
+                className="shrink-0 rounded-full bg-white text-[#128C7E] font-black text-sm px-3 py-1.5 shadow-sm"
+              >
+                {t('hubWaBannerCta')} {isEn ? '→' : '←'}
+              </span>
             </button>
             <button
               onClick={hideWaBanner}
               // theme-ok: white icon on the green WhatsApp gradient banner
-              className="absolute top-2 end-2 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white"
+              className="absolute top-1 end-1 w-7 h-7 rounded-full flex items-center justify-center text-white/75 hover:text-white"
               aria-label={t('hubWaBannerDismiss')}
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </div>
         )}

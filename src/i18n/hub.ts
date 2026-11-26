@@ -3,7 +3,8 @@ import { defineDict } from './types';
 // Session 3 - tools hub, accessibility, calculators list.
 export default defineDict({
   he: {
-    hub: 'כלים',
+    hub: 'כל הכלים',
+    hubNavLabel: 'כל הכלים, יותר מ-20 כלים',
     utilities: 'כלי עזר',
     languageBridge: 'סיוע בתרגום',
     calculators: 'מחשבונים',
@@ -82,13 +83,14 @@ export default defineDict({
     hubFolderMeds: 'תרופות',
     hubFolderMedsSub: 'מידע · קבוצות · נפוצות',
     hubFolderKnowledge: 'ספריית ידע רפואי',
-    hubFolderKnowledgeSub: 'מדדים · מחלות · מושגים · תקנים',
+    hubFolderKnowledgeSub: 'מדדים · מחלות רקע · מושגים',
     hubFolderBack: 'חזרה למרכז הכלים',
     hubFolderApp: 'האפליקציה',
     hubFolderAppSub: 'הגדרות · נגישות · התקנה · עוד',
     hubWaBannerTitle: 'הצטרפו לערוץ הוואטסאפ שלנו',
     hubWaBannerSub: 'טיפים לשטח · כלים חדשים לפני כולם',
     hubWaBannerDismiss: 'הסתרת הבאנר',
+    hubWaBannerCta: 'הצטרפות',
 
     // simulators
     hubSimFlashTitle: 'אימון שינון — פרוטוקולים',
@@ -198,7 +200,8 @@ export default defineDict({
     hubNavTitle: 'ניווט למיון',
   },
   en: {
-    hub: 'Hub',
+    hub: 'All tools',
+    hubNavLabel: 'All tools, more than 20 tools',
     utilities: 'Tools',
     languageBridge: 'Translation Assistance',
     calculators: 'Calculators',
@@ -273,13 +276,14 @@ Highly recommend having it on your phone for your next shift. Download / open:
     hubFolderMeds: 'Medications',
     hubFolderMedsSub: 'Info · classes · common',
     hubFolderKnowledge: 'Medical Library',
-    hubFolderKnowledgeSub: 'Vitals · conditions · terms · kits',
+    hubFolderKnowledgeSub: 'Vitals · conditions · terms',
     hubFolderBack: 'Back to tools',
     hubFolderApp: 'App',
     hubFolderAppSub: 'Settings · accessibility · install · more',
     hubWaBannerTitle: 'Join the Hovesh+ WhatsApp channel',
     hubWaBannerSub: 'Field tips · new tools before everyone',
     hubWaBannerDismiss: 'Hide banner',
+    hubWaBannerCta: 'Join',
 
     hubSimFlashTitle: 'Memory Drill — Protocols',
     hubSimFlashSub: '{count} cards · CPR, shock, drugs',

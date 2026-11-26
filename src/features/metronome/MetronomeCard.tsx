@@ -1,11 +1,100 @@
-import { Play, VolumeX, Volume2, Plus, Minus } from 'lucide-react';
+import { useState } from 'react';
+import { Play, VolumeX, Volume2, Plus, Minus, MapPinned } from 'lucide-react';
 import { useMetronomeStore, BPM_VALUES } from '../../store/metronomeStore';
 import { useMetronome } from './hooks/useMetronome';
 import { useTranslation, useLanguage } from '../../i18n';
 import { trackEvent, trackInteraction } from '../../utils/analytics';
+import AddressFinderModal from '../hub/components/AddressFinderModal';
 
+// Home screen slot: while CPR is not running, the metronome takes the top half
+// and the quick address finder the bottom half. During CPR the full metronome
+// card comes back, with the audio and end-CPR controls.
 export default function MetronomeCard() {
   useMetronome();
+  const isPlaying = useMetronomeStore(s => s.isPlaying);
+  if (isPlaying) return <FullMetronomeCard />;
+  return (
+    <div className="flex flex-col gap-1.5 h-full w-full">
+      <CompactMetronomeCard />
+      <AddressFinderTile />
+    </div>
+  );
+}
+
+function CompactMetronomeCard() {
+  const { bpm, lastCPRTime, lastCPRShocks, setBpm, start } = useMetronomeStore();
+  const t = useTranslation();
+  // 100 → 110 → 120 → 100; the CPR screen has its own tempo picker as well
+  const nextBpm = () => BPM_VALUES[(BPM_VALUES.indexOf(bpm) + 1) % BPM_VALUES.length];
+
+  return (
+    <div
+      className="flex-1 min-h-0 flex flex-col items-center justify-center gap-1 rounded-3xl p-2 w-full bg-surface border border-line"
+      style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)' }}
+    >
+      <p className="text-fg font-black text-lg tracking-wide text-center w-full leading-tight">
+        {t('metronome')}
+      </p>
+      <div className="flex items-center justify-center gap-3 w-full">
+        <button
+          onClick={() => setBpm(nextBpm())}
+          className="flex flex-col items-center active:scale-95 transition-transform"
+          aria-label={t('homeBpmCycle', { bpm })}
+        >
+          <span
+            className="font-mono font-black tabular-nums leading-none text-fg"
+            style={{ fontSize: 'clamp(2rem, 9vw, 2.75rem)' }}
+          >
+            {bpm}
+          </span>
+          <span className="text-fg-subtle text-[0.65rem] font-medium leading-tight">BPM · {t('homeBpmTapHint')}</span>
+        </button>
+        <button
+          // i18n-ok: analytics event label, kept stable across languages
+          onClick={() => { trackInteraction('מטרונום CPR', 'main_tools'); trackEvent('metronome_start', { bpm_value: bpm }); start(); }}
+          className="w-14 h-14 shrink-0 rounded-full flex items-center justify-center active:scale-90 transition-all duration-150"
+          style={{ backgroundColor: '#22C55E', boxShadow: '0 4px 16px rgba(34,197,94,0.35)' }}
+          aria-label={t('start')}
+        >
+          {/* theme-ok: white icon on the green button */}
+          <Play size={24} fill="white" className="text-white" />
+        </button>
+      </div>
+      {lastCPRTime && (
+        <p className="text-xs text-fg-subtle text-center leading-tight">
+          {t('lastSession')}{' '}
+          <span className="font-medium text-blue-700 dark:text-blue-400/90 tabular-nums">{lastCPRTime}</span>
+          {lastCPRShocks > 0 && (
+            <span className="ms-1 text-amber-800 dark:text-yellow-400 font-bold"> · ⚡{lastCPRShocks}</span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AddressFinderTile() {
+  const t = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        // i18n-ok: analytics event label, kept stable across languages
+        onClick={() => { trackInteraction('איתור כתובת מהיר · פתיחה מהבית', 'emergency_info'); setOpen(true); }}
+        className="flex-1 min-h-0 flex flex-col items-center justify-center gap-1 rounded-3xl p-2 w-full
+                   border border-rose-400/40 bg-rose-400/10 active:scale-[0.97] transition-transform"
+        style={{ boxShadow: '0 2px 8px rgb(0 0 0 / 0.08)' }}
+      >
+        <MapPinned size={30} className="text-rose-700 dark:text-rose-400" />
+        <span className="text-rose-800 dark:text-rose-300 font-black text-base leading-tight text-center">{t('homeAddressFinder')}</span>
+        <span className="text-fg-subtle text-xs leading-tight text-center">{t('homeAddressFinderSub')}</span>
+      </button>
+      {open && <AddressFinderModal isOpen onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function FullMetronomeCard() {
   const { bpm, isPlaying, isAudioMuted, lastCPRTime, lastCPRShocks, setBpm, start, toggleAudio, endCPR } =
     useMetronomeStore();
   const t = useTranslation();
