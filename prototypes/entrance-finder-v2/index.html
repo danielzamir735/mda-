@@ -113,7 +113,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .door b{width:28px;height:28px;border-radius:9px;background:#16a34a;border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .door i{font-style:normal;margin-top:2px;background:#16a34a;color:#fff;border-radius:999px;font:800 10.5px/1.5 var(--font);padding:0 6px;white-space:nowrap}
 /* me: a blue dot with a cone for the direction I face */
-.me{position:relative;width:22px;height:22px}
+/* absolute, as the map positions its markers: relative put the dot in the page flow, at the right edge of a right-to-left page */
+.me{position:absolute;width:22px;height:22px}
 .me .dot{position:absolute;inset:0;border-radius:50%;background:#2563eb;border:4px solid #fff;box-shadow:0 0 0 7px rgba(37,99,235,.22),0 2px 6px rgba(0,0,0,.3)}
 .me .cone{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-70px 0 0 -35px;transform-origin:50% 100%;
   background:radial-gradient(circle at 50% 100%,rgba(37,99,235,.38),rgba(37,99,235,0) 70%);clip-path:polygon(50% 100%,15% 0,85% 0)}
@@ -184,6 +185,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script>
+// start the map style and its tile index downloading now, in parallel with the map library below
+(function(){
+  try {
+    var url = new URLSearchParams(location.search).get('night') === '1' ? 'https://tiles.openfreemap.org/styles/dark' : 'https://tiles.openfreemap.org/styles/positron';
+    fetch(url).then(function(r){ return r.json(); }).then(function(st){
+      Object.keys(st.sources || {}).forEach(function(k){ var u = st.sources[k].url; if (u) fetch(u); });
+    }).catch(function(){});
+  } catch(e){}
+})();
+</script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 (() => {
@@ -1069,9 +1081,9 @@ map.on('moveend', async () => {
 });
 
 // ---------- live position ----------
-let me = null, watchId = null, follow = true, meMarker = null, lastFixAt = 0;
+let me = null, watchId = null, follow = true, meMarker = null, lastFixAt = 0, externalPos = false;
 function startWatch(){
-  if (watchId !== null || !navigator.geolocation) return;
+  if (externalPos || watchId !== null || !navigator.geolocation) return;
   watchId = navigator.geolocation.watchPosition(onPos, err => {
     watchId = null;
     if (err.code === 1) toast('אין הרשאת מיקום. אפשר לאשר בהגדרות הדפדפן');
@@ -1080,7 +1092,7 @@ function startWatch(){
 function onPos(pos){
   const c = pos.coords, now = Date.now();
   if (me && c.accuracy > Math.max(25, me.acc * 2.5) && now - lastFixAt < 15000) return;
-  const first = !me;
+  const first = !me, wasRough = me && me.acc > 150;
   me = {lat:c.latitude, lng:c.longitude, acc:c.accuracy};
   lastFixAt = now;
   if (c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 1.2) gpsHeading = c.heading;
@@ -1092,7 +1104,8 @@ function onPos(pos){
   setData('acc', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon', coordinates:[circle(me, me.acc, 32)]}}]});
   updateRoute(false);
   if (!follow) return;
-  if (first) frame(true);
+  // the first fix is often the rough network one; when the GPS one arrives, the map centres again on it
+  if (first || (wasRough && c.accuracy < 60)) frame(true);
   else if (!inView(me)) frame(true);
 }
 function inView(p){
@@ -1301,12 +1314,18 @@ function boot(){
       if (e.data.type === 'ef-goto') openFrom(new URLSearchParams(String(e.data.query || '')));
       // the app got the location permission (perhaps after the map already asked and was refused): start again
       if (e.data.type === 'ef-locate'){ if (!target) follow = true; startWatch(); }
+      // the app's own position updates: used instead of asking the browser again from inside the frame
+      if (e.data.type === 'ef-pos' && Number.isFinite(e.data.latitude) && Number.isFinite(e.data.longitude)){
+        if (!externalPos){ externalPos = true; if (watchId !== null){ navigator.geolocation.clearWatch(watchId); watchId = null; } }
+        onPos({coords: {latitude: e.data.latitude, longitude: e.data.longitude, accuracy: e.data.accuracy || 50, heading: e.data.heading, speed: e.data.speed}});
+      }
     });
   }
   if (!openFrom(sp) && EMBED){
     // opened from the app with no address yet: the map starts on the user, to see what is around
-    follow = true; startWatch();
-    if (navigator.geolocation) toast('מאתר את המיקום שלך…');
+    // the app sends the position itself; the map asks the browser only if nothing arrives
+    follow = true; setTimeout(() => { if (!externalPos) startWatch(); }, 4000);
+    toast('מאתר את המיקום שלך…');
   }
 }
 // an address given as ll + q (from the app), or as q alone; true when there was one

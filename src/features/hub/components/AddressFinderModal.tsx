@@ -78,16 +78,6 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
   };
 
   useEffect(() => () => { clearTimeout(sugTimer.current); sugAbort.current?.abort(); }, []);
-  useEffect(() => {
-    const t = setTimeout(() => setMapLoading(false), 15000); // never keep the loading screen forever
-    const onMsg = (e: MessageEvent) => {
-      if (e.origin !== MAP_ORIGIN || e.data?.type !== 'entrance-finder-ready') return;
-      mapReady.current = true; setMapLoading(false);
-      if (pending.current) { const l = pending.current; pending.current = null; send(l); }
-    };
-    window.addEventListener('message', onMsg);
-    return () => { clearTimeout(t); window.removeEventListener('message', onMsg); };
-  }, []);
 
   // the explanation shows only the first time (the modal is mounted only while open)
   const [showIntro, setShowIntro] = useState(() => {
@@ -105,17 +95,47 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
   // explains how to allow it, with a button that asks again. Once allowed, the map is told to go to the user.
   const [loc, setLoc] = useState<'asking' | 'granted' | 'denied' | 'unavailable'>('asking');
   const [howTo, setHowTo] = useState(false);
+  // The app follows the position itself and hands every update to the map: the map frame then never needs a
+  // permission of its own (some phones refuse it inside a frame even when the site is allowed).
+  // First a quick rough fix, so the map moves at once; then GPS updates refine it to a few metres.
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [roughHint, setRoughHint] = useState(false);
+  const watchRef = useRef<number | null>(null);
+  const lastPos = useRef<GeolocationPosition | null>(null);
+  const postPos = (p: GeolocationPosition) => {
+    lastPos.current = p;
+    setAccuracy(a => (a == null ? p.coords.accuracy : Math.min(a, p.coords.accuracy)));
+    const win = frameRef.current?.contentWindow;
+    if (!mapReady.current || !win) return; // sent once the map is ready
+    const c = p.coords;
+    win.postMessage({ type: 'ef-pos', latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy, heading: c.heading, speed: c.speed }, MAP_ORIGIN);
+  };
+  const followPosition = () => {
+    if (watchRef.current != null || !navigator.geolocation) return;
+    // a quick first fix from the network or a recent reading
+    navigator.geolocation.getCurrentPosition(postPos, () => { /* the GPS watch below still runs */ }, { enableHighAccuracy: false, timeout: 4000, maximumAge: 120000 });
+    watchRef.current = navigator.geolocation.watchPosition(postPos, err => {
+      if (err.code === err.PERMISSION_DENIED) { setLoc('denied'); if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current); watchRef.current = null; }
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+  };
+  useEffect(() => () => { if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current); }, []);
+  // still only a rough position after a while: usually "precise location" is off for the browser
+  useEffect(() => {
+    if (loc !== 'granted') return;
+    const t = setTimeout(() => setRoughHint(true), 12000);
+    return () => clearTimeout(t);
+  }, [loc]);
   const askLocation = () => {
     if (!navigator.geolocation) { setLoc('unavailable'); return; }
     setLoc('asking');
     navigator.geolocation.getCurrentPosition(
-      () => {
+      p => {
         setLoc('granted'); setHowTo(false);
-        const win = frameRef.current?.contentWindow;
-        if (win) win.postMessage({ type: 'ef-locate' }, MAP_ORIGIN);
+        postPos(p);
+        followPosition();
       },
       err => setLoc(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 },
     );
   };
   useEffect(() => {
@@ -128,7 +148,21 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
       s.onchange = () => { if (s.state === 'granted') askLocation(); else if (s.state === 'denied') setLoc('denied'); };
     }).catch(() => { /* not supported (older Safari): the error from asking is enough */ });
     return () => { if (status) status.onchange = null; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showIntro]);
+
+  // the map page says when it is drawn: then it gets the address chosen meanwhile and the latest position
+  useEffect(() => {
+    const t = setTimeout(() => setMapLoading(false), 15000); // never keep the loading screen forever
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== MAP_ORIGIN || e.data?.type !== 'entrance-finder-ready') return;
+      mapReady.current = true; setMapLoading(false);
+      if (pending.current) { const l = pending.current; pending.current = null; send(l); }
+      if (lastPos.current) postPos(lastPos.current);
+    };
+    window.addEventListener('message', onMsg);
+    return () => { clearTimeout(t); window.removeEventListener('message', onMsg); };
+  }, []);
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // suggestions from the first letters typed
@@ -264,6 +298,17 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
           </a>
         </div>
         {message && <p className="text-sm font-semibold text-rose-400 px-1 pt-1.5">{message}</p>}
+        {/* location allowed but only rough: "precise location" is off for the browser */}
+        {loc === 'granted' && roughHint && accuracy != null && accuracy > 300 && (
+          <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm" role="status">
+            <p className="font-bold text-gray-900 dark:text-emt-light">המיקום לא מדויק (בערך {Math.round(accuracy / 100) * 100} מ')</p>
+            <p className="text-gray-600 dark:text-emt-muted leading-snug mt-0.5">
+              {isIOS
+                ? <>בהגדרות הטלפון: <b>פרטיות ואבטחה</b> ← <b>שירותי מיקום</b> ← <b>אתרי Safari</b> (או הדפדפן שלך) ← להדליק <b>מיקום מדויק</b>.</>
+                : <>ליד כתובת האתר: סמל המנעול ← <b>הרשאות</b> ← <b>מיקום</b> ← להדליק <b>מיקום מדויק</b>. ובהגדרות הטלפון: <b>מיקום</b> ← <b>דיוק מיקום של Google</b> פועל.</>}
+            </p>
+          </div>
+        )}
         {/* location blocked: the browser will not ask again by itself, so say how to allow it */}
         {(loc === 'denied' || loc === 'unavailable') && (
           <div className="mt-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-sm" role="alert">
