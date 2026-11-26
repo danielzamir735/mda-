@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Brain, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import HapticButton from './HapticButton';
 import { updateFlashcardStats } from '../utils/flashcardStats';
+import { useTranslation, useLanguage } from '../i18n';
 
 export interface FlashcardItem {
   front: string;
@@ -40,6 +41,8 @@ function ConfettiParticle({ x, color, delay, size }: { x: number; color: string;
 }
 
 export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
+  const t = useTranslation();
+  const { dir } = useLanguage();
   const totalCards = data.length;
   const [deck, setDeck] = useState<FlashcardItem[]>(() => shuffle([...data]));
   const [isFlipped, setIsFlipped] = useState(false);
@@ -101,9 +104,9 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
   }, [data]);
 
   return (
-    <div dir="rtl" className="fixed inset-0 z-[80] flex flex-col">
+    <div dir={dir} className="fixed inset-0 z-[80] flex flex-col">
       {/* Blurred dark backdrop */}
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-2xl" />
+      <div className="absolute inset-0 bg-page/90 dark:bg-black/75 backdrop-blur-2xl" />
 
       <div className="relative flex flex-col flex-1 ios-safe-header safe-area-bottom overflow-hidden">
 
@@ -111,14 +114,14 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
-              <Brain size={18} className="text-purple-300" />
+              <Brain size={18} className="text-purple-600 dark:text-purple-300" />
             </div>
-            <h2 className="text-white font-bold text-xl tracking-tight">אימון שינון</h2>
+            <h2 className="text-fg font-bold text-xl tracking-tight">{t('learnFlashTitle')}</h2>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 hover:text-white active:scale-90 transition-transform"
-            aria-label="סגור"
+            className="w-10 h-10 rounded-full bg-fg/10 border border-fg/15 flex items-center justify-center text-fg/60 hover:text-fg active:scale-90 transition-transform"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
@@ -128,13 +131,13 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
           <>
             {/* ── Progress bar ── */}
             <div className="px-4 pt-2 pb-4">
-              <div className="flex justify-between text-xs text-white/50 mb-1.5">
-                <span>נזכרתי ב-{remembered} מתוך {totalCards}</span>
-                <span>{deck.length} נותרו בחפיסה</span>
+              <div className="flex justify-between text-xs text-fg-muted mb-1.5">
+                <span>{t('learnFlashRememberedOf', { n: remembered, total: totalCards })}</span>
+                <span>{t('learnFlashLeftInDeck', { n: deck.length })}</span>
               </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-2 rounded-full bg-fg/10 overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-l from-green-400 to-purple-500"
+                  className={`h-full rounded-full ${dir === 'rtl' ? 'bg-gradient-to-l' : 'bg-gradient-to-r'} from-green-400 to-purple-500`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}
                   transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -163,15 +166,15 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                     {/* Front face */}
                     <div
                       style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                      className="absolute inset-0 rounded-3xl bg-white/8 backdrop-blur-xl border border-white/15 flex flex-col items-center justify-center p-7 shadow-2xl"
+                      className="absolute inset-0 rounded-3xl bg-surface/80 dark:bg-fg/[0.08] backdrop-blur-xl border border-line dark:border-fg/15 flex flex-col items-center justify-center p-7 shadow-2xl"
                     >
-                      <p className="text-white/35 text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
-                        שאלה
+                      <p className="text-fg-subtle text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
+                        {t('learnFlashQuestion')}
                       </p>
-                      <p className="text-white font-bold text-2xl text-center leading-snug">
+                      <p dir="auto" className="text-fg font-bold text-2xl text-center leading-snug">
                         {currentCard.front}
                       </p>
-                      <p className="text-white/25 text-xs mt-5">הקש לחשיפת התשובה ↓</p>
+                      <p className="text-fg-subtle text-xs mt-5">{t('learnFlashTapReveal')}</p>
                     </div>
 
                     {/* Back face */}
@@ -181,12 +184,12 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                         WebkitBackfaceVisibility: 'hidden',
                         transform: 'rotateY(180deg)',
                       }}
-                      className="absolute inset-0 rounded-3xl bg-purple-950/70 backdrop-blur-xl border border-purple-400/25 flex flex-col items-center justify-center p-7 shadow-2xl"
+                      className="absolute inset-0 rounded-3xl bg-purple-100 dark:bg-purple-950/70 backdrop-blur-xl border border-purple-400/25 flex flex-col items-center justify-center p-7 shadow-2xl"
                     >
-                      <p className="text-purple-300/70 text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
-                        תשובה
+                      <p className="text-purple-700/80 dark:text-purple-300/70 text-[10px] font-semibold uppercase tracking-[0.2em] mb-4">
+                        {t('learnFlashAnswer')}
                       </p>
-                      <p className="text-white font-semibold text-lg text-center leading-relaxed">
+                      <p dir="auto" className="text-fg font-semibold text-lg text-center leading-relaxed">
                         {currentCard.back}
                       </p>
                     </div>
@@ -198,9 +201,9 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                 key={isFlipped ? 'flipped' : 'not-flipped'}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-white/30 text-sm mt-5 text-center"
+                className="text-fg-subtle text-sm mt-5 text-center"
               >
-                {isFlipped ? 'האם זכרת?' : 'הקש על הכרטיס לחשיפת התשובה'}
+                {isFlipped ? t('learnFlashDidYouRemember') : t('learnFlashTapCard')}
               </motion.p>
             </div>
 
@@ -212,8 +215,8 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                 pressScale={0.95}
                 className="flex-1 h-16 rounded-2xl bg-red-500/15 border border-red-500/35 flex flex-col items-center justify-center gap-1 transition-colors hover:bg-red-500/25"
               >
-                <XCircle size={22} className="text-red-400" />
-                <span className="text-red-300 font-semibold text-sm">לא זכרתי</span>
+                <XCircle size={22} className="text-red-500 dark:text-red-400" />
+                <span className="text-red-600 dark:text-red-300 font-semibold text-sm">{t('learnFlashForgot')}</span>
               </HapticButton>
 
               <HapticButton
@@ -222,8 +225,8 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                 pressScale={0.95}
                 className="flex-1 h-16 rounded-2xl bg-green-500/15 border border-green-500/35 flex flex-col items-center justify-center gap-1 transition-colors hover:bg-green-500/25"
               >
-                <CheckCircle size={22} className="text-green-400" />
-                <span className="text-green-300 font-semibold text-sm">זכרתי!</span>
+                <CheckCircle size={22} className="text-green-600 dark:text-green-400" />
+                <span className="text-green-700 dark:text-green-300 font-semibold text-sm">{t('learnFlashRemembered')}</span>
               </HapticButton>
             </div>
           </>
@@ -247,13 +250,13 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                 transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
                 className="w-28 h-28 rounded-full bg-green-500/20 border-2 border-green-400/40 flex items-center justify-center shadow-[0_0_60px_rgba(34,197,94,0.3)]"
               >
-                <CheckCircle size={52} className="text-green-400" />
+                <CheckCircle size={52} className="text-green-600 dark:text-green-400" />
               </motion.div>
 
               <div>
-                <h3 className="text-white font-black text-4xl mb-2">כל הכבוד!</h3>
-                <p className="text-white/55 text-lg">
-                  עברת את כל {totalCards} הכרטיסים בהצלחה
+                <h3 className="text-fg font-black text-4xl mb-2">{t('learnFlashWellDone')}</h3>
+                <p className="text-fg-muted text-lg">
+                  {t('learnFlashAllCards', { n: totalCards })}
                 </p>
               </div>
 
@@ -262,10 +265,10 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                   onClick={restart}
                   hapticPattern={8}
                   pressScale={0.95}
-                  className="px-6 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold flex items-center gap-2 text-base"
+                  className="px-6 py-3.5 rounded-2xl bg-fg/10 border border-fg/20 text-fg font-semibold flex items-center gap-2 text-base"
                 >
                   <RotateCcw size={18} />
-                  שוב
+                  {t('learnFlashAgain')}
                 </HapticButton>
 
                 <HapticButton
@@ -274,7 +277,7 @@ export default function FlashcardTrainer({ data, onClose, statsKey }: Props) {
                   pressScale={0.95}
                   className="px-8 py-3.5 rounded-2xl bg-green-500 text-white font-bold text-base shadow-lg shadow-green-500/30"
                 >
-                  סיום
+                  {t('done')}
                 </HapticButton>
               </div>
             </motion.div>

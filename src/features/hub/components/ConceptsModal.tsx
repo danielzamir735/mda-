@@ -6,6 +6,7 @@ import HapticButton from '../../../components/HapticButton';
 import FlashcardTrainer from '../../../components/FlashcardTrainer';
 import { useConceptsStore, type Concept } from '../../../store/conceptsStore';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage } from '../../../i18n';
 
 interface Props {
   isOpen: boolean;
@@ -15,14 +16,14 @@ interface Props {
 type View = 'list' | 'category' | 'add' | 'edit' | 'newCategory';
 
 const CATEGORY_COLORS = [
-  { key: 'purple', textClass: 'text-purple-300', bgClass: 'bg-purple-500/15', borderClass: 'border-purple-400/30', dotClass: 'bg-purple-400' },
-  { key: 'blue', textClass: 'text-blue-300', bgClass: 'bg-blue-500/15', borderClass: 'border-blue-400/30', dotClass: 'bg-blue-400' },
-  { key: 'emerald', textClass: 'text-emerald-300', bgClass: 'bg-emerald-500/15', borderClass: 'border-emerald-400/30', dotClass: 'bg-emerald-400' },
-  { key: 'amber', textClass: 'text-amber-300', bgClass: 'bg-amber-500/15', borderClass: 'border-amber-400/30', dotClass: 'bg-amber-400' },
-  { key: 'rose', textClass: 'text-rose-300', bgClass: 'bg-rose-500/15', borderClass: 'border-rose-400/30', dotClass: 'bg-rose-400' },
-  { key: 'cyan', textClass: 'text-cyan-300', bgClass: 'bg-cyan-500/15', borderClass: 'border-cyan-400/30', dotClass: 'bg-cyan-400' },
-  { key: 'indigo', textClass: 'text-indigo-300', bgClass: 'bg-indigo-500/15', borderClass: 'border-indigo-400/30', dotClass: 'bg-indigo-400' },
-  { key: 'orange', textClass: 'text-orange-300', bgClass: 'bg-orange-500/15', borderClass: 'border-orange-400/30', dotClass: 'bg-orange-400' },
+  { key: 'purple', textClass: 'text-purple-700 dark:text-purple-300', bgClass: 'bg-purple-500/15', borderClass: 'border-purple-400/30', dotClass: 'bg-purple-400' },
+  { key: 'blue', textClass: 'text-blue-700 dark:text-blue-300', bgClass: 'bg-blue-500/15', borderClass: 'border-blue-400/30', dotClass: 'bg-blue-400' },
+  { key: 'emerald', textClass: 'text-emerald-700 dark:text-emerald-300', bgClass: 'bg-emerald-500/15', borderClass: 'border-emerald-400/30', dotClass: 'bg-emerald-400' },
+  { key: 'amber', textClass: 'text-amber-700 dark:text-amber-300', bgClass: 'bg-amber-500/15', borderClass: 'border-amber-400/30', dotClass: 'bg-amber-400' },
+  { key: 'rose', textClass: 'text-rose-700 dark:text-rose-300', bgClass: 'bg-rose-500/15', borderClass: 'border-rose-400/30', dotClass: 'bg-rose-400' },
+  { key: 'cyan', textClass: 'text-cyan-700 dark:text-cyan-300', bgClass: 'bg-cyan-500/15', borderClass: 'border-cyan-400/30', dotClass: 'bg-cyan-400' },
+  { key: 'indigo', textClass: 'text-indigo-700 dark:text-indigo-300', bgClass: 'bg-indigo-500/15', borderClass: 'border-indigo-400/30', dotClass: 'bg-indigo-400' },
+  { key: 'orange', textClass: 'text-orange-700 dark:text-orange-300', bgClass: 'bg-orange-500/15', borderClass: 'border-orange-400/30', dotClass: 'bg-orange-400' },
 ];
 
 function getCategoryStyle(colorKey: string) {
@@ -34,6 +35,8 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
     concepts, addConcept, deleteConcept, updateConcept, setConceptCategory,
     categories, addCategory, renameCategory, deleteCategory,
   } = useConceptsStore();
+  const t = useTranslation();
+  const { dir } = useLanguage();
 
   const [view, setView] = useState<View>('list');
   const [showFlashcards, setShowFlashcards] = useState(false);
@@ -190,40 +193,42 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.25 }}
-      className="relative rounded-2xl bg-white/5 border border-white/10 overflow-visible"
+      className="relative rounded-2xl bg-surface border border-line overflow-visible"
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-white font-black text-[15px] leading-snug">{concept.term}</p>
-            <p className="text-emt-muted text-[13px] leading-relaxed mt-1.5 whitespace-pre-wrap">{concept.definition}</p>
+            <p dir="auto" className="text-fg font-black text-[15px] leading-snug">{concept.term}</p>
+            <p dir="auto" className="text-fg-muted text-[13px] leading-relaxed mt-1.5 whitespace-pre-wrap">{concept.definition}</p>
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
             <HapticButton
               onClick={() => setCategoryPickerForId(categoryPickerForId === concept.id ? null : concept.id)}
               hapticPattern={10}
               pressScale={0.9}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/8 border border-white/15 text-emt-muted"
-              aria-label="שייך לקטגוריה"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-fg/[0.08] border border-fg/15 text-fg-muted"
+              aria-label={t('learnAssignCategory')}
             >
               <Folder size={14} />
             </HapticButton>
             <HapticButton
               onClick={() => openEdit(concept)}
+              aria-label={t('learnEditConcept')}
               hapticPattern={10}
               pressScale={0.9}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-400/30 text-purple-300/70"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300/70"
             >
               <Pencil size={14} />
             </HapticButton>
             <HapticButton
               onClick={() => handleDelete(concept.id)}
+              aria-label={t('learnDeleteConcept')}
               hapticPattern={deleteConfirmId === concept.id ? 30 : 10}
               pressScale={0.9}
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                 deleteConfirmId === concept.id
-                  ? 'bg-red-500/30 border border-red-400/60 text-red-300'
-                  : 'bg-red-500/10 border border-red-500/20 text-red-400/60'
+                  ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
+                  : 'bg-red-500/10 border border-red-500/20 text-red-600/70 dark:text-red-400/60'
               }`}
             >
               <Trash2 size={15} />
@@ -234,9 +239,9 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
           <motion.p
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="text-red-400/80 text-xs font-semibold mt-2 text-left"
+            className="text-red-600 dark:text-red-400/80 text-xs font-semibold mt-2 text-end"
           >
-            לחץ שוב למחיקה
+            {t('learnTapAgainDelete')}
           </motion.p>
         )}
       </div>
@@ -244,13 +249,13 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
       {categoryPickerForId === concept.id && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setCategoryPickerForId(null)} />
-          <div className="absolute z-20 left-3 top-14 w-48 rounded-2xl bg-[#1a1f2e] border border-white/15 shadow-2xl overflow-hidden">
+          <div className="absolute z-20 end-3 top-14 w-48 rounded-2xl bg-surface border border-line shadow-2xl overflow-hidden">
             <button
               onClick={() => { setConceptCategory(concept.id, null); setCategoryPickerForId(null); }}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-bold text-emt-muted hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-bold text-fg-muted hover:bg-fg/5 transition-colors"
             >
-              ללא קטגוריה
-              {!concept.categoryId && <Check size={14} className="text-white" />}
+              {t('learnNoCategory')}
+              {!concept.categoryId && <Check size={14} className="text-fg" />}
             </button>
             {categories.map((cat) => {
               const style = getCategoryStyle(cat.color);
@@ -258,18 +263,18 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 <button
                   key={cat.id}
                   onClick={() => { setConceptCategory(concept.id, cat.id); setCategoryPickerForId(null); }}
-                  className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-bold text-white hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-bold text-fg hover:bg-fg/5 transition-colors"
                 >
                   <span className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${style.dotClass}`} />
                     <span className="truncate">{cat.name}</span>
                   </span>
-                  {concept.categoryId === cat.id && <Check size={14} className="text-white shrink-0" />}
+                  {concept.categoryId === cat.id && <Check size={14} className="text-fg shrink-0" />}
                 </button>
               );
             })}
             {categories.length === 0 && (
-              <p className="px-3.5 py-2.5 text-[11px] text-emt-muted/70">אין עדיין קטגוריות — צור אחת מהמסך הראשי</p>
+              <p className="px-3.5 py-2.5 text-[11px] text-fg-subtle">{t('learnNoCategoriesYet')}</p>
             )}
           </div>
         </>
@@ -278,23 +283,23 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-[75] flex flex-col bg-emt-dark" dir="rtl">
+    <div className="fixed inset-0 z-[75] flex flex-col bg-page" dir={dir}>
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {(isFormView || view === 'category') ? (
             <HapticButton
               onClick={isFormView ? goBackFromForm : goHome}
               hapticPattern={8}
               pressScale={0.9}
-              aria-label="חזרה"
-              className="w-9 h-9 rounded-xl bg-white/8 border border-white/12 flex items-center justify-center text-emt-muted shrink-0"
+              aria-label={t('learnBack')}
+              className="w-9 h-9 rounded-xl bg-fg/[0.08] border border-fg/15 flex items-center justify-center text-fg-muted shrink-0"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={18} className="ltr:rotate-180" />
             </HapticButton>
           ) : (
             <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-purple-300" />
+              <Sparkles size={18} className="text-purple-600 dark:text-purple-300" />
             </div>
           )}
 
@@ -303,17 +308,17 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
               autoFocus
-              dir="rtl"
+              dir="auto"
               onKeyDown={(e) => { if (e.key === 'Enter') confirmRenameCategory(); }}
-              className="min-w-0 flex-1 bg-white/8 border border-white/15 rounded-xl px-3 py-1.5 text-white font-black text-lg focus:outline-none focus:border-purple-400/60"
+              className="min-w-0 flex-1 bg-fg/[0.08] border border-fg/15 rounded-xl px-3 py-1.5 text-fg font-black text-lg focus:outline-none focus:border-purple-400/60"
             />
           ) : (
-            <h2 className="text-white font-black text-xl truncate">
-              {view === 'add' ? 'מושג חדש'
-                : view === 'edit' ? 'עריכת מושג'
-                : view === 'newCategory' ? 'קטגוריה חדשה'
+            <h2 className="text-fg font-black text-xl truncate">
+              {view === 'add' ? t('learnConceptNew')
+                : view === 'edit' ? t('learnConceptEdit')
+                : view === 'newCategory' ? t('learnCategoryNew')
                 : view === 'category' ? (activeCategory?.name ?? '')
-                : 'מרכז ידע אישי'}
+                : t('learnConceptsTitle')}
             </h2>
           )}
         </div>
@@ -327,12 +332,12 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 pressScale={0.9}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${
                   editDeleteConfirm
-                    ? 'bg-red-500/30 border border-red-400/60 text-red-300'
-                    : 'bg-red-500/10 border border-red-500/20 text-red-400/70'
+                    ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-600/80 dark:text-red-400/70'
                 }`}
               >
                 <Trash2 size={14} />
-                {editDeleteConfirm ? 'בטוח?' : 'מחק'}
+                {editDeleteConfirm ? t('learnSure') : t('delete')}
               </HapticButton>
             )}
             <HapticButton
@@ -340,9 +345,9 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               hapticPattern={[10, 40, 10]}
               pressScale={0.96}
               disabled={!canSave}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/30 border border-purple-400/50 text-purple-100 font-black text-sm disabled:opacity-35 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/30 border border-purple-400/50 text-purple-800 dark:text-purple-100 font-black text-sm disabled:opacity-35 transition-opacity"
             >
-              שמור ✓
+              {t('learnSaveCheck')}
             </HapticButton>
           </div>
         ) : view === 'category' ? (
@@ -350,18 +355,20 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             {isRenamingCategory ? (
               <HapticButton
                 onClick={confirmRenameCategory}
+                aria-label={t('learnConfirmRename')}
                 hapticPattern={10}
                 pressScale={0.9}
-                className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/25 border border-purple-400/40 text-purple-200"
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/25 border border-purple-400/40 text-purple-700 dark:text-purple-200"
               >
                 <Check size={16} />
               </HapticButton>
             ) : (
               <HapticButton
                 onClick={startRenameCategory}
+                aria-label={t('learnRenameCategory')}
                 hapticPattern={10}
                 pressScale={0.9}
-                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/8 border border-white/15 text-emt-muted"
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-fg/[0.08] border border-fg/15 text-fg-muted"
               >
                 <Pencil size={14} />
               </HapticButton>
@@ -372,12 +379,12 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               pressScale={0.9}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${
                 categoryDeleteConfirm
-                  ? 'bg-red-500/30 border border-red-400/60 text-red-300'
-                  : 'bg-red-500/10 border border-red-500/20 text-red-400/70'
+                  ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
+                  : 'bg-red-500/10 border border-red-500/20 text-red-600/80 dark:text-red-400/70'
               }`}
             >
               <Trash2 size={14} />
-              {categoryDeleteConfirm ? 'בטוח?' : 'מחק'}
+              {categoryDeleteConfirm ? t('learnSure') : t('delete')}
             </HapticButton>
           </div>
         ) : (
@@ -385,8 +392,8 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             onClick={onClose}
             hapticPattern={8}
             pressScale={0.9}
-            className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 shrink-0"
-            aria-label="סגור"
+            className="w-10 h-10 rounded-full bg-fg/10 border border-fg/15 flex items-center justify-center text-fg/60 shrink-0"
+            aria-label={t('close')}
           >
             <X size={20} />
           </HapticButton>
@@ -408,20 +415,20 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 onClick={() => openAdd(null)}
                 hapticPattern={10}
                 pressScale={0.96}
-                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-purple-500/20 border border-purple-400/35 py-3 text-purple-200 font-bold text-sm"
+                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-purple-500/20 border border-purple-400/35 py-3 text-purple-700 dark:text-purple-200 font-bold text-sm"
               >
                 <Plus size={16} />
-                הוסף מושג
+                {t('learnAddConcept')}
               </HapticButton>
               {concepts.length > 0 && (
                 <HapticButton
                   onClick={() => { trackEvent('concepts_flashcard_started'); setShowFlashcards(true); }}
                   hapticPattern={10}
                   pressScale={0.96}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-500/20 border border-blue-400/35 py-3 text-blue-200 font-bold text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-500/20 border border-blue-400/35 py-3 text-blue-700 dark:text-blue-200 font-bold text-sm"
                 >
                   <Brain size={16} />
-                  כרטיסיות שינון
+                  {t('learnFlashcardsBtn')}
                 </HapticButton>
               )}
             </div>
@@ -430,28 +437,28 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               {concepts.length === 0 && categories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-5 py-20 px-6">
                   <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center">
-                    <BookOpen size={32} className="text-purple-400/50" />
+                    <BookOpen size={32} className="text-purple-500/60 dark:text-purple-400/50" />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-bold text-base">עדיין לא הוספת מושגים</p>
-                    <p className="text-emt-muted text-sm mt-1 leading-relaxed">
-                      כשתלמד מושג חדש — תרופה, קיצור, מחלה — הוסף אותו כאן ותוכל לחזור אליו ולהתאמן עליו.
+                    <p className="text-fg font-bold text-base">{t('learnEmptyTitle')}</p>
+                    <p className="text-fg-muted text-sm mt-1 leading-relaxed">
+                      {t('learnEmptyDesc')}
                     </p>
                   </div>
                   <HapticButton
                     onClick={() => openAdd(null)}
                     hapticPattern={10}
                     pressScale={0.96}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-purple-500/25 border border-purple-400/40 text-purple-200 font-bold text-sm"
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-purple-500/25 border border-purple-400/40 text-purple-700 dark:text-purple-200 font-bold text-sm"
                   >
                     <Plus size={16} />
-                    הוסף מושג ראשון
+                    {t('learnAddFirstConcept')}
                   </HapticButton>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <p className="text-emt-muted text-xs font-bold uppercase tracking-wide mb-2">קטגוריות</p>
+                    <p className="text-fg-muted text-xs font-bold uppercase tracking-wide mb-2">{t('learnCategories')}</p>
                     <div className="grid grid-cols-2 gap-2.5">
                       {categories.map((cat) => {
                         const style = getCategoryStyle(cat.color);
@@ -462,14 +469,14 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                             onClick={() => { setActiveCategoryId(cat.id); setView('category'); }}
                             hapticPattern={10}
                             pressScale={0.96}
-                            className={`flex items-center gap-2.5 rounded-2xl border p-3 text-right ${style.bgClass} ${style.borderClass}`}
+                            className={`flex items-center gap-2.5 rounded-2xl border p-3 text-start ${style.bgClass} ${style.borderClass}`}
                           >
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${style.bgClass} ${style.borderClass}`}>
                               <Folder size={16} className={style.textClass} />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className={`font-black text-[13px] truncate ${style.textClass}`}>{cat.name}</p>
-                              <p className="text-emt-muted text-[11px] font-semibold">{count} {count === 1 ? 'פתק' : 'פתקים'}</p>
+                              <p className="text-fg-muted text-[11px] font-semibold">{t(count === 1 ? 'learnNotesOne' : 'learnNotesMany', { n: count })}</p>
                             </div>
                           </HapticButton>
                         );
@@ -478,18 +485,18 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                         onClick={() => setView('newCategory')}
                         hapticPattern={10}
                         pressScale={0.96}
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 p-3 text-emt-muted"
+                        className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-fg/20 p-3 text-fg-muted"
                       >
                         <FolderPlus size={16} />
-                        <span className="font-bold text-[13px]">קטגוריה חדשה</span>
+                        <span className="font-bold text-[13px]">{t('learnCategoryNew')}</span>
                       </HapticButton>
                     </div>
                   </div>
 
                   {uncategorizedConcepts.length > 0 && (
                     <div>
-                      <p className="text-emt-muted text-xs font-bold uppercase tracking-wide mb-2">
-                        {categories.length > 0 ? 'פתקים ללא קטגוריה' : `${uncategorizedConcepts.length} ${uncategorizedConcepts.length === 1 ? 'מושג' : 'מושגים'} נשמרו`}
+                      <p className="text-fg-muted text-xs font-bold uppercase tracking-wide mb-2">
+                        {categories.length > 0 ? t('learnUncategorized') : t(uncategorizedConcepts.length === 1 ? 'learnSavedOne' : 'learnSavedMany', { n: uncategorizedConcepts.length })}
                       </p>
                       <div className="flex flex-col gap-3">
                         {uncategorizedConcepts.map((concept, index) => renderConceptCard(concept, index))}
@@ -516,20 +523,20 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 onClick={() => openAdd(activeCategoryId)}
                 hapticPattern={10}
                 pressScale={0.96}
-                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-purple-500/20 border border-purple-400/35 py-3 text-purple-200 font-bold text-sm"
+                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-purple-500/20 border border-purple-400/35 py-3 text-purple-700 dark:text-purple-200 font-bold text-sm"
               >
                 <Plus size={16} />
-                הוסף פתק לקטגוריה
+                {t('learnAddNoteToCategory')}
               </HapticButton>
               {categoryConcepts.length > 0 && (
                 <HapticButton
                   onClick={() => { trackEvent('concepts_flashcard_started'); setShowFlashcards(true); }}
                   hapticPattern={10}
                   pressScale={0.96}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-500/20 border border-blue-400/35 py-3 text-blue-200 font-bold text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-500/20 border border-blue-400/35 py-3 text-blue-700 dark:text-blue-200 font-bold text-sm"
                 >
                   <Brain size={16} />
-                  כרטיסיות שינון
+                  {t('learnFlashcardsBtn')}
                 </HapticButton>
               )}
             </div>
@@ -538,12 +545,12 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               {categoryConcepts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-5 py-20 px-6">
                   <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center">
-                    <Folder size={32} className="text-purple-400/50" />
+                    <Folder size={32} className="text-purple-500/60 dark:text-purple-400/50" />
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-bold text-base">אין עדיין פתקים בקטגוריה הזו</p>
-                    <p className="text-emt-muted text-sm mt-1 leading-relaxed">
-                      הוסף פתק חדש, או ערוך פתק קיים ושייך אותו לכאן דרך כפתור התיקייה.
+                    <p className="text-fg font-bold text-base">{t('learnCategoryEmptyTitle')}</p>
+                    <p className="text-fg-muted text-sm mt-1 leading-relaxed">
+                      {t('learnCategoryEmptyDesc')}
                     </p>
                   </div>
                 </div>
@@ -568,27 +575,26 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             {view === 'newCategory' ? (
               <>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-emt-muted text-xs font-bold uppercase tracking-wide">שם הקטגוריה</label>
+                  <label className="text-fg-muted text-xs font-bold uppercase tracking-wide">{t('learnCategoryName')}</label>
                   <input
                     value={categoryNameInput}
                     onChange={(e) => setCategoryNameInput(e.target.value)}
-                    placeholder="לדוגמה: רפואה, תחנות, קיצורים..."
-                    className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-white placeholder:text-white/30 text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
-                    style={{ background: '#1a1f2e', WebkitTextFillColor: 'white' }}
-                    dir="rtl"
+                    placeholder={t('learnCategoryNamePh')}
+                    className="w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
+                    dir="auto"
                     autoFocus
                     onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-emt-muted text-xs font-bold uppercase tracking-wide">צבע</label>
+                  <label className="text-fg-muted text-xs font-bold uppercase tracking-wide">{t('learnColor')}</label>
                   <div className="flex flex-wrap gap-2.5">
                     {CATEGORY_COLORS.map((c) => (
                       <button
                         key={c.key}
                         type="button"
                         onClick={() => setCategoryColorInput(c.key)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${c.bgClass} ${categoryColorInput === c.key ? 'border-white' : 'border-transparent'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${c.bgClass} ${categoryColorInput === c.key ? 'border-fg' : 'border-transparent'}`}
                         aria-label={c.key}
                       >
                         <span className={`w-4 h-4 rounded-full ${c.dotClass}`} />
@@ -600,14 +606,13 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             ) : (
               <>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-emt-muted text-xs font-bold uppercase tracking-wide">שם המושג</label>
+                  <label className="text-fg-muted text-xs font-bold uppercase tracking-wide">{t('learnConceptName')}</label>
                   <input
                     value={term}
                     onChange={(e) => setTerm(e.target.value)}
-                    placeholder="לדוגמה: ברדיקרדיה, חסם AV, MAP, Digoxin..."
-                    className="w-full rounded-2xl border border-white/15 px-4 py-3.5 text-white placeholder:text-white/30 text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
-                    style={{ background: '#1a1f2e', WebkitTextFillColor: 'white' }}
-                    dir="rtl"
+                    placeholder={t('learnConceptNamePh')}
+                    className="w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[15px] font-semibold focus:outline-none focus:border-purple-400/60 transition-colors"
+                    dir="auto"
                     autoFocus
                     onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                   />
@@ -615,16 +620,16 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
 
                 {categories.length > 0 && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-emt-muted text-xs font-bold uppercase tracking-wide">קטגוריה</label>
+                    <label className="text-fg-muted text-xs font-bold uppercase tracking-wide">{t('learnCategory')}</label>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => setFormCategoryId(null)}
                         className={`px-3 py-2 rounded-xl border text-xs font-bold transition-colors ${
-                          formCategoryId === null ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/10 text-emt-muted'
+                          formCategoryId === null ? 'bg-fg/15 border-fg/30 text-fg' : 'bg-fg/5 border-fg/10 text-fg-muted'
                         }`}
                       >
-                        ללא קטגוריה
+                        {t('learnNoCategory')}
                       </button>
                       {categories.map((cat) => {
                         const style = getCategoryStyle(cat.color);
@@ -635,7 +640,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                             key={cat.id}
                             onClick={() => setFormCategoryId(cat.id)}
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-colors ${
-                              active ? `${style.bgClass} ${style.borderClass} ${style.textClass}` : 'bg-white/5 border-white/10 text-emt-muted'
+                              active ? `${style.bgClass} ${style.borderClass} ${style.textClass}` : 'bg-fg/5 border-fg/10 text-fg-muted'
                             }`}
                           >
                             <span className={`w-2 h-2 rounded-full ${style.dotClass}`} />
@@ -648,14 +653,14 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 )}
 
                 <div className="flex flex-col gap-1.5 flex-1">
-                  <label className="text-emt-muted text-xs font-bold uppercase tracking-wide">הגדרה ופירוש</label>
+                  <label className="text-fg-muted text-xs font-bold uppercase tracking-wide">{t('learnDefinition')}</label>
                   <textarea
                     value={definition}
                     onChange={(e) => setDefinition(e.target.value)}
-                    placeholder="כתוב כאן את הפירוש, המנגנון, תופעות לוואי, מה לזכור בשטח — כל מה שחשוב לך..."
-                    className="flex-1 w-full rounded-2xl border border-white/15 px-4 py-3.5 text-white placeholder:text-white/30 text-[14px] leading-relaxed focus:outline-none focus:border-purple-400/60 resize-none transition-colors"
-                    style={{ background: '#1a1f2e', minHeight: '140px', WebkitTextFillColor: 'white' }}
-                    dir="rtl"
+                    placeholder={t('learnDefinitionPh')}
+                    className="flex-1 w-full rounded-2xl border border-line bg-surface-2 px-4 py-3.5 text-fg placeholder:text-fg-subtle text-[14px] leading-relaxed focus:outline-none focus:border-purple-400/60 resize-none transition-colors"
+                    style={{ minHeight: '140px' }}
+                    dir="auto"
                   />
                 </div>
               </>

@@ -3,6 +3,7 @@ import { X, Bell, Pill, Stethoscope, Brain, AlertTriangle } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { usePwaInstall } from '../../pwa/PwaInstallContext';
+import { useTranslation, type TranslationKey } from '../../../i18n';
 import { enableDailyPush, disableDailyPush, updatePushPrefs, isPushSupported, requestNotificationPermission } from '../../../utils/pushNotifications';
 
 interface Props {
@@ -58,10 +59,11 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
       aria-checked={enabled}
       onClick={onToggle}
       className={`relative inline-flex w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${
-        enabled ? 'bg-emt-green' : 'bg-gray-300 dark:bg-emt-border'
+        enabled ? 'bg-emt-green' : 'bg-line-strong'
       }`}
     >
       <span
+        // theme-ok: switch knob is white on the coloured/grey track in both modes
         className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
           enabled ? 'translate-x-5' : 'translate-x-0'
         }`}
@@ -70,14 +72,15 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   );
 }
 
-const CATEGORIES: { key: 'medication' | 'disease' | 'concept'; label: string; icon: typeof Pill; color: string }[] = [
-  { key: 'medication', label: 'תרופה חדשה', icon: Pill, color: 'text-emerald-400' },
-  { key: 'disease', label: 'מחלה חדשה', icon: Stethoscope, color: 'text-purple-400' },
-  { key: 'concept', label: 'מושג חדש', icon: Brain, color: 'text-sky-400' },
+const CATEGORIES: { key: 'medication' | 'disease' | 'concept'; label: TranslationKey; icon: typeof Pill; color: string }[] = [
+  { key: 'medication', label: 'learnPushCatMedication', icon: Pill, color: 'text-emerald-400' },
+  { key: 'disease', label: 'learnPushCatDisease', icon: Stethoscope, color: 'text-purple-400' },
+  { key: 'concept', label: 'learnPushCatConcept', icon: Brain, color: 'text-sky-400' },
 ];
 
 export default function DailyPushModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
   const { isIOS } = usePwaInstall();
   const [prefs, setPrefs] = useState<StoredPrefs>(() => loadPrefs());
   const [busy, setBusy] = useState(false);
@@ -104,7 +107,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
     setError(null);
     if (!prefs.enabled) {
       if (!isPushSupported()) {
-        setError('הדפדפן הזה אינו תומך בהתראות פוש');
+        setError(t('learnPushErrUnsupported'));
         return;
       }
       setBusy(true);
@@ -122,15 +125,15 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
         console.error('[DailyPushModal] enableDailyPush failed:', err);
         const msg = err instanceof Error ? err.message : '';
         if (msg === 'permission-denied') {
-          setError('ההתראות חסומות עבור האתר הזה בדפדפן — יש לאפשר אותן דרך הגדרות האתר בדפדפן (לא רק בהגדרות המערכת), ואז לנסות שוב');
+          setError(t('learnPushErrDenied'));
         } else if (msg === 'permission-default') {
-          setError('לא אושרה בקשת ההרשאה — נסה שוב ואשר את בקשת ההתראות שתופיע');
+          setError(t('learnPushErrDefault'));
         } else if (msg === 'vapid-key-missing' || msg === 'push-unsupported') {
-          setError('התראות פוש אינן זמינות כרגע באפליקציה הזו — נסה שוב מאוחר יותר');
+          setError(t('learnPushErrUnavailable'));
         } else if (msg.startsWith('db-upsert-failed')) {
-          setError('ההרשאה אושרה אך שמירת ההרשמה נכשלה — בדוק חיבור לאינטרנט ונסה שוב');
+          setError(t('learnPushErrDbFailed'));
         } else {
-          setError('לא הצלחנו להפעיל התראות — נסה שוב');
+          setError(t('learnPushErrGeneric'));
         }
       } finally {
         setBusy(false);
@@ -172,20 +175,20 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
           <Bell size={20} className="text-pink-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">פוש יומי</h2>
+          <h2 className="text-fg font-bold text-xl">{t('learnPushTitle')}</h2>
         </div>
         <HapticButton
           onClick={onClose}
           pressScale={0.88}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-          aria-label="סגור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('close')}
         >
           <X size={20} />
         </HapticButton>
@@ -195,7 +198,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
 
         {/* Enable toggle */}
         <section
-          className={`bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-4
+          className={`bg-surface border border-line rounded-2xl p-4
                       flex items-center justify-between transition-opacity ${busy ? 'opacity-60 pointer-events-none' : ''}`}
         >
           <div className="flex items-center gap-3">
@@ -203,8 +206,8 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
               <Bell size={18} className="text-pink-400" />
             </div>
             <div>
-              <p className="text-gray-900 dark:text-emt-light font-medium text-sm">קבלת פוש יומי</p>
-              <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">תזכורת יומית עם התוכן שבחרת</p>
+              <p className="text-fg font-medium text-sm">{t('learnPushReceive')}</p>
+              <p className="text-fg-muted text-xs mt-0.5">{t('learnPushReceiveDesc')}</p>
             </div>
           </div>
           <Toggle enabled={prefs.enabled} onToggle={handleToggle} />
@@ -217,41 +220,41 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
           <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3.5">
             <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
             <p className="text-amber-700 dark:text-amber-300 text-xs leading-relaxed">
-              באייפון, פוש יתחיל לעבוד רק אחרי שמוסיפים את האפליקציה למסך הבית (בדפדפן Safari: כפתור השיתוף ← הוסף למסך הבית).
+              {t('learnPushIosCaveat')}
             </p>
           </div>
         )}
 
         {/* Categories */}
         <section>
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide px-1 mb-2">
-            מה תרצה לקבל?
+          <p className="text-fg-muted text-xs font-semibold uppercase tracking-wide px-1 mb-2">
+            {t('learnPushWhatToGet')}
           </p>
-          <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl overflow-hidden divide-y divide-gray-100 dark:divide-emt-border">
+          <div className="bg-surface border border-line rounded-2xl overflow-hidden divide-y divide-line">
             {CATEGORIES.map(({ key, label, icon: Icon, color }) => (
               <div key={key} className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
                   <Icon size={18} className={color} />
-                  <span className="text-gray-900 dark:text-emt-light font-medium text-sm">{label}</span>
+                  <span className="text-fg font-medium text-sm">{t(label)}</span>
                 </div>
                 <Toggle enabled={prefs[key]} onToggle={() => handleCategoryToggle(key)} />
               </div>
             ))}
           </div>
-          <p className="text-gray-500 dark:text-emt-muted text-xs px-1 mt-2 leading-relaxed">
-            תקבל פוש אחד ביום עם כל המושגים שבחרת — לא פוש נפרד לכל קטגוריה.
+          <p className="text-fg-muted text-xs px-1 mt-2 leading-relaxed">
+            {t('learnPushOnePerDay')}
           </p>
           {noCategorySelected && (
-            <p className="text-emt-red text-xs px-1 mt-1">יש לבחור לפחות קטגוריה אחת כדי לקבל פוש</p>
+            <p className="text-emt-red text-xs px-1 mt-1">{t('learnPushPickOne')}</p>
           )}
         </section>
 
         {/* Time picker */}
         <section>
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold uppercase tracking-wide px-1 mb-2">
-            שעת קבלה מדויקת (שעון ישראל)
+          <p className="text-fg-muted text-xs font-semibold uppercase tracking-wide px-1 mb-2">
+            {t('learnPushTime')}
           </p>
-          <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl p-4 flex items-center justify-center">
+          <div className="bg-surface border border-line rounded-2xl p-4 flex items-center justify-center">
             <input
               type="time"
               dir="ltr"
@@ -261,8 +264,8 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
                 if (Number.isNaN(h) || Number.isNaN(m)) return;
                 handleTimeChange(h, m);
               }}
-              className="bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border rounded-xl px-4 py-2.5
-                         text-gray-900 dark:text-emt-light font-bold text-lg tracking-wide"
+              className="bg-surface-2 border border-line rounded-xl px-4 py-2.5
+                         text-fg font-bold text-lg tracking-wide"
             />
           </div>
 
@@ -272,15 +275,15 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
               never arrive. */}
           <div className="px-1 mt-2 min-h-[1rem]">
             {!prefs.enabled ? (
-              <p className="text-gray-500 dark:text-emt-muted text-xs leading-relaxed">
-                ההגדרות האלה יישמרו בשרת רק אחרי שתדליק את "קבלת פוש יומי" למעלה ותאשר הרשאה.
+              <p className="text-fg-muted text-xs leading-relaxed">
+                {t('learnPushSavedAfterEnable')}
               </p>
             ) : syncStatus === 'saving' ? (
-              <p className="text-gray-500 dark:text-emt-muted text-xs">שומר בשרת…</p>
+              <p className="text-fg-muted text-xs">{t('learnPushSaving')}</p>
             ) : syncStatus === 'saved' ? (
-              <p className="text-emt-green text-xs font-medium">✓ נשמר בשרת</p>
+              <p className="text-emt-green text-xs font-medium">{t('learnPushSaved')}</p>
             ) : syncStatus === 'error' ? (
-              <p className="text-emt-red text-xs">השמירה בשרת נכשלה — בדוק חיבור לאינטרנט ונסה לשנות שוב</p>
+              <p className="text-emt-red text-xs">{t('learnPushSaveFailed')}</p>
             ) : null}
           </div>
         </section>
