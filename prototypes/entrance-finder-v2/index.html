@@ -978,7 +978,25 @@ async function hereFix(t, seq){
   const r = await fetch(`${GEO_URL}?q=${encodeURIComponent(t.line2 ? `${t.line1}, ${t.line2}` : t.line1)}`, {signal:ctrl.signal})
     .then(x => x.ok ? x.json() : null).catch(() => null);
   clearTimeout(tm);
-  if (!r || !r.found || seq !== loadSeq || nn(r.houseNumber) !== nn(t.num).replace(/[א-ת]$/, '') && nn(r.houseNumber) !== nn(t.num)) return false;
+  if (!r || !r.found || seq !== loadSeq) return false;
+  const want = parseInt(t.num, 10), got = parseInt(r.houseNumber, 10);
+  if (nn(r.houseNumber) !== nn(t.num).replace(/[א-ת]$/, '') && nn(r.houseNumber) !== nn(t.num)){
+    // HERE does not know the number either, only a neighbour on the same street: a pin there beats the middle of
+    // the street, but no building is painted red, and Waze and Google stay offered for the exact house
+    const sameStreet = !t.street || streetHolds(r.street, streetKey(t.street));
+    if (!sameStreet || !Number.isFinite(want) || !Number.isFinite(got) || Math.abs(want - got) > 10) return false;
+    t.lat = r.lat; t.lng = r.lng;
+    dest = r.access ? {lat:r.access.lat, lng:r.access.lng} : {lat:t.lat, lng:t.lng};
+    placePin(t);
+    if (!store.centers.some(p => dist(p, t) < 60)) await loadArea(t);
+    if (seq !== loadSeq) return true;
+    render();
+    const side = (want % 2) === (got % 2) ? 'באותו צד של הרחוב' : 'כנראה מעבר לכביש';
+    setNote(`${t.num} לא מוכר במפות. הסיכה על ${r.houseNumber}, ${side}. הבית המדויק בוויז או בגוגל`);
+    setExt(t);
+    updateRoute(true); frame(true);
+    return true;
+  }
   t.lat = r.lat; t.lng = r.lng; t.exact = true; t.housenumber = r.houseNumber;
   dest = r.access ? {lat:r.access.lat, lng:r.access.lng} : {lat:t.lat, lng:t.lng};
   placePin(t);
