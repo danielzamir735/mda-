@@ -353,7 +353,7 @@ const HUB_FOLDERS: HubFolder[] = [
     color: 'text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
-    children: ['clinical', 'medhistory', 'medical-terms', 'kit-standards'],
+    children: ['clinical', 'medhistory', 'medical-terms'],
   },
   {
     id: 'folder-app',
