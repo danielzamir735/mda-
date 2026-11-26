@@ -1,0 +1,51 @@
+import { defineDict } from './types';
+
+// Session 0 - settings screen.
+export default defineDict({
+  he: {
+    settingsTitle: 'הגדרות',
+    displayAndLanguage: 'תצוגה ושפה',
+    themeLabel: 'ערכת נושא',
+    themeDark: 'כהה',
+    themeLight: 'בהיר',
+    activeBadge: 'פעיל',
+    fieldPreferences: 'העדפות שטח',
+    keepScreenOn: 'מניעת כיבוי מסך',
+    keepScreenOnHint: 'מונע מהמסך להינעל במהלך שימוש',
+    hapticFeedback: 'רטט בלחיצות',
+    dataManagement: 'ניהול נתונים',
+    resetSavedData: 'איפוס נתונים שמורים',
+    resetSavedDataConfirm: 'האם אתה בטוח? כל הנתונים, הפתקים וההגדרות יימחקו.',
+    aboutAndSupport: 'אודות ותמיכה',
+    legalDisclaimer: 'הצהרה משפטית',
+    legalDisclaimerBody:
+      'האפליקציה הינה כלי עזר בלבד עבור אנשי רפואה ומתנדבים. היא אינה מחליפה שיקול דעת רפואי מקצועי, הכשרה רפואית, או פרוטוקולים רשמיים. המפתחים אינם אחראים לכל נזק שייגרם עקב הסתמכות על האפליקציה.',
+    termsOfUse: 'תנאי שימוש',
+    privacyPolicy: 'מדיניות פרטיות',
+    accessibilityStatement: 'הצהרת נגישות',
+    appVersion: 'חובש+ | גרסה {version}',
+  },
+  en: {
+    settingsTitle: 'Settings',
+    displayAndLanguage: 'Display & Language',
+    themeLabel: 'Theme',
+    themeDark: 'Dark',
+    themeLight: 'Light',
+    activeBadge: 'Active',
+    fieldPreferences: 'Field Preferences',
+    keepScreenOn: 'Keep Screen On',
+    keepScreenOnHint: 'Stops the screen from locking while in use',
+    hapticFeedback: 'Vibrate on Tap',
+    dataManagement: 'Data Management',
+    resetSavedData: 'Reset Saved Data',
+    resetSavedDataConfirm: 'Are you sure? All data, notes and settings will be deleted.',
+    aboutAndSupport: 'About & Support',
+    legalDisclaimer: 'Legal Disclaimer',
+    legalDisclaimerBody:
+      'This app is a support tool only, for medical staff and volunteers. It does not replace professional medical judgment, medical training or official protocols. The developers are not liable for any damage caused by relying on the app.',
+    termsOfUse: 'Terms of Use',
+    privacyPolicy: 'Privacy Policy',
+    accessibilityStatement: 'Accessibility Statement',
+    appVersion: 'Hovesh+ | Version {version}',
+  },
+});

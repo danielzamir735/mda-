@@ -2,6 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme tokens. Every neutral colour in the app should come from these, so a
+ * screen follows the dark/light switch without a `dark:` twin for each class.
+ * Values are bare RGB channels so Tailwind opacity modifiers work
+ * (`bg-fg/10`, `text-fg/70`). Tailwind names: see tailwind.config.js.
+ * In inline styles use `rgb(var(--fg) / 0.35)`.
+ */
+@layer base {
+  :root {
+    --page: 249 250 251;        /* gray-50   – screen background            */
+    --surface: 255 255 255;     /* white     – cards, sheets                */
+    --surface-2: 243 244 246;   /* gray-100  – inputs, chips, inner panels  */
+    --surface-3: 229 231 235;   /* gray-200  – pressed / selected           */
+    --fg: 17 24 39;             /* gray-900  – main text                    */
+    --fg-muted: 75 85 99;       /* gray-600  – secondary text (AA on page)  */
+    --fg-subtle: 156 163 175;   /* gray-400  – icons, placeholders          */
+    --line: 229 231 235;        /* gray-200  – borders, dividers            */
+    --line-strong: 209 213 219; /* gray-300                                  */
+    color-scheme: light;
+  }
+  .dark {
+    --page: 9 9 11;             /* emt-dark   */
+    --surface: 17 17 20;        /* emt-gray   */
+    --surface-2: 24 24 27;      /* zinc-900   */
+    --surface-3: 39 39 42;      /* zinc-800   */
+    --fg: 244 244 245;          /* emt-light  */
+    --fg-muted: 161 161 170;    /* zinc-400   */
+    --fg-subtle: 113 113 122;   /* emt-muted  */
+    --line: 63 63 70;           /* emt-border */
+    --line-strong: 82 82 91;    /* zinc-600   */
+    color-scheme: dark;
+  }
+  body {
+    background-color: rgb(var(--page));
+    color: rgb(var(--fg));
+  }
+}
+
 @layer utilities {
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
