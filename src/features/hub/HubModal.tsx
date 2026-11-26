@@ -30,6 +30,7 @@ const TRACK = {
   personalBit: 'תרומה — בנימה אישית ביט', // i18n-ok: analytics event name
   poison: 'מרכזי הרעלות', // i18n-ok: analytics event name
   breathing: 'מסנכרן נשימות', // i18n-ok: analytics event name
+  waBanner: 'באנר וואטסאפ · פתיחה', // i18n-ok: analytics event name
   folderPrefix: 'תיקייה · ', // i18n-ok: analytics event name
 };
 const heName = (key: TranslationKey) => translate(key, undefined, 'he');
@@ -309,7 +310,9 @@ const HUB_ITEMS: HubItem[] = [
 ];
 
 // תיקיות במרכז הכלים: כמה כלים קרובים מוצגים כאריח אחד, ולחיצה עליו פותחת רשימה של הכלים שבתוכו
-type HubFolder = HubItem & { children: string[] };
+// placeAtLast: the folder takes the place of its last tool instead of its first,
+// so a folder of rarely used tools stays near the bottom of the list
+type HubFolder = HubItem & { children: string[]; placeAtLast?: boolean };
 
 const HUB_FOLDERS: HubFolder[] = [
   {
@@ -352,6 +355,17 @@ const HUB_FOLDERS: HubFolder[] = [
     bg: 'bg-blue-400/10',
     children: ['clinical', 'medhistory', 'medical-terms', 'kit-standards'],
   },
+  {
+    id: 'folder-app',
+    labelKey: 'hubFolderApp',
+    subtitleKey: 'hubFolderAppSub',
+    icon: Settings,
+    color: 'text-fg-muted',
+    border: 'border-line',
+    bg: 'bg-surface-2',
+    children: ['settings', 'accessibility', 'daily-push', 'install-app', 'updates'],
+    placeAtLast: true,
+  },
 ];
 
 const FOLDER_BY_ID = new Map(HUB_FOLDERS.map(f => [f.id, f]));
@@ -359,13 +373,23 @@ const FOLDER_BY_ID = new Map(HUB_FOLDERS.map(f => [f.id, f]));
 const FOLDER_OF_CHILD = new Map(HUB_FOLDERS.flatMap(f => f.children.map(c => [c, f.id] as const)));
 const ITEM_BY_ID = new Map(HUB_ITEMS.map(item => [item.id, item]));
 
-// הרשימה הראשית: כל כלי שלא בתיקייה, וכל תיקייה במקום שבו היה הכלי הראשון שלה
-const TOP_ITEMS: HubItem[] = [];
-for (const item of HUB_ITEMS) {
-  const folderId = FOLDER_OF_CHILD.get(item.id);
-  const top = folderId ? FOLDER_BY_ID.get(folderId)! : item;
-  if (!TOP_ITEMS.includes(top)) TOP_ITEMS.push(top);
+// Replaces each tool that lives in a folder with that folder, once, at the
+// place of its first tool (or its last one, for placeAtLast folders).
+function groupIntoFolders(ids: string[]): string[] {
+  const out: string[] = [];
+  ids.forEach((id, i) => {
+    const folderId = FOLDER_OF_CHILD.get(id);
+    if (!folderId) { if (!out.includes(id)) out.push(id); return; }
+    if (out.includes(folderId)) return;
+    const isLastChild = !ids.slice(i + 1).some(rest => FOLDER_OF_CHILD.get(rest) === folderId);
+    if (!FOLDER_BY_ID.get(folderId)!.placeAtLast || isLastChild) out.push(folderId);
+  });
+  return out;
 }
+
+// the main list: every tool that is not in a folder, plus the folders
+const TOP_ITEMS: HubItem[] = groupIntoFolders(HUB_ITEMS.map(item => item.id))
+  .map(id => FOLDER_BY_ID.get(id) ?? ITEM_BY_ID.get(id)!);
 
 const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call', ...HUB_FOLDERS.map(f => f.id)]);
 
@@ -376,16 +400,20 @@ const LEGACY_HUB_STORAGE_KEY = 'hub_order_v3';
 const DEFAULT_HUB_ORDER = TOP_ITEMS.map(item => item.id);
 
 const NEW_ON_TOP = ['address-finder'];
+
+// The WhatsApp banner at the top of the hub disappears once the viewer joins or hides it.
+const WA_BANNER_KEY = 'hub_wa_banner_hidden_v1';
+function loadWaBannerHidden(): boolean {
+  try { return localStorage.getItem(WA_BANNER_KEY) === '1'; } catch { return false; }
+}
+function saveWaBannerHidden() {
+  try { localStorage.setItem(WA_BANNER_KEY, '1'); } catch { /* storage unavailable */ }
+}
 // tools moved down once for users who already have a saved order (golden hour gave its top spot to the address finder)
 const DEMOTED_ONCE: { key: string; ids: string[] } = { key: 'hub_demoted_v1', ids: ['golden-hour'] };
 
 function migrateLegacyOrder(ids: string[]): string[] {
-  const out: string[] = [];
-  for (const id of ids) {
-    const mapped = FOLDER_OF_CHILD.get(id) ?? id;
-    if (!out.includes(mapped)) out.push(mapped);
-  }
-  return out;
+  return groupIntoFolders(ids);
 }
 
 function loadHubOrder(): string[] {
@@ -474,6 +502,8 @@ export default function HubModal({
   const [showAddressFinder, setShowAddressFinder] = useState(false);
   const [simFlashcardOpen, setSimFlashcardOpen] = useState(false);
   const [showWhatsAppCommunity, setShowWhatsAppCommunity] = useState(false);
+  const [waBannerHidden, setWaBannerHidden] = useState(loadWaBannerHidden);
+  const hideWaBanner = () => { saveWaBannerHidden(); setWaBannerHidden(true); };
   const [editMode, setEditMode] = useState(false);
   const [hubOrder, setHubOrder] = useState<string[]>(() => loadHubOrder());
 
@@ -637,6 +667,42 @@ export default function HubModal({
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+
+        {/* WhatsApp channel banner */}
+        {!editMode && !waBannerHidden && (
+          <div
+            className="relative shrink-0 rounded-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 4px 20px rgba(37,211,102,0.30)' }}
+          >
+            <button
+              onClick={() => { trackInteraction(TRACK.waBanner, 'community_learning'); setShowWhatsAppCommunity(true); }}
+              // theme-ok: white text on the green WhatsApp gradient banner
+              className="w-full flex items-center gap-3 p-4 pe-12 text-start text-white active:scale-[0.98] transition-transform"
+            >
+              <div
+                // theme-ok: translucent white circle on the green WhatsApp gradient
+                className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center shrink-0"
+              >
+                <Users size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-base leading-tight">{t('hubWaBannerTitle')}</p>
+                <p
+                  // theme-ok: white text on the green WhatsApp gradient
+                  className="text-white/85 text-xs mt-0.5 leading-tight"
+                >{t('hubWaBannerSub')}</p>
+              </div>
+            </button>
+            <button
+              onClick={hideWaBanner}
+              // theme-ok: white icon on the green WhatsApp gradient banner
+              className="absolute top-2 end-2 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white"
+              aria-label={t('hubWaBannerDismiss')}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {editMode ? (
           <Reorder.Group
@@ -1064,7 +1130,7 @@ export default function HubModal({
               href="https://whatsapp.com/channel/0029Vb83OlqCBtxAbvGHzH1J"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackInteraction(TRACK.whatsapp, 'community_learning')}
+              onClick={() => { trackInteraction(TRACK.whatsapp, 'community_learning'); hideWaBanner(); }}
               // theme-ok: white text on the green WhatsApp gradient button
               className="block w-full py-4 rounded-2xl text-white font-bold text-lg text-center active:scale-95 transition-transform"
               style={{

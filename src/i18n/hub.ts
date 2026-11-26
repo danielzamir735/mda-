@@ -84,6 +84,11 @@ export default defineDict({
     hubFolderKnowledge: 'ספריית ידע רפואי',
     hubFolderKnowledgeSub: 'מדדים · מחלות · מושגים · תקנים',
     hubFolderBack: 'חזרה למרכז הכלים',
+    hubFolderApp: 'האפליקציה',
+    hubFolderAppSub: 'הגדרות · נגישות · התקנה · עוד',
+    hubWaBannerTitle: 'הצטרפו לערוץ הוואטסאפ שלנו',
+    hubWaBannerSub: 'טיפים לשטח · כלים חדשים לפני כולם',
+    hubWaBannerDismiss: 'הסתרת הבאנר',
 
     // simulators
     hubSimFlashTitle: 'אימון שינון — פרוטוקולים',
@@ -270,6 +275,11 @@ Highly recommend having it on your phone for your next shift. Download / open:
     hubFolderKnowledge: 'Medical Library',
     hubFolderKnowledgeSub: 'Vitals · conditions · terms · kits',
     hubFolderBack: 'Back to tools',
+    hubFolderApp: 'App',
+    hubFolderAppSub: 'Settings · accessibility · install · more',
+    hubWaBannerTitle: 'Join the Hovesh+ WhatsApp channel',
+    hubWaBannerSub: 'Field tips · new tools before everyone',
+    hubWaBannerDismiss: 'Hide banner',
 
     hubSimFlashTitle: 'Memory Drill — Protocols',
     hubSimFlashSub: '{count} cards · CPR, shock, drugs',
