@@ -1237,7 +1237,20 @@ function boot(){
     // tell the app the map is drawn, so it can drop its loading screen
     const ready = () => { try { window.parent.postMessage({type:'entrance-finder-ready'}, '*'); } catch(e){} };
     map.once('idle', ready); setTimeout(ready, 12000);
+    // the app sends each address it finds; the map goes there without loading again
+    window.addEventListener('message', e => {
+      if (e.source !== window.parent || !e.data || e.data.type !== 'ef-goto') return;
+      openFrom(new URLSearchParams(String(e.data.query || '')));
+    });
   }
+  if (!openFrom(sp) && EMBED){
+    // opened from the app with no address yet: the map starts on the user, to see what is around
+    follow = true; startWatch();
+    if (navigator.geolocation) toast('מאתר את המיקום שלך…');
+  }
+}
+// an address given as ll + q (from the app), or as q alone; true when there was one
+function openFrom(sp){
   const ll = (sp.get('ll')||'').split(',').map(Number);
   if (ll.length === 2 && ll.every(Number.isFinite)){
     const q = sp.get('q') || '';
@@ -1247,7 +1260,7 @@ function boot(){
           street: numM ? line1.slice(0, numM.index).trim() : '', housenumber: numM ? nn(numM[1]) : '',
           // near=1: the app's search only found a nearby number (49 for a typed 49א); gn is that number
           ...(sp.get('near') === '1' ? {exact:false, qNum: numM ? nn(numM[1]) : '', housenumber: sp.get('gn') || ''} : {})}, EMBED);
-    return;
+    return true;
   }
   // only a typed address: look it up and go straight to the building
   const q = (sp.get('q') || '').trim();
@@ -1257,7 +1270,9 @@ function boot(){
       if (!res.length){ toast('לא מצאתי את הכתובת. נסו להוסיף עיר'); return; }
       if (res.length === 1 || res[0].exact) goTo(res[0], true); else showSuggest(res);
     });
+    return true;
   }
+  return false;
 }
 })();
 </script>
