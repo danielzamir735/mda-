@@ -122,11 +122,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .me .dot{position:absolute;inset:0;border-radius:50%;background:#2563eb;border:4px solid #fff;box-shadow:0 0 0 7px rgba(37,99,235,.22),0 2px 6px rgba(0,0,0,.3)}
 .me .cone{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-70px 0 0 -35px;transform-origin:50% 100%;
   background:radial-gradient(circle at 50% 100%,rgba(37,99,235,.38),rgba(37,99,235,0) 70%);clip-path:polygon(50% 100%,15% 0,85% 0)}
-.maplibregl-ctrl-attrib{font-size:10px}
+/* the map's sources, as one faint line of small print in the corner (no info button) */
+#credit{position:absolute;left:6px;bottom:2px;z-index:1;max-width:70%;font:9px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.45);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr}
+body.night #credit{color:rgba(255,255,255,.45)}
 </style>
 </head>
 <body>
 <div id="map" aria-label="מפה"></div>
+<div id="credit">© OpenStreetMap · OpenMapTiles · OpenFreeMap · HERE · Esri</div>
 
 <div class="top">
   <form class="search" id="searchForm" role="search" autocomplete="off">
@@ -288,8 +291,7 @@ const T = THEMES[themeName];
 try { maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.min.js', true); } catch(e){}
 const map = new maplibregl.Map({
   container:'map', style: night ? STYLES.night : STYLES.day, center:[34.85, 31.95], zoom:8,
-  pitch:0, maxPitch:0, attributionControl:{compact:true, // flat until 3D is turned on
-    customAttribution:'כתובות © HERE · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenMapTiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}
+  pitch:0, maxPitch:0, attributionControl:false, // flat until 3D is turned on; sources are credited in #credit
 });
 window.__map = map; // debugging handle
 document.body.classList.toggle('night', night);
@@ -828,7 +830,7 @@ async function cityQuery(city, kind, c, d, where){
   try {
     const j = await (await fetch(url, {signal:ctrl.signal})).json();
     if (!j.features) return null;
-    if (!credited.has(city.id)){ credited.add(city.id); const a = document.querySelector('.maplibregl-ctrl-attrib-inner'); if (a) a.insertAdjacentHTML('beforeend', ` | ${city.noBlds ? 'מספרי בתים' : 'מבנים ומספרי בתים'}: ${esc(city.name)}`); }
+    if (!credited.has(city.id)){ credited.add(city.id); const a = $('credit'); if (a) a.textContent += ` · ${city.name}`; }
     return j.features;
   } catch(e){ return null; } finally { clearTimeout(tm); }
 }
