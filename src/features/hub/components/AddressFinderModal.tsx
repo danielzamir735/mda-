@@ -315,28 +315,24 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
             <div className="flex items-start gap-2">
               <Navigation size={16} className="shrink-0 mt-0.5 text-amber-500 dark:text-amber-300" />
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-gray-900 dark:text-emt-light">
-                  {loc === 'denied' ? 'הגישה למיקום חסומה בדפדפן' : 'לא הצלחתי לקבל את המיקום שלך'}
-                </p>
+                <p className="font-bold text-gray-900 dark:text-emt-light">כדי שהשירות יעבוד, צריך להפעיל את המיקום בטלפון</p>
                 <p className="text-gray-600 dark:text-emt-muted leading-snug mt-0.5">
                   {loc === 'denied'
-                    ? 'בלי מיקום המפה לא תראה איפה אתה ביחס לבניין. אפשר לחפש כתובת גם כך.'
-                    : 'כדאי לבדוק שהמיקום (GPS) בטלפון פועל.'}
+                    ? 'המיקום כבוי או חסום לדפדפן, ולכן המפה לא יודעת איפה אתה ביחס לבניין. אפשר לחפש כתובת גם בינתיים.'
+                    : 'המיקום (GPS) בטלפון כבוי, או שאין כרגע קליטה. הפעילו אותו ולחצו "נסה שוב".'}
                 </p>
-                {loc === 'denied' && howTo && (
+                {howTo && (
                   <ol className="list-decimal pr-4 mt-1.5 space-y-0.5 text-gray-700 dark:text-emt-light">
                     {isIOS ? (
                       <>
-                        <li>פותחים את <b>הגדרות</b> בטלפון</li>
-                        <li><b>פרטיות ואבטחה</b> ← <b>שירותי מיקום</b>: לוודא שפועל</li>
-                        <li>באותו מסך: <b>אתרי Safari</b> (או הדפדפן שבו פתחת) ← <b>בעת השימוש ביישום</b></li>
+                        <li>פותחים את <b>הגדרות</b> בטלפון ← <b>פרטיות ואבטחה</b> ← <b>שירותי מיקום</b>: להדליק</li>
+                        <li>באותו מסך: <b>אתרי Safari</b> (או הדפדפן שבו פתחת) ← <b>בעת השימוש ביישום</b>, ולהדליק <b>מיקום מדויק</b></li>
                         <li>חוזרים לכאן ולוחצים <b>נסה שוב</b></li>
                       </>
                     ) : (
                       <>
-                        <li>לוחצים על סמל המנעול או ההגדרות ליד כתובת האתר למעלה</li>
-                        <li><b>הרשאות</b> ← <b>מיקום</b> ← <b>אישור</b></li>
-                        <li>אם אין: <b>הגדרות</b> בטלפון ← <b>מיקום</b> ← הדפדפן ← <b>אישור</b></li>
+                        <li>מושכים מלמעלה את ההגדרות המהירות ומדליקים <b>מיקום</b></li>
+                        <li>סמל המנעול ליד כתובת האתר ← <b>הרשאות</b> ← <b>מיקום</b> ← <b>אישור</b>, ולהדליק <b>מיקום מדויק</b></li>
                         <li>חוזרים לכאן ולוחצים <b>נסה שוב</b></li>
                       </>
                     )}
@@ -346,11 +342,9 @@ export default function AddressFinderModal({ isOpen, onClose }: Props) {
                   <button type="button" onClick={askLocation} className="px-3 py-1.5 rounded-lg bg-amber-500 text-white font-bold text-xs active:opacity-80">
                     נסה שוב
                   </button>
-                  {loc === 'denied' && (
-                    <button type="button" onClick={() => setHowTo(v => !v)} className="px-3 py-1.5 rounded-lg border border-amber-400/50 text-amber-700 dark:text-amber-200 font-bold text-xs">
-                      {howTo ? 'הסתר הסבר' : 'איך מאשרים?'}
-                    </button>
-                  )}
+                  <button type="button" onClick={() => setHowTo(v => !v)} className="px-3 py-1.5 rounded-lg border border-amber-400/50 text-amber-700 dark:text-amber-200 font-bold text-xs">
+                    {howTo ? 'הסתר הסבר' : 'איך מפעילים?'}
+                  </button>
                 </div>
               </div>
             </div>

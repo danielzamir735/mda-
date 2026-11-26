@@ -19,17 +19,21 @@
 }
 /* ===== design: technical instrument look ===== */
 /* the 3D key: a ring turning around the cube while the map is flat */
-#tdBtn .ico{position:relative;display:grid;place-items:center;width:22px;height:22px}
-#tdBtn .ring{position:absolute;inset:-7px;border-radius:50%;pointer-events:none;
-  background:conic-gradient(from 0deg, transparent 0 40%, var(--accent) 78%, #60a5fa 92%, transparent 100%);
-  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
-          mask:radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
-  animation:td-spin 2.6s linear infinite}
-#tdBtn.is3d .ring{display:none}
-#tdBtn:not(.is3d) svg{animation:td-tilt 2.6s ease-in-out infinite}
-@keyframes td-spin{to{transform:rotate(360deg)}}
-@keyframes td-tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-12deg) scale(1.06)}}
-@media (prefers-reduced-motion:reduce){#tdBtn .ring,#tdBtn svg{animation:none}}
+/* the 3D key: while the map is flat, a small colourful cube turns in space; in 3D the flat-view icon shows instead */
+#tdBtn .ico{position:relative;display:grid;place-items:center;width:22px;height:22px;perspective:90px}
+#tdBtn .cube{position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;transform-style:preserve-3d;
+  animation:td-cube 3.4s linear infinite}
+#tdBtn .cube i{position:absolute;inset:0;border-radius:2px;border:1px solid rgba(255,255,255,.6)}
+#tdBtn .cube .c1{background:#ef4444;transform:translateZ(7.5px)}
+#tdBtn .cube .c2{background:#3b82f6;transform:rotateY(180deg) translateZ(7.5px)}
+#tdBtn .cube .c3{background:#22c55e;transform:rotateY(90deg) translateZ(7.5px)}
+#tdBtn .cube .c4{background:#f59e0b;transform:rotateY(-90deg) translateZ(7.5px)}
+#tdBtn .cube .c5{background:#a855f7;transform:rotateX(90deg) translateZ(7.5px)}
+#tdBtn .cube .c6{background:#06b6d4;transform:rotateX(-90deg) translateZ(7.5px)}
+@keyframes td-cube{from{transform:rotateX(-26deg) rotateY(0deg)}to{transform:rotateX(-26deg) rotateY(360deg)}}
+#tdBtn:not(.is3d) svg{display:none}
+#tdBtn.is3d .cube{display:none}
+@media (prefers-reduced-motion:reduce){#tdBtn .cube{animation:none;transform:rotateX(-26deg) rotateY(-38deg)}}
 .fab .lbl{display:block;font-size:10.5px;font-weight:700;line-height:1.05;margin-top:3px;letter-spacing:0;text-align:center;max-width:52px}
 .fab{flex-direction:column}
 /* pro: technical instrument look. IBM Plex Sans Hebrew, flat panels, square keys, navy number plates */
@@ -150,7 +154,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
     <span class="lbl">צפון</span>
   </button>
   <button class="fab" id="tdBtn" aria-label="תלת ממד או מבט מלמעלה" title="תלת ממד">
-    <span class="ico"><i class="ring" aria-hidden="true"></i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span>
+    <span class="ico"><span class="cube" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i><i class="c6"></i></span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span>
     <span class="lbl">תלת ממד</span>
   </button>
   <button class="fab" id="nightBtn" aria-label="מצב לילה" title="מצב לילה">
@@ -1103,6 +1107,7 @@ function onPos(pos){
   } else meMarker.setLngLat([me.lng, me.lat]);
   setData('acc', {type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Polygon', coordinates:[circle(me, me.acc, 32)]}}]});
   updateRoute(false);
+  if (first && !target) follow = true; // opened on the user: zoom in on the first position found
   if (!follow) return;
   // the first fix is often the rough network one; when the GPS one arrives, the map centres again on it
   if (first || (wasRough && c.accuracy < 60)) frame(true);
