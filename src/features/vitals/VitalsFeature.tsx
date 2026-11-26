@@ -13,7 +13,7 @@ import NotesModal from '../notes/NotesModal';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { HeartDuration, BreathDuration } from '../../store/settingsStore';
 import { useVitalsDraftStore } from '../../store/vitalsDraftStore';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from '../../i18n';
 import { trackEvent, trackInteraction } from '../../utils/analytics';
 import HubModal from '../hub/HubModal';
 import AmbulanceChecklistModal from '../hub/components/AmbulanceChecklistModal';
@@ -108,6 +108,7 @@ export default function VitalsFeature() {
   const setDraftBreathing = useVitalsDraftStore((s) => s.setDraftBreathing);
 
   const openModal = useCallback((multiplier: number, unit: string, cardType: 'heart' | 'breath') => {
+    // i18n-ok: analytics event label, kept stable across languages
     trackInteraction(cardType === 'heart' ? 'מדידת דופק' : 'מדידת נשימות', 'main_tools');
     setActiveMultiplier(multiplier);
     setActiveUnit(unit);
@@ -139,7 +140,7 @@ export default function VitalsFeature() {
   const handleResetLastBreath = useCallback(() => setLastResultBreath(null), []);
 
   return (
-    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gray-50 dark:bg-emt-dark safe-area-top" style={bgColor ? { backgroundColor: bgColor } : {}}>
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-page safe-area-top" style={bgColor ? { backgroundColor: bgColor } : {}}>
 
 
       <main className="flex-1 grid grid-cols-2 gap-1.5 p-2 min-h-0 overflow-y-auto">
@@ -176,11 +177,17 @@ export default function VitalsFeature() {
       {isMetronomePlaying && <CPRTimerOverlay onOpenAfterCall={() => setAfterCallFrom('cpr')} />}
 
       <BottomNav
+        // i18n-ok: analytics event label, kept stable across languages
         onGalleryOpen={() => { trackInteraction('גלריה', 'navigation'); setGalleryOpen(true); }}
+        // i18n-ok: analytics event label, kept stable across languages
         onNotesOpen={() => { trackInteraction('הערות', 'navigation'); setNotesOpen(true); }}
+        // i18n-ok: analytics event label, kept stable across languages
         onCalculatorsOpen={() => { trackInteraction('מחשבונים', 'navigation'); setCalculatorsFromHub(false); setCalculatorsOpen(true); }}
+        // i18n-ok: analytics event label, kept stable across languages
         onHubOpen={() => { trackInteraction('כלי עזר', 'navigation'); setHubOpen(true); }}
+        // i18n-ok: analytics event label, kept stable across languages
         onSupportOpen={() => { trackInteraction('תמיכה', 'navigation'); setSupportOpen(true); }}
+        // i18n-ok: analytics event label, kept stable across languages
         onLanguageBridgeOpen={() => { trackInteraction('גשר שפות', 'navigation'); setLanguageBridgeOpen(true); }}
       />
 
@@ -188,9 +195,9 @@ export default function VitalsFeature() {
         <button
           type="button"
           onClick={() => setFeedbackOpen(true)}
-          className="text-[10px] font-bold text-blue-600 dark:text-blue-400 underline underline-offset-2 active:opacity-60 transition-opacity"
+          className="text-[10px] font-bold text-blue-700 dark:text-blue-400 underline underline-offset-2 active:opacity-60 transition-opacity"
         >
-          © כל הזכויות שמורות ל Daniel Zamir - Web Development
+          {t('homeFooterCopyright')}
         </button>
       </footer>
 

@@ -38,14 +38,14 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
   {
     id: 'airway',
     label: 'אירווי',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     bgColor: 'bg-sky-400/10',
     borderColor: 'border-sky-400/30',
     drugs: [
       {
         name: 'אטומידאט',
         sub: 'Etomidate — סדציה RSI',
-        color: 'text-sky-400',
+        color: 'text-sky-700 dark:text-sky-400',
         routes: [
           {
             route: 'IV',
@@ -60,7 +60,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'קטמין',
         sub: 'Ketamine — סדציה RSI',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           {
             route: 'IV',
@@ -81,7 +81,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'מידזולם',
         sub: 'Midazolam / Dormicum — סדציה',
-        color: 'text-violet-400',
+        color: 'text-violet-700 dark:text-violet-400',
         routes: [
           {
             route: 'IV',
@@ -94,7 +94,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'מידזולם',
         sub: 'Midazolam — שימור סדציה (Drip)',
-        color: 'text-violet-300',
+        color: 'text-violet-700 dark:text-violet-300',
         routes: [
           {
             route: 'IV Drip',
@@ -106,7 +106,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'קטמין',
         sub: 'Ketamine — שימור סדציה (Drip)',
-        color: 'text-amber-300',
+        color: 'text-amber-800 dark:text-amber-300',
         routes: [
           {
             route: 'IV Drip',
@@ -122,14 +122,14 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
   {
     id: 'respiratory',
     label: 'נשימה',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     bgColor: 'bg-teal-400/10',
     borderColor: 'border-teal-400/30',
     drugs: [
       {
         name: 'ונטולין',
         sub: 'Salbutamol / Ventolin',
-        color: 'text-teal-400',
+        color: 'text-teal-700 dark:text-teal-400',
         routes: [
           {
             route: 'אינהלציה',
@@ -147,7 +147,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'אירובנט',
         sub: 'Ipratropium',
-        color: 'text-teal-300',
+        color: 'text-teal-700 dark:text-teal-300',
         routes: [
           {
             route: 'אינהלציה',
@@ -178,7 +178,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'סולמדרול',
         sub: 'Methylprednisolone',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           {
             route: 'IV',
@@ -191,7 +191,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'מגנזיום',
         sub: 'Magnesium Sulfate',
-        color: 'text-lime-400',
+        color: 'text-lime-800 dark:text-lime-400',
         routes: [
           {
             route: 'IV איטי',
@@ -215,7 +215,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'אדנוזין',
         sub: 'Adenosine — SVT',
-        color: 'text-cyan-400',
+        color: 'text-cyan-700 dark:text-cyan-400',
         routes: [
           {
             route: 'IV מהיר — מנה 1',
@@ -235,7 +235,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'אמיודרון',
         sub: 'Amiodarone',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           {
             route: 'IV (10–20 דקות)',
@@ -250,7 +250,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'מגנזיום',
         sub: 'Magnesium Sulfate',
-        color: 'text-lime-400',
+        color: 'text-lime-800 dark:text-lime-400',
         routes: [
           {
             route: 'IV איטי',
@@ -293,7 +293,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'אטרופין',
         sub: 'Atropine — ברדיקרדיה',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           {
             route: 'IV/IO',
@@ -314,14 +314,14 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
   {
     id: 'neuro',
     label: 'נוירו',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     bgColor: 'bg-violet-400/10',
     borderColor: 'border-violet-400/30',
     drugs: [
       {
         name: 'מידזולם',
         sub: 'Midazolam — פרכוסים',
-        color: 'text-violet-400',
+        color: 'text-violet-700 dark:text-violet-400',
         routes: [
           {
             route: 'IV',
@@ -338,7 +338,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'גלוקוז 10%',
         sub: 'Glucose 10%',
-        color: 'text-yellow-400',
+        color: 'text-yellow-800 dark:text-yellow-400',
         routes: [
           {
             route: 'IV/IO',
@@ -391,7 +391,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'ונטולין',
         sub: 'Salbutamol — ברונכוספזם',
-        color: 'text-teal-400',
+        color: 'text-teal-700 dark:text-teal-400',
         routes: [
           {
             route: 'אינהלציה',
@@ -403,7 +403,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'סולמדרול',
         sub: 'Methylprednisolone',
-        color: 'text-orange-400',
+        color: 'text-orange-700 dark:text-orange-400',
         routes: [
           {
             route: 'IV',
@@ -419,14 +419,14 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
   {
     id: 'pain',
     label: 'כאב',
-    color: 'text-pink-400',
+    color: 'text-pink-700 dark:text-pink-400',
     bgColor: 'bg-pink-400/10',
     borderColor: 'border-pink-400/30',
     drugs: [
       {
         name: 'אקמול',
         sub: 'Paracetamol',
-        color: 'text-pink-400',
+        color: 'text-pink-700 dark:text-pink-400',
         routes: [
           {
             route: 'PO',
@@ -443,7 +443,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'אפטלגין',
         sub: 'Metamizole / Dipyrone',
-        color: 'text-rose-400',
+        color: 'text-rose-700 dark:text-rose-400',
         routes: [
           {
             route: 'IV איטי',
@@ -455,7 +455,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'פנטניל',
         sub: 'Fentanyl',
-        color: 'text-purple-400',
+        color: 'text-purple-700 dark:text-purple-400',
         routes: [
           {
             route: 'IV/IN',
@@ -467,7 +467,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'קטמין',
         sub: 'Ketamine — אנלגזיה (low-dose)',
-        color: 'text-amber-400',
+        color: 'text-amber-800 dark:text-amber-400',
         routes: [
           {
             route: 'IV — סינרגיסטי',
@@ -484,7 +484,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'זופרן',
         sub: 'Ondansetron — אנטי-בחילה',
-        color: 'text-indigo-400',
+        color: 'text-indigo-700 dark:text-indigo-400',
         routes: [
           {
             route: 'IV',
@@ -519,7 +519,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'הידרוקסיקובלמין',
         sub: 'Hydroxocobalamin — הרעלת ציאניד',
-        color: 'text-red-500',
+        color: 'text-red-700 dark:text-red-500',
         routes: [
           {
             route: 'IV',
@@ -531,7 +531,7 @@ export const PEDIATRIC_SCENARIOS: Scenario[] = [
       {
         name: 'תיאוסולפט',
         sub: 'Sodium Thiosulfate',
-        color: 'text-slate-400',
+        color: 'text-slate-600 dark:text-slate-400',
         routes: [
           {
             route: 'IV',

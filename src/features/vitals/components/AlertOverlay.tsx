@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from '../../../i18n';
 
 interface Props {
   visible: boolean;
   text?: string;
 }
 
-export default function AlertOverlay({ visible, text = 'האם סדיר ונימוש?' }: Props) {
+export default function AlertOverlay({ visible, text }: Props) {
+  const t = useTranslation();
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function AlertOverlay({ visible, text = 'האם סדיר ונימ
         className="text-emt-red font-black text-center leading-snug animate-slide-up whitespace-pre-line"
         style={{ fontSize: 'clamp(1.4rem, 5.5vw, 2.4rem)' }}
       >
-        {text}
+        {text ?? t('homeAlertPulseRegular')}
       </p>
     </div>
   );

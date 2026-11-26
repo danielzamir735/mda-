@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Save, ChevronDown } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
-import { useVitalsLogStore } from '../../../store/vitalsLogStore';
-import { useTranslation } from '../../../hooks/useTranslation';
+import { useVitalsLogStore, FAST_NORMAL, FAST_ABNORMAL } from '../../../store/vitalsLogStore';
+import { useTranslation } from '../../../i18n';
 
 export interface EditData {
   patientName?: string;
@@ -33,15 +33,15 @@ function InputField({ label, value, onChange, placeholder, inputMode = 'numeric'
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{label}</label>
+      <label className="text-fg-muted text-sm font-bold">{label}</label>
       <input
         type="text"
         inputMode={inputMode}
         placeholder={placeholder ?? '0'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
-                   text-gray-900 dark:text-emt-light text-center text-base font-bold placeholder:text-gray-300 dark:placeholder:text-emt-border
+        className="w-full bg-surface-2 border border-line rounded-2xl px-4 py-2
+                   text-fg text-center text-base font-bold placeholder:text-fg-subtle
                    focus:outline-none focus:border-emt-red transition-colors"
       />
     </div>
@@ -80,7 +80,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (fastTest === 'לא תקין') setFastExpanded(true);
+    if (fastTest === FAST_ABNORMAL) setFastExpanded(true);
   }, [fastTest]);
 
   if (!isOpen) return null;
@@ -93,18 +93,18 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
 
   // FAST options stored as Hebrew regardless of UI language (data compatibility)
   const fastOptions = [
-    { value: 'תקין', label: t('normal') },
-    { value: 'לא תקין', label: t('abnormal') },
-  ] as const;
+    { value: FAST_NORMAL, label: t('normal') },
+    { value: FAST_ABNORMAL, label: t('abnormal') },
+  ];
 
   return (
-    <div className="fixed inset-0 z-[60] bg-white dark:bg-emt-dark flex flex-col animate-fade-scale">
+    <div className="fixed inset-0 z-[60] bg-page flex flex-col animate-fade-scale">
       {/* Header */}
-      <div className="ios-safe-header flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-emt-border shrink-0">
-        <button onClick={onClose} className="p-2 text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light transition-colors" aria-label={t('close')}>
+      <div className="ios-safe-header flex items-center justify-between px-4 py-2 border-b border-line shrink-0">
+        <button onClick={onClose} className="p-2 text-fg-muted hover:text-fg transition-colors" aria-label={t('close')}>
           <X size={24} />
         </button>
-        <h1 className="text-gray-900 dark:text-emt-light font-black text-xl">{t('editVitals')}</h1>
+        <h1 className="text-fg font-black text-xl">{t('editVitals')}</h1>
         <div className="w-10" />
       </div>
 
@@ -114,15 +114,15 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
           {/* Patient Name */}
           <div className="col-span-2">
             <div className="flex flex-col gap-1.5">
-              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('patientName')}</label>
+              <label className="text-fg-muted text-sm font-bold">{t('patientName')}</label>
               <input
                 type="text"
                 inputMode="text"
                 placeholder={t('patientNamePlaceholder')}
                 value={patientName}
                 onChange={(e) => setPatientName(e.target.value)}
-                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
-                           text-gray-900 dark:text-emt-light text-center text-base font-bold placeholder:text-gray-300 dark:placeholder:text-emt-border
+                className="w-full bg-surface-2 border border-line rounded-2xl px-4 py-2
+                           text-fg text-center text-base font-bold placeholder:text-fg-subtle
                            focus:outline-none focus:border-emt-red transition-colors"
               />
             </div>
@@ -131,20 +131,20 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
           {/* Examination Time */}
           <div className="col-span-2">
             <div className="flex flex-col gap-1.5">
-              <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('examinationTime')}</label>
+              <label className="text-fg-muted text-sm font-bold">{t('examinationTime')}</label>
               <input
                 type="time"
                 value={examinationTime}
                 onChange={(e) => setExaminationTime(e.target.value)}
-                className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
-                           text-gray-900 dark:text-emt-light text-center text-base font-bold
+                className="w-full bg-surface-2 border border-line rounded-2xl px-4 py-2
+                           text-fg text-center text-base font-bold
                            focus:outline-none focus:border-emt-red transition-colors"
               />
             </div>
           </div>
 
           {/* Divider */}
-          <div className="col-span-2 border-t border-gray-200 dark:border-emt-border" />
+          <div className="col-span-2 border-t border-line" />
 
           {/* Blood Pressure — full width */}
           <div className="col-span-2">
@@ -168,7 +168,7 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
 
           {/* FAST Test toggle */}
           <div className="col-span-2 flex flex-col gap-1.5">
-            <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('fastTest')}</label>
+            <label className="text-fg-muted text-sm font-bold">{t('fastTest')}</label>
             <div className="flex gap-2">
               {fastOptions.map(({ value, label }) => (
                 <button
@@ -177,8 +177,8 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                   onClick={() => setFastTest(fastTest === value ? '' : value)}
                   className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
                     ${fastTest === value
-                      ? value === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
-                      : 'bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted'}`}
+                      ? value === FAST_NORMAL ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
+                      : 'bg-surface-2 border border-line text-fg-muted'}`}
                 >
                   {label}
                 </button>
@@ -186,24 +186,24 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
             </div>
           </div>
 
-          {/* FAST Expansion — hidden when תקין, auto-open when לא תקין */}
-          {fastTest !== 'תקין' && <div className="col-span-2">
+          {/* FAST Expansion — hidden when normal, auto-open when abnormal */}
+          {fastTest !== FAST_NORMAL && <div className="col-span-2">
             <button
               type="button"
               onClick={() => setFastExpanded(!fastExpanded)}
-              className="flex items-center gap-1.5 text-gray-400 dark:text-emt-muted text-xs font-bold w-full py-1.5 hover:text-gray-600 dark:hover:text-emt-light transition-colors"
+              className="flex items-center gap-1.5 text-fg-subtle text-xs font-bold w-full py-1.5 hover:text-fg transition-colors"
             >
               <ChevronDown size={14} className={`transition-transform duration-200 ${fastExpanded ? 'rotate-180' : ''}`} />
               {t('fastExpand')}
             </button>
             {fastExpanded && (
-              <div className="flex flex-col gap-3 mt-1 pt-3 border-t border-gray-200 dark:border-emt-border">
+              <div className="flex flex-col gap-3 mt-1 pt-3 border-t border-line">
                 {[
                   { label: t('fastMotorStrength'), val: fastMotorStrength, set: setFastMotorStrength },
                   { label: t('fastFacialDroop'), val: fastFacialDroop, set: setFastFacialDroop },
                 ].map(({ label, val, set }) => (
                   <div key={label} className="flex flex-col gap-1.5">
-                    <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{label}</label>
+                    <label className="text-fg-muted text-sm font-bold">{label}</label>
                     <div className="flex gap-2">
                       {fastOptions.map(({ value, label: optLabel }) => (
                         <button
@@ -212,8 +212,8 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                           onClick={() => set(val === value ? '' : value)}
                           className={`flex-1 py-2 rounded-2xl font-bold text-sm transition-colors
                             ${val === value
-                              ? value === 'תקין' ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
-                              : 'bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border text-gray-500 dark:text-emt-muted'}`}
+                              ? value === FAST_NORMAL ? 'bg-emt-green text-white' : 'bg-emt-red text-white'
+                              : 'bg-surface-2 border border-line text-fg-muted'}`}
                         >
                           {optLabel}
                         </button>
@@ -222,13 +222,13 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
                   </div>
                 ))}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('fastSymptomTime')}</label>
+                  <label className="text-fg-muted text-sm font-bold">{t('fastSymptomTime')}</label>
                   <input
                     type="time"
                     value={fastSymptomTime}
                     onChange={(e) => setFastSymptomTime(e.target.value)}
-                    className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
-                               text-gray-900 dark:text-emt-light text-center text-base font-bold
+                    className="w-full bg-surface-2 border border-line rounded-2xl px-4 py-2
+                               text-fg text-center text-base font-bold
                                focus:outline-none focus:border-emt-red transition-colors"
                   />
                 </div>
@@ -238,14 +238,14 @@ export default function EditVitalsModal({ isOpen, onClose, logId, initialData }:
 
           {/* Notes */}
           <div className="col-span-2 flex flex-col gap-1.5">
-            <label className="text-gray-500 dark:text-emt-muted text-sm font-bold">{t('notesLabel')}</label>
+            <label className="text-fg-muted text-sm font-bold">{t('notesLabel')}</label>
             <textarea
               placeholder={t('additionalNotesPlaceholder')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-2xl px-4 py-2
-                         text-gray-900 dark:text-emt-light text-sm font-medium placeholder:text-gray-300 dark:placeholder:text-emt-border
+              className="w-full bg-surface-2 border border-line rounded-2xl px-4 py-2
+                         text-fg text-sm font-medium placeholder:text-fg-subtle
                          focus:outline-none focus:border-emt-red transition-colors resize-none"
             />
           </div>

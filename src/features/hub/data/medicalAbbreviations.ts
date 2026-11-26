@@ -26,7 +26,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'conditions',
     title: 'מושגים ומצבים רפואיים',
-    color: 'text-red-400',
+    color: 'text-red-700 dark:text-red-400',
     border: 'border-red-400/30',
     bg: 'bg-red-400/5',
     items: [
@@ -43,7 +43,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'routes',
     title: 'דרכי מתן תרופה למטופל',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/5',
     items: [
@@ -61,7 +61,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'cardiac',
     title: 'לב וקרדיולוגיה',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/5',
     items: [
@@ -87,7 +87,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'respiratory',
     title: 'נשימה',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/5',
     items: [
@@ -98,7 +98,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'neuro',
     title: 'עצבים ומוח',
-    color: 'text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/5',
     items: [
@@ -116,7 +116,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'lab',
     title: 'מעבדה והמטולוגיה',
-    color: 'text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/5',
     items: [
@@ -129,7 +129,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'assessment',
     title: 'הערכה ופרוטוקולים',
-    color: 'text-indigo-400',
+    color: 'text-indigo-700 dark:text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/5',
     items: [
@@ -144,7 +144,7 @@ export const ABBREVIATION_CATEGORIES: AbbreviationCategory[] = [
   {
     id: 'cranial-nerves',
     title: '12 העצבים הקרניאליים',
-    color: 'text-fuchsia-400',
+    color: 'text-fuchsia-700 dark:text-fuchsia-400',
     border: 'border-fuchsia-400/30',
     bg: 'bg-fuchsia-400/5',
     items: [

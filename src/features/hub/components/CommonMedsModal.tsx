@@ -8,6 +8,7 @@ import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import FlashcardTrainer, { type FlashcardItem } from '../../../components/FlashcardTrainer';
 import { readFlashcardStats } from '../../../utils/flashcardStats';
 import { trackInteraction, trackEvent } from '../../../utils/analytics';
+import { useTranslation, translate } from '../../../hooks/useTranslation';
 import { MED_CATEGORIES, TOTAL_MEDS, type CommonMed, type MedCategory } from '../data/commonMedsData';
 
 const STATS_KEY = 'flashcardStats_commonMeds_v1';
@@ -26,7 +27,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 // טקסט להקראה: מסירים הערות בעברית שבסוגריים, ולוכסנים הופכים להפסקות
 function ttsText(en: string): string {
   return en
-    .replace(/\([^)]*[֐-׿][^)]*\)/g, '')
+    .replace(/\([^)]*[֐-׿][^)]*\)/g, '') // i18n-ok: Hebrew letter range in a regex, not text
     .replace(/\s*\/\s*/g, ', ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -55,19 +56,19 @@ function MedRow({ med, divider, color, isSpeaking, onSpeak }: MedRowProps) {
   return (
     <div className={`px-4 py-3 flex items-center gap-3 ${divider}`}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug text-right" dir="ltr">
+        <p className="text-sm font-bold text-fg leading-snug text-start" dir="ltr">
           {med.en}
         </p>
-        <p className="text-xs text-gray-500 dark:text-emt-muted leading-relaxed mt-0.5">{med.he}</p>
+        <p className="text-xs text-fg-muted leading-relaxed mt-0.5">{med.he}</p>
       </div>
       <button
         onClick={() => onSpeak(med)}
-        aria-label={`השמע הגייה: ${med.en}`}
+        aria-label={translate('refPlayPronunciation', { term: med.en })}
         className={`shrink-0 w-9 h-9 rounded-full border flex items-center justify-center
                     active:scale-90 transition-all
                     ${isSpeaking
                       ? `${color} border-current bg-current/10 animate-pulse`
-                      : 'text-gray-400 dark:text-emt-muted border-gray-200 dark:border-emt-border hover:text-gray-700 dark:hover:text-emt-light'}`}
+                      : 'text-fg-subtle border-line hover:text-fg'}`}
       >
         <Volume2 size={16} />
       </button>
@@ -81,6 +82,7 @@ interface Props {
 }
 
 export default function CommonMedsModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [query, setQuery] = useState('');
   const [trainer, setTrainer] = useState<{ data: FlashcardItem[]; label: string } | null>(null);
   const [speakingKey, setSpeakingKey] = useState<string | null>(null);
@@ -95,12 +97,12 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, handleClose);
 
   useEffect(() => {
-    if (isOpen) trackInteraction('תרופות נפוצות', 'reference');
+    if (isOpen) trackInteraction('תרופות נפוצות', 'reference'); // i18n-ok: analytics label, kept stable
   }, [isOpen]);
 
   const speak = useCallback((med: CommonMed) => {
     if (!('speechSynthesis' in window)) {
-      alert('מנוע דיבור אינו נתמך במכשיר זה');
+      alert(translate('refTtsUnsupported'));
       return;
     }
     window.speechSynthesis.cancel();
@@ -151,19 +153,19 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
 
   return (
     <>
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Pill size={22} className="text-emerald-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">תרופות נפוצות</h2>
+          <Pill size={22} className="text-emerald-700 dark:text-emerald-400" />
+          <h2 className="text-fg font-bold text-xl">{t('refMedsTitle')}</h2>
         </div>
         <button
           onClick={handleClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-          aria-label="סגור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
@@ -172,16 +174,16 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
       {/* Search */}
       <div className="shrink-0 px-4 pt-3 pb-2">
         <div className="relative">
-          <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-emt-muted pointer-events-none" />
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none" />
           <input
             type="text"
-            placeholder="חפש לפי שם תרופה או קטגוריה..."
+            placeholder={t('refMedsSearch')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-emt-border
-                       bg-white dark:bg-emt-gray text-gray-900 dark:text-emt-light
-                       placeholder-gray-400 dark:placeholder-emt-muted
-                       pr-9 pl-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+            className="w-full rounded-xl border border-line
+                       bg-surface text-fg
+                       placeholder:text-fg-subtle
+                       ps-9 pe-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
           />
         </div>
       </div>
@@ -197,21 +199,21 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
                      active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
-            <Brain size={20} className="text-emerald-400" />
+            <Brain size={20} className="text-emerald-700 dark:text-emerald-400" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-emerald-600 dark:text-emerald-200 font-bold text-base leading-tight">התחל אימון שינון</span>
-            <span className="text-emerald-600/60 dark:text-emerald-300/50 text-xs mt-0.5">
-              {TOTAL_MEDS} כרטיסיות
-              {stats.sessions > 0 && ` · ${stats.sessions} אימונים הושלמו`}
-              {successRate !== null && ` · ${successRate}% הצלחה`}
+            <span className="text-emerald-700 dark:text-emerald-200 font-bold text-base leading-tight">{t('refStartTraining')}</span>
+            <span className="text-emerald-700 dark:text-emerald-300/50 text-xs mt-0.5">
+              {t('refCardsCount', { n: TOTAL_MEDS })}
+              {stats.sessions > 0 && ` · ${t('refSessionsDone', { n: stats.sessions })}`}
+              {successRate !== null && ` · ${t('refSuccessRate', { n: successRate })}`}
             </span>
           </div>
-          <div className="mr-auto text-emerald-400/40 text-lg">←</div>
+          <div className="ms-auto text-emerald-700 dark:text-emerald-500/50 text-lg rtl:rotate-0 ltr:rotate-180">←</div>
         </button>
 
         {filteredCategories.length === 0 ? (
-          <p className="text-center text-gray-400 dark:text-emt-muted py-8 text-sm">לא נמצאו תוצאות</p>
+          <p className="text-center text-fg-muted py-8 text-sm">{t('noResults')}</p>
         ) : (
           filteredCategories.map((cat) => {
             const Icon = CATEGORY_ICONS[cat.id] ?? Pill;
@@ -219,20 +221,20 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
             return (
               <div key={cat.id}>
                 {/* Category header */}
-                <div className="flex items-start gap-3 mb-2 pr-1">
+                <div className="flex items-start gap-3 mb-2 ps-1">
                   <div className={`w-10 h-10 rounded-xl border ${cat.border} ${cat.bg} flex items-center justify-center shrink-0`}>
                     <Icon size={19} className={cat.color} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className={`text-sm font-black ${cat.color}`}>{cat.title}</h3>
-                      <span className="text-[10px] font-mono text-gray-400 dark:text-emt-muted" dir="ltr">{cat.titleEn}</span>
+                      <span className="text-[10px] font-mono text-fg-muted" dir="ltr">{cat.titleEn}</span>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-emt-muted leading-relaxed mt-0.5">{cat.description}</p>
+                    <p className="text-xs text-fg-muted leading-relaxed mt-0.5">{cat.description}</p>
                   </div>
                   <button
                     onClick={() => openTrainer(buildFlashcards(cat), cat.id)}
-                    aria-label={`אימון שינון: ${cat.title}`}
+                    aria-label={t('refTrainCategory', { name: cat.title })}
                     className={`shrink-0 w-9 h-9 rounded-xl border ${cat.border} ${cat.bg} flex items-center justify-center
                                active:scale-90 transition-transform ${cat.color}`}
                   >
@@ -246,7 +248,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
                     src={cat.image}
                     alt={cat.title}
                     loading="lazy"
-                    className="w-full h-28 object-cover rounded-2xl mb-2 border border-gray-200 dark:border-emt-border"
+                    className="w-full h-28 object-cover rounded-2xl mb-2 border border-line"
                   />
                 )}
 
@@ -283,7 +285,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
                   ))}
                 </div>
 
-                <p className="text-[10px] text-gray-400 dark:text-emt-muted mt-1 pr-1">{medCount} תרופות</p>
+                <p className="text-[10px] text-fg-muted mt-1 ps-1">{t('refMedsCount', { n: medCount })}</p>
               </div>
             );
           })

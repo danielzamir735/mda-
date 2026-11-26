@@ -5,6 +5,7 @@ import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import HapticButton from '../../../components/HapticButton';
 import { supabase } from '../../../lib/supabase';
 import { trackInteraction } from '../../../utils/analytics';
+import { useTranslation, useLanguage, translate, type TranslationKey } from '../../../hooks/useTranslation';
 import {
   ER_LOAD_HOSPITALS,
   ER_DEPARTMENTS,
@@ -22,6 +23,27 @@ const FAVORITES_KEY = 'er_load_favorites_v1';
 const RATE_LIMIT_KEY = 'er_load_last_report_v1';
 const RATE_LIMIT_MS = 30 * 60 * 1000; // one report per hospital+department per 30 min
 const STALE_MS = 3 * 60 * 60 * 1000; // reports older than 3h are shown as stale
+
+// English display names; the Hebrew name stays the stored/database key.
+const HOSPITAL_EN: Record<string, string> = {
+  'רמב"ם': 'Rambam', // i18n-ok: lookup key
+  'בלינסון': 'Beilinson', // i18n-ok: lookup key
+  'איכילוב': 'Ichilov', // i18n-ok: lookup key
+  'תל השומר שיבא': 'Sheba Tel HaShomer', // i18n-ok: lookup key
+  'הדסה עין כרם': 'Hadassah Ein Kerem', // i18n-ok: lookup key
+  'שערי צדק': 'Shaare Zedek', // i18n-ok: lookup key
+  'סורוקה': 'Soroka', // i18n-ok: lookup key
+};
+const CITY_EN: Record<string, string> = {
+  'חיפה': 'Haifa', // i18n-ok: lookup key
+  'פתח תקווה': 'Petah Tikva', // i18n-ok: lookup key
+  'תל אביב': 'Tel Aviv', // i18n-ok: lookup key
+  'רמת גן': 'Ramat Gan', // i18n-ok: lookup key
+  'ירושלים': 'Jerusalem', // i18n-ok: lookup key
+  'באר שבע': 'Beersheba', // i18n-ok: lookup key
+};
+const DEPT_KEY: Record<ErDepartment, TranslationKey> = { general: 'refErGeneral', pediatric: 'refErPediatric' };
+const LEVEL_KEY: Record<ErLoadLevel, TranslationKey> = { 1: 'refLoadLight', 2: 'refLoadMedium', 3: 'refLoadHeavy' };
 
 function getSessionId(): string {
   const key = 'medic_session_id';
@@ -68,10 +90,10 @@ function reportKey(hospital: string, department: ErDepartment) {
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'עכשיו';
-  if (mins < 60) return `לפני ${mins} דק׳`;
+  if (mins < 1) return translate('now');
+  if (mins < 60) return translate('refMinAgo', { n: mins });
   const hours = Math.floor(mins / 60);
-  return `לפני ${hours} ${hours === 1 ? 'שעה' : 'שעות'}`;
+  return hours === 1 ? translate('refHourAgo') : translate('refHoursAgo', { n: hours });
 }
 
 function formatHHMM(iso: string): string {
@@ -81,6 +103,10 @@ function formatHHMM(iso: string): string {
 
 export default function HospitalLoadModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
+  const { isEn } = useLanguage();
+  const hospitalName = (name: string) => (isEn && HOSPITAL_EN[name]) || name;
+  const cityName = (city: string) => (isEn && CITY_EN[city]) || city;
 
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -113,7 +139,7 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (!isOpen) return;
-    trackInteraction('עומסים בבתי חולים', 'emergency_info');
+    trackInteraction('עומסים בבתי חולים', 'emergency_info'); // i18n-ok: analytics label, kept stable
     const favs = loadFavorites();
     setFavorites(favs);
     if (favs.length === 0) {
@@ -171,19 +197,19 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Gauge size={20} className="text-cyan-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">עומסים בבתי חולים</h2>
+          <Gauge size={20} className="text-cyan-700 dark:text-cyan-400" />
+          <h2 className="text-fg font-bold text-xl">{t('refErLoadTitle')}</h2>
         </div>
         <div className="flex items-center gap-2">
           {!pickerOpen && (
             <button
               onClick={openPickerToEdit}
-              className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 active:scale-90 transition-all"
-              aria-label="עריכת בתי חולים מועדפים"
+              className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-700 dark:text-cyan-400 active:scale-90 transition-all"
+              aria-label={t('refEditFavorites')}
             >
               <Pencil size={16} />
             </button>
@@ -191,10 +217,10 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
           <HapticButton
             onClick={onClose}
             pressScale={0.88}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center
-                       text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-            aria-label="סגור"
+                       text-fg-muted hover:text-fg"
+            aria-label={t('close')}
           >
             <X size={20} />
           </HapticButton>
@@ -204,8 +230,8 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
       {pickerOpen ? (
         // ── Favorites picker ──────────────────────────────────────────────
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-          <p className="text-gray-500 dark:text-emt-muted text-sm leading-relaxed px-1">
-            בחר את בתי החולים שברצונך לעקוב אחרי העומס בהם. ניתן לשנות בכל עת.
+          <p className="text-fg-muted text-sm leading-relaxed px-1">
+            {t('refPickHospitalsIntro')}
           </p>
           <div className="flex flex-col gap-2">
             {ER_LOAD_HOSPITALS.map(({ name, city }) => {
@@ -214,17 +240,18 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
                 <button
                   key={name}
                   onClick={() => togglePick(name)}
-                  className={`flex items-center justify-between w-full rounded-2xl border p-4 transition-colors text-right
+                  className={`flex items-center justify-between w-full rounded-2xl border p-4 transition-colors text-start
                     ${picked
                       ? 'border-cyan-400/50 bg-cyan-400/10'
-                      : 'border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray'}`}
+                      : 'border-line bg-surface'}`}
                 >
                   <div>
-                    <p className="text-gray-900 dark:text-emt-light font-bold text-sm">{name}</p>
-                    <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{city}</p>
+                    <p className="text-fg font-bold text-sm">{hospitalName(name)}</p>
+                    <p className="text-fg-muted text-xs mt-0.5">{cityName(city)}</p>
                   </div>
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0
-                    ${picked ? 'border-cyan-400 bg-cyan-400' : 'border-gray-300 dark:border-emt-border'}`}>
+                    ${picked ? 'border-cyan-400 bg-cyan-400' : 'border-line-strong'}`}>
+                    {/* theme-ok: white check on the cyan circle */}
                     {picked && <Check size={14} className="text-white" />}
                   </div>
                 </button>
@@ -236,57 +263,57 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
         // ── Dashboard ─────────────────────────────────────────────────────
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
           {loading && favorites.length > 0 && (
-            <p className="text-gray-500 dark:text-emt-muted text-xs text-center">טוען עדכונים…</p>
+            <p className="text-fg-muted text-xs text-center">{t('refLoadingUpdates')}</p>
           )}
           {favorites.length === 0 ? (
-            <p className="text-gray-500 dark:text-emt-muted text-sm text-center mt-8">
-              לא נבחרו בתי חולים עדיין — לחץ על ✎ למעלה כדי לבחור.
+            <p className="text-fg-muted text-sm text-center mt-8">
+              {t('refNoFavorites')}
             </p>
           ) : (
             favorites.map(hospital => (
               <div
                 key={hospital}
-                className="shrink-0 bg-white dark:bg-emt-gray border border-cyan-400/20 rounded-2xl overflow-hidden shadow-sm"
+                className="shrink-0 bg-surface border border-cyan-400/20 rounded-2xl overflow-hidden shadow-sm"
               >
                 {/* Emphasized hospital header */}
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-cyan-500/8 dark:bg-cyan-500/10 border-b border-cyan-400/15">
                   <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shrink-0">
-                    <Building2 size={18} className="text-cyan-500 dark:text-cyan-400" />
+                    <Building2 size={18} className="text-cyan-700 dark:text-cyan-400" />
                   </div>
-                  <p className="text-gray-900 dark:text-emt-light font-black text-lg leading-tight">{hospital}</p>
+                  <p className="text-fg font-black text-lg leading-tight">{hospitalName(hospital)}</p>
                 </div>
 
-                <div className="divide-y divide-gray-100 dark:divide-emt-border">
-                  {ER_DEPARTMENTS.map(({ key, label }) => {
+                <div className="divide-y divide-line">
+                  {ER_DEPARTMENTS.map(({ key }) => {
                     const report = reports[reportKey(hospital, key)];
                     const levelInfo = report ? ER_LOAD_LEVELS.find(l => l.level === report.load_level) : undefined;
                     return (
                       <div key={key} className="flex flex-col gap-2 px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-800 dark:text-emt-light text-sm font-bold">{label}</span>
+                          <span className="text-fg text-sm font-bold">{t(DEPT_KEY[key])}</span>
                           {levelInfo && (
                             <span className={`flex items-center gap-1 text-xs font-bold ${levelInfo.color} ${levelInfo.bg} border ${levelInfo.border} rounded-full px-2 py-0.5`}>
                               <span>{levelInfo.emoji}</span>
-                              {levelInfo.label}
+                              {t(LEVEL_KEY[levelInfo.level])}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-1 text-gray-400 dark:text-emt-muted text-[11px]">
+                          <span className="flex items-center gap-1 text-fg-muted text-[11px]">
                             {report ? (
                               <>
                                 <Clock size={11} />
-                                עדכון אחרון: {timeAgo(report.created_at)} ({formatHHMM(report.created_at)})
+                                {t('refLastUpdate', { ago: timeAgo(report.created_at), time: formatHHMM(report.created_at) })}
                               </>
                             ) : (
-                              'אין דיווח עדכני'
+                              t('refNoRecentReport')
                             )}
                           </span>
                           <button
                             onClick={() => { setReportSheet({ hospital, department: key }); setSubmitState('idle'); }}
-                            className="shrink-0 text-xs font-bold text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
+                            className="shrink-0 text-xs font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
                           >
-                            דווח
+                            {t('refReport')}
                           </button>
                         </div>
                       </div>
@@ -297,21 +324,21 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
             ))
           )}
 
-          <p className="text-gray-400 dark:text-emt-muted text-[11px] text-center leading-relaxed mt-2 px-2">
-            מבוסס על דיווחי משתמשים בלבד — מידע כללי, לא רשמי, ואינו מהווה תחליף לבדיקה מול בית החולים.
+          <p className="text-fg-muted text-[11px] text-center leading-relaxed mt-2 px-2">
+            {t('refUserReportsDisclaimer')}
           </p>
         </div>
       )}
 
       {/* Sticky bottom action */}
       {pickerOpen ? (
-        <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)] border-t border-gray-100 dark:border-emt-border">
+        <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)] border-t border-line">
           <button
             onClick={confirmPicker}
             disabled={pickerSelection.length === 0}
             className="w-full py-3.5 rounded-xl bg-emt-green text-white font-bold text-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            שמור
+            {t('save')}
           </button>
         </div>
       ) : null}
@@ -323,13 +350,13 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex flex-col bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[70] flex flex-col bg-page/90 backdrop-blur-md"
           >
             <div className="ios-safe-header shrink-0 flex justify-end px-4 py-3">
               <button
                 onClick={() => setReportSheet(null)}
-                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/80 active:scale-90 transition-all"
-                aria-label="סגור"
+                className="w-10 h-10 rounded-full bg-fg/10 flex items-center justify-center text-fg/80 active:scale-90 transition-all"
+                aria-label={t('close')}
               >
                 <X size={20} />
               </button>
@@ -337,15 +364,15 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
 
             <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 -mt-10">
               <div className="text-center">
-                <p className="text-white/50 text-sm font-medium mb-1">
-                  {ER_DEPARTMENTS.find(d => d.key === reportSheet.department)?.label}
+                <p className="text-fg-muted text-sm font-medium mb-1">
+                  {t(DEPT_KEY[reportSheet.department])}
                 </p>
-                <p className="text-white font-black text-2xl">{reportSheet.hospital}</p>
-                <p className="text-white/60 text-sm mt-3">מה רמת העומס כרגע?</p>
+                <p className="text-fg font-black text-2xl">{hospitalName(reportSheet.hospital)}</p>
+                <p className="text-fg-muted text-sm mt-3">{t('refLoadQuestion')}</p>
               </div>
 
               <div className="flex items-center justify-center gap-4 sm:gap-6">
-                {ER_LOAD_LEVELS.map(({ level, label, emoji, color, bg, border }, i) => (
+                {ER_LOAD_LEVELS.map(({ level, emoji, color, bg, border }, i) => (
                   <motion.button
                     key={level}
                     initial={{ opacity: 0, y: 16, scale: 0.8 }}
@@ -359,19 +386,19 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
                     <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 ${bg} ${border} flex items-center justify-center text-5xl shadow-lg`}>
                       {emoji}
                     </div>
-                    <span className={`text-base font-bold ${color}`}>{label}</span>
+                    <span className={`text-base font-bold ${color}`}>{t(LEVEL_KEY[level])}</span>
                   </motion.button>
                 ))}
               </div>
 
               <div className="min-h-[1.5rem] text-center">
-                {submitState === 'saving' && <p className="text-white/60 text-sm">שולח…</p>}
-                {submitState === 'saved' && <p className="text-emt-green text-sm font-bold">✓ הדיווח נשמר</p>}
-                {submitState === 'error' && <p className="text-emt-red text-sm">השליחה נכשלה — בדוק חיבור ונסה שוב</p>}
+                {submitState === 'saving' && <p className="text-fg-muted text-sm">{t('refSending')}</p>}
+                {submitState === 'saved' && <p className="text-emt-green text-sm font-bold">{t('refReportSaved')}</p>}
+                {submitState === 'error' && <p className="text-emt-red text-sm">{t('refSendFailed')}</p>}
                 {submitState === 'rate-limited' && (
-                  <p className="flex items-center justify-center gap-1.5 text-amber-400 text-sm">
+                  <p className="flex items-center justify-center gap-1.5 text-amber-800 dark:text-amber-400 text-sm">
                     <AlertCircle size={14} />
-                    כבר דיווחת כאן לאחרונה — נסה שוב בעוד קצת
+                    {t('refRateLimited')}
                   </p>
                 )}
               </div>

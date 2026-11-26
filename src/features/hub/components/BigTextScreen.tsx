@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Mic, Square, Trash2 } from 'lucide-react';
 import HapticButton from '../../../components/HapticButton';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation, useLanguage } from '../../../i18n';
 
 // Minimal typing for the Web Speech API — not part of TypeScript's DOM lib
 interface SpeechResultEvent {
@@ -38,6 +39,8 @@ function fontSizeFor(length: number) {
 interface Props { onBack: () => void; }
 
 export default function BigTextScreen({ onBack }: Props) {
+  const t = useTranslation();
+  const { isEn } = useLanguage();
   const [text, setText]           = useState('');
   const [interim, setInterim]     = useState('');
   const [listening, setListening] = useState(false);
@@ -64,7 +67,7 @@ export default function BigTextScreen({ onBack }: Props) {
     inputRef.current?.blur();
 
     const rec = new Ctor();
-    rec.lang = 'he-IL';
+    rec.lang = isEn ? 'en-US' : 'he-IL';
     rec.continuous = true;
     rec.interimResults = true;
     rec.onresult = (e) => {
@@ -82,10 +85,10 @@ export default function BigTextScreen({ onBack }: Props) {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
       setMicError(
         e.error === 'not-allowed' || e.error === 'service-not-allowed'
-          ? 'אין הרשאה למיקרופון. אפשר להקליד במקום.'
+          ? t('btMicDenied')
           : e.error === 'network'
-            ? 'ההקלטה דורשת חיבור לאינטרנט. אפשר להקליד במקום.'
-            : 'ההקלטה לא זמינה כרגע. אפשר להקליד במקום.',
+            ? t('btMicNetwork')
+            : t('btMicUnavailable'),
       );
     };
     rec.onend = () => { setListening(false); setInterim(''); recognizerRef.current = null; };
@@ -96,7 +99,7 @@ export default function BigTextScreen({ onBack }: Props) {
       setListening(true);
       trackEvent('big_text_dictation_started');
     } catch {
-      setMicError('ההקלטה לא זמינה כרגע. אפשר להקליד במקום.');
+      setMicError(t('btMicUnavailable'));
     }
   };
 
@@ -109,28 +112,28 @@ export default function BigTextScreen({ onBack }: Props) {
   const shown = [text, interim].filter(Boolean).join(' ');
 
   return (
-    <div className="fixed inset-0 z-[99999] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[99999] flex flex-col bg-page">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <HapticButton
           pressScale={0.9}
           onClick={() => { recognizerRef.current?.abort(); onBack(); }}
-          className="flex items-center gap-1.5 text-orange-400 font-bold text-sm"
-          aria-label="חזור לתרגום"
+          className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold text-sm"
+          aria-label={t('btBackAria')}
         >
-          <ArrowRight size={16} />
-          חזור
+          <ArrowRight size={16} className="ltr:rotate-180" />
+          {t('back')}
         </HapticButton>
-        <h2 className="text-gray-900 dark:text-emt-light font-bold text-base">כתוביות למטופל</h2>
+        <h2 className="text-fg font-bold text-base">{t('btTitle')}</h2>
         <HapticButton
           pressScale={0.9}
           onClick={clear}
           disabled={!shown}
-          className="flex items-center gap-1.5 text-gray-500 dark:text-emt-muted font-bold text-sm disabled:opacity-30"
-          aria-label="נקה טקסט"
+          className="flex items-center gap-1.5 text-fg-muted font-bold text-sm disabled:opacity-30"
+          aria-label={t('btClearAria')}
         >
           <Trash2 size={16} />
-          נקה
+          {t('clear')}
         </HapticButton>
       </div>
 
@@ -145,50 +148,51 @@ export default function BigTextScreen({ onBack }: Props) {
           <p
             dir="auto"
             className="m-auto w-full text-center font-black leading-tight break-words whitespace-pre-wrap
-                       text-gray-900 dark:text-white"
+                       text-fg"
             style={{ fontSize: fontSizeFor(shown.length) }}
           >
             {text}
             {interim && <span className="opacity-50">{text ? ' ' : ''}{interim}</span>}
           </p>
         ) : (
-          <p className="m-auto text-center text-gray-400 dark:text-emt-muted text-lg leading-relaxed max-w-xs">
-            מה שתקלידו או תאמרו יופיע כאן באותיות גדולות. גם המטופל יכול להקליד תשובה.
+          <p className="m-auto text-center text-fg-subtle text-lg leading-relaxed max-w-xs">
+            {t('btEmpty')}
           </p>
         )}
       </div>
 
       {micError && (
-        <p role="alert" className="shrink-0 px-4 pb-2 text-sm font-semibold text-red-600 dark:text-red-400 text-center">
+        <p role="alert" className="shrink-0 px-4 pb-2 text-sm font-semibold text-red-700 dark:text-red-400 text-center">
           {micError}
         </p>
       )}
 
       {/* Input row */}
-      <div className="shrink-0 flex items-end gap-2 px-3 pt-2 pb-4 border-t border-gray-200 dark:border-emt-border">
+      <div className="shrink-0 flex items-end gap-2 px-3 pt-2 pb-4 border-t border-line">
         <textarea
           ref={inputRef}
           value={text}
           onChange={e => setText(e.target.value)}
           rows={2}
           dir="auto"
-          placeholder="הקלידו כאן..."
-          aria-label="טקסט להצגה למטופל"
-          className="flex-1 resize-none rounded-2xl border border-gray-300 dark:border-emt-border bg-white dark:bg-emt-gray
-                     px-4 py-3 text-lg text-gray-900 dark:text-emt-light placeholder:text-gray-400
+          placeholder={t('btPlaceholder')}
+          aria-label={t('btInputAria')}
+          className="flex-1 resize-none rounded-2xl border border-line-strong bg-surface
+                     px-4 py-3 text-lg text-fg placeholder:text-fg-subtle
                      focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
         {micSupported && (
           <HapticButton
             pressScale={0.92}
             onClick={listening ? stopListening : startListening}
+            // theme-ok: white on the orange/red record button
             className={`shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-white text-[11px] font-bold
                         ${listening ? 'bg-emt-red animate-pulse' : 'bg-orange-500'}`}
-            aria-label={listening ? 'עצור הקלטה' : 'הקלט דיבור'}
+            aria-label={listening ? t('btStopRec') : t('btRecord')}
             aria-pressed={listening}
           >
             {listening ? <Square size={22} /> : <Mic size={24} />}
-            {listening ? 'עצור' : 'הקלט'}
+            {listening ? t('stop') : t('btRecordShort')}
           </HapticButton>
         )}
       </div>

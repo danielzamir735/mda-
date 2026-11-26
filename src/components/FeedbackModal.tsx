@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, MessageSquare, Info, Send, Loader2, CheckCircle } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface Errors {
 }
 
 export default function FeedbackModal({ isOpen, onClose }: Props) {
+  const t = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -35,9 +37,9 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
 
   const validate = (): Errors => {
     const e: Errors = {};
-    if (!name.trim()) e.name = 'נא למלא שם מלא';
-    if (!phone.trim()) e.phone = 'נא למלא מספר טלפון';
-    if (!message.trim()) e.message = 'נא למלא הודעה';
+    if (!name.trim()) e.name = t('obFbNameErr');
+    if (!phone.trim()) e.phone = t('obFbPhoneErr');
+    if (!message.trim()) e.message = t('obFbMessageErr');
     return e;
   };
 
@@ -51,7 +53,9 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
     }
 
     const lines: string[] = [];
+    // i18n-ok: the message goes to the developers' inbox, which is in Hebrew
     lines.push(`שם: ${name.trim()}`);
+    // i18n-ok: as above
     lines.push(`טלפון: ${phone.trim()}`);
     lines.push('');
     lines.push(message.trim());
@@ -72,40 +76,41 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
   };
 
   const inputCls = (hasError: boolean) =>
-    'w-full rounded-xl border bg-gray-50 dark:bg-emt-dark ' +
-    'text-gray-900 dark:text-emt-light px-4 py-2.5 text-sm outline-none transition-colors ' +
-    'placeholder:text-gray-400 dark:placeholder:text-emt-muted ' +
+    'w-full rounded-xl border bg-page ' +
+    'text-fg px-4 py-2.5 text-sm outline-none transition-colors ' +
+    'placeholder:text-fg-subtle ' +
     (hasError
       ? 'border-red-400 focus:border-red-500'
-      : 'border-gray-200 dark:border-emt-border focus:border-emt-red/60');
+      : 'border-line focus:border-emt-red/60');
 
   const RequiredLabel = ({ children }: { children: string }) => (
-    <label className="text-sm font-semibold text-gray-700 dark:text-emt-light flex items-center gap-1">
+    <label className="text-sm font-semibold text-fg/85 flex items-center gap-1">
       {children}
-      <span className="text-red-500">*</span>
+      <span className="text-red-700 dark:text-red-500">*</span>
     </label>
   );
 
   const FieldError = ({ msg }: { msg?: string }) =>
-    msg ? <p className="text-red-500 text-xs mt-1 pr-1">{msg}</p> : null;
+    msg ? <p className="text-red-700 dark:text-red-500 text-xs mt-1 pe-1">{msg}</p> : null;
 
   return (
+    // theme-ok: the dim backdrop behind a pop-up stays dark in both modes
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-emt-gray border border-gray-200 dark:border-emt-border rounded-t-2xl p-5 w-full max-w-lg flex flex-col gap-4">
+      <div className="bg-surface border border-line rounded-t-2xl p-5 w-full max-w-lg flex flex-col gap-4">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare size={18} className="text-emt-red" />
-            <h2 className="text-gray-900 dark:text-emt-light font-bold text-lg">שלח משוב</h2>
+            <h2 className="text-fg font-bold text-lg">{t('obFbTitle')}</h2>
           </div>
           <button
             onClick={handleClose}
             disabled={status === 'sending'}
-            className="w-9 h-9 rounded-full bg-gray-100 dark:bg-emt-dark border border-gray-200 dark:border-emt-border
+            className="w-9 h-9 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted disabled:opacity-40"
-            aria-label="סגור"
+                       text-fg-muted disabled:opacity-40"
+            aria-label={t('close')}
           >
             <X size={18} />
           </button>
@@ -113,25 +118,25 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
 
         {/* Beta notice */}
         <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-4 py-3">
-          <Info size={16} className="text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+          <Info size={16} className="text-blue-700 dark:text-blue-400 mt-0.5 shrink-0" />
           <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
-            האפליקציה עדיין בשלבי פיתוח ושיפור. נשמח מאוד לשמוע מכם כל הערה, הצעת ייעול, או דיווח על תקלה כדי שנוכל להמשיך להשתפר!
+            {t('obFbBeta')}
           </p>
         </div>
 
         {status === 'success' ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <CheckCircle size={44} className="text-emt-green" />
-            <p className="text-gray-900 dark:text-emt-light font-semibold text-base">המשוב נשלח בהצלחה!</p>
-            <p className="text-gray-500 dark:text-emt-muted text-sm">תודה רבה על הפידבק 🙏</p>
+            <p className="text-fg font-semibold text-base">{t('obFbSent')}</p>
+            <p className="text-fg-muted text-sm">{t('obFbThanks')}</p>
           </div>
         ) : (
           <>
             <div className="flex flex-col gap-0.5">
-              <RequiredLabel>שם מלא</RequiredLabel>
+              <RequiredLabel>{t('obFbName')}</RequiredLabel>
               <input
                 type="text"
-                placeholder="ישראל ישראלי"
+                placeholder={t('obFbNamePh')}
                 value={name}
                 onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: undefined })); }}
                 disabled={status === 'sending'}
@@ -141,23 +146,23 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <RequiredLabel>טלפון</RequiredLabel>
+              <RequiredLabel>{t('obFbPhone')}</RequiredLabel>
               <input
                 type="tel"
-                dir="rtl"
+                dir="ltr"
                 placeholder="050-0000000"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: undefined })); }}
                 disabled={status === 'sending'}
-                className={`${inputCls(!!errors.phone)} text-right`}
+                className={`${inputCls(!!errors.phone)} text-start rtl:text-right`}
               />
               <FieldError msg={errors.phone} />
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <RequiredLabel>הודעה</RequiredLabel>
+              <RequiredLabel>{t('obFbMessage')}</RequiredLabel>
               <textarea
-                placeholder="הערה / הצעה לשיפור..."
+                placeholder={t('obFbMessagePh')}
                 value={message}
                 onChange={(e) => { setMessage(e.target.value); setErrors(prev => ({ ...prev, message: undefined })); }}
                 rows={4}
@@ -169,7 +174,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
 
             {/* Error */}
             {status === 'error' && (
-              <p className="text-red-500 text-sm text-center">שליחה נכשלה. נסה שוב.</p>
+              <p className="text-red-700 dark:text-red-500 text-sm text-center">{t('obFbFailed')}</p>
             )}
 
             {/* Actions */}
@@ -177,11 +182,11 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
               <button
                 onClick={handleClose}
                 disabled={status === 'sending'}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-emt-border
-                           text-gray-500 dark:text-emt-muted text-sm font-semibold active:scale-95
+                className="flex-1 py-2.5 rounded-xl border border-line
+                           text-fg-muted text-sm font-semibold active:scale-95
                            transition-transform disabled:opacity-40"
               >
-                ביטול
+                {t('cancel')}
               </button>
               <button
                 onClick={handleSend}
@@ -195,7 +200,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
                 ) : (
                   <Send size={15} />
                 )}
-                {status === 'sending' ? 'שולח...' : 'שלח משוב'}
+                {status === 'sending' ? t('obFbSending') : t('obFbTitle')}
               </button>
             </div>
           </>
