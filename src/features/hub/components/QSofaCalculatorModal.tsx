@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackInteraction, trackEvent } from '../../../utils/analytics';
+import { useTranslation, type TranslationKey } from '../../../i18n';
 
 interface Props { isOpen: boolean; onClose: () => void; }
 
@@ -10,18 +11,18 @@ interface Props { isOpen: boolean; onClose: () => void; }
 const CRITERIA = [
   {
     key: 'rr' as const,
-    title: 'קצב נשימה ≥ 22',
-    subtitle: 'נשימות לדקה',
+    title: 'calcQsofaRr' as TranslationKey,
+    subtitle: 'calcQsofaRrSub' as TranslationKey,
   },
   {
     key: 'sbp' as const,
-    title: 'לחץ דם סיסטולי ≤ 100',
-    subtitle: 'מ"מ כספית',
+    title: 'calcQsofaSbp' as TranslationKey,
+    subtitle: 'calcQsofaSbpSub' as TranslationKey,
   },
   {
     key: 'mental' as const,
-    title: 'שינוי מצב הכרה',
-    subtitle: 'GCS < 15 / בלבול חדש',
+    title: 'calcQsofaMental' as TranslationKey,
+    subtitle: 'calcQsofaMentalSub' as TranslationKey,
   },
 ];
 
@@ -39,30 +40,30 @@ function writeLS(key: string, value: boolean) {
 
 type SevKey = 'low' | 'moderate' | 'high';
 
-const SEV: Record<SevKey, { label: string; badge: string; score: string; bar: string; barBorder: string; description: string }> = {
+const SEV: Record<SevKey, { label: TranslationKey; badge: string; score: string; bar: string; barBorder: string; description: TranslationKey }> = {
   low:      {
-    label: 'סיכון נמוך',
+    label: 'calcQsofaSevLow',
     badge: 'bg-emt-green/20 text-emt-green',
     score: 'text-emt-green',
     bar: 'bg-emt-green/8',
     barBorder: 'border-emt-green/30',
-    description: 'מעקב — שקול הערכה מחדש אם המצב מחמיר',
+    description: 'calcQsofaDescLow',
   },
   moderate: {
-    label: 'חשד לספסיס',
-    badge: 'bg-emt-yellow/20 text-emt-yellow',
-    score: 'text-emt-yellow',
+    label: 'calcQsofaSevModerate',
+    badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow',
+    score: 'text-amber-600 dark:text-emt-yellow',
     bar: 'bg-emt-yellow/8',
     barBorder: 'border-emt-yellow/30',
-    description: 'יש לשקול הערכה נרחבת — תרביות דם, לקטט, נוזלים',
+    description: 'calcQsofaDescModerate',
   },
   high:     {
-    label: 'ספסיס אפשרי',
+    label: 'calcQsofaSevHigh',
     badge: 'bg-emt-red/20 text-emt-red',
     score: 'text-emt-red',
     bar: 'bg-emt-red/8',
     barBorder: 'border-emt-red/30',
-    description: 'הפעל פרוטוקול ספסיס — העברה מיידית לבית חולים',
+    description: 'calcQsofaDescHigh',
   },
 };
 
@@ -86,11 +87,11 @@ function CriterionRow({ title, subtitle, active, onToggle }: CriterionRowProps) 
     <button
       onClick={onToggle}
       className={[
-        'flex items-center gap-4 w-full px-4 py-4 rounded-2xl border text-right',
+        'flex items-center gap-4 w-full px-4 py-4 rounded-2xl border text-start',
         'transition-all active:scale-95',
         active
           ? 'border-amber-400/60 bg-amber-400/10'
-          : 'border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray',
+          : 'border-line bg-surface',
       ].join(' ')}
     >
       {/* Checkbox */}
@@ -98,29 +99,30 @@ function CriterionRow({ title, subtitle, active, onToggle }: CriterionRowProps) 
         'w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all',
         active
           ? 'bg-amber-400 border-amber-400'
-          : 'bg-transparent border-gray-300 dark:border-emt-border',
+          : 'bg-transparent border-line-strong',
       ].join(' ')}>
         {active && (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            {/* theme-ok: white tick on the solid amber circle */}
             <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         )}
       </div>
 
       {/* Text */}
-      <div className="flex-1 text-right">
-        <p className={`font-bold text-base leading-tight ${active ? 'text-amber-400' : 'text-gray-800 dark:text-emt-light'}`}>
+      <div className="flex-1 text-start">
+        <p className={`font-bold text-base leading-tight ${active ? 'text-amber-600 dark:text-amber-400' : 'text-fg'}`}>
           {title}
         </p>
-        <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5">{subtitle}</p>
+        <p className="text-fg-muted text-xs mt-0.5">{subtitle}</p>
       </div>
 
       {/* Point badge */}
       <span className={[
         'text-sm font-black px-2.5 py-1 rounded-full border transition-all',
         active
-          ? 'bg-amber-400/20 border-amber-400/50 text-amber-400'
-          : 'bg-gray-100 dark:bg-emt-dark border-gray-200 dark:border-emt-border text-gray-400 dark:text-emt-muted',
+          ? 'bg-amber-400/20 border-amber-400/50 text-amber-600 dark:text-amber-400'
+          : 'bg-surface-2 border-line text-fg-muted',
       ].join(' ')}>
         +1
       </span>
@@ -133,12 +135,13 @@ function CriterionRow({ title, subtitle, active, onToggle }: CriterionRowProps) 
 export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
 
+  const t = useTranslation();
   const [rr, setRr] = useState<boolean>(() => readLS('qsofa_rr'));
   const [sbp, setSbp] = useState<boolean>(() => readLS('qsofa_sbp'));
   const [mental, setMental] = useState<boolean>(() => readLS('qsofa_mental'));
 
   useEffect(() => {
-    if (isOpen) trackInteraction('מחשבון qSOFA', 'calculators');
+    if (isOpen) trackInteraction('מחשבון qSOFA', 'calculators'); // i18n-ok: analytics label, kept stable
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -162,13 +165,13 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page">
 
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
           <AlertTriangle size={20} className="text-amber-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מחשבון qSOFA</h2>
+          <h2 className="text-fg font-bold text-xl">{t('calcQsofaTitle')}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -178,13 +181,14 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
                        hover:bg-red-500/20 active:scale-95 transition-all"
           >
             <RotateCcw size={14} />
-            <span>אפס</span>
+            <span>{t('reset')}</span>
           </button>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+            className="w-10 h-10 rounded-full bg-surface-2 border border-line
                        flex items-center justify-center active:scale-90 transition-transform
-                       text-gray-500 dark:text-emt-muted"
+                       text-fg-muted"
+            aria-label={t('close')}
           >
             <X size={20} />
           </button>
@@ -194,32 +198,32 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-36">
 
-        <p className="text-gray-500 dark:text-emt-muted text-sm text-right px-1">
-          סמן את הקריטריונים הקיימים — ציון ≥ 2 מצביע על ספסיס אפשרי
+        <p className="text-fg-muted text-sm text-start px-1">
+          {t('calcQsofaIntro')}
         </p>
 
         {CRITERIA.map(c => (
           <CriterionRow
             key={c.key}
-            title={c.title}
-            subtitle={c.subtitle}
+            title={t(c.title)}
+            subtitle={t(c.subtitle)}
             active={values[c.key]}
             onToggle={() => setters[c.key](!values[c.key])}
           />
         ))}
 
         {/* Interpretation table */}
-        <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray p-4 mt-1">
-          <p className="text-gray-500 dark:text-emt-muted text-xs font-semibold mb-2 text-right">פרשנות ציון</p>
+        <div className="rounded-2xl border border-line bg-surface p-4 mt-1">
+          <p className="text-fg-muted text-xs font-semibold mb-2 text-start">{t('calcQsofaInterpretation')}</p>
           <div className="flex flex-col gap-1.5">
             {[
-              { range: '0', label: 'סיכון נמוך', color: 'text-emt-green' },
-              { range: '1', label: 'חשד לספסיס — מעקב', color: 'text-emt-yellow' },
-              { range: '2–3', label: 'ספסיס אפשרי — טיפול מיידי', color: 'text-emt-red' },
+              { range: '0', label: t('calcQsofaSevLow'), color: 'text-emt-green' },
+              { range: '1', label: t('calcQsofaRowModerate'), color: 'text-amber-600 dark:text-emt-yellow' },
+              { range: '2–3', label: t('calcQsofaRowHigh'), color: 'text-emt-red' },
             ].map(r => (
               <div key={r.range} className="flex items-center justify-between">
                 <span className={`font-bold text-sm ${r.color}`}>{r.label}</span>
-                <span className={`text-xs font-black px-2 py-0.5 rounded-full bg-gray-100 dark:bg-emt-dark ${r.color}`}>{r.range}</span>
+                <span dir="ltr" className={`text-xs font-black px-2 py-0.5 rounded-full bg-surface-2 ${r.color}`}>{r.range}</span>
               </div>
             ))}
           </div>
@@ -233,12 +237,12 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
         sev.bar, sev.barBorder,
       ].join(' ')}>
 
-        <div className="flex flex-col gap-0.5 flex-1 min-w-0 pr-3">
+        <div className="flex flex-col gap-0.5 flex-1 min-w-0 pe-3">
           <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full self-start ${sev.badge}`}>
-            {sev.label}
+            {t(sev.label)}
           </span>
-          <p className="text-gray-500 dark:text-emt-muted text-xs mt-1 leading-snug">
-            {sev.description}
+          <p className="text-fg-muted text-xs mt-1 leading-snug">
+            {t(sev.description)}
           </p>
         </div>
 
@@ -249,7 +253,7 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
           >
             {total}
           </span>
-          <span className="text-gray-400 dark:text-emt-muted text-sm font-semibold mb-1">/ 3</span>
+          <span className="text-fg-muted text-sm font-semibold mb-1">/ 3</span>
         </div>
       </div>
     </div>

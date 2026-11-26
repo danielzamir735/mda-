@@ -9,7 +9,6 @@ import {
 
 export interface ChildPartDef {
   id: BodyPartId;
-  label: string;
   percentage: number;
 }
 
@@ -22,27 +21,24 @@ export interface ChildPartDef {
 // Sum: 18 + 36 + 18 + 27 + 1 = 100.0%. All values are exact in IEEE-754
 // (multiples of 0.25), so floating-point summation never drifts past 100.
 export const CHILD_PARTS: ChildPartDef[] = [
-  { id: 'head_front',      label: 'ראש קדמי',     percentage: 9    },
-  { id: 'head_back',       label: 'ראש אחורי',    percentage: 9    },
-  { id: 'torso_front',     label: 'גוף קדמי',     percentage: 18   },
-  { id: 'torso_back',      label: 'גב',           percentage: 18   },
-  { id: 'right_arm_front', label: "יד י' קדמי",   percentage: 4.5  },
-  { id: 'right_arm_back',  label: "יד י' אחורי",  percentage: 4.5  },
-  { id: 'left_arm_front',  label: "יד ש' קדמי",   percentage: 4.5  },
-  { id: 'left_arm_back',   label: "יד ש' אחורי",  percentage: 4.5  },
-  { id: 'right_leg_front', label: "רגל י' קדמי",  percentage: 6.75 },
-  { id: 'right_leg_back',  label: "רגל י' אחורי", percentage: 6.75 },
-  { id: 'left_leg_front',  label: "רגל ש' קדמי",  percentage: 6.75 },
-  { id: 'left_leg_back',   label: "רגל ש' אחורי", percentage: 6.75 },
-  { id: 'perineum',        label: 'פרינאום',      percentage: 1    },
+  { id: 'head_front',      percentage: 9    },
+  { id: 'head_back',       percentage: 9    },
+  { id: 'torso_front',     percentage: 18   },
+  { id: 'torso_back',      percentage: 18   },
+  { id: 'right_arm_front', percentage: 4.5  },
+  { id: 'right_arm_back',  percentage: 4.5  },
+  { id: 'left_arm_front',  percentage: 4.5  },
+  { id: 'left_arm_back',   percentage: 4.5  },
+  { id: 'right_leg_front', percentage: 6.75 },
+  { id: 'right_leg_back',  percentage: 6.75 },
+  { id: 'left_leg_front',  percentage: 6.75 },
+  { id: 'left_leg_back',   percentage: 6.75 },
+  { id: 'perineum',        percentage: 1    },
 ];
 
 export const CHILD_PART_LOOKUP: Record<BodyPartId, ChildPartDef> =
   CHILD_PARTS.reduce((acc, p) => { acc[p.id] = p; return acc; }, {} as Record<BodyPartId, ChildPartDef>);
 
-const LABELS: Record<string, string> = CHILD_PARTS.reduce((acc, p) => {
-  acc[p.id] = p.label; return acc;
-}, {} as Record<string, string>);
 
 // Visual scale applied to the silhouette. Children are rendered ~80% of the
 // adult diagram size so the age difference is immediately obvious at a glance.
@@ -67,9 +63,9 @@ export default function ChildBodyDiagram({ selected, onToggle, onReset }: ChildB
     >
       <BodyDiagramShell>
         <div className="relative flex items-start justify-center gap-3 sm:gap-6">
-          <Silhouette side="front" selected={sel} onToggle={onToggle} labelLookup={LABELS} scale={CHILD_SCALE} childProportions />
-          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-emt-border to-transparent" />
-          <Silhouette side="back"  selected={sel} onToggle={onToggle} labelLookup={LABELS} scale={CHILD_SCALE} childProportions />
+          <Silhouette side="front" selected={sel} onToggle={onToggle} scale={CHILD_SCALE} childProportions />
+          <div className="self-stretch w-px bg-gradient-to-b from-transparent via-line-strong to-transparent" />
+          <Silhouette side="back"  selected={sel} onToggle={onToggle} scale={CHILD_SCALE} childProportions />
         </div>
 
         <PerineumResetBar

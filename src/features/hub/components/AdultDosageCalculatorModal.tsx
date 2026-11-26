@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Stethoscope, Scale } from 'lucide-react';
 import { useModalBackHandler } from '../../../hooks/useModalBackHandler';
 import { trackEvent } from '../../../utils/analytics';
+import { useTranslation } from '../../../i18n';
 import { ADULT_SCENARIOS } from '../data/adultProtocolData';
 import type { AdultDrug, AdultDrugRoute } from '../data/adultProtocolData';
 
@@ -21,30 +22,30 @@ function resolveDose(route: AdultDrugRoute, weight: number): string {
 
 function DrugCard({ drug, weight }: { drug: AdultDrug; weight: number }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray overflow-hidden">
+    <div className="rounded-2xl border border-line bg-surface overflow-hidden">
       <div className="p-5">
         <div className="mb-4">
           <p className={`font-bold text-2xl ${drug.color}`}>{drug.name}</p>
-          <p className="text-gray-400 dark:text-emt-muted text-base mt-0.5">{drug.sub}</p>
+          <p className="text-fg-muted text-base mt-0.5">{drug.sub}</p>
           {drug.note && (
-            <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{drug.note}</p>
+            <p className="text-fg-muted text-sm mt-1 leading-relaxed">{drug.note}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-4">
           {drug.routes.map((r, i) => (
-            <div key={i} className={i > 0 ? 'border-t border-gray-100 dark:border-emt-border pt-4' : ''}>
-              <span className="inline-block text-base font-bold text-gray-500 dark:text-emt-muted bg-gray-100 dark:bg-emt-dark px-4 py-1.5 rounded-full mb-2">
+            <div key={i} className={i > 0 ? 'border-t border-line pt-4' : ''}>
+              <span className="inline-block text-base font-bold text-fg-muted bg-surface-2 px-4 py-1.5 rounded-full mb-2">
                 {r.route}
               </span>
-              <p className="text-gray-900 dark:text-emt-light font-bold text-4xl leading-tight" dir="ltr">
+              <p className="text-fg font-bold text-4xl leading-tight" dir="ltr">
                 {resolveDose(r, weight)}
               </p>
               {r.max && (
-                <p className="text-gray-400 dark:text-emt-muted text-sm mt-1.5 leading-relaxed" dir="ltr">{r.max}</p>
+                <p className="text-fg-muted text-sm mt-1.5 leading-relaxed" dir="ltr">{r.max}</p>
               )}
               {r.note && (
-                <p className="text-gray-500 dark:text-emt-muted text-sm mt-1 leading-relaxed">{r.note}</p>
+                <p className="text-fg-muted text-sm mt-1 leading-relaxed">{r.note}</p>
               )}
             </div>
           ))}
@@ -64,6 +65,7 @@ const solidBg: Record<string, string> = Object.fromEntries(
 
 export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   useModalBackHandler(isOpen, onClose);
+  const t = useTranslation();
 
   const [weightInput, setWeightInput] = useState(() => {
     try { return localStorage.getItem(STORAGE_WEIGHT) ?? ''; } catch { return ''; }
@@ -101,19 +103,19 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-50 dark:bg-emt-dark overflow-x-hidden">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-page overflow-x-hidden">
       {/* Header */}
-      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+      <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
           <Stethoscope size={22} className="text-orange-400" />
-          <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl">מינון תרופות מבוגרים ALS</h2>
+          <h2 className="text-fg font-bold text-xl">{t('calcAdultTitle')}</h2>
         </div>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+          className="w-10 h-10 rounded-full bg-surface-2 border border-line
                      flex items-center justify-center active:scale-90 transition-transform
-                     text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
-          aria-label="סגור"
+                     text-fg-muted hover:text-fg"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
@@ -126,8 +128,8 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
           <div className="w-12 h-12 rounded-full bg-orange-400/15 border-2 border-orange-400/30 flex items-center justify-center mb-2">
             <Scale size={22} className="text-orange-400" />
           </div>
-          <h3 className="text-gray-900 dark:text-emt-light font-bold text-base mb-0.5">מינון תרופות מבוגרים</h3>
-          <p className="text-gray-400 dark:text-emt-muted text-xs">הזן גיל ומשקל לחישוב מינונים מדויק</p>
+          <h3 className="text-fg font-bold text-base mb-0.5">{t('calcAdultHero')}</h3>
+          <p className="text-fg-muted text-xs">{t('calcEnterAgeWeightHint')}</p>
         </div>
 
         {/* Inputs */}
@@ -135,30 +137,30 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
 
           {/* Age input */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">גיל המטופל</label>
+            <label className="text-xs font-bold text-fg">{t('calcPatientAge')}</label>
             <input
               type="number"
               inputMode="numeric"
-              placeholder="הזן גיל"
+              placeholder={t('calcEnterAge')}
               value={ageInput}
               onChange={e => { setAgeInput(e.target.value); setCalculated(false); }}
-              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+              className="w-full rounded-xl border-2 border-line bg-surface
+                         px-3 py-2.5 text-fg text-base placeholder-fg-subtle
                          focus:outline-none focus:border-orange-400 transition-colors"
             />
           </div>
 
           {/* Weight input */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-gray-700 dark:text-emt-light">משקל (ק"ג)</label>
+            <label className="text-xs font-bold text-fg">{t('calcWeightKgLabel')}</label>
             <input
               type="number"
               inputMode="decimal"
-              placeholder='הזן משקל בק"ג'
+              placeholder={t('calcEnterWeightKg')}
               value={weightInput}
               onChange={e => { setWeightInput(e.target.value); setCalculated(false); }}
-              className="w-full rounded-xl border-2 border-gray-200 dark:border-emt-border bg-white dark:bg-emt-gray
-                         px-3 py-2.5 text-gray-900 dark:text-emt-light text-base placeholder-gray-300 dark:placeholder-emt-muted
+              className="w-full rounded-xl border-2 border-line bg-surface
+                         px-3 py-2.5 text-fg text-base placeholder-fg-subtle
                          focus:outline-none focus:border-orange-400 transition-colors"
             />
           </div>
@@ -167,11 +169,12 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
           <button
             onClick={handleCalculate}
             disabled={!weightNum}
+            // theme-ok: white text on the orange button
             className="w-full rounded-xl bg-orange-400 text-white font-bold text-base py-3 mt-1
                        active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed
                        shadow-md shadow-orange-400/25"
           >
-            חשב מינונים
+            {t('calcCalculateDoses')}
           </button>
         </div>
 
@@ -180,15 +183,15 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
           <>
             {/* Info badge */}
             <div className="px-4 mt-4 flex items-center justify-between">
-              <p className="text-gray-900 dark:text-emt-light font-bold text-xl">בחר תרחיש</p>
+              <p className="text-fg font-bold text-xl">{t('calcChooseScenario')}</p>
               <div className="flex items-center gap-2">
                 {ageNum && (
                   <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
-                    גיל {ageNum}
+                    {t('calcAgeBadge', { age: ageNum })}
                   </span>
                 )}
                 <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
-                  {w} ק"ג
+                  {t('calcKgValue', { w })}
                 </span>
               </div>
             </div>
@@ -202,8 +205,9 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
                   className={`rounded-2xl py-5 text-lg font-bold border-2 transition-all w-full
                     ${i === ADULT_SCENARIOS.length - 1 && ADULT_SCENARIOS.length % 2 !== 0 ? 'col-span-2' : ''}
                     ${i === activeScenario
+                      // theme-ok: white text on the scenario's solid colour
                       ? `${solidBg[s.id]} text-white border-transparent shadow-lg scale-[1.02]`
-                      : `bg-white dark:bg-emt-gray ${s.color} ${s.borderColor}`
+                      : `bg-surface ${s.color} ${s.borderColor}`
                     }
                   `}
                 >

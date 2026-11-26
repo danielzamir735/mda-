@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { useTranslation, type TranslationKey } from '../../../i18n';
 
 import headSvgRaw      from '../../../assets/body-parts/head-back.svg?raw';
 import torsoSvgRaw     from '../../../assets/body-parts/torso-back.svg?raw';
@@ -74,7 +75,6 @@ interface SilhouetteProps {
   side: 'front' | 'back';
   selected: Set<BodyPartId>;
   onToggle: (id: BodyPartId) => void;
-  labelLookup: Record<string, string>;
   scale?: number;
   childProportions?: boolean;
 }
@@ -82,7 +82,9 @@ interface SilhouetteProps {
 // One full silhouette (front OR back), absolute-positioned in a logical 160×380
 // canvas. Each part's width × height matches the SVG viewBox aspect ratio so the
 // path fills the container edge-to-edge — that's what eliminates the gaps.
-export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, childProportions = false }: SilhouetteProps) {
+export function Silhouette({ side, selected, onToggle, scale = 1, childProportions = false }: SilhouetteProps) {
+  const t = useTranslation();
+  const partLabel = (id: BodyPartId) => t(`calcPart_${id}` as TranslationKey);
   const W = 160;
   const H = 380;
 
@@ -124,8 +126,8 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-emt-muted">
-        {side === 'front' ? 'קדמי' : 'אחורי'}
+      <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-fg-muted">
+        {side === 'front' ? t('calcBodyFront') : t('calcBodyBack')}
       </p>
 
       {/* Outer wrapper takes the post-scale layout space so the parent flex layout collapses correctly. */}
@@ -150,34 +152,34 @@ export function Silhouette({ side, selected, onToggle, labelLookup, scale = 1, c
 
           {/* HEAD — top center. h from 370×552 viewBox aspect (≈0.67). */}
           <div className="absolute" style={{ left: 58, top: 0, width: 44, height: 66 }}>
-            <PartButton svg={headSvgRaw} selected={selected.has(idHead)} onClick={() => onToggle(idHead)} width={44} height={66} ariaLabel={labelLookup[idHead]} mirrored={mirror} />
+            <PartButton svg={headSvgRaw} selected={selected.has(idHead)} onClick={() => onToggle(idHead)} width={44} height={66} ariaLabel={partLabel(idHead)} mirrored={mirror} />
           </div>
 
           {/* RIGHT ARM — left side of diagram. Mirrored shoulder lands at canvas x≈36-46,
                giving ~2px overlap with torso left edge (44) — snug, not crushing. */}
           <div className="absolute" style={{ left: 15, top: armTop, width: 34, height: 111 }}>
-            <PartButton svg={rightArmSvgRaw} selected={selected.has(idRArm)} onClick={() => onToggle(idRArm)} width={34} height={111} ariaLabel={labelLookup[idRArm]} mirrored={mirror} />
+            <PartButton svg={rightArmSvgRaw} selected={selected.has(idRArm)} onClick={() => onToggle(idRArm)} width={34} height={111} ariaLabel={partLabel(idRArm)} mirrored={mirror} />
           </div>
 
           {/* LEFT ARM — right side of diagram. Mirrored shoulder lands at canvas x≈115-123,
                giving ~1px overlap with torso right edge (116) — snug, not crushing. */}
           <div className="absolute" style={{ left: 111, top: armTop, width: 34, height: 111 }}>
-            <PartButton svg={leftArmSvgRaw} selected={selected.has(idLArm)} onClick={() => onToggle(idLArm)} width={34} height={111} ariaLabel={labelLookup[idLArm]} mirrored={mirror} />
+            <PartButton svg={leftArmSvgRaw} selected={selected.has(idLArm)} onClick={() => onToggle(idLArm)} width={34} height={111} ariaLabel={partLabel(idLArm)} mirrored={mirror} />
           </div>
 
           {/* TORSO — paints over arm shoulders + head neck for a clean silhouette. 798×1443 aspect. */}
           <div className="absolute" style={{ left: 44, top: torsoTop, width: 72, height: 130 }}>
-            <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={labelLookup[idTorso]} mirrored={mirror} />
+            <PartButton svg={torsoSvgRaw} selected={selected.has(idTorso)} onClick={() => onToggle(idTorso)} width={72} height={130} ariaLabel={partLabel(idTorso)} mirrored={mirror} />
           </div>
 
           {/* RIGHT LEG — left half under torso. 359×1749 aspect (~0.205). */}
           <div className="absolute" style={{ left: rightLegLeft, top: legTop, width: legW, height: legH }}>
-            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={legW} height={legH} ariaLabel={labelLookup[idRLeg]} mirrored={mirror} />
+            <PartButton svg={rightLegSvgRaw} selected={selected.has(idRLeg)} onClick={() => onToggle(idRLeg)} width={legW} height={legH} ariaLabel={partLabel(idRLeg)} mirrored={mirror} />
           </div>
 
           {/* LEFT LEG — right half under torso. */}
           <div className="absolute" style={{ left: leftLegLeft, top: legTop, width: legW, height: legH }}>
-            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={legW} height={legH} ariaLabel={labelLookup[idLLeg]} mirrored={mirror} />
+            <PartButton svg={leftLegSvgRaw} selected={selected.has(idLLeg)} onClick={() => onToggle(idLLeg)} width={legW} height={legH} ariaLabel={partLabel(idLLeg)} mirrored={mirror} />
           </div>
         </div>
       </div>
@@ -198,6 +200,7 @@ export function BodyDiagramShell({ children }: ShellProps) {
         'bg-white/40 dark:bg-white/[0.04]',
         'backdrop-blur-xl backdrop-saturate-150',
         'border border-white/60 dark:border-white/10',
+        // theme-ok: light and dark shadows are paired on this line
         'shadow-[0_8px_32px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]',
       ].join(' ')}
     >
@@ -208,7 +211,7 @@ export function BodyDiagramShell({ children }: ShellProps) {
           backgroundImage:
             'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
           backgroundSize: '14px 14px',
-          color: '#0f172a',
+          color: 'rgb(var(--fg))',
         }}
       />
       {children}
@@ -223,8 +226,9 @@ interface PerineumResetBarProps {
 }
 
 export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }: PerineumResetBarProps) {
+  const t = useTranslation();
   return (
-    <div className="relative mt-4 flex items-center justify-center gap-2 flex-wrap" dir="rtl">
+    <div className="relative mt-4 flex items-center justify-center gap-2 flex-wrap">
       <button
         type="button"
         onClick={onTogglePerineum}
@@ -233,19 +237,19 @@ export function PerineumResetBar({ selectedPerineum, onTogglePerineum, onReset }
           'px-3 py-2 rounded-xl border font-bold text-sm transition-colors active:scale-95',
           selectedPerineum
             ? 'border-emt-red/50 bg-emt-red/10 text-emt-red'
-            : 'border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted',
+            : 'border-line bg-surface-2 text-fg-muted',
         ].join(' ')}
       >
-        איבר מין <span className="text-xs opacity-60">(1%)</span>
+        {t('calcGenitals')} <span className="text-xs opacity-60">(1%)</span>
       </button>
 
       <button
         type="button"
         onClick={onReset}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-emt-border bg-gray-100 dark:bg-emt-gray text-gray-600 dark:text-emt-muted font-bold text-sm active:scale-95 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-line bg-surface-2 text-fg-muted font-bold text-sm active:scale-95 transition-colors"
       >
         <RotateCcw size={14} />
-        נקה הכל
+        {t('calcClearAll')}
       </button>
     </div>
   );
