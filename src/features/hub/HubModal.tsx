@@ -89,7 +89,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'concepts',
     label: 'מרכז ידע אישי',
     icon: Sparkles,
-    color: 'text-purple-300',
+    color: 'text-purple-500 dark:text-purple-300',
     border: 'border-purple-400/35',
     bg: 'bg-purple-400/10',
   },
@@ -306,21 +306,96 @@ const HUB_ITEMS: HubItem[] = [
   },
 ];
 
-const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call']);
+// תיקיות במרכז הכלים: כמה כלים קרובים מוצגים כאריח אחד, ולחיצה עליו פותחת רשימה של הכלים שבתוכו
+type HubFolder = HubItem & { children: string[] };
 
-// v3: bumped so the new hospital-load tile lands in its intended top-right
-// slot for existing users too — loadHubOrder() otherwise appends any id
-// missing from a saved order to the end, not the front.
-const HUB_STORAGE_KEY = 'hub_order_v3';
-const DEFAULT_HUB_ORDER = HUB_ITEMS.map(item => item.id);
+const HUB_FOLDERS: HubFolder[] = [
+  {
+    id: 'folder-hospitals',
+    label: 'בתי חולים',
+    subtitle: 'עומסים עכשיו · מידע',
+    icon: Building2,
+    color: 'text-cyan-300',
+    border: 'border-cyan-400/30',
+    bg: 'bg-cyan-400/10',
+    children: ['hospital-load', 'hospitals'],
+  },
+  {
+    id: 'folder-learning',
+    label: 'למידה ותרגול',
+    subtitle: 'אתגר יומי · סימולטורים · עוד',
+    icon: Trophy,
+    color: 'text-yellow-400',
+    border: 'border-yellow-400/40',
+    bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
+    children: ['daily-challenge', 'simulators', 'golden-hour', 'concepts'],
+  },
+  {
+    id: 'folder-meds',
+    label: 'תרופות',
+    subtitle: 'מידע · קבוצות · נפוצות',
+    icon: Pill,
+    color: 'text-teal-400',
+    border: 'border-teal-400/30',
+    bg: 'bg-teal-400/10',
+    children: ['medication-scanner', 'medications-classification', 'common-meds'],
+  },
+  {
+    id: 'folder-knowledge',
+    label: 'ספריית ידע רפואי',
+    subtitle: 'מדדים · מחלות · מושגים · תקנים',
+    icon: BookOpen,
+    color: 'text-blue-400',
+    border: 'border-blue-400/30',
+    bg: 'bg-blue-400/10',
+    children: ['clinical', 'medhistory', 'medical-terms', 'kit-standards'],
+  },
+];
+
+const FOLDER_BY_ID = new Map(HUB_FOLDERS.map(f => [f.id, f]));
+// כלי שנמצא בתוך תיקייה ← מזהה התיקייה
+const FOLDER_OF_CHILD = new Map(HUB_FOLDERS.flatMap(f => f.children.map(c => [c, f.id] as const)));
+const ITEM_BY_ID = new Map(HUB_ITEMS.map(item => [item.id, item]));
+
+// הרשימה הראשית: כל כלי שלא בתיקייה, וכל תיקייה במקום שבו היה הכלי הראשון שלה
+const TOP_ITEMS: HubItem[] = [];
+for (const item of HUB_ITEMS) {
+  const folderId = FOLDER_OF_CHILD.get(item.id);
+  const top = folderId ? FOLDER_BY_ID.get(folderId)! : item;
+  if (!TOP_ITEMS.includes(top)) TOP_ITEMS.push(top);
+}
+
+const ENABLED = new Set(['address-finder', 'golden-hour', 'campaign', 'concepts', 'medical-terms', 'daily-challenge', 'calculators', 'settings', 'clinical', 'medhistory', 'defibrillator', 'hospitals', 'updates', 'kit-standards', 'medications-classification', 'common-meds', 'install-app', 'realtime-translate', 'poison-centers', 'accessibility', 'breathing', 'medication-scanner', 'simulators', 'soul-departure', 'whatsapp-community', 'daily-push', 'hospital-load', 'after-call', ...HUB_FOLDERS.map(f => f.id)]);
+
+// v4: tools grouped into folders. A v3 order is migrated by replacing each
+// grouped tool with its folder, at the place of the first one.
+const HUB_STORAGE_KEY = 'hub_order_v4';
+const LEGACY_HUB_STORAGE_KEY = 'hub_order_v3';
+const DEFAULT_HUB_ORDER = TOP_ITEMS.map(item => item.id);
 
 const NEW_ON_TOP = ['address-finder'];
 // tools moved down once for users who already have a saved order (golden hour gave its top spot to the address finder)
 const DEMOTED_ONCE: { key: string; ids: string[] } = { key: 'hub_demoted_v1', ids: ['golden-hour'] };
 
+function migrateLegacyOrder(ids: string[]): string[] {
+  const out: string[] = [];
+  for (const id of ids) {
+    const mapped = FOLDER_OF_CHILD.get(id) ?? id;
+    if (!out.includes(mapped)) out.push(mapped);
+  }
+  return out;
+}
+
 function loadHubOrder(): string[] {
   try {
-    const saved = localStorage.getItem(HUB_STORAGE_KEY);
+    let saved = localStorage.getItem(HUB_STORAGE_KEY);
+    if (!saved) {
+      const legacy = localStorage.getItem(LEGACY_HUB_STORAGE_KEY);
+      if (legacy) {
+        saved = JSON.stringify(migrateLegacyOrder(JSON.parse(legacy)));
+        localStorage.setItem(HUB_STORAGE_KEY, saved);
+      }
+    }
     if (saved) {
       const parsed: string[] = JSON.parse(saved);
       const valid = parsed.filter(id => DEFAULT_HUB_ORDER.includes(id));
@@ -398,7 +473,10 @@ export default function HubModal({
   const [editMode, setEditMode] = useState(false);
   const [hubOrder, setHubOrder] = useState<string[]>(() => loadHubOrder());
 
-  const orderedItems = hubOrder.map(id => HUB_ITEMS.find(item => item.id === id)!).filter(Boolean);
+  const [openFolderId, setOpenFolderId] = useState<string | null>(null);
+  const openFolder = openFolderId ? FOLDER_BY_ID.get(openFolderId) ?? null : null;
+
+  const orderedItems = hubOrder.map(id => TOP_ITEMS.find(item => item.id === id)!).filter(Boolean);
 
   const handleHubReorder = (newItems: HubItem[]) => {
     const newOrder = newItems.map(item => item.id);
@@ -428,10 +506,12 @@ export default function HubModal({
 
   // Reset simulators view when hub closes so re-opening always shows the tools menu
   useEffect(() => {
-    if (!isOpen) { setShowSimulators(false); setShowAddressFinder(false); }
+    if (!isOpen) { setShowSimulators(false); setShowAddressFinder(false); setOpenFolderId(null); }
   }, [isOpen]);
 
   useModalBackHandler(isOpen, onClose);
+  // Back from a folder returns to the tools menu
+  useModalBackHandler(openFolderId !== null, () => setOpenFolderId(null));
   // Give simulators its own back-button layer so back returns to the tools menu, not home
   useModalBackHandler(showSimulators, () => setShowSimulators(false));
   useModalBackHandler(showWhatsAppCommunity, () => setShowWhatsAppCommunity(false));
@@ -465,6 +545,9 @@ export default function HubModal({
   };
 
   const handleItemClick = (id: string) => {
+    const folder = FOLDER_BY_ID.get(id);
+    if (folder) { trackInteraction(`תיקייה · ${folder.label}`, 'hub_folder'); setOpenFolderId(id); return; }
+
     const tracking = HUB_TRACKING[id];
     if (tracking) trackInteraction(tracking[0], tracking[1]);
 
@@ -570,7 +653,7 @@ https://hovesh-plus.vercel.app/`;
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {orderedItems.map(({ id, label, subtitle, icon: Icon, color, border, bg, href }) => {
-              if (id === 'hospital-load') {
+              if (id === 'folder-hospitals') {
                 return (
                   <div key={id} className="relative">
                     <motion.div
@@ -587,7 +670,7 @@ https://hovesh-plus.vercel.app/`;
                       transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
                     />
                     <motion.button
-                      onClick={() => handleItemClick('hospital-load')}
+                      onClick={() => handleItemClick('folder-hospitals')}
                       className="relative overflow-hidden rounded-2xl active:scale-95 transition-transform w-full min-h-36"
                     >
                       <motion.div
@@ -607,30 +690,12 @@ https://hovesh-plus.vercel.app/`;
                           WebkitBackdropFilter: 'blur(14px)',
                         }}
                       >
-                        <Gauge size={28} className="text-cyan-300" />
-                        <span className="text-cyan-200 font-bold text-sm leading-tight">עומסים בבתי חולים</span>
+                        <Building2 size={28} className="text-cyan-300" />
+                        <span className="text-cyan-200 font-bold text-sm leading-tight">{label}</span>
+                        <span className="text-cyan-100/60 text-xs leading-tight">{subtitle}</span>
                       </div>
                     </motion.button>
                   </div>
-                );
-              }
-
-              if (id === 'concepts') {
-                return (
-                  <motion.button
-                    key={id}
-                    onClick={() => handleItemClick('concepts')}
-                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-purple-400/35 p-3 active:scale-95 transition-transform relative overflow-hidden min-h-36 text-center w-full"
-                    style={{
-                      background: 'linear-gradient(160deg, rgba(168,85,247,0.15) 0%, rgba(109,40,217,0.08) 100%)',
-                      backdropFilter: 'blur(14px)',
-                      WebkitBackdropFilter: 'blur(14px)',
-                      boxShadow: '0 0 18px rgba(168,85,247,0.12)',
-                    }}
-                  >
-                    <Sparkles size={28} className="text-purple-300 relative z-10" />
-                    <span className="text-purple-100 font-bold text-sm leading-tight relative z-10">מרכז ידע אישי</span>
-                  </motion.button>
                 );
               }
 
@@ -715,6 +780,73 @@ https://hovesh-plus.vercel.app/`;
         </HapticButton>
 
       </div>
+
+      {/* Folder — list of the tools grouped under one tile */}
+      {openFolder && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-gray-50 dark:bg-emt-dark">
+          <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-emt-border">
+            <div className="flex items-center gap-2 min-w-0">
+              <openFolder.icon size={22} className={`${openFolder.color} shrink-0`} />
+              <div className="min-w-0">
+                <h2 className="text-gray-900 dark:text-emt-light font-bold text-xl leading-tight">{openFolder.label}</h2>
+                <p className="text-gray-500 dark:text-emt-muted text-xs truncate">{openFolder.subtitle}</p>
+              </div>
+            </div>
+            <HapticButton
+              onClick={() => setOpenFolderId(null)}
+              pressScale={0.88}
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-emt-gray border border-gray-200 dark:border-emt-border
+                         flex items-center justify-center shrink-0
+                         text-gray-500 dark:text-emt-muted hover:text-gray-900 dark:hover:text-emt-light"
+              aria-label="חזרה למרכז הכלים"
+            >
+              <X size={20} />
+            </HapticButton>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            {openFolder.children.map(childId => {
+              const child = ITEM_BY_ID.get(childId);
+              if (!child) return null;
+              const { icon: Icon, label, subtitle, color, border, bg, href } = child;
+              const rowClass = `flex items-center gap-4 w-full rounded-2xl border ${border} ${bg} p-4 active:scale-[0.98] transition-transform text-right`;
+              const rowContent = (
+                <>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${bg} border ${border}`}>
+                    <Icon size={22} className={color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`${color} font-bold text-base leading-tight`}>{label}</p>
+                    {subtitle && <p className="text-gray-500 dark:text-emt-muted text-xs mt-0.5 leading-tight">{subtitle}</p>}
+                  </div>
+                  {href
+                    ? <ExternalLink size={16} className="text-gray-400 dark:text-emt-muted shrink-0" />
+                    : <span className="text-gray-400 dark:text-emt-muted text-lg shrink-0">←</span>}
+                </>
+              );
+              if (href) {
+                return (
+                  <a
+                    key={childId}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={rowClass}
+                    onClick={() => trackInteraction(childId === 'golden-hour' ? 'שעת הזהב · פתיחה מהאפליקציה' : label, 'learning')}
+                  >
+                    {rowContent}
+                  </a>
+                );
+              }
+              return (
+                <HapticButton key={childId} pressScale={0.97} onClick={() => handleItemClick(childId)} className={rowClass}>
+                  {rowContent}
+                </HapticButton>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Simulators Modal */}
       {showSimulators && (
