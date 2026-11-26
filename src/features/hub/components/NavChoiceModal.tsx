@@ -60,7 +60,7 @@ export default function NavChoiceModal({ hospital, onClose }: Props) {
             onClick={onClose}
             className="flex items-center justify-center gap-3 rounded-xl py-4
                        bg-[#33ccff]/10 border border-[#33ccff]/40
-                       text-sky-600 dark:text-[#33ccff] font-bold text-lg
+                       text-sky-700 dark:text-[#33ccff] font-bold text-lg
                        active:scale-95 transition-transform"
           >
             Waze
@@ -72,7 +72,7 @@ export default function NavChoiceModal({ hospital, onClose }: Props) {
             onClick={onClose}
             className="flex items-center justify-center gap-3 rounded-xl py-4
                        bg-green-600/10 border border-green-500/40
-                       text-green-600 dark:text-green-400 font-bold text-lg
+                       text-green-700 dark:text-green-400 font-bold text-lg
                        active:scale-95 transition-transform"
           >
             Google Maps

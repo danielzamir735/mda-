@@ -50,7 +50,7 @@ function TermRow({
       <button
         onClick={() => { trackEvent('medical_term_tts_played'); speakEnglish(item.speech); }}
         className="w-10 h-10 shrink-0 rounded-xl bg-sky-500/10 border border-sky-400/25
-                   flex items-center justify-center text-sky-600 dark:text-sky-400
+                   flex items-center justify-center text-sky-700 dark:text-sky-400
                    active:scale-90 transition-transform"
         aria-label={t('refPlayPronunciation', { term: item.abbr })}
       >
@@ -179,7 +179,7 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
         {/* Header */}
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <GraduationCap size={22} className="text-sky-500 dark:text-sky-400" />
+            <GraduationCap size={22} className="text-sky-700 dark:text-sky-400" />
             <div>
               <h2 className="text-fg font-bold text-xl leading-tight">{t('refTermsTitle')}</h2>
               <p className="text-fg-muted text-xs">{t('refTermsSubtitle')}</p>
@@ -292,15 +292,15 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                            active:scale-[0.98] transition-transform"
               >
                 <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0">
-                  <Brain size={20} className="text-sky-500 dark:text-sky-400" />
+                  <Brain size={20} className="text-sky-700 dark:text-sky-400" />
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">{t('refDictionaryTraining')}</span>
-                  <span className="text-sky-700/70 dark:text-sky-300/50 text-xs mt-0.5">
+                  <span className="text-sky-700 dark:text-sky-300/50 text-xs mt-0.5">
                     {t('refTermsAndChapters', { n: TOTAL_DICTIONARY_TERMS, c: DICTIONARY_SECTIONS.length })}
                   </span>
                 </div>
-                <div className="ms-auto text-sky-500/50 text-lg ltr:rotate-180">←</div>
+                <div className="ms-auto text-sky-700 dark:text-sky-500/50 text-lg ltr:rotate-180">←</div>
               </button>
 
               {DICTIONARY_SECTIONS.map((section) => {
@@ -355,15 +355,15 @@ export default function MedicalAbbreviationsModal({ isOpen, onClose }: Props) {
                        active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0">
-              <Brain size={20} className="text-sky-500 dark:text-sky-400" />
+              <Brain size={20} className="text-sky-700 dark:text-sky-400" />
             </div>
             <div className="flex flex-col items-start">
               <span className="text-sky-700 dark:text-sky-200 font-bold text-base leading-tight">{t('refTrainingMode')}</span>
-              <span className="text-sky-700/70 dark:text-sky-300/50 text-xs mt-0.5">
+              <span className="text-sky-700 dark:text-sky-300/50 text-xs mt-0.5">
                 {t('refTermsMastered', { n: ALL_ABBREVIATIONS.length, m: masteredCount })}
               </span>
             </div>
-            <div className="ms-auto text-sky-500/50 text-lg ltr:rotate-180">←</div>
+            <div className="ms-auto text-sky-700 dark:text-sky-500/50 text-lg ltr:rotate-180">←</div>
           </button>
 
           {ABBREVIATION_CATEGORIES.map((cat) => (

@@ -38,7 +38,7 @@ export default function MetronomeCard() {
       <div className="flex flex-col items-center flex-1 justify-center gap-0">
         <span
           className={`font-mono font-black tabular-nums leading-none transition-colors duration-300 ${
-            isPlaying ? 'text-amber-700 dark:text-emt-yellow' : 'text-fg'
+            isPlaying ? 'text-amber-800 dark:text-emt-yellow' : 'text-fg'
           }`}
           style={{ fontSize: 'clamp(2.8rem, 11vw, 5rem)' }}
         >
@@ -49,9 +49,9 @@ export default function MetronomeCard() {
           <div className="mt-1.5 text-center">
             <p className="text-sm text-fg-subtle">
               {t('lastSession')}{' '}
-              <span className="text-lg font-medium text-blue-600 dark:text-blue-400/90 tabular-nums">{lastCPRTime}</span>
+              <span className="text-lg font-medium text-blue-700 dark:text-blue-400/90 tabular-nums">{lastCPRTime}</span>
               {lastCPRShocks > 0 && (
-                <span className="ms-1 text-amber-600 dark:text-yellow-400 font-bold"> · ⚡{lastCPRShocks}</span>
+                <span className="ms-1 text-amber-800 dark:text-yellow-400 font-bold"> · ⚡{lastCPRShocks}</span>
               )}
             </p>
           </div>

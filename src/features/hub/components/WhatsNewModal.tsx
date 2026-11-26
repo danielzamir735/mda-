@@ -19,7 +19,7 @@ const UPDATES: UpdateItem[] = [
   {
     type: 'icon',
     Icon: Wind,
-    iconClass: 'text-teal-500',
+    iconClass: 'text-teal-700 dark:text-teal-500',
     text: 'obWnBreathing',
   },
   // ── v2.1 ──────────────────────────────────────────
@@ -27,19 +27,19 @@ const UPDATES: UpdateItem[] = [
   {
     type: 'icon',
     Icon: BookOpen,
-    iconClass: 'text-amber-500',
+    iconClass: 'text-amber-800 dark:text-amber-500',
     text: 'obWnDictionary',
   },
   {
     type: 'icon',
     Icon: Zap,
-    iconClass: 'text-yellow-500',
+    iconClass: 'text-yellow-800 dark:text-yellow-500',
     text: 'obWnInstall',
   },
   {
     type: 'icon',
     Icon: Camera,
-    iconClass: 'text-sky-500',
+    iconClass: 'text-sky-700 dark:text-sky-500',
     text: 'obWnCamera4k',
   },
   {
@@ -53,19 +53,19 @@ const UPDATES: UpdateItem[] = [
   {
     type: 'icon',
     Icon: Pill,
-    iconClass: 'text-green-500',
+    iconClass: 'text-green-800 dark:text-green-500',
     text: 'obWnMedGroups',
   },
   {
     type: 'icon',
     Icon: Stethoscope,
-    iconClass: 'text-sky-500',
+    iconClass: 'text-sky-700 dark:text-sky-500',
     text: 'obWnCommonMeds',
   },
   {
     type: 'icon',
     Icon: Tablet,
-    iconClass: 'text-purple-500',
+    iconClass: 'text-purple-700 dark:text-purple-500',
     text: 'obWnTabletHistory',
   },
   { type: 'emoji', emoji: '🏥', text: 'obWnHospitals' },

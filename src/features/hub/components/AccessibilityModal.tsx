@@ -182,7 +182,7 @@ export default function AccessibilityModal({ isOpen, onClose }: Props) {
               className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-surface-2 transition-colors"
             >
               <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Share2 size={18} className="text-blue-500" />
+                <Share2 size={18} className="text-blue-700 dark:text-blue-500" />
               </div>
               <span className="text-fg font-medium text-sm flex-1 text-start">{t('hubA11yShareApp')}</span>
               <ForwardIcon size={16} className="text-fg-subtle" />

@@ -112,7 +112,7 @@ function LegalDocsView({ onClose, initialDoc }: { onClose: () => void; initialDo
             {translate('obLegalContact', undefined, 'he')}{' '}
             <a
               href={`mailto:${LEGAL_CONTACT_EMAIL}`}
-              className="text-blue-600 dark:text-blue-400 font-semibold underline underline-offset-2"
+              className="text-blue-700 dark:text-blue-400 font-semibold underline underline-offset-2"
             >
               {LEGAL_CONTACT_EMAIL}
             </a>

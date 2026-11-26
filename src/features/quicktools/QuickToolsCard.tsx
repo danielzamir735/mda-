@@ -58,9 +58,9 @@ export default function QuickToolsCard() {
               className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
                          border border-emt-green/40 bg-emt-green/10"
             >
-              <Activity size={18} className="text-green-600 dark:text-emt-green" />
+              <Activity size={18} className="text-green-800 dark:text-emt-green" />
             </div>
-            <span className="text-green-600 dark:text-emt-green text-sm font-bold text-start">{t('addVitals')}</span>
+            <span className="text-green-800 dark:text-emt-green text-sm font-bold text-start">{t('addVitals')}</span>
           </button>
 
           {/* Vitals History */}
@@ -75,9 +75,9 @@ export default function QuickToolsCard() {
               className="w-9 h-9 rounded-full flex items-center justify-center shrink-0
                          border border-emt-green/40 bg-emt-green/10"
             >
-              <History size={18} className="text-green-600 dark:text-emt-green" />
+              <History size={18} className="text-green-800 dark:text-emt-green" />
             </div>
-            <span className="text-green-600 dark:text-emt-green text-sm font-bold text-start">{t('vitalsHistory')}</span>
+            <span className="text-green-800 dark:text-emt-green text-sm font-bold text-start">{t('vitalsHistory')}</span>
           </button>
 
           {/* Daily Challenge */}
@@ -93,9 +93,9 @@ export default function QuickToolsCard() {
                          border border-amber-400/40 bg-amber-400/10"
             >
               <span className="absolute inset-0 rounded-full border border-amber-400/60 animate-ping opacity-70" aria-hidden="true" />
-              <Trophy size={18} className="text-amber-600 dark:text-amber-400 relative" />
+              <Trophy size={18} className="text-amber-800 dark:text-amber-400 relative" />
             </div>
-            <span className="text-amber-600 dark:text-amber-400 text-sm font-bold text-start">{t('homeDailyChallenge')}</span>
+            <span className="text-amber-800 dark:text-amber-400 text-sm font-bold text-start">{t('homeDailyChallenge')}</span>
           </button>
 
         </div>

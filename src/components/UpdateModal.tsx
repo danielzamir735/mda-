@@ -22,7 +22,7 @@ export default function UpdateModal({ onUpdate, onDismiss }: Props) {
       <div className="w-[90%] max-w-md bg-surface shadow-2xl rounded-2xl border border-emerald-500/30 p-6 sm:p-8 text-center">
         {/* Icon */}
         <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 mx-auto mb-4">
-          <DownloadCloud size={28} className="text-emerald-600 dark:text-emerald-400" />
+          <DownloadCloud size={28} className="text-emerald-700 dark:text-emerald-400" />
         </div>
 
         {/* Text */}

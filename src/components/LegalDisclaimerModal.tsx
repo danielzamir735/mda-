@@ -32,7 +32,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
           {/* Icon + Title */}
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <Info size={32} className="text-blue-500" />
+              <Info size={32} className="text-blue-700 dark:text-blue-500" />
             </div>
             <h2 className="text-fg font-black text-xl leading-snug">
               {t('obLegalTitle')}
@@ -64,7 +64,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept }: Props) {
                   key={id}
                   type="button"
                   onClick={() => setDocOpen(id)}
-                  className="py-2 text-blue-600 dark:text-blue-400 font-semibold underline underline-offset-2 active:opacity-70"
+                  className="py-2 text-blue-700 dark:text-blue-400 font-semibold underline underline-offset-2 active:opacity-70"
                 >
                   {t(label)}
                 </button>

@@ -43,7 +43,7 @@ export default function UpdateAnnouncementModal() {
         {/* Header */}
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30">
-            <Rocket size={28} className="text-emerald-600 dark:text-emerald-400" />
+            <Rocket size={28} className="text-emerald-700 dark:text-emerald-400" />
           </div>
           <h2 className="text-2xl font-extrabold text-fg leading-tight">
             {t('obAnnTitle')}
@@ -61,7 +61,7 @@ export default function UpdateAnnouncementModal() {
           {/* Feature 1 — Medication Scanner */}
           <div className="flex items-start gap-3">
             <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/30 mt-0.5">
-              <ScanSearch size={20} className="text-teal-600 dark:text-teal-400" />
+              <ScanSearch size={20} className="text-teal-700 dark:text-teal-400" />
             </div>
             <p className="text-fg/85 text-sm leading-relaxed">
               <span className="font-bold text-teal-700 dark:text-teal-300">{t('obAnnScannerBold')}</span>{' '}
@@ -72,7 +72,7 @@ export default function UpdateAnnouncementModal() {
           {/* Feature 2 — Breathing Synchronizer */}
           <div className="flex items-start gap-3">
             <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 mt-0.5">
-              <Wind size={20} className="text-sky-600 dark:text-sky-400" />
+              <Wind size={20} className="text-sky-700 dark:text-sky-400" />
             </div>
             <p className="text-fg/85 text-sm leading-relaxed">
               <span className="font-bold text-sky-700 dark:text-sky-300">{t('obAnnBreathBold')}</span>{' '}

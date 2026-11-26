@@ -100,7 +100,7 @@ function renderResult(text: string) {
     if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith('* ')) {
       return (
         <div key={i} className="flex gap-2 text-sm text-fg-muted leading-relaxed">
-          <span className="text-teal-600 dark:text-teal-400 mt-0.5 shrink-0">•</span>
+          <span className="text-teal-700 dark:text-teal-400 mt-0.5 shrink-0">•</span>
           <span dir="auto">{parts}</span>
         </div>
       );
@@ -109,7 +109,7 @@ function renderResult(text: string) {
     if (trimmed.startsWith('#') || (trimmed.endsWith(':') && trimmed.length < 60)) {
       const heading = trimmed.replace(/^#+\s*/, '');
       return (
-        <p key={i} dir="auto" className="text-sm font-bold text-teal-600 dark:text-teal-400 mt-3 mb-0.5">{heading}</p>
+        <p key={i} dir="auto" className="text-sm font-bold text-teal-700 dark:text-teal-400 mt-3 mb-0.5">{heading}</p>
       );
     }
 
@@ -256,7 +256,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Scan size={22} className="text-teal-600 dark:text-teal-400" />
+          <Scan size={22} className="text-teal-700 dark:text-teal-400" />
           <h2 className="text-fg font-bold text-xl">{t('msTitle')}</h2>
         </div>
         <button
@@ -313,7 +313,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label={t('search')}
           >
-            <Search size={20} className="text-teal-600 dark:text-teal-400" />
+            <Search size={20} className="text-teal-700 dark:text-teal-400" />
           </button>
         </div>
 
@@ -335,9 +335,9 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-14 h-14 rounded-full bg-teal-400/15 flex items-center justify-center">
-              <Camera size={28} className="text-teal-600 dark:text-teal-400" />
+              <Camera size={28} className="text-teal-700 dark:text-teal-400" />
             </div>
-            <span className="text-teal-600 dark:text-teal-400 font-black text-base tracking-tight">{t('msCamera')}</span>
+            <span className="text-teal-700 dark:text-teal-400 font-black text-base tracking-tight">{t('msCamera')}</span>
             <span className="text-fg-muted text-xs text-center px-2">{t('msCameraSub')}</span>
           </button>
 
@@ -350,9 +350,9 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-14 h-14 rounded-full bg-purple-400/15 flex items-center justify-center">
-              <Image size={28} className="text-purple-600 dark:text-purple-400" />
+              <Image size={28} className="text-purple-700 dark:text-purple-400" />
             </div>
-            <span className="text-purple-600 dark:text-purple-400 font-black text-base tracking-tight">{t('msGallery')}</span>
+            <span className="text-purple-700 dark:text-purple-400 font-black text-base tracking-tight">{t('msGallery')}</span>
             <span className="text-fg-muted text-xs text-center px-2">{t('msGallerySub')}</span>
           </button>
         </div>
@@ -381,7 +381,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                 style={{ animation: 'fadeIn 0.4s ease' }}
               >
                 <div className="w-12 h-12 rounded-full bg-teal-400/10 flex items-center justify-center">
-                  <StepIcon size={24} className="text-teal-600 dark:text-teal-400" />
+                  <StepIcon size={24} className="text-teal-700 dark:text-teal-400" />
                 </div>
                 <p className="text-teal-700 dark:text-teal-300 text-base font-semibold">{t(text)}</p>
               </div>
@@ -393,12 +393,12 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
         {/* Error */}
         {state === 'error' && (
           <div className="rounded-2xl border border-emt-yellow/30 bg-emt-yellow/10 p-4 flex flex-col items-center gap-3 text-center">
-            <AlertCircle size={32} className="text-amber-600 dark:text-emt-yellow" />
-            <p className="text-amber-700 dark:text-emt-yellow font-bold text-base">{t('msErrorTitle')}</p>
+            <AlertCircle size={32} className="text-amber-800 dark:text-emt-yellow" />
+            <p className="text-amber-800 dark:text-emt-yellow font-bold text-base">{t('msErrorTitle')}</p>
             <p className="text-fg-muted text-sm">{t('msErrorBody')}</p>
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-amber-700 dark:text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emt-yellow/20 text-amber-800 dark:text-emt-yellow font-bold text-sm active:scale-95 transition-transform"
             >
               <RotateCcw size={16} />
               {t('retry')}
@@ -411,8 +411,8 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
           <div className="rounded-2xl border border-teal-400/30 bg-teal-400/5 p-4 flex flex-col gap-1">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Scan size={16} className="text-teal-600 dark:text-teal-400" />
-                <span className="text-teal-600 dark:text-teal-400 font-black text-sm uppercase tracking-wider">{t('msResults')}</span>
+                <Scan size={16} className="text-teal-700 dark:text-teal-400" />
+                <span className="text-teal-700 dark:text-teal-400 font-black text-sm uppercase tracking-wider">{t('msResults')}</span>
               </div>
               <button
                 onClick={handleReset}
@@ -437,7 +437,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
               className="w-full flex items-center justify-between px-4 py-3 active:opacity-70 transition-opacity"
             >
               <div className="flex items-center gap-2">
-                <Clock size={16} className="text-purple-600 dark:text-purple-400" />
+                <Clock size={16} className="text-purple-700 dark:text-purple-400" />
                 <span className="text-purple-700 dark:text-purple-300 font-bold text-sm">{t('msHistory')}</span>
                 <span className="text-fg-muted text-xs bg-surface-3 rounded-full px-2 py-0.5">
                   {searchHistory.length}
@@ -493,7 +493,7 @@ export default function MedicationScannerModal({ isOpen, onClose }: Props) {
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0 ms-3">
                             <span className="text-fg-muted text-xs">{formatted}</span>
-                            <Scan size={12} className="text-teal-600/60 dark:text-teal-400/60" />
+                            <Scan size={12} className="text-teal-700 dark:text-teal-400/60" />
                           </div>
                         </button>
                       );

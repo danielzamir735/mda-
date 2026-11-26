@@ -118,7 +118,7 @@ export default function BigTextScreen({ onBack }: Props) {
         <HapticButton
           pressScale={0.9}
           onClick={() => { recognizerRef.current?.abort(); onBack(); }}
-          className="flex items-center gap-1.5 text-orange-500 dark:text-orange-400 font-bold text-sm"
+          className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold text-sm"
           aria-label={t('btBackAria')}
         >
           <ArrowRight size={16} className="ltr:rotate-180" />
@@ -162,7 +162,7 @@ export default function BigTextScreen({ onBack }: Props) {
       </div>
 
       {micError && (
-        <p role="alert" className="shrink-0 px-4 pb-2 text-sm font-semibold text-red-600 dark:text-red-400 text-center">
+        <p role="alert" className="shrink-0 px-4 pb-2 text-sm font-semibold text-red-700 dark:text-red-400 text-center">
           {micError}
         </p>
       )}

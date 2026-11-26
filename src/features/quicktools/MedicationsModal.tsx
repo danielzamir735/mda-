@@ -18,7 +18,7 @@ const CATEGORIES: MedCategory[] = [
   {
     category: 'מערכת הלב וכלי הדם', // i18n-ok: bilingual medication vocabulary (content)
     categoryEn: 'Cardiovascular system',
-    color: 'text-red-600 dark:text-red-400',
+    color: 'text-red-700 dark:text-red-400',
     border: 'border-red-400/30',
     bg: 'bg-red-400/5',
     items: [
@@ -34,7 +34,7 @@ const CATEGORIES: MedCategory[] = [
   {
     category: 'מערכת העיכול', // i18n-ok: bilingual medication vocabulary (content)
     categoryEn: 'Alimentary system',
-    color: 'text-amber-600 dark:text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/5',
     items: [
@@ -46,7 +46,7 @@ const CATEGORIES: MedCategory[] = [
   {
     category: 'מערכת הנשימה', // i18n-ok: bilingual medication vocabulary (content)
     categoryEn: 'Respiratory system',
-    color: 'text-sky-600 dark:text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/5',
     items: [
@@ -56,7 +56,7 @@ const CATEGORIES: MedCategory[] = [
   {
     category: 'מערכת המין והשתן', // i18n-ok: bilingual medication vocabulary (content)
     categoryEn: 'Genitourinary',
-    color: 'text-purple-600 dark:text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/5',
     items: [
@@ -68,7 +68,7 @@ const CATEGORIES: MedCategory[] = [
   {
     category: 'מחלות זיהומיות', // i18n-ok: bilingual medication vocabulary (content)
     categoryEn: 'Infectious dis',
-    color: 'text-green-600 dark:text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/5',
     items: [
@@ -129,7 +129,7 @@ export default function MedicationsModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Pill size={22} className="text-teal-600 dark:text-teal-400" />
+          <Pill size={22} className="text-teal-700 dark:text-teal-400" />
           <h2 className="text-fg font-bold text-xl">{t('homeMedGroupsTitle')}</h2>
         </div>
         <button
@@ -174,13 +174,13 @@ export default function MedicationsModal({ isOpen, onClose }: Props) {
                      active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center shrink-0">
-            <Brain size={20} className="text-teal-600 dark:text-teal-400" />
+            <Brain size={20} className="text-teal-700 dark:text-teal-400" />
           </div>
           <div className="flex flex-col items-start text-start">
             <span className="text-teal-700 dark:text-teal-200 font-bold text-base leading-tight">{t('homeMedStartTraining')}</span>
-            <span className="text-teal-700/70 dark:text-teal-300/50 text-xs mt-0.5">{t('homeMedCardsCount', { count: FLASHCARD_DATA.length })}</span>
+            <span className="text-teal-700 dark:text-teal-300/50 text-xs mt-0.5">{t('homeMedCardsCount', { count: FLASHCARD_DATA.length })}</span>
           </div>
-          <div className="ms-auto text-teal-600/60 dark:text-teal-400/40 text-lg ltr:rotate-180">←</div>
+          <div className="ms-auto text-teal-700 dark:text-teal-400/40 text-lg ltr:rotate-180">←</div>
         </button>
 
         {filtered ? (

@@ -21,10 +21,10 @@ const BAGS: Bag[] = [
     id: 'maar',
     title: 'bagTFirstResponderBag',
     subtitle: 'bagTFirstResponder',
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
-    iconColor: 'text-emerald-400',
+    iconColor: 'text-emerald-700 dark:text-emerald-400',
     items: [
       { k: 'bagBackpack', qty: '1' },
       { k: 'bagTriangularBandage', qty: '5' },
@@ -51,10 +51,10 @@ const BAGS: Bag[] = [
     id: 'chovesh',
     title: 'bagTEmtBag',
     subtitle: 'bagTCertifiedEmt',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
-    iconColor: 'text-blue-400',
+    iconColor: 'text-blue-700 dark:text-blue-400',
     items: [
       { k: 'bagBackpack', qty: '1' },
       { k: 'bagTriangularBandage', qty: '8' },
@@ -126,10 +126,10 @@ const BAGS: Bag[] = [
     id: 'doctor_camp',
     title: 'bagTCampDoctorBag',
     subtitle: 'bagTCampDoctor',
-    color: 'text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
-    iconColor: 'text-purple-400',
+    iconColor: 'text-purple-700 dark:text-purple-400',
     items: [
       { k: 'bagFullResuscitationAndTraumaKit', qty: '1' },
       { name: 'Lidocaine 2%', qty: '1' },
@@ -150,10 +150,10 @@ const BAGS: Bag[] = [
     id: 'doctor_walk',
     title: 'bagTHikingDoctorBag',
     subtitle: 'bagTHikingDoctor',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
-    iconColor: 'text-amber-400',
+    iconColor: 'text-amber-800 dark:text-amber-400',
     items: [
       { k: 'bagBasicTraumaKitAsFor', qty: '1', qk: 'bagQtySet' },
       { k: 'bagBagValveMaskMasks', qty: '1' },
@@ -182,7 +182,7 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'trauma',
     title: 'bagTDressingsTrauma',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
@@ -208,7 +208,7 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'airway',
     title: 'bagTResuscitationVentilationOxygen',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
@@ -239,7 +239,7 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'meds',
     title: 'bagTIvGlucoseMedications',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
@@ -259,7 +259,7 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'immob',
     title: 'bagTImmobilizationChildbirth',
-    color: 'text-indigo-400',
+    color: 'text-indigo-700 dark:text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
     items: [
@@ -271,7 +271,7 @@ const HATZALAH_BLS_CATEGORIES: MDACategory[] = [
   {
     id: 'general',
     title: 'bagTGeneralAccessories',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
@@ -301,7 +301,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'intubation',
     title: 'bagTAirwayIntubation',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
     items: [
@@ -340,7 +340,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'airway',
     title: 'bagTVentilationOxygenRespiratory',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
@@ -374,7 +374,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'trauma',
     title: 'bagTDressingsTraumaChestDecompression',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
@@ -403,7 +403,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'iv',
     title: 'bagTIvInjectionGlucose',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
     items: [
@@ -435,7 +435,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'meds',
     title: 'bagTMedicationsAmpoules',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
@@ -469,7 +469,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'monitor',
     title: 'bagTMonitorCorpuls',
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
     items: [
@@ -486,7 +486,7 @@ const HATZALAH_ALS_CATEGORIES: MDACategory[] = [
   {
     id: 'general',
     title: 'bagTImmobilizationChildbirthGeneral',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
@@ -519,7 +519,7 @@ const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'meds',
     title: 'bagTMedicationsFluids',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
     items: [
@@ -532,7 +532,7 @@ const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'airway',
     title: 'bagTVentilationOxygenEquipment',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
     items: [
@@ -558,7 +558,7 @@ const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'diagnostics',
     title: 'bagTDiagnosticsMeasurement',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
     items: [
@@ -570,7 +570,7 @@ const MDA_CATEGORIES: MDACategory[] = [
   {
     id: 'trauma',
     title: 'bagTDressingsTrauma',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
     items: [
@@ -719,29 +719,29 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
         {/* Status icon — tap to cycle null → have → missing → null */}
         <button onClick={onToggle} className="shrink-0 active:scale-90 transition-transform flex flex-col items-center gap-0.5">
           {status.status === 'have'
-            ? <CheckCircle2 size={22} className="text-emerald-500 dark:text-emerald-400" />
+            ? <CheckCircle2 size={22} className="text-emerald-700 dark:text-emerald-400" />
             : status.status === 'missing'
-            ? <XCircle size={22} className="text-red-500 dark:text-red-400" />
+            ? <XCircle size={22} className="text-red-700 dark:text-red-400" />
             : <Circle size={22} className="text-fg-subtle" />}
         </button>
 
         <span className={`flex-1 text-sm font-medium ${
-          status.status === 'missing' ? 'text-red-600 dark:text-red-400' :
-          status.status === 'have' ? 'text-emerald-600 dark:text-emerald-400' :
+          status.status === 'missing' ? 'text-red-700 dark:text-red-400' :
+          status.status === 'have' ? 'text-emerald-700 dark:text-emerald-400' :
           'text-fg'
         }`}>
           {item.k ? t(item.k, item.v !== undefined ? { n: item.v } : undefined) : item.name}
         </span>
 
         {hasWarning && (
-          <AlertTriangle size={15} className={`shrink-0 ${isExpired ? 'text-red-400' : 'text-amber-400'}`} />
+          <AlertTriangle size={15} className={`shrink-0 ${isExpired ? 'text-red-700 dark:text-red-400' : 'text-amber-800 dark:text-amber-400'}`} />
         )}
 
         <button
           onClick={() => setShowDate(v => !v)}
           className={`shrink-0 flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg active:scale-90 transition-all ${
             status.expiryDate
-              ? isExpired ? 'text-red-400' : isSoon ? 'text-amber-400' : 'text-emerald-400'
+              ? isExpired ? 'text-red-700 dark:text-red-400' : isSoon ? 'text-amber-800 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'
               : 'text-fg-muted bg-surface-2'
           }`}
           aria-label={t('bagExpiryDate')}
@@ -759,7 +759,7 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
       {status.expiryDate && !showDate && (
         <p
           className={`px-14 pb-2 text-xs font-medium ${
-            isExpired ? 'text-red-500 dark:text-red-400' : isSoon ? 'text-amber-600 dark:text-amber-400' : 'text-fg-muted'
+            isExpired ? 'text-red-700 dark:text-red-400' : isSoon ? 'text-amber-800 dark:text-amber-400' : 'text-fg-muted'
           }`}
         >
           {formatExpiryLabel(status.expiryDate, days!)}
@@ -784,7 +784,7 @@ function ItemRow({ item, status, accentColor, accentBg, accentBorder, onToggle, 
           {status.expiryDate && (
             <button
               onClick={() => onExpiryChange(undefined)}
-              className="text-red-600 dark:text-red-400 text-xs px-2 py-2 rounded-xl bg-red-500/10 dark:bg-red-950/20 shrink-0"
+              className="text-red-700 dark:text-red-400 text-xs px-2 py-2 rounded-xl bg-red-500/10 dark:bg-red-950/20 shrink-0"
             >
               {t('delete')}
             </button>
@@ -810,11 +810,11 @@ function Legend() {
       <div className="flex items-center gap-3 flex-wrap">
         <span className="font-semibold text-fg/70">{t('bagLegendTap')}</span>
         <span className="flex items-center gap-1"><Circle size={11} /> {t('bagNotMarked')}</span>
-        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 size={11} /> {t('bagHave')}</span>
-        <span className="flex items-center gap-1 text-red-600 dark:text-red-400"><XCircle size={11} /> {t('bagMissing')}</span>
+        <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400"><CheckCircle2 size={11} /> {t('bagHave')}</span>
+        <span className="flex items-center gap-1 text-red-700 dark:text-red-400"><XCircle size={11} /> {t('bagMissing')}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <Calendar size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+        <Calendar size={11} className="text-blue-700 dark:text-blue-400 shrink-0" />
         <span>{t('bagLegendExpiry')}</span>
       </div>
     </div>
@@ -977,7 +977,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
           <h2 className="text-fg font-bold text-xl">{t(selectedBag.title)}</h2>
           <button
             onClick={clearMohChecklist}
-            className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
+            className="flex items-center gap-1 text-red-700 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
             <RotateCcw size={15} />
@@ -989,12 +989,12 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         <div className="shrink-0 px-4 py-2 border-b border-line flex items-center gap-3">
           <span className="text-sm text-fg-muted">{selectedBag.items.length} {t('items')}</span>
           {haveCount > 0 && (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
               <CheckCircle2 size={12} /> {haveCount} {t('bagHave')}
             </span>
           )}
           {missingCount > 0 && (
-            <span className="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1">
+            <span className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1">
               <XCircle size={12} /> {missingCount} {t('bagMissing')}
             </span>
           )}
@@ -1059,7 +1059,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
               <p className={`font-bold text-sm ${cat.color}`}>{t(cat.title)}</p>
               <div className="flex items-center gap-2">
                 {(catWarnings.expired > 0 || catWarnings.soon > 0) && (
-                  <AlertTriangle size={14} className={catWarnings.expired > 0 ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'} />
+                  <AlertTriangle size={14} className={catWarnings.expired > 0 ? 'text-red-700 dark:text-red-400' : 'text-amber-800 dark:text-amber-400'} />
                 )}
                 <span className={`text-xs font-medium ${cat.color} opacity-70`}>
                   {haveCount}/{cat.items.length}
@@ -1107,7 +1107,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
         {activeStandard === 'mda' || activeStandard === 'hatzalah' ? (
           <button
             onClick={activeStandard === 'mda' ? clearMdaChecklist : clearHatzalahChecklist}
-            className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
+            className="flex items-center gap-1 text-red-700 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 text-sm transition-colors active:scale-90"
             aria-label={t('clearMarkings')}
           >
             <RotateCcw size={15} />
@@ -1168,7 +1168,7 @@ export default function BagStandardsModal({ isOpen, onClose }: Props) {
                     <p className="text-xs text-fg-muted mt-0.5">{bag.items.length} {t('items')}</p>
                   </div>
                   {hasAnyWarning && (
-                    <AlertTriangle size={18} className={expired > 0 ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'} />
+                    <AlertTriangle size={18} className={expired > 0 ? 'text-red-700 dark:text-red-400' : 'text-amber-800 dark:text-amber-400'} />
                   )}
                 </button>
               );

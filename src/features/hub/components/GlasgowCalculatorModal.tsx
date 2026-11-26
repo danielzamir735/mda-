@@ -52,7 +52,7 @@ type SevKey = 'mild' | 'moderate' | 'severe';
 
 const SEV: Record<SevKey, { label: TranslationKey; badge: string; score: string; card: string }> = {
   mild:     { label: 'calcGcsSevMild', badge: 'bg-emt-green/20 text-emt-green',   score: 'text-emt-green',   card: 'border-emt-green/30 bg-emt-green/5' },
-  moderate: { label: 'calcGcsSevModerate', badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow', score: 'text-amber-600 dark:text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5' },
+  moderate: { label: 'calcGcsSevModerate', badge: 'bg-emt-yellow/20 text-amber-800 dark:text-emt-yellow', score: 'text-amber-800 dark:text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5' },
   severe:   { label: 'calcGcsSevSevere', badge: 'bg-emt-red/20 text-emt-red',       score: 'text-emt-red',     card: 'border-emt-red/30 bg-emt-red/5' },
 };
 
@@ -137,14 +137,14 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Brain size={20} className="text-cyan-400" />
+          <Brain size={20} className="text-cyan-700 dark:text-cyan-400" />
           <h2 className="text-fg font-bold text-xl">{t('calcGcsTitle')}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30
-                       bg-red-500/10 text-red-500 text-sm font-semibold
+                       bg-red-500/10 text-red-700 dark:text-red-500 text-sm font-semibold
                        hover:bg-red-500/20 active:scale-95 transition-all"
             aria-label={t('calcResetValues')}
           >
@@ -170,7 +170,7 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
         <section className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-fg font-bold text-base">{t('calcGcsEyes')}</p>
-            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
               E = {eyes}
             </span>
           </div>
@@ -189,7 +189,7 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
         <section className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-fg font-bold text-base">{t('calcGcsVerbal')}</p>
-            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
               V = {verbal}
             </span>
           </div>
@@ -208,7 +208,7 @@ export default function GlasgowCalculatorModal({ isOpen, onClose }: Props) {
         <section className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <p className="text-fg font-bold text-base">{t('calcGcsMotor')}</p>
-            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded-full">
               M = {motor}
             </span>
           </div>

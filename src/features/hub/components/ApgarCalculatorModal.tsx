@@ -38,7 +38,7 @@ type SevKey = 'red' | 'yellow' | 'green';
 
 const SEV_STYLES: Record<SevKey, { badge: string; score: string; card: string; label: TranslationKey }> = {
   red:    { badge: 'bg-emt-red/20 text-emt-red',       score: 'text-emt-red',    card: 'border-emt-red/30 bg-emt-red/5',    label: 'calcApgarSevRed' },
-  yellow: { badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow', score: 'text-amber-600 dark:text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5', label: 'calcApgarSevYellow' },
+  yellow: { badge: 'bg-emt-yellow/20 text-amber-800 dark:text-emt-yellow', score: 'text-amber-800 dark:text-emt-yellow', card: 'border-emt-yellow/30 bg-emt-yellow/5', label: 'calcApgarSevYellow' },
   green:  { badge: 'bg-emt-green/20 text-emt-green',   score: 'text-emt-green',  card: 'border-emt-green/30 bg-emt-green/5',  label: 'calcApgarSevGreen' },
 };
 
@@ -79,7 +79,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Activity size={20} className="text-pink-400" />
+          <Activity size={20} className="text-pink-700 dark:text-pink-400" />
           <h2 className="text-fg font-bold text-xl">{t('calcApgarTitle')}</h2>
         </div>
         <button
@@ -113,7 +113,7 @@ export default function ApgarCalculatorModal({ isOpen, onClose }: Props) {
                       'flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs',
                       'font-bold transition-all active:scale-95',
                       active
-                        ? 'border-pink-400/50 bg-pink-400/10 text-pink-600 dark:text-pink-400'
+                        ? 'border-pink-400/50 bg-pink-400/10 text-pink-700 dark:text-pink-400'
                         : 'border-line bg-surface-2 text-fg-muted',
                     ].join(' ')}
                   >

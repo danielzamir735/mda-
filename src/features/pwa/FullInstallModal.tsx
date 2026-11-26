@@ -15,7 +15,7 @@ const AppIcon = () => (
     {/* theme-ok: white icon on the blue badge */}
     <ShieldPlus className="w-9 h-9 text-white drop-shadow-lg" strokeWidth={1.5} />
     <Activity
-      className="absolute bottom-0 end-0 w-4 h-4 text-blue-200 opacity-90"
+      className="absolute bottom-0 end-0 w-4 h-4 text-blue-700 dark:text-blue-200 opacity-90"
       strokeWidth={2}
     />
   </div>
@@ -32,7 +32,7 @@ function StepCard({
         {index}
       </span>
       <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30
-                      flex items-center justify-center text-blue-600 dark:text-blue-400 mt-0.5">
+                      flex items-center justify-center text-blue-700 dark:text-blue-400 mt-0.5">
         {icon}
       </div>
       <div className="flex-1 text-start">
@@ -76,10 +76,10 @@ function AndroidContent({
       <div className="flex flex-col gap-4">
         {/* Status banner */}
         <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/30">
-          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-green-800 dark:text-green-400 flex-shrink-0" />
           <div className="flex-1 text-start">
-            <p className="text-green-700 dark:text-green-300 font-bold text-sm">{t('obInstPreparing')}</p>
-            <p className="text-green-600 dark:text-green-400/80 text-xs mt-0.5">{t('obInstReady')}</p>
+            <p className="text-green-800 dark:text-green-300 font-bold text-sm">{t('obInstPreparing')}</p>
+            <p className="text-green-800 dark:text-green-400/80 text-xs mt-0.5">{t('obInstReady')}</p>
           </div>
         </div>
 
@@ -142,7 +142,7 @@ function IosContent() {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl bg-amber-500/15 border border-amber-500/35 px-4 py-3 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-5 h-5 text-amber-800 dark:text-amber-400 flex-shrink-0 mt-0.5" />
         <p className="text-amber-800 dark:text-amber-300 text-sm font-medium leading-snug text-start">
           {t('obInstSafariOnly')}
         </p>

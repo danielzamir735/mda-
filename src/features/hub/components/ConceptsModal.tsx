@@ -19,7 +19,7 @@ const CATEGORY_COLORS = [
   { key: 'purple', textClass: 'text-purple-700 dark:text-purple-300', bgClass: 'bg-purple-500/15', borderClass: 'border-purple-400/30', dotClass: 'bg-purple-400' },
   { key: 'blue', textClass: 'text-blue-700 dark:text-blue-300', bgClass: 'bg-blue-500/15', borderClass: 'border-blue-400/30', dotClass: 'bg-blue-400' },
   { key: 'emerald', textClass: 'text-emerald-700 dark:text-emerald-300', bgClass: 'bg-emerald-500/15', borderClass: 'border-emerald-400/30', dotClass: 'bg-emerald-400' },
-  { key: 'amber', textClass: 'text-amber-700 dark:text-amber-300', bgClass: 'bg-amber-500/15', borderClass: 'border-amber-400/30', dotClass: 'bg-amber-400' },
+  { key: 'amber', textClass: 'text-amber-800 dark:text-amber-300', bgClass: 'bg-amber-500/15', borderClass: 'border-amber-400/30', dotClass: 'bg-amber-400' },
   { key: 'rose', textClass: 'text-rose-700 dark:text-rose-300', bgClass: 'bg-rose-500/15', borderClass: 'border-rose-400/30', dotClass: 'bg-rose-400' },
   { key: 'cyan', textClass: 'text-cyan-700 dark:text-cyan-300', bgClass: 'bg-cyan-500/15', borderClass: 'border-cyan-400/30', dotClass: 'bg-cyan-400' },
   { key: 'indigo', textClass: 'text-indigo-700 dark:text-indigo-300', bgClass: 'bg-indigo-500/15', borderClass: 'border-indigo-400/30', dotClass: 'bg-indigo-400' },
@@ -216,7 +216,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               aria-label={t('learnEditConcept')}
               hapticPattern={10}
               pressScale={0.9}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300/70"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-400/30 text-purple-700 dark:text-purple-300/70"
             >
               <Pencil size={14} />
             </HapticButton>
@@ -228,7 +228,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                 deleteConfirmId === concept.id
                   ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
-                  : 'bg-red-500/10 border border-red-500/20 text-red-600/70 dark:text-red-400/60'
+                  : 'bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400/60'
               }`}
             >
               <Trash2 size={15} />
@@ -239,7 +239,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
           <motion.p
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="text-red-600 dark:text-red-400/80 text-xs font-semibold mt-2 text-end"
+            className="text-red-700 dark:text-red-400/80 text-xs font-semibold mt-2 text-end"
           >
             {t('learnTapAgainDelete')}
           </motion.p>
@@ -299,7 +299,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
             </HapticButton>
           ) : (
             <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <Sparkles size={18} className="text-purple-600 dark:text-purple-300" />
+              <Sparkles size={18} className="text-purple-700 dark:text-purple-300" />
             </div>
           )}
 
@@ -333,7 +333,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${
                   editDeleteConfirm
                     ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
-                    : 'bg-red-500/10 border border-red-500/20 text-red-600/80 dark:text-red-400/70'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400/70'
                 }`}
               >
                 <Trash2 size={14} />
@@ -380,7 +380,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm transition-colors ${
                 categoryDeleteConfirm
                   ? 'bg-red-500/30 border border-red-400/60 text-red-700 dark:text-red-300'
-                  : 'bg-red-500/10 border border-red-500/20 text-red-600/80 dark:text-red-400/70'
+                  : 'bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400/70'
               }`}
             >
               <Trash2 size={14} />
@@ -437,7 +437,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               {concepts.length === 0 && categories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-5 py-20 px-6">
                   <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center">
-                    <BookOpen size={32} className="text-purple-500/60 dark:text-purple-400/50" />
+                    <BookOpen size={32} className="text-purple-700 dark:text-purple-400/50" />
                   </div>
                   <div className="text-center">
                     <p className="text-fg font-bold text-base">{t('learnEmptyTitle')}</p>
@@ -545,7 +545,7 @@ export default function ConceptsModal({ isOpen, onClose }: Props) {
               {categoryConcepts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-5 py-20 px-6">
                   <div className="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center">
-                    <Folder size={32} className="text-purple-500/60 dark:text-purple-400/50" />
+                    <Folder size={32} className="text-purple-700 dark:text-purple-400/50" />
                   </div>
                   <div className="text-center">
                     <p className="text-fg font-bold text-base">{t('learnCategoryEmptyTitle')}</p>

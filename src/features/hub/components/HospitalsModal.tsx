@@ -164,7 +164,7 @@ function NearestERButton() {
   if (phase === 'error') {
     return (
       <div className="flex flex-col items-center gap-3 py-6 mb-1 px-4 text-center">
-        <AlertTriangle size={28} className="text-amber-500" />
+        <AlertTriangle size={28} className="text-amber-800 dark:text-amber-500" />
         <p className="text-fg text-sm font-medium max-w-xs">
           {t(ERROR_MESSAGES[errorReason])}
         </p>
@@ -349,7 +349,7 @@ export default function HospitalsModal({ isOpen, onClose }: Props) {
 
         {listB.length > 0 && (
           <>
-            <SectionLabel text="LEVEL B" cls="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700/40" />
+            <SectionLabel text="LEVEL B" cls="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700/40" />
             <div className="space-y-2">
               {listB.map(h => (
                 <HospitalAccordionItem

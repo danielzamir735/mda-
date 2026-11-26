@@ -195,7 +195,7 @@ export default function VitalsFeature() {
         <button
           type="button"
           onClick={() => setFeedbackOpen(true)}
-          className="text-[10px] font-bold text-blue-600 dark:text-blue-400 underline underline-offset-2 active:opacity-60 transition-opacity"
+          className="text-[10px] font-bold text-blue-700 dark:text-blue-400 underline underline-offset-2 active:opacity-60 transition-opacity"
         >
           {t('homeFooterCopyright')}
         </button>

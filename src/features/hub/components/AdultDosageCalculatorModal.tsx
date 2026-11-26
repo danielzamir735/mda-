@@ -107,7 +107,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Stethoscope size={22} className="text-orange-400" />
+          <Stethoscope size={22} className="text-orange-700 dark:text-orange-400" />
           <h2 className="text-fg font-bold text-xl">{t('calcAdultTitle')}</h2>
         </div>
         <button
@@ -126,7 +126,7 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
         {/* Hero */}
         <div className="flex flex-col items-center text-center px-6 pt-4 pb-3">
           <div className="w-12 h-12 rounded-full bg-orange-400/15 border-2 border-orange-400/30 flex items-center justify-center mb-2">
-            <Scale size={22} className="text-orange-400" />
+            <Scale size={22} className="text-orange-700 dark:text-orange-400" />
           </div>
           <h3 className="text-fg font-bold text-base mb-0.5">{t('calcAdultHero')}</h3>
           <p className="text-fg-muted text-xs">{t('calcEnterAgeWeightHint')}</p>
@@ -186,11 +186,11 @@ export default function AdultDosageCalculatorModal({ isOpen, onClose }: Props) {
               <p className="text-fg font-bold text-xl">{t('calcChooseScenario')}</p>
               <div className="flex items-center gap-2">
                 {ageNum && (
-                  <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
+                  <span className="text-sm font-bold text-orange-700 dark:text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
                     {t('calcAgeBadge', { age: ageNum })}
                   </span>
                 )}
-                <span className="text-sm font-bold text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
+                <span className="text-sm font-bold text-orange-700 dark:text-orange-400 bg-orange-400/10 px-3 py-1 rounded-full border border-orange-400/30">
                   {t('calcKgValue', { w })}
                 </span>
               </div>

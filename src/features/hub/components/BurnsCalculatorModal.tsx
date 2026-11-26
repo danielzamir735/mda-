@@ -66,8 +66,8 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
   const totalDisplay = Number.isInteger(total) ? String(total) : total.toFixed(1);
 
   const severity = total === 0 ? null : total < 10 ? t('calcBurnsSevMinor') : total < 25 ? t('calcBurnsSevModerate') : t('calcBurnsSevSevere');
-  const sevColor  = total < 10 ? 'text-amber-600 dark:text-emt-yellow' : total < 25 ? 'text-orange-400' : 'text-emt-red';
-  const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-400' : 'bg-emt-red/20 text-emt-red';
+  const sevColor  = total < 10 ? 'text-amber-800 dark:text-emt-yellow' : total < 25 ? 'text-orange-700 dark:text-orange-400' : 'text-emt-red';
+  const sevBadge  = total < 10 ? 'bg-emt-yellow/20 text-amber-800 dark:text-emt-yellow' : total < 25 ? 'bg-orange-400/20 text-orange-700 dark:text-orange-400' : 'bg-emt-red/20 text-emt-red';
 
   const handleShare = () => {
     if (!navigator.share) return;
@@ -151,7 +151,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
         {/* ── Parkland Fluid Resuscitation ── */}
         <div className="w-full rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Droplets size={18} className="text-blue-500" />
+            <Droplets size={18} className="text-blue-700 dark:text-blue-500" />
             <h3 className="text-blue-700 dark:text-blue-300 font-bold text-base">{t('calcParklandTitle')}</h3>
           </div>
 
@@ -190,7 +190,7 @@ export default function BurnsCalculatorModal({ isOpen, onClose }: Props) {
             {parklandResult !== null ? (
               <>
                 <p className="text-xs font-semibold text-fg-muted uppercase tracking-wide">{t('calcFluidsRequired')}</p>
-                <p className="font-black text-blue-600 dark:text-blue-300 tabular-nums" style={{ fontSize: 'clamp(2rem, 10vw, 3rem)' }}>
+                <p className="font-black text-blue-700 dark:text-blue-300 tabular-nums" style={{ fontSize: 'clamp(2rem, 10vw, 3rem)' }}>
                   {parklandResult.toFixed(2)} <span className="text-lg">{t('calcLiters')}</span>
                 </p>
                 <p className="text-xs text-fg-muted">{t('calcParkland24h')}</p>

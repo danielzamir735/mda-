@@ -157,7 +157,7 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Pill size={22} className="text-emerald-500 dark:text-emerald-400" />
+          <Pill size={22} className="text-emerald-700 dark:text-emerald-400" />
           <h2 className="text-fg font-bold text-xl">{t('refMedsTitle')}</h2>
         </div>
         <button
@@ -199,17 +199,17 @@ export default function CommonMedsModal({ isOpen, onClose }: Props) {
                      active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
-            <Brain size={20} className="text-emerald-500 dark:text-emerald-400" />
+            <Brain size={20} className="text-emerald-700 dark:text-emerald-400" />
           </div>
           <div className="flex flex-col items-start">
             <span className="text-emerald-700 dark:text-emerald-200 font-bold text-base leading-tight">{t('refStartTraining')}</span>
-            <span className="text-emerald-700/70 dark:text-emerald-300/50 text-xs mt-0.5">
+            <span className="text-emerald-700 dark:text-emerald-300/50 text-xs mt-0.5">
               {t('refCardsCount', { n: TOTAL_MEDS })}
               {stats.sessions > 0 && ` · ${t('refSessionsDone', { n: stats.sessions })}`}
               {successRate !== null && ` · ${t('refSuccessRate', { n: successRate })}`}
             </span>
           </div>
-          <div className="ms-auto text-emerald-500/50 text-lg rtl:rotate-0 ltr:rotate-180">←</div>
+          <div className="ms-auto text-emerald-700 dark:text-emerald-500/50 text-lg rtl:rotate-0 ltr:rotate-180">←</div>
         </button>
 
         {filteredCategories.length === 0 ? (

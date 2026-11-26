@@ -40,14 +40,14 @@ export default function WelcomeModal({ isOpen, onClose }: Props) {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <Home size={20} className="text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" />
+              <Home size={20} className="text-blue-700 dark:text-blue-400 shrink-0 mt-0.5" />
               <p className="text-fg/85 text-base leading-relaxed">
                 <span className="font-bold">{t('obWelcomeHomeBold')}</span>{' '}
                 {t('obWelcomeHomeText')}
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <Smartphone size={20} className="text-purple-500 dark:text-purple-400 shrink-0 mt-0.5" />
+              <Smartphone size={20} className="text-purple-700 dark:text-purple-400 shrink-0 mt-0.5" />
               <p className="text-fg/85 text-base leading-relaxed">
                 <span className="font-bold">{t('obWelcomeNoteBold')}</span>{' '}
                 {t('obWelcomeNoteText')}

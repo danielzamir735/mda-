@@ -30,7 +30,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'basics',
     title: 'מושגי יסוד ופיזיולוגיה כללית',
-    color: 'text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/5',
     terms: [
@@ -53,7 +53,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'cells-tissues',
     title: 'רמות ארגון, תאים ורקמות',
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/5',
     terms: [
@@ -76,7 +76,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'prefixes',
     title: 'קידומות (פרפיקסים) מורפולוגיות',
-    color: 'text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/5',
     terms: [
@@ -91,7 +91,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'respiratory',
     title: 'מערכת הנשימה ונתיב אוויר',
-    color: 'text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/5',
     terms: [
@@ -112,7 +112,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'respiratory-pathology',
     title: 'פתולוגיות ונשימה לקויה',
-    color: 'text-cyan-400',
+    color: 'text-cyan-700 dark:text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/5',
     terms: [
@@ -135,7 +135,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'airway-techniques',
     title: 'פעולות וטכניקות בנתיב אוויר',
-    color: 'text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/5',
     terms: [
@@ -153,7 +153,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'heart',
     title: 'מערכת הלב, כלי הדם והולכה',
-    color: 'text-red-400',
+    color: 'text-red-700 dark:text-red-400',
     border: 'border-red-400/30',
     bg: 'bg-red-400/5',
     terms: [
@@ -180,7 +180,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'hemodynamics',
     title: 'המודינמיקה, לחצי דם והמטולוגיה',
-    color: 'text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/5',
     terms: [
@@ -201,7 +201,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'cardiac-pathology',
     title: 'פתולוגיות לבביות והפרעות קצב',
-    color: 'text-pink-400',
+    color: 'text-pink-700 dark:text-pink-400',
     border: 'border-pink-400/30',
     bg: 'bg-pink-400/5',
     terms: [
@@ -220,7 +220,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'nervous-system',
     title: 'מערכת העצבים והמוח',
-    color: 'text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/5',
     terms: [
@@ -241,7 +241,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'trauma',
     title: 'טראומה, פגיעות ראש וחזה',
-    color: 'text-orange-400',
+    color: 'text-orange-700 dark:text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/5',
     terms: [
@@ -262,7 +262,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'shock',
     title: 'מנגנוני הלם (Shock)',
-    color: 'text-yellow-400',
+    color: 'text-yellow-800 dark:text-yellow-400',
     border: 'border-yellow-400/30',
     bg: 'bg-yellow-400/5',
     terms: [
@@ -276,7 +276,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'orthopedics',
     title: 'אורתופדיה, שלד ומערכת הכסות',
-    color: 'text-lime-400',
+    color: 'text-lime-800 dark:text-lime-400',
     border: 'border-lime-400/30',
     bg: 'bg-lime-400/5',
     terms: [
@@ -296,7 +296,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'abdomen',
     title: 'בטן, מערכת העיכול ואיברים פנימיים',
-    color: 'text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/5',
     terms: [
@@ -316,7 +316,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'internal',
     title: 'רפואה פנימית, מטבוליזם ואלרגיה',
-    color: 'text-indigo-400',
+    color: 'text-indigo-700 dark:text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/5',
     terms: [
@@ -333,7 +333,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'pharmacology',
     title: 'פרמקולוגיה ודרכי מתן תרופות',
-    color: 'text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/5',
     terms: [
@@ -349,7 +349,7 @@ export const DICTIONARY_SECTIONS: DictionarySection[] = [
   {
     id: 'cranial-nerves',
     title: '12 העצבים הקרניאליים (Cranial Nerves)',
-    color: 'text-fuchsia-400',
+    color: 'text-fuchsia-700 dark:text-fuchsia-400',
     border: 'border-fuchsia-400/30',
     bg: 'bg-fuchsia-400/5',
     terms: [

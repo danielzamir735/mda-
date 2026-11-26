@@ -17,7 +17,7 @@
     --surface-3: 229 231 235;   /* gray-200  – pressed / selected           */
     --fg: 17 24 39;             /* gray-900  – main text                    */
     --fg-muted: 75 85 99;       /* gray-600  – secondary text (AA on page)  */
-    --fg-subtle: 156 163 175;   /* gray-400  – icons, placeholders          */
+    --fg-subtle: 95 101 114;    /* between gray-500 and gray-600 – hints, icons, placeholders (gray-400 was too pale to read) */
     --line: 229 231 235;        /* gray-200  – borders, dividers            */
     --line-strong: 209 213 219; /* gray-300                                  */
     color-scheme: light;
@@ -71,3 +71,62 @@
   0%, 100% { opacity: 0; transform: scale(0.5) translateX(-50%); }
   40%, 60% { opacity: 0.55; transform: scale(1) translateX(-50%); }
 }
+
+/*
+ * Light mode: the brand accents (emt-red/green/yellow/blue) are bright enough
+ * for a dark screen but too pale to read as text on a white one. As text only,
+ * swap them for deeper shades of the same colour; backgrounds keep the brand hue.
+ */
+html:not(.dark) .text-emt-green { color: #166534; }        /* green-800 */
+html:not(.dark) .text-emt-green\/70 { color: rgb(22 101 52 / 0.9); }
+html:not(.dark) .text-emt-red { color: #c8102e; }
+html:not(.dark) .text-emt-red\/80 { color: rgb(200 16 46 / 0.9); }
+html:not(.dark) .hover\:text-emt-red:hover { color: #c8102e; }
+html:not(.dark) .hover\:text-emt-green:hover { color: #15803d; }
+html:not(.dark) .text-emt-yellow { color: #b45309; }       /* amber-700 */
+html:not(.dark) .text-emt-blue { color: #1d4ed8; }         /* blue-700 */
+
+/*
+ * Light mode: faded text (text-fg/50 and the like) loses far more contrast on a
+ * white page than on a black one, so in light mode lift its opacity:
+ * new = 0.3 + 0.75 x old (e.g. /50 -> 0.675, /25 -> 0.49).
+ */
+html:not(.dark) .text-fg\/5 { color: rgb(var(--fg) / 0.337); }
+html:not(.dark) .text-fg\/10 { color: rgb(var(--fg) / 0.375); }
+html:not(.dark) .text-fg\/15 { color: rgb(var(--fg) / 0.412); }
+html:not(.dark) .text-fg\/20 { color: rgb(var(--fg) / 0.45); }
+html:not(.dark) .text-fg\/25 { color: rgb(var(--fg) / 0.487); }
+html:not(.dark) .text-fg\/30 { color: rgb(var(--fg) / 0.525); }
+html:not(.dark) .text-fg\/35 { color: rgb(var(--fg) / 0.562); }
+html:not(.dark) .text-fg\/40 { color: rgb(var(--fg) / 0.6); }
+html:not(.dark) .text-fg\/45 { color: rgb(var(--fg) / 0.637); }
+html:not(.dark) .text-fg\/50 { color: rgb(var(--fg) / 0.675); }
+html:not(.dark) .text-fg\/55 { color: rgb(var(--fg) / 0.712); }
+html:not(.dark) .text-fg\/60 { color: rgb(var(--fg) / 0.75); }
+html:not(.dark) .text-fg\/65 { color: rgb(var(--fg) / 0.787); }
+html:not(.dark) .text-fg-muted\/5 { color: rgb(var(--fg-muted) / 0.337); }
+html:not(.dark) .text-fg-muted\/10 { color: rgb(var(--fg-muted) / 0.375); }
+html:not(.dark) .text-fg-muted\/15 { color: rgb(var(--fg-muted) / 0.412); }
+html:not(.dark) .text-fg-muted\/20 { color: rgb(var(--fg-muted) / 0.45); }
+html:not(.dark) .text-fg-muted\/25 { color: rgb(var(--fg-muted) / 0.487); }
+html:not(.dark) .text-fg-muted\/30 { color: rgb(var(--fg-muted) / 0.525); }
+html:not(.dark) .text-fg-muted\/35 { color: rgb(var(--fg-muted) / 0.562); }
+html:not(.dark) .text-fg-muted\/40 { color: rgb(var(--fg-muted) / 0.6); }
+html:not(.dark) .text-fg-muted\/45 { color: rgb(var(--fg-muted) / 0.637); }
+html:not(.dark) .text-fg-muted\/50 { color: rgb(var(--fg-muted) / 0.675); }
+html:not(.dark) .text-fg-muted\/55 { color: rgb(var(--fg-muted) / 0.712); }
+html:not(.dark) .text-fg-muted\/60 { color: rgb(var(--fg-muted) / 0.75); }
+html:not(.dark) .text-fg-muted\/65 { color: rgb(var(--fg-muted) / 0.787); }
+html:not(.dark) .text-fg-subtle\/5 { color: rgb(var(--fg-subtle) / 0.337); }
+html:not(.dark) .text-fg-subtle\/10 { color: rgb(var(--fg-subtle) / 0.375); }
+html:not(.dark) .text-fg-subtle\/15 { color: rgb(var(--fg-subtle) / 0.412); }
+html:not(.dark) .text-fg-subtle\/20 { color: rgb(var(--fg-subtle) / 0.45); }
+html:not(.dark) .text-fg-subtle\/25 { color: rgb(var(--fg-subtle) / 0.487); }
+html:not(.dark) .text-fg-subtle\/30 { color: rgb(var(--fg-subtle) / 0.525); }
+html:not(.dark) .text-fg-subtle\/35 { color: rgb(var(--fg-subtle) / 0.562); }
+html:not(.dark) .text-fg-subtle\/40 { color: rgb(var(--fg-subtle) / 0.6); }
+html:not(.dark) .text-fg-subtle\/45 { color: rgb(var(--fg-subtle) / 0.637); }
+html:not(.dark) .text-fg-subtle\/50 { color: rgb(var(--fg-subtle) / 0.675); }
+html:not(.dark) .text-fg-subtle\/55 { color: rgb(var(--fg-subtle) / 0.712); }
+html:not(.dark) .text-fg-subtle\/60 { color: rgb(var(--fg-subtle) / 0.75); }
+html:not(.dark) .text-fg-subtle\/65 { color: rgb(var(--fg-subtle) / 0.787); }

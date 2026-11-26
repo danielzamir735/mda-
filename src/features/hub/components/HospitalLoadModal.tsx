@@ -201,14 +201,14 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Gauge size={20} className="text-cyan-500 dark:text-cyan-400" />
+          <Gauge size={20} className="text-cyan-700 dark:text-cyan-400" />
           <h2 className="text-fg font-bold text-xl">{t('refErLoadTitle')}</h2>
         </div>
         <div className="flex items-center gap-2">
           {!pickerOpen && (
             <button
               onClick={openPickerToEdit}
-              className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-500 dark:text-cyan-400 active:scale-90 transition-all"
+              className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-700 dark:text-cyan-400 active:scale-90 transition-all"
               aria-label={t('refEditFavorites')}
             >
               <Pencil size={16} />
@@ -278,7 +278,7 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
                 {/* Emphasized hospital header */}
                 <div className="flex items-center gap-3 px-4 py-3.5 bg-cyan-500/8 dark:bg-cyan-500/10 border-b border-cyan-400/15">
                   <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shrink-0">
-                    <Building2 size={18} className="text-cyan-500 dark:text-cyan-400" />
+                    <Building2 size={18} className="text-cyan-700 dark:text-cyan-400" />
                   </div>
                   <p className="text-fg font-black text-lg leading-tight">{hospitalName(hospital)}</p>
                 </div>
@@ -311,7 +311,7 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
                           </span>
                           <button
                             onClick={() => { setReportSheet({ hospital, department: key }); setSubmitState('idle'); }}
-                            className="shrink-0 text-xs font-bold text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
+                            className="shrink-0 text-xs font-bold text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 rounded-full px-3 py-1.5 active:scale-90 transition-all"
                           >
                             {t('refReport')}
                           </button>
@@ -396,7 +396,7 @@ export default function HospitalLoadModal({ isOpen, onClose }: Props) {
                 {submitState === 'saved' && <p className="text-emt-green text-sm font-bold">{t('refReportSaved')}</p>}
                 {submitState === 'error' && <p className="text-emt-red text-sm">{t('refSendFailed')}</p>}
                 {submitState === 'rate-limited' && (
-                  <p className="flex items-center justify-center gap-1.5 text-amber-600 dark:text-amber-400 text-sm">
+                  <p className="flex items-center justify-center gap-1.5 text-amber-800 dark:text-amber-400 text-sm">
                     <AlertCircle size={14} />
                     {t('refRateLimited')}
                   </p>

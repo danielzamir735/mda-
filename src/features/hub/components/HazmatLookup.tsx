@@ -95,11 +95,11 @@ function MaterialCard({ material }: { material: HazMaterial | null }) {
         </div>
       )}
 
-      <Section icon={<Flame size={18} className="text-orange-500" />} title={`${t('refHazDangers')} · ${guide.title}`}>
+      <Section icon={<Flame size={18} className="text-orange-700 dark:text-orange-500" />} title={`${t('refHazDangers')} · ${guide.title}`}>
         <Bullets items={guide.dangers} className="text-fg/85" />
       </Section>
 
-      <Section icon={<Ruler size={18} className="text-blue-500" />} title={t('refHazDistances')}>
+      <Section icon={<Ruler size={18} className="text-blue-700 dark:text-blue-500" />} title={t('refHazDistances')}>
         <DistanceRow label={t('refHazIsolate')} value={guide.isolate} />
         {guide.largeSpill && <DistanceRow label={t('refHazLargeSpill')} value={guide.largeSpill} />}
         {guide.fire && <DistanceRow label={t('refHazFire')} value={guide.fire} />}
@@ -206,7 +206,7 @@ export default function HazmatLookup() {
       {/* Safety first */}
       <div className="rounded-2xl border border-red-400/50 bg-red-50 dark:bg-red-900/20 p-4 flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={20} className="text-red-600 dark:text-red-400 shrink-0" />
+          <AlertTriangle size={20} className="text-red-700 dark:text-red-400 shrink-0" />
           <h3 className="text-red-700 dark:text-red-300 font-bold text-base">{t('refHazSafetyFirst')}</h3>
         </div>
         <ul className="flex flex-col gap-1.5 text-sm text-red-800 dark:text-red-200 leading-relaxed list-disc ps-5">
@@ -245,8 +245,8 @@ export default function HazmatLookup() {
             <li>{decoded.digit}.</li>
             <li>{t('refHazEacPpe', { ppe: decoded.letter.ppe })}</li>
             <li>{decoded.letter.spill === 'dilute' ? t('refHazEacDilute') : t('refHazEacContain')}</li>
-            {decoded.letter.violent && <li className="font-bold text-red-600 dark:text-red-400">{t('refHazEacViolent')}</li>}
-            {decoded.evacuate && <li className="font-bold text-red-600 dark:text-red-400">{t('refHazEacEvacuate')}</li>}
+            {decoded.letter.violent && <li className="font-bold text-red-700 dark:text-red-400">{t('refHazEacViolent')}</li>}
+            {decoded.evacuate && <li className="font-bold text-red-700 dark:text-red-400">{t('refHazEacEvacuate')}</li>}
           </ul>
         ) : eac.trim().length >= 2 ? (
           <p className="text-sm text-fg-muted">{t('refHazEacInvalid')}</p>

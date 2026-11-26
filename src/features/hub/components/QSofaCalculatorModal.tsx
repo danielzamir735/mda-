@@ -51,8 +51,8 @@ const SEV: Record<SevKey, { label: TranslationKey; badge: string; score: string;
   },
   moderate: {
     label: 'calcQsofaSevModerate',
-    badge: 'bg-emt-yellow/20 text-amber-600 dark:text-emt-yellow',
-    score: 'text-amber-600 dark:text-emt-yellow',
+    badge: 'bg-emt-yellow/20 text-amber-800 dark:text-emt-yellow',
+    score: 'text-amber-800 dark:text-emt-yellow',
     bar: 'bg-emt-yellow/8',
     barBorder: 'border-emt-yellow/30',
     description: 'calcQsofaDescModerate',
@@ -111,7 +111,7 @@ function CriterionRow({ title, subtitle, active, onToggle }: CriterionRowProps) 
 
       {/* Text */}
       <div className="flex-1 text-start">
-        <p className={`font-bold text-base leading-tight ${active ? 'text-amber-600 dark:text-amber-400' : 'text-fg'}`}>
+        <p className={`font-bold text-base leading-tight ${active ? 'text-amber-800 dark:text-amber-400' : 'text-fg'}`}>
           {title}
         </p>
         <p className="text-fg-muted text-xs mt-0.5">{subtitle}</p>
@@ -121,7 +121,7 @@ function CriterionRow({ title, subtitle, active, onToggle }: CriterionRowProps) 
       <span className={[
         'text-sm font-black px-2.5 py-1 rounded-full border transition-all',
         active
-          ? 'bg-amber-400/20 border-amber-400/50 text-amber-600 dark:text-amber-400'
+          ? 'bg-amber-400/20 border-amber-400/50 text-amber-800 dark:text-amber-400'
           : 'bg-surface-2 border-line text-fg-muted',
       ].join(' ')}>
         +1
@@ -170,14 +170,14 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={20} className="text-amber-400" />
+          <AlertTriangle size={20} className="text-amber-800 dark:text-amber-400" />
           <h2 className="text-fg font-bold text-xl">{t('calcQsofaTitle')}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30
-                       bg-red-500/10 text-red-500 text-sm font-semibold
+                       bg-red-500/10 text-red-700 dark:text-red-500 text-sm font-semibold
                        hover:bg-red-500/20 active:scale-95 transition-all"
           >
             <RotateCcw size={14} />
@@ -218,7 +218,7 @@ export default function QSofaCalculatorModal({ isOpen, onClose }: Props) {
           <div className="flex flex-col gap-1.5">
             {[
               { range: '0', label: t('calcQsofaSevLow'), color: 'text-emt-green' },
-              { range: '1', label: t('calcQsofaRowModerate'), color: 'text-amber-600 dark:text-emt-yellow' },
+              { range: '1', label: t('calcQsofaRowModerate'), color: 'text-amber-800 dark:text-emt-yellow' },
               { range: '2–3', label: t('calcQsofaRowHigh'), color: 'text-emt-red' },
             ].map(r => (
               <div key={r.range} className="flex items-center justify-between">

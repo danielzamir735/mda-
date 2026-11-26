@@ -45,7 +45,7 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
         {/* Header */}
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <BookOpen size={22} className="text-blue-400" />
+            <BookOpen size={22} className="text-blue-700 dark:text-blue-400" />
             <h2 className="text-fg font-bold text-xl">{t('calcVitalsTitle')}</h2>
           </div>
           <button
@@ -70,13 +70,13 @@ export default function VitalsReferenceModal({ isOpen, onClose }: Props) {
                        active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <Brain size={20} className="text-purple-400" />
+              <Brain size={20} className="text-purple-700 dark:text-purple-400" />
             </div>
             <div className="flex flex-col items-start">
               <span className="text-purple-700 dark:text-purple-200 font-bold text-base leading-tight">{t('calcVitalsTrainer')}</span>
-              <span className="text-purple-600/70 dark:text-purple-300/50 text-xs mt-0.5">{t('calcVitalsTrainerSub', { n: FLASHCARD_DATA.length })}</span>
+              <span className="text-purple-700 dark:text-purple-300/50 text-xs mt-0.5">{t('calcVitalsTrainerSub', { n: FLASHCARD_DATA.length })}</span>
             </div>
-            <div className="ms-auto text-purple-400/60 text-lg">{dir === 'rtl' ? '←' : '→'}</div>
+            <div className="ms-auto text-purple-700 dark:text-purple-400/60 text-lg">{dir === 'rtl' ? '←' : '→'}</div>
           </button>
 
           {/* Table */}

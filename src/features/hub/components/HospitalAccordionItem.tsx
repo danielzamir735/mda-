@@ -44,7 +44,7 @@ function PhoneRow({
                  bg-page border border-line
                  active:scale-95 transition-transform"
     >
-      <span className="text-blue-500 dark:text-blue-400 shrink-0">{icon}</span>
+      <span className="text-blue-700 dark:text-blue-400 shrink-0">{icon}</span>
       <div className="flex flex-col flex-1 text-start">
         <span className="text-fg-muted text-xs leading-none mb-0.5">{label}</span>
         <span className="text-fg font-semibold text-base leading-none" dir="ltr">
@@ -83,7 +83,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
           {isLevelA && (
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0
-                         bg-transparent text-red-600 dark:text-red-400 border border-red-600/60 dark:border-red-500/60"
+                         bg-transparent text-red-700 dark:text-red-400 border border-red-600/60 dark:border-red-500/60"
             >
               A
             </span>
@@ -164,7 +164,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                            bg-blue-600/15 border border-blue-500/40
                            active:scale-95 transition-transform"
               >
-                <Navigation size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                <Navigation size={20} className="text-blue-700 dark:text-blue-400 shrink-0" />
                 <span className="text-blue-700 dark:text-blue-300 font-semibold">{t('navigateToER')}</span>
               </button>
             )
@@ -178,7 +178,7 @@ export default function HospitalAccordionItem({ hospital, isLevelA, isOpen, onTo
                          bg-blue-600/15 border border-blue-500/40
                          active:scale-95 transition-transform"
             >
-              <Navigation size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
+              <Navigation size={20} className="text-blue-700 dark:text-blue-400 shrink-0" />
               <span className="text-blue-700 dark:text-blue-300 font-semibold">{t('navigateToER')}</span>
             </a>
           )}

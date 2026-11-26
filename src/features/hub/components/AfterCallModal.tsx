@@ -177,7 +177,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-fg/10 bg-fg/[0.03] backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <HeartHandshake size={22} className="text-violet-600 dark:text-violet-300" />
+          <HeartHandshake size={22} className="text-violet-700 dark:text-violet-300" />
           <h2 className="text-fg font-bold text-xl">{t('acTitle')}</h2>
         </div>
         <HapticButton
@@ -200,7 +200,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
         {/* 1. breathing */}
         <section className="shrink-0 rounded-3xl border border-sky-400/30 dark:border-sky-300/20 bg-sky-400/[0.06] dark:bg-sky-400/[0.04] px-4 py-5">
           <div className="flex items-center gap-2 mb-4">
-            <Wind size={18} className="text-sky-600 dark:text-sky-300" />
+            <Wind size={18} className="text-sky-700 dark:text-sky-300" />
             <h3 className="text-fg font-bold text-base">{t('acGuidedBreathing')}</h3>
           </div>
           <GuidedBreathing />
@@ -225,7 +225,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
                 >
                   <span className="text-2xl leading-none mt-0.5">{h.emoji}</span>
                   <span className="flex-1 flex flex-col gap-1">
-                    <span className={`font-bold text-sm ${isDone ? 'text-green-700 dark:text-green-300' : 'text-fg'}`}>{t(h.titleKey)}</span>
+                    <span className={`font-bold text-sm ${isDone ? 'text-green-800 dark:text-green-300' : 'text-fg'}`}>{t(h.titleKey)}</span>
                     <span className="text-fg-muted text-xs leading-relaxed">{t(h.descKey)}</span>
                   </span>
                   <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isDone ? 'border-green-500 bg-green-500' : 'border-fg/25'}`}>
@@ -273,7 +273,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
                 <p className="text-fg-muted text-xs font-bold">{t('acSavedDebriefs', { n: entries.length })}</p>
                 <button
                   onClick={() => { if (window.confirm(t('acConfirmDeleteAll'))) deleteAll(); }}
-                  className="text-xs font-bold text-red-600 dark:text-red-300/80"
+                  className="text-xs font-bold text-red-700 dark:text-red-300/80"
                 >
                   {t('acDeleteAll')}
                 </button>
@@ -293,7 +293,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
                           className="p-2 rounded-full bg-red-500/10"
                           aria-label={t('acDeleteDebrief')}
                         >
-                          <Trash2 size={14} className="text-red-600 dark:text-red-300/80" />
+                          <Trash2 size={14} className="text-red-700 dark:text-red-300/80" />
                         </button>
                       </div>
                       {isOpen && (
@@ -332,7 +332,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
         {/* 5. call someone */}
         <section className="shrink-0 rounded-3xl border border-green-500/30 dark:border-green-300/20 bg-green-400/[0.06] dark:bg-green-400/[0.04] px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
-            <Phone size={18} className="text-green-600 dark:text-green-300" />
+            <Phone size={18} className="text-green-800 dark:text-green-300" />
             <h3 className="text-fg font-bold text-base">{t('acTalkNow')}</h3>
           </div>
           <div className="flex flex-col gap-2">
@@ -343,9 +343,9 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
                 onClick={() => trackInteraction(`${TRACK_TITLE()} · ${h.display}`, 'wellness')}
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 bg-green-500/15 border border-green-500/30 active:scale-[0.98] transition-transform"
               >
-                <Phone size={18} className="text-green-600 dark:text-green-300 shrink-0" />
+                <Phone size={18} className="text-green-800 dark:text-green-300 shrink-0" />
                 <span className="flex-1 text-fg font-bold text-sm">{t(h.nameKey)}</span>
-                <span className="text-green-700 dark:text-green-200 font-black tabular-nums" dir="ltr">{h.display}</span>
+                <span className="text-green-800 dark:text-green-200 font-black tabular-nums" dir="ltr">{h.display}</span>
               </a>
             ))}
 
@@ -355,7 +355,7 @@ export default function AfterCallModal({ isOpen, onClose, onOpenBreathing }: Pro
                   href={telHref(supportPhone)}
                   className="flex-1 flex items-center gap-3 rounded-2xl px-4 py-3.5 bg-violet-500/15 border border-violet-400/30 active:scale-[0.98] transition-transform"
                 >
-                  <Phone size={18} className="text-violet-600 dark:text-violet-300 shrink-0" />
+                  <Phone size={18} className="text-violet-700 dark:text-violet-300 shrink-0" />
                   <span className="flex-1 text-fg font-bold text-sm">{supportName || t('acMySupportLine')}</span>
                   <span className="text-violet-700 dark:text-violet-200 font-black tabular-nums" dir="ltr">{supportPhone}</span>
                 </a>

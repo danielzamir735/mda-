@@ -107,7 +107,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
             onClick={() => (isCustomizeMode ? exitCustomize() : setIsCustomizeMode(true))}
             className={`px-3 py-1.5 rounded-lg border text-sm font-bold active:scale-95 transition-all ${
               isCustomizeMode
-                ? 'bg-emt-yellow/10 border-emt-yellow text-amber-600 dark:text-emt-yellow'
+                ? 'bg-emt-yellow/10 border-emt-yellow text-amber-800 dark:text-emt-yellow'
                 : 'bg-surface-2 border-line-strong text-fg-muted hover:text-fg'
             }`}
           >
@@ -132,7 +132,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-fg-muted">{checkedCount} / {totalItems} {t('items')}</span>
           {isCustomizeMode
-            ? <span className="text-sm font-bold text-amber-600 dark:text-emt-yellow">{t('refEditMode')}</span>
+            ? <span className="text-sm font-bold text-amber-800 dark:text-emt-yellow">{t('refEditMode')}</span>
             : isComplete && <span className="text-sm font-bold text-emt-green">{t('refVehicleReady')}</span>
           }
         </div>
@@ -227,7 +227,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                             </button>
                           )}
                           <span className="flex-1 text-start text-sm text-fg">{item.name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full border text-amber-600 dark:text-emt-yellow border-emt-yellow/30 shrink-0">
+                          <span className="text-xs px-2 py-0.5 rounded-full border text-amber-800 dark:text-emt-yellow border-emt-yellow/30 shrink-0">
                             {item.requiredAmount}
                           </span>
                         </div>
@@ -255,7 +255,7 @@ export default function AmbulanceChecklistModal({ isOpen, onClose }: Props) {
                           {item.name}
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${
-                          checked ? 'text-fg-muted border-line-strong' : 'text-amber-600 dark:text-emt-yellow border-emt-yellow/30'
+                          checked ? 'text-fg-muted border-line-strong' : 'text-amber-800 dark:text-emt-yellow border-emt-yellow/30'
                         }`}>
                           {item.requiredAmount}
                         </span>

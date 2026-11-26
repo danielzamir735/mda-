@@ -73,10 +73,10 @@ function ContractionTable({ contractions, activeStartMs, activeElapsed, bare = f
       </div>
       {activeStartMs != null && (
         <div className="grid items-center px-3 py-2.5" style={{ gridTemplateColumns: TABLE_COLS, borderTop: '1px solid rgb(var(--fg) / 0.05)', background: 'rgba(239,35,60,0.08)' }}>
-          <span className="text-xs font-semibold text-red-600/70 dark:text-red-300/70">{contractions.length + 1}</span>
+          <span className="text-xs font-semibold text-red-700 dark:text-red-300/70">{contractions.length + 1}</span>
           <span className="text-center text-xs tabular-nums text-fg/70">{fmtClock(activeStartMs)}</span>
-          <span className="text-center text-xs text-red-600 dark:text-red-300 font-bold">{t('ctInProgress')}</span>
-          <span className="text-center font-black text-sm text-red-600 dark:text-red-300 tabular-nums">{fmt(activeElapsed ?? 0)}</span>
+          <span className="text-center text-xs text-red-700 dark:text-red-300 font-bold">{t('ctInProgress')}</span>
+          <span className="text-center font-black text-sm text-red-700 dark:text-red-300 tabular-nums">{fmt(activeElapsed ?? 0)}</span>
           <span className="text-center text-xs text-fg/30">—</span>
         </div>
       )}
@@ -89,8 +89,8 @@ function ContractionTable({ contractions, activeStartMs, activeElapsed, bare = f
           <span className="text-xs font-semibold" style={{ color: 'rgb(var(--fg) / 0.4)' }}>{contractions.length - i}</span>
           <span className="text-center text-xs tabular-nums" style={{ color: 'rgb(var(--fg) / 0.75)' }}>{fmtClock(contractionStart(c))}</span>
           <span className="text-center text-xs tabular-nums" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{fmtClock(c.id)}</span>
-          <span className="text-center font-black text-sm text-green-600 dark:text-green-400 tabular-nums">{fmt(c.duration)}</span>
-          <span className={`text-center font-black text-sm tabular-nums ${c.interval !== null && c.interval < 300 ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
+          <span className="text-center font-black text-sm text-green-800 dark:text-green-400 tabular-nums">{fmt(c.duration)}</span>
+          <span className={`text-center font-black text-sm tabular-nums ${c.interval !== null && c.interval < 300 ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
             {c.interval !== null ? fmt(c.interval) : '—'}
           </span>
         </div>
@@ -239,12 +239,12 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                 style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)' }}
                 aria-label={t('ctHistory')}
               >
-                <History size={18} className="text-purple-600 dark:text-purple-300" />
+                <History size={18} className="text-purple-700 dark:text-purple-300" />
               </button>
               {contractions.length > 0 && (
                 <button
                   onClick={handleReset}
-                  className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform text-red-600 dark:text-red-400"
+                  className="px-3.5 py-1.5 rounded-full text-sm font-bold active:scale-95 transition-transform text-red-700 dark:text-red-400"
                   style={{ background: 'rgba(239,35,60,0.12)', border: '1px solid rgba(239,35,60,0.35)' }}
                   aria-label={t('ctResetAria')}
                 >
@@ -287,7 +287,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                 style={{ background: 'rgba(239,35,60,0.15)', border: '1px solid rgba(239,35,60,0.35)' }}
                 aria-label={t('ctDismissAlert')}
               >
-                <X size={14} className="text-red-400" />
+                <X size={14} className="text-red-700 dark:text-red-400" />
               </button>
             </div>
           </motion.div>
@@ -302,7 +302,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
           className="w-full shrink-0 flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
           style={{ background: 'rgb(var(--fg) / 0.04)', border: '1px solid rgb(var(--fg) / 0.09)' }}
         >
-          <User size={16} className="text-purple-600/70 dark:text-purple-300/70 shrink-0" />
+          <User size={16} className="text-purple-700 dark:text-purple-300/70 shrink-0" />
           <input
             value={currentLabel}
             onChange={e => setCurrentLabel(e.target.value)}
@@ -321,7 +321,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.25 }}
-              className={`text-center font-bold text-lg tracking-wide ${active ? 'text-red-600 dark:text-red-300' : 'text-fg/60'}`}
+              className={`text-center font-bold text-lg tracking-wide ${active ? 'text-red-700 dark:text-red-300' : 'text-fg/60'}`}
             >
               {active ? t('ctActiveHint') : t('ctIdleHint')}
             </motion.p>
@@ -347,7 +347,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                   }}
                 >
                   <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctAvgDuration')}</p>
-                  <p className="font-black text-xl text-green-600 dark:text-green-400">{fmt(avgDuration)}</p>
+                  <p className="font-black text-xl text-green-800 dark:text-green-400">{fmt(avgDuration)}</p>
                 </div>
               )}
 
@@ -361,7 +361,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                   }}
                 >
                   <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctAvgInterval')}</p>
-                  <p className={`font-black text-xl ${isUrgent ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                  <p className={`font-black text-xl ${isUrgent ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
                     {fmt(avgInterval)}
                   </p>
                 </div>
@@ -376,7 +376,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                 }}
               >
                 <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgb(var(--fg) / 0.55)' }}>{t('ctCount')}</p>
-                <p className="font-black text-xl text-purple-600 dark:text-purple-300">{contractions.length}</p>
+                <p className="font-black text-xl text-purple-700 dark:text-purple-300">{contractions.length}</p>
               </div>
             </motion.div>
           )}
@@ -440,12 +440,12 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
                 >
                   {fmt(elapsed)}
                 </motion.span>
-                <span className="text-sm font-bold text-red-100 mt-2 tracking-wide">{t('ctEnd')}</span>
+                <span className="text-sm font-bold text-red-700 dark:text-red-100 mt-2 tracking-wide">{t('ctEnd')}</span>
               </>
             ) : (
               <>
-                <Timer size={54} className="text-green-600 dark:text-green-400" strokeWidth={1.5} />
-                <span className="text-base font-bold text-green-700 dark:text-green-300 mt-2 tracking-wide">{t('ctStart')}</span>
+                <Timer size={54} className="text-green-800 dark:text-green-400" strokeWidth={1.5} />
+                <span className="text-base font-bold text-green-800 dark:text-green-300 mt-2 tracking-wide">{t('ctStart')}</span>
               </>
             )}
           </motion.button>
@@ -462,11 +462,11 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               style={{ color: 'rgb(var(--fg) / 0.55)' }}
             >
               {t('ctLast')}{' '}
-              <span className="text-green-600 dark:text-green-400 font-bold">{fmt(contractions[0].duration)}</span>
+              <span className="text-green-800 dark:text-green-400 font-bold">{fmt(contractions[0].duration)}</span>
               {contractions[0].interval !== null && (
                 <>
                   {' · '}{t('ctIntervalLabel')}{' '}
-                  <span className={`font-bold ${isUrgent ? 'text-red-500 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                  <span className={`font-bold ${isUrgent ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
                     {fmt(contractions[0].interval!)}
                   </span>
                 </>
@@ -511,7 +511,7 @@ export default function ContractionTimerModal({ isOpen, onClose }: Props) {
               </button>
 
               <div className="flex items-center gap-2">
-                <History size={18} className="text-purple-600 dark:text-purple-300" />
+                <History size={18} className="text-purple-700 dark:text-purple-300" />
                 <h3 className="text-fg font-bold text-xl">{t('ctSessionsHistory')}</h3>
               </div>
 
@@ -664,7 +664,7 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename,
             <div className="flex gap-2 px-4 pb-3">
               <button
                 onClick={onRestore}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform text-green-700 dark:text-green-300"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-transform text-green-800 dark:text-green-300"
                 style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)' }}
               >
                 <Undo2 size={14} />
@@ -684,7 +684,7 @@ function SessionCard({ session, index, isExpanded, onToggle, onDelete, onRename,
                 style={{ background: 'rgba(239,35,60,0.08)', border: '1px solid rgba(239,35,60,0.25)' }}
                 aria-label={t('ctDeleteSession')}
               >
-                <Trash2 size={14} className="text-red-500/80 dark:text-red-400/70" />
+                <Trash2 size={14} className="text-red-700 dark:text-red-400/70" />
               </button>
             </div>
             <ContractionTable contractions={list} bare />

@@ -80,12 +80,12 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               <motion.div
                 animate={{ scale: [1, 1.28, 1, 1.16, 1] }}
                 transition={{ duration: 1.4, repeat: Infinity, times: [0, 0.14, 0.28, 0.42, 0.56], ease: 'easeInOut' }}
-                className="drop-shadow-[0_0_28px_rgba(244,63,94,0.7)] text-rose-500"
+                className="drop-shadow-[0_0_28px_rgba(244,63,94,0.7)] text-rose-700 dark:text-rose-500"
               >
                 <Heart size={62} fill="currentColor" />
               </motion.div>
               <h1 className="text-3xl font-black text-fg text-center leading-tight">
-                {t('obSupTitle')}<span className="text-rose-500 dark:text-rose-400">+</span>
+                {t('obSupTitle')}<span className="text-rose-700 dark:text-rose-400">+</span>
               </h1>
             </div>
 
@@ -97,10 +97,10 @@ export default function SupportModal({ isOpen, onClose }: Props) {
               className="text-center text-lg leading-tight text-fg-muted"
             >
               {t('obSupCountBefore')}{' '}
-              <span className="text-emerald-600 dark:text-emerald-300 font-black tabular-nums">
+              <span className="text-emerald-700 dark:text-emerald-300 font-black tabular-nums">
                 {displayCount.toLocaleString('en-US')}
               </span>
-              <span className="text-emerald-600 dark:text-emerald-300 font-bold">+</span>{' '}
+              <span className="text-emerald-700 dark:text-emerald-300 font-bold">+</span>{' '}
               {t('obSupCountAfter')}
             </motion.p>
 
@@ -202,7 +202,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                 </button>
 
                 <h2 className="text-fg font-bold text-xl text-center mb-1">{t('obSupBitTitle')}</h2>
-                <p className="text-violet-600 dark:text-violet-300 text-sm text-center mb-4">
+                <p className="text-violet-700 dark:text-violet-300 text-sm text-center mb-4">
                   {t('obSupBitTo')}
                 </p>
 
@@ -225,7 +225,7 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                     }}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${
                       bitCopied
-                        ? 'bg-green-500/20 border-green-500/40 text-green-700 dark:text-green-300'
+                        ? 'bg-green-500/20 border-green-500/40 text-green-800 dark:text-green-300'
                         : 'bg-violet-500/25 border-violet-400/40 text-violet-700 dark:text-violet-300'
                     }`}
                   >
@@ -268,10 +268,10 @@ export default function SupportModal({ isOpen, onClose }: Props) {
                   backdropFilter: 'blur(12px)',
                 }}
               >
-                <p className="text-green-700 dark:text-green-300 font-semibold text-sm leading-relaxed">
+                <p className="text-green-800 dark:text-green-300 font-semibold text-sm leading-relaxed">
                   {t('obSupThank1')}<br />
                   {t('obSupThank2')}<br />
-                  <span className="text-green-600/80 dark:text-green-400/80 font-normal text-xs">{t('obSupThank3')}</span>
+                  <span className="text-green-800 dark:text-green-400/80 font-normal text-xs">{t('obSupThank3')}</span>
                 </p>
               </motion.div>
             )}

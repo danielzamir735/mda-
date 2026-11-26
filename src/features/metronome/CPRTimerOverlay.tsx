@@ -117,7 +117,7 @@ function ShockTable({ logs, t }: { logs: ShockLog[]; t: (k: Parameters<ReturnTyp
             backgroundColor: i % 2 === 0 ? 'rgba(245,158,11,0.06)' : 'transparent',
           }}
         >
-          <span className="font-black text-amber-400">{i + 1}</span>
+          <span className="font-black text-amber-800 dark:text-amber-400">{i + 1}</span>
           <span className="text-fg">{shock.time}</span>
           <span className="text-fg-muted">{shock.elapsed}</span>
           <span className="text-fg-subtle"><bdi dir="ltr">{shock.gap !== '—' ? `+${shock.gap}` : '—'}</bdi></span>
@@ -164,7 +164,7 @@ function SummaryModal({ startAt, elapsedMs, shocks, events, onSave, onDiscard, o
       <div className="w-full max-w-sm bg-surface rounded-3xl border border-line overflow-hidden shrink-0">
         {/* card header */}
         <div className="flex items-center gap-2 px-5 py-4 border-b border-line">
-          <Zap size={16} className="text-amber-400" fill="currentColor" />
+          <Zap size={16} className="text-amber-800 dark:text-amber-400" fill="currentColor" />
           <h2 className="font-black text-lg text-fg">{t('cprSummary')}</h2>
         </div>
 
@@ -243,12 +243,12 @@ function SummaryModal({ startAt, elapsedMs, shocks, events, onSave, onDiscard, o
             onClick={onOpenAfterCall}
             className="w-full mt-1 rounded-2xl px-4 py-3.5 flex items-center gap-3 text-start active:scale-[0.98] transition-transform border border-violet-300/40 bg-violet-500/5 dark:bg-violet-500/10"
           >
-            <HeartHandshake size={22} className="text-violet-500 dark:text-violet-300 shrink-0" />
+            <HeartHandshake size={22} className="text-violet-700 dark:text-violet-300 shrink-0" />
             <span className="flex-1 flex flex-col">
               <span className="text-fg font-bold text-sm">{t('cprHardCallTitle')}</span>
-              <span className="text-gray-500 dark:text-violet-200/60 text-xs">{t('cprHardCallSub')}</span>
+              <span className="text-gray-600 dark:text-violet-200/60 text-xs">{t('cprHardCallSub')}</span>
             </span>
-            <ChevronLeft size={18} className="text-violet-400 shrink-0 ltr:rotate-180" />
+            <ChevronLeft size={18} className="text-violet-700 dark:text-violet-400 shrink-0 ltr:rotate-180" />
           </button>
         )}
       </div>
@@ -473,10 +473,10 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
         <div className="mx-5 rounded-2xl border border-blue-400/30 bg-blue-500/5 dark:bg-blue-500/10 px-4 py-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-baseline gap-2 whitespace-nowrap min-w-0">
-              <span className="font-black text-blue-600 dark:text-blue-300 text-base">{t('cprCycleN', { n: cycleCount + 1 })}</span>
+              <span className="font-black text-blue-700 dark:text-blue-300 text-base">{t('cprCycleN', { n: cycleCount + 1 })}</span>
               <span className="text-xs text-fg-muted">{t('cprSwapIn')}</span>
               <span
-                className={`font-mono font-black tabular-nums text-lg ${nearSwap ? 'text-red-500' : 'text-fg'}`}
+                className={`font-mono font-black tabular-nums text-lg ${nearSwap ? 'text-red-700 dark:text-red-500' : 'text-fg'}`}
                 dir="ltr"
               >
                 {formatElapsed(coach.cycleRemainingSec * 1000)}
@@ -484,7 +484,7 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
             </div>
             <button
               onClick={resetCycle}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 border border-blue-400/40 text-blue-600 dark:text-blue-300 active:scale-95 transition-transform"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 border border-blue-400/40 text-blue-700 dark:text-blue-300 active:scale-95 transition-transform"
               aria-label={t('cprResetCycle')}
             >
               <RotateCcw size={13} />
@@ -519,10 +519,10 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
         {coach.reminder && (
           <div className="mx-5 mt-2.5 rounded-2xl border-2 border-pink-500/60 bg-pink-500/10 px-4 py-3 flex items-center gap-3"
                style={{ animation: 'cpr-modal-in 260ms ease-out both' }}>
-            <Syringe size={20} className="text-pink-500 shrink-0" />
+            <Syringe size={20} className="text-pink-700 dark:text-pink-500 shrink-0" />
             <p className="flex-1 font-black text-base text-pink-700 dark:text-pink-200">{coach.reminder.text}</p>
             <button onClick={() => coach.dismissReminder(coach.reminder!.key)} className="w-8 h-8 rounded-full bg-pink-500/15 flex items-center justify-center shrink-0" aria-label={t('cprDismissReminder')}>
-              <X size={15} className="text-pink-500" />
+              <X size={15} className="text-pink-700 dark:text-pink-500" />
             </button>
           </div>
         )}
@@ -595,7 +595,7 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
               {coach.epiSinceSec === null ? (
                 <span className="text-xs text-fg-muted">{t('cprNotGivenYet')}</span>
               ) : coach.epiDue ? (
-                <span className="text-sm font-black text-pink-600 dark:text-pink-300">{t('cprEpiDueDose', { n: epiCount + 1 })}</span>
+                <span className="text-sm font-black text-pink-700 dark:text-pink-300">{t('cprEpiDueDose', { n: epiCount + 1 })}</span>
               ) : (
                 <span className="text-xs text-fg-muted">
                   {t('cprEpiNextIn', { n: epiCount })}{' '}
@@ -633,7 +633,7 @@ export default function CPRTimerOverlay({ onOpenAfterCall }: OverlayProps) {
 
           <button
             onClick={markRosc}
-            className="py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 border-2 border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300 active:scale-95 transition-transform"
+            className="py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 border-2 border-green-500/50 bg-green-500/10 text-green-800 dark:text-green-300 active:scale-95 transition-transform"
           >
             <HeartPulse size={16} />
             ROSC

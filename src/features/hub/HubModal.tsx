@@ -74,7 +74,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'address-finder',
     labelKey: 'hubItemAddressFinder',
     icon: MapPinned,
-    color: 'text-rose-600 dark:text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/40',
     bg: 'bg-rose-400/10',
   },
@@ -82,7 +82,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'hospital-load',
     labelKey: 'hubItemHospitalLoad',
     icon: Gauge,
-    color: 'text-cyan-600 dark:text-cyan-300',
+    color: 'text-cyan-700 dark:text-cyan-300',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
   },
@@ -90,7 +90,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'concepts',
     labelKey: 'hubItemConcepts',
     icon: Sparkles,
-    color: 'text-purple-600 dark:text-purple-300',
+    color: 'text-purple-700 dark:text-purple-300',
     border: 'border-purple-400/35',
     bg: 'bg-purple-400/10',
   },
@@ -106,7 +106,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'medication-scanner',
     labelKey: 'hubItemMedScanner',
     icon: ScanSearch,
-    color: 'text-teal-600 dark:text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
   },
@@ -115,7 +115,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemDailyChallenge',
     subtitleKey: 'hubItemDailyChallengeSub',
     icon: Trophy,
-    color: 'text-yellow-600 dark:text-yellow-400',
+    color: 'text-yellow-800 dark:text-yellow-400',
     border: 'border-yellow-400/40',
     bg: 'bg-gradient-to-br from-yellow-500/15 via-amber-500/10 to-orange-500/5',
   },
@@ -124,7 +124,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemMedicalTerms',
     subtitleKey: 'hubItemMedicalTermsSub',
     icon: GraduationCap,
-    color: 'text-sky-600 dark:text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
@@ -132,7 +132,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'medhistory',
     labelKey: 'hubItemMedHistory',
     icon: Stethoscope,
-    color: 'text-purple-600 dark:text-purple-400',
+    color: 'text-purple-700 dark:text-purple-400',
     border: 'border-purple-400/30',
     bg: 'bg-purple-400/10',
   },
@@ -140,7 +140,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'medications-classification',
     labelKey: 'hubItemMedGroups',
     icon: Pill,
-    color: 'text-teal-600 dark:text-teal-400',
+    color: 'text-teal-700 dark:text-teal-400',
     border: 'border-teal-400/30',
     bg: 'bg-teal-400/10',
   },
@@ -148,7 +148,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'common-meds',
     labelKey: 'hubItemCommonMeds',
     icon: Pill,
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-400/30',
     bg: 'bg-emerald-400/10',
   },
@@ -156,7 +156,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'clinical',
     labelKey: 'hubItemVitalsTable',
     icon: BookOpen,
-    color: 'text-blue-600 dark:text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
   },
@@ -164,7 +164,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'hospitals',
     labelKey: 'hubItemHospitals',
     icon: Building2,
-    color: 'text-cyan-600 dark:text-cyan-400',
+    color: 'text-cyan-700 dark:text-cyan-400',
     border: 'border-cyan-400/30',
     bg: 'bg-cyan-400/10',
   },
@@ -173,7 +173,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemTranslate',
     subtitleKey: 'hubItemTranslateSub',
     icon: Languages,
-    color: 'text-orange-600 dark:text-orange-400',
+    color: 'text-orange-700 dark:text-orange-400',
     border: 'border-orange-400/30',
     bg: 'bg-orange-400/10',
   },
@@ -181,7 +181,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'updates',
     labelKey: 'hubItemShareApp',
     icon: Share2,
-    color: 'text-blue-600 dark:text-blue-400',
+    color: 'text-blue-700 dark:text-blue-400',
     border: 'border-blue-400/30',
     bg: 'bg-blue-400/10',
   },
@@ -189,7 +189,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'install-app',
     labelKey: 'hubItemInstallApp',
     icon: Download,
-    color: 'text-sky-600 dark:text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
@@ -197,7 +197,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'poison-centers',
     labelKey: 'hubItemPoison',
     icon: Skull,
-    color: 'text-lime-600 dark:text-lime-400',
+    color: 'text-lime-800 dark:text-lime-400',
     border: 'border-lime-400/30',
     bg: 'bg-lime-400/10',
   },
@@ -213,7 +213,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'accessibility',
     labelKey: 'hubItemAccessibility',
     icon: Accessibility,
-    color: 'text-violet-600 dark:text-violet-400',
+    color: 'text-violet-700 dark:text-violet-400',
     border: 'border-violet-400/30',
     bg: 'bg-violet-400/10',
   },
@@ -221,7 +221,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'breathing',
     labelKey: 'hubItemBreathing',
     icon: Wind,
-    color: 'text-sky-600 dark:text-sky-400',
+    color: 'text-sky-700 dark:text-sky-400',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
@@ -230,7 +230,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemAfterCall',
     subtitleKey: 'hubItemAfterCallSub',
     icon: HeartHandshake,
-    color: 'text-violet-600 dark:text-violet-300',
+    color: 'text-violet-700 dark:text-violet-300',
     border: 'border-violet-400/35',
     bg: 'bg-violet-400/10',
   },
@@ -238,7 +238,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'kit-standards',
     labelKey: 'hubItemKitStandards',
     icon: ClipboardList,
-    color: 'text-indigo-600 dark:text-indigo-400',
+    color: 'text-indigo-700 dark:text-indigo-400',
     border: 'border-indigo-400/30',
     bg: 'bg-indigo-400/10',
   },
@@ -256,7 +256,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemCommunity',
     subtitleKey: 'hubItemCommunitySub',
     icon: Users,
-    color: 'text-green-600 dark:text-green-400',
+    color: 'text-green-800 dark:text-green-400',
     border: 'border-green-400/30',
     bg: 'bg-green-400/10',
   },
@@ -265,7 +265,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemSimulators',
     subtitleKey: 'hubItemSimulatorsSub',
     icon: HeartPulse,
-    color: 'text-rose-600 dark:text-rose-400',
+    color: 'text-rose-700 dark:text-rose-400',
     border: 'border-rose-400/30',
     bg: 'bg-rose-400/10',
   },
@@ -274,7 +274,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemSoulDeparture',
     subtitleKey: 'hubItemSoulDepartureSub',
     icon: Star,
-    color: 'text-amber-600 dark:text-amber-400',
+    color: 'text-amber-800 dark:text-amber-400',
     border: 'border-amber-400/30',
     bg: 'bg-amber-400/10',
   },
@@ -283,7 +283,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemDailyPush',
     subtitleKey: 'hubItemDailyPushSub',
     icon: Bell,
-    color: 'text-pink-600 dark:text-pink-400',
+    color: 'text-pink-700 dark:text-pink-400',
     border: 'border-pink-400/30',
     bg: 'bg-pink-400/10',
   },
@@ -292,7 +292,7 @@ const HUB_ITEMS: HubItem[] = [
     labelKey: 'hubItemGoldenHour',
     subtitleKey: 'hubItemGoldenHourSub',
     icon: Ambulance,
-    color: 'text-amber-600 dark:text-amber-300',
+    color: 'text-amber-800 dark:text-amber-300',
     border: 'border-amber-400/40',
     bg: 'bg-amber-400/10',
     href: 'https://protocol-runner.vercel.app/?src=app',
@@ -301,7 +301,7 @@ const HUB_ITEMS: HubItem[] = [
     id: 'campaign',
     labelKey: 'hubItemCampaign',
     icon: Rocket,
-    color: 'text-sky-600 dark:text-sky-300',
+    color: 'text-sky-700 dark:text-sky-300',
     border: 'border-sky-400/30',
     bg: 'bg-sky-400/10',
   },
@@ -605,8 +605,8 @@ export default function HubModal({
                           WebkitBackdropFilter: 'blur(14px)',
                         }}
                       >
-                        <Gauge size={28} className="text-cyan-600 dark:text-cyan-300" />
-                        <span className="text-cyan-700 dark:text-cyan-200 font-bold text-sm leading-tight">{t('hubItemHospitalLoad')}</span>
+                        <Gauge size={28} className="text-cyan-700 dark:text-cyan-300" />
+                        <span className="text-cyan-800 dark:text-cyan-200 font-bold text-sm leading-tight">{t('hubItemHospitalLoad')}</span>
                       </div>
                     </motion.button>
                   </div>
@@ -626,7 +626,7 @@ export default function HubModal({
                       boxShadow: '0 0 18px rgba(168,85,247,0.12)',
                     }}
                   >
-                    <Sparkles size={28} className="text-purple-600 dark:text-purple-300 relative z-10" />
+                    <Sparkles size={28} className="text-purple-700 dark:text-purple-300 relative z-10" />
                     <span className="text-purple-800 dark:text-purple-100 font-bold text-sm leading-tight relative z-10">{t('hubItemConcepts')}</span>
                   </motion.button>
                 );
@@ -664,7 +664,7 @@ export default function HubModal({
                     </span>
                   )}
                   {!enabled && (
-                    <span className="text-xs font-semibold bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full">
                       {t('hubComingSoon')}
                     </span>
                   )}
@@ -720,7 +720,7 @@ export default function HubModal({
           {/* Header */}
           <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
             <div className="flex items-center gap-2">
-              <HeartPulse size={22} className="text-rose-600 dark:text-rose-400" />
+              <HeartPulse size={22} className="text-rose-700 dark:text-rose-400" />
               <div>
                 <h2 className="text-fg font-bold text-xl leading-tight">{t('hubItemSimulators')}</h2>
                 <p className="text-fg-muted text-xs">{t('hubItemSimulatorsSub')}</p>
@@ -749,13 +749,13 @@ export default function HubModal({
                          backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center shrink-0">
-                <Brain size={20} className="text-rose-600 dark:text-rose-400" />
+                <Brain size={20} className="text-rose-700 dark:text-rose-400" />
               </div>
               <div className="flex flex-col items-start">
                 <span className="text-rose-700 dark:text-rose-200 font-bold text-base leading-tight">{t('hubSimFlashTitle')}</span>
-                <span className="text-rose-700/70 dark:text-rose-300/50 text-xs mt-0.5">{t('hubSimFlashSub', { count: SIMULATOR_FLASHCARDS.length })}</span>
+                <span className="text-rose-700 dark:text-rose-300/50 text-xs mt-0.5">{t('hubSimFlashSub', { count: SIMULATOR_FLASHCARDS.length })}</span>
               </div>
-              <div className="ms-auto text-rose-500/60 dark:text-rose-400/40 text-lg">{isEn ? '→' : '←'}</div>
+              <div className="ms-auto text-rose-700 dark:text-rose-400/40 text-lg">{isEn ? '→' : '←'}</div>
             </HapticButton>
 
             {[
@@ -763,7 +763,7 @@ export default function HubModal({
                 labelKey: 'hubSimCpr' as TranslationKey,
                 subKey: 'hubSimCprSub' as TranslationKey,
                 url: 'https://life-saver.org.uk/',
-                color: 'text-rose-600 dark:text-rose-400',
+                color: 'text-rose-700 dark:text-rose-400',
                 border: 'border-rose-400/30',
                 bg: 'bg-rose-400/5',
                 iconBg: 'bg-rose-400/20 border-rose-400/40',
@@ -772,7 +772,7 @@ export default function HubModal({
                 labelKey: 'hubSimEcg' as TranslationKey,
                 subKey: 'hubSimEcgSub' as TranslationKey,
                 url: 'https://www.skillstat.com/tools/ecg-simulator/',
-                color: 'text-sky-600 dark:text-sky-400',
+                color: 'text-sky-700 dark:text-sky-400',
                 border: 'border-sky-400/30',
                 bg: 'bg-sky-400/5',
                 iconBg: 'bg-sky-400/20 border-sky-400/40',
@@ -781,7 +781,7 @@ export default function HubModal({
                 labelKey: 'hubSimCases' as TranslationKey,
                 subKey: 'hubSimCasesSub' as TranslationKey,
                 url: 'https://revivr.bhf.org.uk/',
-                color: 'text-emerald-600 dark:text-emerald-400',
+                color: 'text-emerald-700 dark:text-emerald-400',
                 border: 'border-emerald-400/30',
                 bg: 'bg-emerald-400/5',
                 iconBg: 'bg-emerald-400/20 border-emerald-400/40',
@@ -790,7 +790,7 @@ export default function HubModal({
                 labelKey: 'hubSimDisease' as TranslationKey,
                 subKey: 'hubSimDiseaseSub' as TranslationKey,
                 url: 'https://diseaseguess.azurewebsites.net/welcome',
-                color: 'text-violet-600 dark:text-violet-400',
+                color: 'text-violet-700 dark:text-violet-400',
                 border: 'border-violet-400/30',
                 bg: 'bg-violet-400/5',
                 iconBg: 'bg-violet-400/20 border-violet-400/40',
@@ -857,12 +857,12 @@ export default function HubModal({
                   boxShadow: '0 0 48px rgba(37,211,102,0.22)',
                 }}
               >
-                <Users size={46} className="text-green-600 dark:text-green-400" />
+                <Users size={46} className="text-green-800 dark:text-green-400" />
               </div>
               <h1 className="text-fg font-bold text-2xl leading-tight mb-1">
                 {t('hubWaTitle')}
               </h1>
-              <p className="text-green-700/80 dark:text-green-400/75 text-sm font-medium tracking-wide">
+              <p className="text-green-800 dark:text-green-400/75 text-sm font-medium tracking-wide">
                 {t('hubWaSub')}
               </p>
             </div>
@@ -874,7 +874,7 @@ export default function HubModal({
             >
               <p className="text-fg/85 text-sm leading-relaxed text-center">
                 {t('hubWaIntroBefore')}{' '}
-                <span className="text-green-600 dark:text-green-400 font-bold">{t('hubAppName')}</span>
+                <span className="text-green-800 dark:text-green-400 font-bold">{t('hubAppName')}</span>
                 {' '}{t('hubWaIntroAfter')}
               </p>
             </div>
@@ -998,7 +998,7 @@ export default function HubModal({
                   }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
-                <Rocket size={46} className="text-sky-500 dark:text-sky-300" />
+                <Rocket size={46} className="text-sky-700 dark:text-sky-300" />
               </motion.div>
 
               <motion.h1
@@ -1013,7 +1013,7 @@ export default function HubModal({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-sky-700/80 dark:text-sky-400/80 text-sm font-medium tracking-wide"
+                className="text-sky-700 dark:text-sky-400/80 text-sm font-medium tracking-wide"
               >
                 {t('hubCampaignSub')}
               </motion.p>
@@ -1029,7 +1029,7 @@ export default function HubModal({
             >
               <p className="text-fg/85 text-sm leading-relaxed text-center">
                 {t('hubCampaignIntroBefore')}{' '}
-                <span className="text-sky-600 dark:text-sky-300 font-bold">{t('hubCampaignIntroHighlight')}</span>
+                <span className="text-sky-700 dark:text-sky-300 font-bold">{t('hubCampaignIntroHighlight')}</span>
                 {' '}{t('hubCampaignIntroAfter')}
               </p>
             </motion.div>
@@ -1240,7 +1240,7 @@ export default function HubModal({
                   </button>
 
                   <h2 className="text-fg font-bold text-xl text-center mb-1">{t('hubBitSheetTitle')}</h2>
-                  <p className="text-violet-600 dark:text-violet-300 text-sm text-center mb-4">
+                  <p className="text-violet-700 dark:text-violet-300 text-sm text-center mb-4">
                     {t('hubBitSheetSub')}
                   </p>
 
@@ -1261,7 +1261,7 @@ export default function HubModal({
                       }}
                       className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors border ${
                         campaignBitCopied
-                          ? 'bg-green-500/20 border-green-500/40 text-green-700 dark:text-green-300'
+                          ? 'bg-green-500/20 border-green-500/40 text-green-800 dark:text-green-300'
                           : 'bg-violet-500/25 border-violet-400/40 text-violet-700 dark:text-violet-200'
                       }`}
                     >
@@ -1300,10 +1300,10 @@ export default function HubModal({
                           border: '1px solid rgba(34,197,94,0.35)',
                         }}
                       >
-                        <p className="text-green-700 dark:text-green-300 font-semibold text-sm leading-relaxed">
+                        <p className="text-green-800 dark:text-green-300 font-semibold text-sm leading-relaxed">
                           {t('hubThanks1')}<br />
                           {t('hubThanks2')}<br />
-                          <span className="text-green-600 dark:text-green-400/80 font-normal text-xs">{t('hubThanks3')}</span>
+                          <span className="text-green-800 dark:text-green-400/80 font-normal text-xs">{t('hubThanks3')}</span>
                         </p>
                       </motion.div>
                     )}

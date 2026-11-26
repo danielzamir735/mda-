@@ -202,7 +202,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <button
             onClick={() => setEditingId(null)}
-            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold text-sm active:opacity-70"
+            className="flex items-center gap-1 text-blue-700 dark:text-blue-400 font-bold text-sm active:opacity-70"
           >
             <ChevronRight size={20} className="ltr:rotate-180" />
             {activeFolderName}
@@ -210,7 +210,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
           <button
             onClick={handleDelete}
             className="w-9 h-9 flex items-center justify-center rounded-full
-                       bg-red-600/15 border border-red-500/30 text-red-600 dark:text-red-400 active:scale-90 transition-transform"
+                       bg-red-600/15 border border-red-500/30 text-red-700 dark:text-red-400 active:scale-90 transition-transform"
             aria-label={t('deleteNote')}
           >
             <Trash2 size={16} />
@@ -221,7 +221,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
         <button
           onClick={() => setMovePickerOpen(true)}
           className="shrink-0 self-start mx-4 mt-2.5 flex items-center gap-1.5 rounded-full
-                     bg-blue-500/10 border border-blue-400/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1.5 active:scale-95 transition-transform"
+                     bg-blue-500/10 border border-blue-400/30 text-blue-700 dark:text-blue-400 text-xs font-bold px-3 py-1.5 active:scale-95 transition-transform"
         >
           <Folder size={13} />
           {editingNote?.folderId
@@ -288,10 +288,10 @@ export default function NotesModal({ isOpen, onClose }: Props) {
                       }`}
                     >
                       <span className="text-sm font-medium text-fg flex items-center gap-2">
-                        <Folder size={14} className="text-blue-400" />
+                        <Folder size={14} className="text-blue-700 dark:text-blue-400" />
                         {f.name}
                       </span>
-                      {selected && <Check size={15} className="text-blue-400" />}
+                      {selected && <Check size={15} className="text-blue-700 dark:text-blue-400" />}
                     </button>
                   );
                 })}
@@ -311,7 +311,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
         <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <button
             onClick={() => { setView('folders'); setActiveFolderId(null); }}
-            className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold text-sm active:opacity-70"
+            className="flex items-center gap-1 text-blue-700 dark:text-blue-400 font-bold text-sm active:opacity-70"
           >
             <ChevronRight size={20} className="ltr:rotate-180" />
             {t('notes')}
@@ -400,7 +400,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
             className="flex flex-col items-start justify-between p-4 rounded-2xl border border-blue-400/25
                        bg-blue-400/5 dark:bg-blue-400/10 text-start active:scale-95 transition-transform min-h-[104px]"
           >
-            <Folder size={22} className="text-blue-400" />
+            <Folder size={22} className="text-blue-700 dark:text-blue-400" />
             <div className="w-full">
               <p className="text-fg font-bold text-sm leading-tight">{t('generalGroup')}</p>
               <p className="text-fg-muted text-xs mt-0.5">{t('homeNotesCount', { count: generalCount })}</p>
@@ -420,7 +420,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
                   className="absolute inset-0 rounded-2xl active:scale-95 transition-transform"
                   aria-label={f.name}
                 />
-                <Folder size={22} className="text-amber-500 dark:text-amber-400 pointer-events-none" />
+                <Folder size={22} className="text-amber-800 dark:text-amber-400 pointer-events-none" />
                 <div className="w-full pointer-events-none">
                   <p className="text-fg font-bold text-sm leading-tight line-clamp-2">{f.name}</p>
                   <p className="text-fg-muted text-xs mt-0.5">{t('homeNotesCount', { count })}</p>
@@ -430,7 +430,7 @@ export default function NotesModal({ isOpen, onClose }: Props) {
                     if (confirm(t('homeNotesDeleteFolderConfirm', { name: f.name }))) deleteFolder(f.id);
                   }}
                   className="absolute top-2 end-2 w-7 h-7 flex items-center justify-center rounded-full
-                             bg-surface/70 text-red-500 dark:text-red-400 active:scale-90 transition-transform"
+                             bg-surface/70 text-red-700 dark:text-red-400 active:scale-90 transition-transform"
                   aria-label={t('homeNotesDeleteFolder')}
                 >
                   <Trash2 size={13} />

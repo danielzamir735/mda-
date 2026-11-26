@@ -131,7 +131,7 @@ export default function PoisonCentersModal({ isOpen, onClose }: Props) {
         {/* First Aid Guidelines */}
         <div className="rounded-2xl border border-red-400/50 bg-red-50 dark:bg-red-900/20 p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <AlertTriangle size={20} className="text-red-600 dark:text-red-400 shrink-0" />
+            <AlertTriangle size={20} className="text-red-700 dark:text-red-400 shrink-0" />
             <h3 className="text-red-700 dark:text-red-300 font-bold text-base">
               {t('refFirstAidTitle')}
             </h3>

@@ -207,7 +207,7 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-fg">{t('calcWeightKgLabel')}</label>
               {isEstimated && estimatedWeight && (
-                <span className="text-xs font-bold text-amber-600 dark:text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-amber-800 dark:text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
                   {t('calcEstimateBadge', { w: estimatedWeight })}
                 </span>
               )}
@@ -227,8 +227,8 @@ export default function PediatricDosageCalculatorModal({ isOpen, onClose }: Prop
           {/* Estimated weight warning */}
           {isEstimated && (
             <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
-              <AlertCircle size={13} className="text-amber-600 dark:text-emt-yellow shrink-0 mt-0.5" />
-              <p className="text-amber-600 dark:text-emt-yellow text-xs font-medium">{t('calcEstimatedWarning')}</p>
+              <AlertCircle size={13} className="text-amber-800 dark:text-emt-yellow shrink-0 mt-0.5" />
+              <p className="text-amber-800 dark:text-emt-yellow text-xs font-medium">{t('calcEstimatedWarning')}</p>
             </div>
           )}
 

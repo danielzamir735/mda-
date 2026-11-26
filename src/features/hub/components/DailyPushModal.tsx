@@ -73,9 +73,9 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 }
 
 const CATEGORIES: { key: 'medication' | 'disease' | 'concept'; label: TranslationKey; icon: typeof Pill; color: string }[] = [
-  { key: 'medication', label: 'learnPushCatMedication', icon: Pill, color: 'text-emerald-400' },
-  { key: 'disease', label: 'learnPushCatDisease', icon: Stethoscope, color: 'text-purple-400' },
-  { key: 'concept', label: 'learnPushCatConcept', icon: Brain, color: 'text-sky-400' },
+  { key: 'medication', label: 'learnPushCatMedication', icon: Pill, color: 'text-emerald-700 dark:text-emerald-400' },
+  { key: 'disease', label: 'learnPushCatDisease', icon: Stethoscope, color: 'text-purple-700 dark:text-purple-400' },
+  { key: 'concept', label: 'learnPushCatConcept', icon: Brain, color: 'text-sky-700 dark:text-sky-400' },
 ];
 
 export default function DailyPushModal({ isOpen, onClose }: Props) {
@@ -179,7 +179,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Bell size={20} className="text-pink-400" />
+          <Bell size={20} className="text-pink-700 dark:text-pink-400" />
           <h2 className="text-fg font-bold text-xl">{t('learnPushTitle')}</h2>
         </div>
         <HapticButton
@@ -203,7 +203,7 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center">
-              <Bell size={18} className="text-pink-400" />
+              <Bell size={18} className="text-pink-700 dark:text-pink-400" />
             </div>
             <div>
               <p className="text-fg font-medium text-sm">{t('learnPushReceive')}</p>
@@ -218,8 +218,8 @@ export default function DailyPushModal({ isOpen, onClose }: Props) {
         {/* iOS caveat — informational only, never blocks the toggle */}
         {showIosCaveat && (
           <div className="flex items-start gap-2.5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3.5">
-            <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-amber-700 dark:text-amber-300 text-xs leading-relaxed">
+            <AlertTriangle size={16} className="text-amber-800 dark:text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
               {t('learnPushIosCaveat')}
             </p>
           </div>

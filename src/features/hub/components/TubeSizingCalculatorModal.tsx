@@ -109,7 +109,7 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-0">
       <p className="text-sm text-fg-muted">{label}</p>
-      <p className={`font-bold text-base text-end ${highlight ? 'text-sky-600 dark:text-sky-400' : 'text-fg'}`}>{value}</p>
+      <p className={`font-bold text-base text-end ${highlight ? 'text-sky-700 dark:text-sky-400' : 'text-fg'}`}>{value}</p>
     </div>
   );
 }
@@ -148,7 +148,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <Wind size={22} className="text-sky-400" />
+          <Wind size={22} className="text-sky-700 dark:text-sky-400" />
           <h2 className="text-fg font-bold text-xl">{t('calcTubeTitle')}</h2>
         </div>
         <button
@@ -207,7 +207,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-fg">{t('calcWeightKgLabel')}</label>
               {isEstimated && estimatedWeight && (
-                <span className="text-xs font-bold text-amber-600 dark:text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-amber-800 dark:text-emt-yellow bg-emt-yellow/10 border border-emt-yellow/30 px-2 py-0.5 rounded-full">
                   {t('calcEstimateBadge', { w: estimatedWeight })}
                 </span>
               )}
@@ -226,8 +226,8 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
 
           {isEstimated && (
             <div className="flex items-start gap-2 rounded-xl bg-emt-yellow/10 border border-emt-yellow/30 px-3 py-2">
-              <AlertCircle size={13} className="text-amber-600 dark:text-emt-yellow shrink-0 mt-0.5" />
-              <p className="text-amber-600 dark:text-emt-yellow text-xs font-medium">{t('calcEstimatedWarning')}</p>
+              <AlertCircle size={13} className="text-amber-800 dark:text-emt-yellow shrink-0 mt-0.5" />
+              <p className="text-amber-800 dark:text-emt-yellow text-xs font-medium">{t('calcEstimatedWarning')}</p>
             </div>
           )}
 
@@ -247,8 +247,8 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
         {tubeResult && (
           <div className="rounded-2xl border border-sky-400/30 bg-sky-400/5 p-4 flex flex-col gap-0">
             <div className="flex items-center gap-2 mb-3">
-              <Wind size={16} className="text-sky-400" />
-              <p className="text-sky-600 dark:text-sky-400 font-bold text-base">{t('calcEttHeader', { label: tubeResult.label })}</p>
+              <Wind size={16} className="text-sky-700 dark:text-sky-400" />
+              <p className="text-sky-700 dark:text-sky-400 font-bold text-base">{t('calcEttHeader', { label: tubeResult.label })}</p>
             </div>
             <Row label={t('calcCuffed')} value={tubeResult.withCuff} highlight />
             <Row label={t('calcUncuffed')} value={tubeResult.withoutCuff} highlight />
@@ -263,8 +263,8 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
         {lmaResult && (
           <div className="rounded-2xl border border-violet-400/30 bg-violet-400/5 p-4 flex flex-col gap-0">
             <div className="flex items-center gap-2 mb-3">
-              <Wind size={16} className="text-violet-400" />
-              <p className="text-violet-600 dark:text-violet-400 font-bold text-base">{t('calcLmaHeader', { w })}</p>
+              <Wind size={16} className="text-violet-700 dark:text-violet-400" />
+              <p className="text-violet-700 dark:text-violet-400 font-bold text-base">{t('calcLmaHeader', { w })}</p>
             </div>
             <Row label={t('calcLmaSize')} value={lmaResult.size} highlight />
             <Row label={t('calcCuffVolume')} value={lmaResult.cuffVolume} />
@@ -278,7 +278,7 @@ export default function TubeSizingCalculatorModal({ isOpen, onClose }: Props) {
             <div
               key={wRange}
               className={`flex items-center justify-between py-1.5 border-b border-line last:border-0 ${
-                lmaResult?.size === size ? 'text-violet-600 dark:text-violet-400' : 'text-fg'
+                lmaResult?.size === size ? 'text-violet-700 dark:text-violet-400' : 'text-fg'
               }`}
             >
               <p className="text-xs">{t('calcKgValue', { w: wRange })}</p>

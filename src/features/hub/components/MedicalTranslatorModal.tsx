@@ -181,7 +181,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
         {/* Header */}
         <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <Languages size={20} className="text-orange-500 dark:text-orange-400" />
+            <Languages size={20} className="text-orange-700 dark:text-orange-400" />
             <h2 className="text-fg font-bold text-xl">{t('mtTitle')}</h2>
           </div>
           <HapticButton
@@ -236,7 +236,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             className="w-full py-5 px-6 rounded-2xl border-2 border-orange-400/40
                        bg-orange-400/10 flex items-center gap-4 text-start"
           >
-            <Captions size={36} className="shrink-0 text-orange-500 dark:text-orange-400" />
+            <Captions size={36} className="shrink-0 text-orange-700 dark:text-orange-400" />
             <span className="flex-1 flex flex-col gap-0.5">
               <span className="text-fg font-bold text-2xl leading-tight">{t('btTitle')}</span>
               <span className="text-fg-muted text-sm leading-snug">{t('mtCaptionsSub')}</span>
@@ -259,7 +259,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
         <HapticButton
           pressScale={0.9}
           onClick={() => { setSelectedLang(null); setCategory(ALL_CATEGORY); }}
-          className="flex items-center gap-1.5 text-orange-500 dark:text-orange-400 font-bold text-sm"
+          className="flex items-center gap-1.5 text-orange-700 dark:text-orange-400 font-bold text-sm"
           aria-label={t('mtBackToLangs')}
         >
           <ArrowRight size={16} className="ltr:rotate-180" />
@@ -294,7 +294,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             className={[
               'shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors',
               category === cat
-                ? 'bg-orange-400/20 border-orange-400/50 text-orange-600 dark:text-orange-400'
+                ? 'bg-orange-400/20 border-orange-400/50 text-orange-700 dark:text-orange-400'
                 : 'bg-surface-2 border-line text-fg-muted',
             ].join(' ')}
           >
@@ -314,13 +314,13 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
                      backdrop-blur-sm px-4 py-3.5 flex items-center gap-3"
         >
           <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center shrink-0">
-            <Brain size={20} className="text-orange-500 dark:text-orange-400" />
+            <Brain size={20} className="text-orange-700 dark:text-orange-400" />
           </div>
           <div className="flex flex-col items-start text-start">
             <span className="text-orange-800 dark:text-orange-200 font-bold text-base leading-tight">{t('mtTrainer')}</span>
-            <span className="text-orange-700/70 dark:text-orange-300/50 text-xs mt-0.5">{t('mtTrainerCount', { n: PHRASES.length, flag: LANG_FLAGS[activeLang] })}</span>
+            <span className="text-orange-700 dark:text-orange-300/50 text-xs mt-0.5">{t('mtTrainerCount', { n: PHRASES.length, flag: LANG_FLAGS[activeLang] })}</span>
           </div>
-          <div className="ms-auto text-orange-500/60 dark:text-orange-400/40 text-lg ltr:rotate-180">←</div>
+          <div className="ms-auto text-orange-700 dark:text-orange-400/40 text-lg ltr:rotate-180">←</div>
         </HapticButton>
 
         {filtered.map(phrase => (
@@ -348,7 +348,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
               pressScale={0.85}
               onClick={e => { e.stopPropagation(); speakText(phrase[activeLang], activeLang); }}
               className="shrink-0 w-10 h-10 rounded-full bg-orange-400/20 border border-orange-400/40
-                         flex items-center justify-center text-orange-600 dark:text-orange-400"
+                         flex items-center justify-center text-orange-700 dark:text-orange-400"
               aria-label={t('mtSpeak')}
             >
               <Volume2 size={17} />
@@ -366,7 +366,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
         >
           <div className="flex items-center gap-2 mb-6">
             <span className="text-2xl">{LANG_FLAGS[activeLang]}</span>
-            <p className="text-orange-600 dark:text-orange-400 text-sm font-bold uppercase tracking-widest">
+            <p className="text-orange-700 dark:text-orange-400 text-sm font-bold uppercase tracking-widest">
               {t(LANG_LABEL_KEYS[activeLang])}
             </p>
           </div>
@@ -380,7 +380,7 @@ export default function MedicalTranslatorModal({ isOpen, onClose, initialLang }:
             pressScale={0.9}
             onClick={e => { e.stopPropagation(); speakText(expandedPhrase[activeLang], activeLang); }}
             className="mb-8 px-6 py-3 rounded-2xl bg-orange-400/20 border border-orange-400/50
-                       flex items-center gap-2 text-orange-600 dark:text-orange-400 font-bold text-base"
+                       flex items-center gap-2 text-orange-700 dark:text-orange-400 font-bold text-base"
             aria-label={t('mtSpeak')}
           >
             <Volume2 size={20} />

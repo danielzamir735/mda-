@@ -97,7 +97,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
             {isCustom && id && (
               <button
                 onClick={(e) => { e.stopPropagation(); removeItem(id); }}
-                className="text-red-400 hover:text-red-600 active:scale-90 transition-all"
+                className="text-red-700 dark:text-red-400 hover:text-red-600 active:scale-90 transition-all"
                 aria-label={t('delete')}
               >
                 <Trash2 size={13} />
@@ -131,7 +131,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
-          <BookHeart size={22} className="text-purple-500 dark:text-purple-400" />
+          <BookHeart size={22} className="text-purple-700 dark:text-purple-400" />
           <h2 className="text-fg font-bold text-xl">{t('mhTitle')}</h2>
         </div>
         <button
@@ -202,13 +202,13 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
                        active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
-              <Brain size={20} className="text-purple-500 dark:text-purple-400" />
+              <Brain size={20} className="text-purple-700 dark:text-purple-400" />
             </div>
             <div className="flex flex-col items-start text-start">
               <span className="text-purple-800 dark:text-purple-200 font-bold text-base leading-tight">{t('mhTrainerStart')}</span>
-              <span className="text-purple-700/70 dark:text-purple-300/50 text-xs mt-0.5">{t('mhTrainerCount', { n: FLASHCARD_DATA.length })}</span>
+              <span className="text-purple-700 dark:text-purple-300/50 text-xs mt-0.5">{t('mhTrainerCount', { n: FLASHCARD_DATA.length })}</span>
             </div>
-            <div className="ms-auto text-purple-500/60 dark:text-purple-400/40 text-lg ltr:rotate-180">←</div>
+            <div className="ms-auto text-purple-700 dark:text-purple-400/40 text-lg ltr:rotate-180">←</div>
           </button>
         )}
 
@@ -286,7 +286,7 @@ export default function MedicalHistoryModal({ isOpen, onClose }: Props) {
             {/* Custom items */}
             {customItems.length > 0 && (
               <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 mb-2 ps-1">
+                <h3 className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 mb-2 ps-1">
                   {t('mhCustomTitle')}
                 </h3>
                 <div className="rounded-2xl border border-purple-400/30 bg-purple-400/5 overflow-hidden">

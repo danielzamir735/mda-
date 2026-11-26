@@ -54,7 +54,7 @@ export default function MigrationBanner() {
             <p className="text-fg/90 text-sm leading-relaxed flex-1">
               <span className="font-bold text-fg">{t('obMigBold')}</span>{' '}
               {t('obMigText')}{' '}
-              <span className="text-rose-600 dark:text-rose-300 font-medium" dir="ltr">{NEW_DOMAIN}</span>
+              <span className="text-rose-700 dark:text-rose-300 font-medium" dir="ltr">{NEW_DOMAIN}</span>
             </p>
             <button
               onClick={handleDismiss}

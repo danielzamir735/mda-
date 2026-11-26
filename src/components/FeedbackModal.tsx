@@ -86,12 +86,12 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
   const RequiredLabel = ({ children }: { children: string }) => (
     <label className="text-sm font-semibold text-fg/85 flex items-center gap-1">
       {children}
-      <span className="text-red-500">*</span>
+      <span className="text-red-700 dark:text-red-500">*</span>
     </label>
   );
 
   const FieldError = ({ msg }: { msg?: string }) =>
-    msg ? <p className="text-red-500 text-xs mt-1 pe-1">{msg}</p> : null;
+    msg ? <p className="text-red-700 dark:text-red-500 text-xs mt-1 pe-1">{msg}</p> : null;
 
   return (
     // theme-ok: the dim backdrop behind a pop-up stays dark in both modes
@@ -118,7 +118,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
 
         {/* Beta notice */}
         <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-4 py-3">
-          <Info size={16} className="text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+          <Info size={16} className="text-blue-700 dark:text-blue-400 mt-0.5 shrink-0" />
           <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed">
             {t('obFbBeta')}
           </p>
@@ -174,7 +174,7 @@ export default function FeedbackModal({ isOpen, onClose }: Props) {
 
             {/* Error */}
             {status === 'error' && (
-              <p className="text-red-500 text-sm text-center">{t('obFbFailed')}</p>
+              <p className="text-red-700 dark:text-red-500 text-sm text-center">{t('obFbFailed')}</p>
             )}
 
             {/* Actions */}

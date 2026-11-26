@@ -119,7 +119,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
       {/* Header */}
       <div className="ios-safe-header shrink-0 flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2 min-w-0">
-          <Activity size={20} className="text-red-400 shrink-0" />
+          <Activity size={20} className="text-red-700 dark:text-red-400 shrink-0" />
           <h2 className="text-fg font-bold text-xl truncate">
             {t('shockCalcTitle')}
           </h2>
@@ -128,7 +128,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30
-                       bg-red-500/10 text-red-500 text-sm font-semibold
+                       bg-red-500/10 text-red-700 dark:text-red-500 text-sm font-semibold
                        hover:bg-red-500/20 active:scale-95 transition-all"
             aria-label={t('shockResetData')}
           >
@@ -171,7 +171,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className={`font-bold text-base transition-colors duration-300 ${siCritical ? 'text-red-600 dark:text-red-400' : 'text-fg'}`}>
+              <p className={`font-bold text-base transition-colors duration-300 ${siCritical ? 'text-red-700 dark:text-red-400' : 'text-fg'}`}>
                 {t('shockIndexTitle')}
               </p>
               <p className="text-fg-muted text-xs">{t('shockIndexFormula')}</p>
@@ -186,7 +186,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
                     className="mt-2 overflow-hidden"
                   >
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1
-                                     rounded-full bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30">
+                                     rounded-full bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30">
                       {t('shockHighSuspicion')}
                     </span>
                   </motion.div>
@@ -195,7 +195,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             </div>
             <div className="shrink-0 flex flex-col items-end">
               <span
-                className={`font-black tabular-nums leading-none transition-colors duration-300 ${siCritical ? 'text-red-600 dark:text-red-400' : 'text-fg'}`}
+                className={`font-black tabular-nums leading-none transition-colors duration-300 ${siCritical ? 'text-red-700 dark:text-red-400' : 'text-fg'}`}
                 style={{ fontSize: 'clamp(2.2rem, 10vw, 3rem)' }}
               >
                 <RollingNumber value={si} decimals={2} />
@@ -220,7 +220,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className={`font-bold text-base transition-colors duration-300 ${mapCritical ? 'text-orange-600 dark:text-orange-400' : 'text-fg'}`}>
+              <p className={`font-bold text-base transition-colors duration-300 ${mapCritical ? 'text-orange-700 dark:text-orange-400' : 'text-fg'}`}>
                 {t('shockMapTitle')}
               </p>
               <p className="text-fg-muted text-xs">DBP + (SBP − DBP) ÷ 3</p>
@@ -235,7 +235,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
                     className="mt-2 overflow-hidden"
                   >
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1
-                                     rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30">
+                                     rounded-full bg-orange-500/20 text-orange-700 dark:text-orange-400 border border-orange-500/30">
                       {t('shockPerfusionRisk')}
                     </span>
                   </motion.div>
@@ -245,7 +245,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             <div className="shrink-0 flex flex-col items-end">
               <div className="flex items-end gap-1">
                 <span
-                  className={`font-black tabular-nums leading-none transition-colors duration-300 ${mapCritical ? 'text-orange-600 dark:text-orange-400' : 'text-fg'}`}
+                  className={`font-black tabular-nums leading-none transition-colors duration-300 ${mapCritical ? 'text-orange-700 dark:text-orange-400' : 'text-fg'}`}
                   style={{ fontSize: 'clamp(2.2rem, 10vw, 3rem)' }}
                 >
                   <RollingNumber value={hasInput ? map : 0} decimals={0} />
@@ -271,7 +271,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-fg-muted text-xs" dir="ltr">SI ≥ 0.9</span>
-              <span className="text-red-600 dark:text-red-400 text-xs font-bold">{t('shockSuspected')}</span>
+              <span className="text-red-700 dark:text-red-400 text-xs font-bold">{t('shockSuspected')}</span>
             </div>
             <div className="w-full h-px bg-line" />
             <div className="flex justify-between items-center">
@@ -280,7 +280,7 @@ export default function ShockCalculator({ isOpen, onClose }: Props) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-fg-muted text-xs" dir="ltr">MAP &lt; 65 mmHg</span>
-              <span className="text-orange-600 dark:text-orange-400 text-xs font-bold">{t('shockIschemiaRisk')}</span>
+              <span className="text-orange-700 dark:text-orange-400 text-xs font-bold">{t('shockIschemiaRisk')}</span>
             </div>
           </div>
         </section>

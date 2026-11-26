@@ -152,7 +152,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
             <div className="flex items-center justify-between px-4 py-3.5">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                  <Monitor size={18} className="text-blue-500" />
+                  <Monitor size={18} className="text-blue-700 dark:text-blue-500" />
                 </div>
                 <div>
                   <p className="text-fg font-medium text-sm">{t('keepScreenOn')}</p>
@@ -164,7 +164,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
             <div className="flex items-center justify-between px-4 py-3.5">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                  <Vibrate size={18} className="text-purple-500" />
+                  <Vibrate size={18} className="text-purple-700 dark:text-purple-500" />
                 </div>
                 <p className="text-fg font-medium text-sm">{t('hapticFeedback')}</p>
               </div>
@@ -182,9 +182,9 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
               className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-red-50 dark:active:bg-red-900/10 transition-colors"
             >
               <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
-                <Trash2 size={18} className="text-red-500" />
+                <Trash2 size={18} className="text-red-700 dark:text-red-500" />
               </div>
-              <span className="text-red-500 font-medium text-sm">{t('resetSavedData')}</span>
+              <span className="text-red-700 dark:text-red-500 font-medium text-sm">{t('resetSavedData')}</span>
             </button>
           </div>
         </section>

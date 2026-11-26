@@ -329,7 +329,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.9)' }} />
             </span>
-            <span className="text-[0.6rem] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t('lbCommunity')}</span>
+            <span className="text-[0.6rem] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">{t('lbCommunity')}</span>
           </div>
           {/* Number + Users icon */}
           <div className="flex items-center justify-between">
@@ -346,7 +346,7 @@ function IntroScreen({ onStart, assistCount }: { onStart: () => void; assistCoun
               className="flex items-center justify-center w-10 h-10 rounded-xl"
               style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.2)' }}
             >
-              <Users size={20} className="text-emerald-600 dark:text-emerald-400" />
+              <Users size={20} className="text-emerald-700 dark:text-emerald-400" />
             </div>
           </div>
           <p className="text-xs text-fg/55 font-semibold leading-relaxed">
@@ -366,14 +366,14 @@ function AvailabilityBadge({ translator }: { translator: Translator }) {
   if (avail) {
     if (avail.type === '24_7') return (
       <div className="flex items-center gap-1 mt-0.5">
-        <ShieldCheck size={11} className="text-emerald-600 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
-        <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">24/7</span>
+        <ShieldCheck size={11} className="text-emerald-700 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+        <span className="text-[0.65rem] text-emerald-700 dark:text-emerald-400 font-bold">24/7</span>
       </div>
     );
     if (avail.type === 'no_saturday') return (
       <div className="flex items-center gap-1 mt-0.5">
-        <Moon size={10} className="text-amber-600 dark:text-amber-400" />
-        <span className="text-[0.65rem] text-amber-600 dark:text-amber-400 font-bold">{t('lbEveryDayButSat')}</span>
+        <Moon size={10} className="text-amber-800 dark:text-amber-400" />
+        <span className="text-[0.65rem] text-amber-800 dark:text-amber-400 font-bold">{t('lbEveryDayButSat')}</span>
       </div>
     );
     if (avail.type === 'custom' && avail.schedule.length > 0) return (
@@ -392,8 +392,8 @@ function AvailabilityBadge({ translator }: { translator: Translator }) {
   // Legacy fallback
   if (translator.is_24_7) return (
     <div className="flex items-center gap-1 mt-0.5">
-      <ShieldCheck size={11} className="text-emerald-600 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
-      <span className="text-[0.65rem] text-emerald-600 dark:text-emerald-400 font-bold">24/7</span>
+      <ShieldCheck size={11} className="text-emerald-700 dark:text-emerald-400" style={{ filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.65))' }} />
+      <span className="text-[0.65rem] text-emerald-700 dark:text-emerald-400 font-bold">24/7</span>
     </div>
   );
   const slots: TimeSlot[] = (translator.time_slots && translator.time_slots.length > 0)
@@ -483,8 +483,8 @@ function TranslatorCard({ translator, available, isEmergency, allLanguages, sele
         <AvailabilityBadge translator={translator} />
         {isEmergency && (
           <div className="flex items-center gap-1 mt-0.5">
-            <AlertCircle size={10} className="text-orange-600 dark:text-orange-400 shrink-0" />
-            <span className="text-[0.6rem] text-orange-600 dark:text-orange-400 font-bold">{t('lbEmergencyOnly')}</span>
+            <AlertCircle size={10} className="text-orange-700 dark:text-orange-400 shrink-0" />
+            <span className="text-[0.6rem] text-orange-700 dark:text-orange-400 font-bold">{t('lbEmergencyOnly')}</span>
           </div>
         )}
       </div>
@@ -625,9 +625,9 @@ function LanguageRequestForm() {
         className="flex flex-col items-center gap-2 rounded-2xl p-4 border border-emerald-400/40 text-center"
         style={{ background: 'rgba(34,197,94,0.1)' }}
       >
-        <Check size={20} className="text-emerald-600 dark:text-emerald-400" />
+        <Check size={20} className="text-emerald-700 dark:text-emerald-400" />
         <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t('lbRequestSent')}</p>
-        <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">{t('lbRequestSentSub')}</p>
+        <p className="text-xs text-emerald-700 dark:text-emerald-400/70">{t('lbRequestSentSub')}</p>
       </motion.div>
     );
   }
@@ -661,7 +661,7 @@ function LanguageRequestForm() {
         </button>
       </div>
       {status === 'error' && (
-        <p className="text-xs text-red-600 dark:text-red-400">{t('lbSendFailed')}</p>
+        <p className="text-xs text-red-700 dark:text-red-400">{t('lbSendFailed')}</p>
       )}
     </motion.div>
   );
@@ -1012,7 +1012,7 @@ function RegisterForm({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-black text-blue-800 dark:text-blue-200">{t('lbAlreadyRegisteredBanner')}</span>
-              <span className="text-xs text-blue-700/70 dark:text-blue-300/70">{t('lbAlreadyRegisteredSub')}</span>
+              <span className="text-xs text-blue-700 dark:text-blue-300/70">{t('lbAlreadyRegisteredSub')}</span>
             </div>
           </motion.div>
         )}
@@ -1082,7 +1082,7 @@ function RegisterForm({
             )}
           </div>
           {phoneMismatch && (
-            <p className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+            <p className="text-xs text-red-700 dark:text-red-400 font-medium flex items-center gap-1">
               <AlertCircle size={12} />
               {t('lbErrPhoneMismatch')}
             </p>
@@ -1154,12 +1154,12 @@ function RegisterForm({
               boxShadow: availMode === '24_7' ? '0 0 0 3px rgba(34,197,94,0.1), 0 4px 20px rgba(34,197,94,0.18)' : 'none',
             }}
           >
-            <ShieldCheck size={22} className={`shrink-0 ${availMode === '24_7' ? 'text-emerald-600 dark:text-emerald-400' : 'text-fg/40'}`} style={availMode === '24_7' ? { filter: 'drop-shadow(0 0 5px rgba(52,211,153,0.55))' } : undefined} />
+            <ShieldCheck size={22} className={`shrink-0 ${availMode === '24_7' ? 'text-emerald-700 dark:text-emerald-400' : 'text-fg/40'}`} style={availMode === '24_7' ? { filter: 'drop-shadow(0 0 5px rgba(52,211,153,0.55))' } : undefined} />
             <div className="flex flex-col items-start flex-1">
               <span className="text-sm font-black text-fg">{t('lbAvail247')}</span>
               <span className="text-[0.65rem] text-fg/45">{t('lbAvail247Sub')}</span>
             </div>
-            {availMode === '24_7' && <Check size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />}
+            {availMode === '24_7' && <Check size={16} className="text-emerald-700 dark:text-emerald-400 shrink-0" />}
           </button>
 
           {/* 24/7 except Saturday */}
@@ -1173,12 +1173,12 @@ function RegisterForm({
               boxShadow: availMode === 'no_saturday' ? '0 0 0 3px rgba(251,191,36,0.08), 0 4px 20px rgba(251,191,36,0.15)' : 'none',
             }}
           >
-            <Moon size={22} className={`shrink-0 ${availMode === 'no_saturday' ? 'text-amber-600 dark:text-amber-400' : 'text-fg/40'}`} style={availMode === 'no_saturday' ? { filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' } : undefined} />
+            <Moon size={22} className={`shrink-0 ${availMode === 'no_saturday' ? 'text-amber-800 dark:text-amber-400' : 'text-fg/40'}`} style={availMode === 'no_saturday' ? { filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))' } : undefined} />
             <div className="flex flex-col items-start flex-1">
               <span className="text-sm font-black text-fg">{t('lbAvailNoSat')}</span>
               <span className="text-[0.65rem] text-fg/45">{t('lbAvailNoSatSub')}</span>
             </div>
-            {availMode === 'no_saturday' && <Check size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />}
+            {availMode === 'no_saturday' && <Check size={16} className="text-amber-800 dark:text-amber-400 shrink-0" />}
           </button>
 
           {/* Custom schedule */}
@@ -1192,12 +1192,12 @@ function RegisterForm({
               boxShadow: availMode === 'custom' ? '0 0 0 3px rgba(96,165,250,0.08), 0 4px 20px rgba(59,130,246,0.18)' : 'none',
             }}
           >
-            <CalendarDays size={22} className={`shrink-0 ${availMode === 'custom' ? 'text-blue-600 dark:text-blue-400' : 'text-fg/40'}`} />
+            <CalendarDays size={22} className={`shrink-0 ${availMode === 'custom' ? 'text-blue-700 dark:text-blue-400' : 'text-fg/40'}`} />
             <div className="flex flex-col items-start flex-1">
               <span className="text-sm font-black text-fg">{t('lbAvailCustom')}</span>
               <span className="text-[0.65rem] text-fg/45">{t('lbAvailCustomSub')}</span>
             </div>
-            {availMode === 'custom' && <Check size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+            {availMode === 'custom' && <Check size={16} className="text-blue-700 dark:text-blue-400 shrink-0" />}
           </button>
         </div>
 
@@ -1236,7 +1236,7 @@ function RegisterForm({
                             : 'rgb(var(--fg) / 0.04)',
                         }}
                       >
-                        <span className={`text-[0.7rem] font-black ${active ? (day === 6 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400') : 'text-fg/35'}`}>
+                        <span className={`text-[0.7rem] font-black ${active ? (day === 6 ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400') : 'text-fg/35'}`}>
                           {abbr}
                         </span>
                       </button>
@@ -1319,7 +1319,7 @@ function RegisterForm({
                 </div>
 
                 {Object.values(customDays).every(d => !d.enabled) && (
-                  <p className="text-xs text-amber-600/80 dark:text-amber-400/80 text-center font-semibold py-1">
+                  <p className="text-xs text-amber-800 dark:text-amber-400/80 text-center font-semibold py-1">
                     {t('lbPickDay')}
                   </p>
                 )}
@@ -1344,7 +1344,7 @@ function RegisterForm({
       >
         {/* Card header */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b" style={{ borderColor: 'rgba(251,146,60,0.18)' }}>
-          <AlertCircle size={13} className="text-orange-600 dark:text-orange-400 shrink-0" />
+          <AlertCircle size={13} className="text-orange-700 dark:text-orange-400 shrink-0" />
           <span className="text-[0.62rem] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">{t('lbExceptional')}</span>
         </div>
         {/* Card body */}
@@ -1532,7 +1532,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           <UserPlus size={16} className="text-blue-700 dark:text-blue-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[0.6rem] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">{t('lbMyProfile')}</p>
+          <p className="text-[0.6rem] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">{t('lbMyProfile')}</p>
           <p className="text-sm font-bold text-fg truncate">{data.full_name}</p>
         </div>
       </div>
@@ -1555,8 +1555,8 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           {(() => {
             const avail = data.availability;
             if (avail) {
-              if (avail.type === '24_7') return <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
-              if (avail.type === 'no_saturday') return <p className="text-xs text-amber-600/80 dark:text-amber-400/80 flex items-center gap-1"><Moon size={11} />{t('lbAvailNoSat')}</p>;
+              if (avail.type === '24_7') return <p className="text-xs text-emerald-700 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
+              if (avail.type === 'no_saturday') return <p className="text-xs text-amber-800 dark:text-amber-400/80 flex items-center gap-1"><Moon size={11} />{t('lbAvailNoSat')}</p>;
               if (avail.type === 'custom' && avail.schedule.length > 0) return (
                 <>
                   {avail.schedule.map((entry, i) => (
@@ -1569,7 +1569,7 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
                 </>
               );
             }
-            if (data.is_24_7) return <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
+            if (data.is_24_7) return <p className="text-xs text-emerald-700 dark:text-emerald-400/80 flex items-center gap-1"><ShieldCheck size={11} />{t('lbAvail247')}</p>;
             return (data.time_slots && data.time_slots.length > 0
               ? data.time_slots
               : (data.start_time && data.end_time ? [{ start: data.start_time, end: data.end_time }] : [])
@@ -1587,14 +1587,14 @@ function MyProfileCard({ id, allLanguages, onDeleted, onEdit }: {
           <div className="flex items-center gap-3 mt-0.5">
             <button
               onClick={() => onEdit(data.phone_number)}
-              className="text-xs text-blue-600/80 dark:text-blue-400/80 hover:text-blue-300 font-bold transition-colors"
+              className="text-xs text-blue-700 dark:text-blue-400/80 hover:text-blue-300 font-bold transition-colors"
             >
               {t('lbEditDetails')}
             </button>
             <span className="text-fg/20 text-xs">|</span>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-xs text-red-600/60 dark:text-red-400/60 hover:text-red-400 font-semibold transition-colors"
+              className="text-xs text-red-700 dark:text-red-400/60 hover:text-red-400 font-semibold transition-colors"
             >
               {t('lbRemoveProfile')}
             </button>
@@ -1890,7 +1890,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
             <h1 className="text-base font-black text-fg leading-snug">{t('lbChooseLang')}</h1>
           ) : (
             <div className="flex items-center justify-center gap-2">
-              <Globe size={20} className="text-blue-600 dark:text-blue-400" />
+              <Globe size={20} className="text-blue-700 dark:text-blue-400" />
               <h1 className="text-lg font-black text-fg">{t('lbTitle')}</h1>
             </div>
           )}
@@ -2128,7 +2128,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
 
                 {loadingAll ? (
                   <div className="flex justify-center py-12">
-                    <Loader2 size={28} className="animate-spin text-blue-600 dark:text-blue-400" />
+                    <Loader2 size={28} className="animate-spin text-blue-700 dark:text-blue-400" />
                   </div>
                 ) : noResults ? (
                   <div className="flex flex-col gap-4 py-4">
@@ -2163,7 +2163,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
               <div className="p-4 flex flex-col gap-4">
                 {loadingList ? (
                   <div className="flex justify-center py-16">
-                    <Loader2 size={28} className="animate-spin text-blue-600 dark:text-blue-400" />
+                    <Loader2 size={28} className="animate-spin text-blue-700 dark:text-blue-400" />
                   </div>
                 ) : translators.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -2186,7 +2186,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow shadow-emerald-400/60 animate-pulse" />
-                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                          <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">
                             {t('lbAvailableNow', { n: available.length })}
                           </span>
                         </div>
@@ -2226,7 +2226,7 @@ export default function LanguageBridgeModal({ isOpen, onClose }: Props) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 px-1">
                           <div className="w-2 h-2 rounded-full bg-orange-500 shadow shadow-orange-400/50" />
-                          <span className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase tracking-wide">
+                          <span className="text-xs font-black text-orange-700 dark:text-orange-400 uppercase tracking-wide">
                             {t('lbEmergencyOnlyCount', { n: emergencyBackups.length })}
                           </span>
                         </div>
