@@ -243,6 +243,13 @@ function streetWall(pts){
 function wallDist(p, pts){ let d = Infinity; for (let i=1; i<=pts.length; i++) d = Math.min(d, segDist(p, pts[i-1], pts[i % pts.length])); return d; }
 const normStreet = s => String(s||'').replace(/^(רחוב|רח'|שדרות|שד'|דרך)\s+/,'').replace(/["'״׳\-\s]/g,'').toLowerCase();
 // street names compared word by word in any order: Tel Aviv writes "לבנון חיים" for "חיים לבנון"
+// the typed street inside a city's name for it: every typed word there, or every city word typed. A city may cut its
+// names short ("שדרות נהר הירד" for שדרות נהר הירדן), so a word counts when one is the start of the other
+const wordIn = (w, list) => list.some(x => x === w || (x.length >= 3 && w.startsWith(x)) || (w.length >= 3 && x.startsWith(w)));
+const streetHolds = (name, typedKey) => {
+  const a = streetKey(name).split(' ').filter(Boolean), b = String(typedKey || '').split(' ').filter(Boolean);
+  return !!a.length && !!b.length && (b.every(w => wordIn(w, a)) || a.every(x => wordIn(x, b)));
+};
 const streetKey = s => String(s || '').replace(/^(רחוב|רח'|שדרות|שד'|דרך)\s+/, '').replace(/["'״׳\-.]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 const ring2 = pts => [...pts.map(p => [p.lng, p.lat]), [pts[0].lng, pts[0].lat]];
 
@@ -655,7 +662,29 @@ const RG_AREAS = [[[32.06202,34.84631],[32.05183,34.85361],[32.04987,34.85032],[
 const RG_DATA = 'https://services8.arcgis.com/MdnyDq2GlaTWezhQ/arcgis/rest/services';
 // Petah Tikva's judicial border (simplified)
 const PT_BORDER = [[32.07738,34.91509],[32.07371,34.91475],[32.07289,34.91576],[32.07206,34.91985],[32.06784,34.92054],[32.0666,34.90317],[32.06752,34.89937],[32.05413,34.9008],[32.05453,34.8969],[32.05695,34.89692],[32.0569,34.89382],[32.06765,34.89494],[32.06902,34.89326],[32.07072,34.88495],[32.07116,34.86845],[32.06885,34.85922],[32.06938,34.85999],[32.08025,34.86031],[32.08013,34.85523],[32.08593,34.8563],[32.08679,34.85212],[32.08618,34.85213],[32.08682,34.8481],[32.08761,34.8488],[32.08819,34.84784],[32.08952,34.84806],[32.09024,34.84581],[32.09615,34.84609],[32.10201,34.84813],[32.11359,34.85072],[32.11374,34.85375],[32.11434,34.85377],[32.11433,34.85512],[32.11488,34.85536],[32.11481,34.85756],[32.11192,34.85781],[32.11245,34.86095],[32.11345,34.861],[32.11393,34.86244],[32.11562,34.86258],[32.11633,34.8617],[32.11712,34.86303],[32.11678,34.86474],[32.12153,34.86795],[32.12237,34.86663],[32.12222,34.86555],[32.1234,34.86586],[32.1232,34.86759],[32.12128,34.8695],[32.12248,34.87019],[32.12429,34.869],[32.12522,34.86947],[32.1254,34.87081],[32.12627,34.87156],[32.1245,34.87225],[32.12238,34.87432],[32.12176,34.87357],[32.12009,34.87455],[32.12077,34.87561],[32.12161,34.87468],[32.12243,34.87705],[32.1244,34.87612],[32.12366,34.87762],[32.12497,34.87856],[32.12515,34.87987],[32.12714,34.88034],[32.12684,34.88201],[32.12654,34.88104],[32.12586,34.88116],[32.12476,34.88626],[32.12368,34.88698],[32.12283,34.88917],[32.12331,34.89071],[32.12265,34.89179],[32.11714,34.8927],[32.11728,34.8937],[32.12275,34.89311],[32.12218,34.89921],[32.12275,34.89956],[32.12212,34.90065],[32.12353,34.90075],[32.1239,34.90296],[32.1249,34.9032],[32.12443,34.90582],[32.12292,34.90692],[32.12412,34.90724],[32.12425,34.90857],[32.12631,34.90761],[32.12692,34.90904],[32.12584,34.90972],[32.12701,34.91172],[32.12567,34.91165],[32.12533,34.91275],[32.12302,34.91373],[32.12248,34.91243],[32.12156,34.91243],[32.12128,34.91102],[32.12073,34.91218],[32.12039,34.91127],[32.11962,34.9112],[32.11992,34.91209],[32.11855,34.91343],[32.11891,34.91479],[32.11782,34.9143],[32.11734,34.9149],[32.11667,34.91305],[32.11551,34.91349],[32.11517,34.91458],[32.11443,34.91466],[32.11455,34.91638],[32.11271,34.9181],[32.11182,34.91767],[32.11101,34.91903],[32.11118,34.908],[32.1078,34.90779],[32.10715,34.90412],[32.1043,34.90733],[32.10044,34.90841],[32.10047,34.90934],[32.0984,34.91117],[32.09821,34.91042],[32.09729,34.91111],[32.09683,34.91068],[32.0959,34.91216],[32.09508,34.91667],[32.09285,34.91936],[32.09148,34.9197],[32.09093,34.92208],[32.08894,34.92221],[32.08891,34.9215],[32.08702,34.92128],[32.08579,34.92401],[32.08856,34.92576],[32.08533,34.9291],[32.08444,34.92747],[32.08096,34.92659],[32.08289,34.92058],[32.07569,34.91882],[32.07738,34.91509]].map(([lat, lng]) => ({lat, lng}));
+// judicial borders (simplified): Holon from the city, Herzliya and Beit Shemesh from the Planning Administration's national layer
+const HOLON_BORDER = [[32.03373,34.77605],[32.03053,34.77435],[32.02888,34.77443],[32.02734,34.78244],[32.02322,34.78541],[32.02187,34.78923],[32.02557,34.79135],[32.03158,34.79288],[32.02588,34.80057],[32.0258,34.79899],[32.02169,34.80391],[32.02199,34.80505],[32.01702,34.80959],[32.00994,34.81478],[32.00659,34.81176],[31.99428,34.80738],[31.99595,34.79998],[31.99198,34.7986],[31.98871,34.79637],[31.98875,34.79256],[31.99091,34.77955],[31.9967,34.76498],[31.99283,34.76176],[31.99498,34.75834],[32.00136,34.75929],[32.00201,34.7553],[32.00563,34.75576],[32.00575,34.75683],[32.00811,34.75767],[32.00743,34.76113],[32.01026,34.76178],[32.01804,34.76183],[32.03346,34.75944],[32.03631,34.75989],[32.03623,34.76552],[32.03277,34.7744],[32.03866,34.77811],[32.03816,34.77898],[32.03373,34.77605]].map(([lat, lng]) => ({lat, lng}));
+const HZ_BORDER = [[32.16309,34.86361],[32.15898,34.8646],[32.15898,34.86157],[32.15371,34.8603],[32.15348,34.86249],[32.1503,34.85703],[32.14864,34.8554],[32.14896,34.8495],[32.15007,34.84522],[32.15323,34.83796],[32.1541,34.83369],[32.15681,34.83416],[32.15899,34.83538],[32.15959,34.83507],[32.16058,34.82888],[32.16022,34.82622],[32.15543,34.82457],[32.15569,34.82182],[32.1531,34.82095],[32.15179,34.8196],[32.15237,34.81665],[32.15032,34.81609],[32.15132,34.81277],[32.15824,34.81537],[32.1587,34.81333],[32.1528,34.80917],[32.15338,34.80669],[32.14899,34.80404],[32.14402,34.80243],[32.14696,34.78764],[32.1548,34.79015],[32.16377,34.78923],[32.17454,34.79621],[32.20291,34.8056],[32.20121,34.81228],[32.19851,34.81102],[32.19599,34.81846],[32.18463,34.81526],[32.18013,34.81593],[32.17976,34.81844],[32.1778,34.81845],[32.17775,34.81982],[32.17728,34.8195],[32.17891,34.82521],[32.17843,34.82912],[32.1799,34.82909],[32.17945,34.8329],[32.1813,34.83358],[32.18131,34.83414],[32.18973,34.83479],[32.18946,34.83692],[32.18642,34.83721],[32.18593,34.8426],[32.18119,34.84851],[32.17772,34.85691],[32.17583,34.8565],[32.17265,34.85687],[32.17094,34.86443],[32.16475,34.86295],[32.16309,34.86361]].map(([lat, lng]) => ({lat, lng}));
+const BS_BORDER = [[31.73523,34.99819],[31.73522,34.99415],[31.73437,34.99337],[31.73298,34.99337],[31.73301,34.99663],[31.73128,34.99553],[31.73018,34.99559],[31.72908,34.99785],[31.72963,34.99927],[31.72741,35.00312],[31.72873,35.00461],[31.73175,35.00463],[31.73164,35.0051],[31.72687,35.00692],[31.72305,35.00957],[31.71759,35.00878],[31.71732,35.00923],[31.70862,35.00627],[31.70555,35.00846],[31.69802,35.00958],[31.69665,35.01135],[31.69373,35.00986],[31.69429,35.00757],[31.69311,35.00633],[31.69296,35.00503],[31.69165,35.00496],[31.68969,35.00278],[31.68919,35.00134],[31.68842,35.00164],[31.68729,34.99991],[31.69014,34.99898],[31.69021,34.99817],[31.69135,34.99843],[31.69272,34.99467],[31.69288,34.98729],[31.69341,34.98558],[31.69521,34.98348],[31.69533,34.98149],[31.69439,34.97773],[31.69242,34.97772],[31.69192,34.97662],[31.69341,34.97255],[31.69324,34.96985],[31.69441,34.96634],[31.69326,34.96304],[31.69356,34.95305],[31.6975,34.94994],[31.69797,34.94879],[31.69579,34.94312],[31.69757,34.94239],[31.69946,34.94276],[31.70491,34.94513],[31.70603,34.9483],[31.70916,34.95058],[31.70916,34.95508],[31.71113,34.95934],[31.7156,34.96147],[31.71793,34.96333],[31.71958,34.96137],[31.72156,34.96157],[31.72214,34.9603],[31.7234,34.96055],[31.72467,34.95778],[31.72608,34.95654],[31.72795,34.95755],[31.73025,34.95626],[31.73221,34.95442],[31.73356,34.95014],[31.7378,34.94753],[31.74566,34.94689],[31.75177,34.9474],[31.75557,34.9498],[31.75425,34.95235],[31.75444,34.95423],[31.75362,34.95651],[31.75063,34.95863],[31.74927,34.95753],[31.74786,34.96045],[31.74785,34.96197],[31.7471,34.96316],[31.74622,34.96319],[31.74291,34.96785],[31.74649,34.97171],[31.75246,34.97352],[31.75682,34.97891],[31.7583,34.98179],[31.75878,34.9858],[31.76117,34.98871],[31.76243,34.99211],[31.76604,34.99119],[31.76982,34.98849],[31.76919,34.98701],[31.7696,34.98555],[31.77011,34.98709],[31.77367,34.98852],[31.77472,34.99065],[31.77532,34.99283],[31.7746,34.99359],[31.77329,34.99331],[31.77229,34.9953],[31.77083,34.99385],[31.77109,34.99168],[31.76935,34.99144],[31.76838,34.99202],[31.76871,34.99348],[31.77014,34.99391],[31.77014,34.99446],[31.76903,34.99497],[31.76832,34.99669],[31.76638,34.9946],[31.76563,34.99555],[31.76589,34.99655],[31.7629,34.99458],[31.76083,34.99788],[31.76061,35.00579],[31.76279,35.00958],[31.76588,35.01026],[31.76776,35.01481],[31.76764,35.02209],[31.76874,35.02428],[31.76841,35.0319],[31.76609,35.03131],[31.76571,35.02923],[31.76116,35.02034],[31.76071,35.02058],[31.76074,35.0184],[31.75958,35.02052],[31.75804,35.01955],[31.75291,35.01949],[31.75098,35.01504],[31.75136,35.01389],[31.75094,35.01297],[31.75187,35.0101],[31.75448,35.00862],[31.75318,35.00394],[31.75136,35.00251],[31.74764,35.00322],[31.74482,35.00166],[31.74207,35.00158],[31.73643,35.00513],[31.73304,35.00479],[31.73303,35.00329],[31.73405,35.00195],[31.73462,35.00239],[31.73496,35.00179],[31.73452,35.00136],[31.73553,34.99975],[31.73523,34.99819]].map(([lat, lng]) => ({lat, lng}));
+// a number written with its letter in one field ("12א")
+const numLetter = v => { const m = String(v ?? '').trim().match(/^(\d+)\s*([א-ת]?)/); return {num: m ? m[1] : '', letter: m ? m[2] : ''}; };
 const CITIES = [
+  { id:'hol', name:'עיריית חולון', box:[31.988, 34.755, 32.039, 34.815], poly: HOLON_BORDER, noBlds: true,
+    url:'https://services2.arcgis.com/cjDo9oPmimdHxumn/arcgis/rest/services',
+    numUrl:'https://services2.arcgis.com/cjDo9oPmimdHxumn/arcgis/rest/services/holon/FeatureServer', numLayer:0,
+    numWhere: n => `HOUSE LIKE '${n}%'`, numFields:'OBJECTID,STREET_NAM,HOUSE',
+    num: a => ({...numLetter(a.HOUSE), street: a.STREET_NAM}) },
+  { id:'hz', name:'עיריית הרצליה', box:[32.143, 34.786, 32.204, 34.866], poly: HZ_BORDER, noBlds: true,
+    url:'https://services3.arcgis.com/9qGhZGtb39XMVQyR/arcgis/rest/services',
+    numUrl:'https://services3.arcgis.com/9qGhZGtb39XMVQyR/arcgis/rest/services/' + encodeURIComponent('מספרי_בתים_חדש') + '/FeatureServer', numLayer:43,
+    numWhere: n => `bldg_number=${n}`, numFields:'OBJECTID,BLDG_NUM,street_nam,bldg_number',
+    num: a => ({...numLetter(a.BLDG_NUM || a.bldg_number), street: a.street_nam}) },
+  // Beit Shemesh draws each number as a small box; its centre is the number's place
+  { id:'bs', name:'עיריית בית שמש', box:[31.686, 34.941, 31.776, 35.033], poly: BS_BORDER, noBlds: true,
+    url:'https://services6.arcgis.com/umvQBavFaD4lkAZ3/arcgis/rest/services',
+    numUrl:'https://services6.arcgis.com/umvQBavFaD4lkAZ3/arcgis/rest/services/' + encodeURIComponent('מספרי בתים') + '/FeatureServer', numLayer:0,
+    numWhere: n => `BLDG_NUM LIKE '${n}%'`, numFields:'FID,STREET_N_1,BLDG_NUM',
+    num: a => ({...numLetter(a.BLDG_NUM), street: a.STREET_N_1}) },
   { id:'pt', name:'עיריית פתח תקווה', box:[32.054, 34.845, 32.128, 34.930], poly: PT_BORDER, noBlds: true,
     url:'https://services9.arcgis.com/tfeLX7LFVABzD11G/arcgis/rest/services',
     numUrl:'https://services9.arcgis.com/tfeLX7LFVABzD11G/arcgis/rest/services/Addresses/FeatureServer', numLayer:1,
@@ -715,6 +744,7 @@ async function cityQuery(city, kind, c, d, where){
   } catch(e){ return null; } finally { clearTimeout(tm); }
 }
 const ring = f => f.geometry && f.geometry.rings ? f.geometry.rings[0].map(([x, y]) => ({lat:y, lng:x})) : [];
+const fpt = f => !f.geometry ? null : f.geometry.x != null ? {lat: f.geometry.y, lng: f.geometry.x} : f.geometry.rings ? centroid(ring(f)) : null;
 // the city's numbers and buildings for the loaded area (numbers replace OpenStreetMap's near them)
 async function cityArea(city, c){
   const d = 0.0022; // a little wider than OpenStreetMap's area, whose buildings and streets run past its edge
@@ -723,14 +753,25 @@ async function cityArea(city, c){
   if (!feats || (!city.noBlds && (!blds || !blds.length))) return;
   for (const f of blds){ const pts = ring(f); if (pts.length > 2) store.cityBlds.set(city.id + 'b' + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? pts[0].lat), {pts, city: city.id, ...city.bld(f.attributes)}); }
   for (const f of feats){
-    if (!f.geometry) continue;
-    const a = city.num(f.attributes), p = {lat: f.geometry.y, lng: f.geometry.x};
+    const p = fpt(f); if (!p) continue;
+    const a = city.num(f.attributes);
     if (!a.num) continue;
     const key = city.id + (f.attributes.OBJECTID ?? f.attributes.UniqueId ?? `${p.lat},${p.lng}`);
     if (store.labels.has(key)) continue;
     store.labels.set(key, {key, city: city.id, num: a.num + a.letter, street: a.street, ...p, bld: null});
   }
   store.cityBoxes.push({c, d, blds: !city.noBlds});
+}
+// a city with numbers only: where along the street its sign for the number stands (the typed letter preferred)
+async function citySign(city, t){
+  const m = String(t.num).match(/^(\d+)([א-ת]?)$/); if (!m) return null;
+  const feats = await cityQuery(city, 'num', t, 0.008, city.numWhere(m[1]));
+  const st = streetKey(t.street), words = n => streetKey(n).split(' ').filter(Boolean);
+  const all = (feats || []).map(f => ({p: fpt(f), ...city.num(f.attributes)})).filter(x => x.p && x.num === m[1] && dist(t, x.p) < 900);
+  const exact = all.filter(x => !st || streetKey(x.street) === st);
+  const pool = exact.length ? exact : all.filter(x => streetHolds(x.street, st));
+  pool.sort((a, b) => ((b.letter === m[2]) - (a.letter === m[2])) || dist(t, a.p) - dist(t, b.p));
+  return pool[0] ? pool[0].p : null;
 }
 // the city's buildings for one address, and the one the letter points to when known; signs are kept as entrances
 async function cityBuildings(city, t){
@@ -746,9 +787,9 @@ async function cityBuildings(city, t){
   const words = n => streetKey(n).split(' ').filter(Boolean);
   const hasExact = (numFeats || []).some(f => streetKey(city.num(f.attributes).street) === st);
   const same = name => !st || !name || streetKey(name) === st
-    || (!hasExact && (st.split(' ').every(w => words(name).includes(w)) || words(name).every(w => st.split(' ').includes(w))));
+    || (!hasExact && streetHolds(name, st));
   const signs = (numFeats || []).filter(f => f.geometry && city.num(f.attributes).num === base && same(city.num(f.attributes).street))
-    .map(f => ({p: {lat: f.geometry.y, lng: f.geometry.x}, letter: city.num(f.attributes).letter}))
+    .map(f => ({p: fpt(f), letter: city.num(f.attributes).letter}))
     .filter(s => dist(t, s.p) < reach);
   let cands = [];
   if (city.byNumber){
@@ -843,7 +884,7 @@ function findBuilding(t){
   const tk = streetKey(t.street), words = s => streetKey(s).split(' ').filter(Boolean);
   // the city often writes a street surname first (וולפסון דוד for וולפסון): the whole name first, else one holding the typed words
   const exactSt = l => !st || !l.street || normStreet(l.street) === st || streetKey(l.street) === tk;
-  const partSt = l => { const a = words(l.street), b = tk.split(' ').filter(Boolean); return b.every(w => a.includes(w)) || a.every(w => b.includes(w)); };
+  const partSt = l => streetHolds(l.street, tk);
   const B = inCityBlds(t) ? [...store.cityBlds.values()] : [...store.buildings.values()];
   const bldOf = l => cityHere
     ? B.find(b => inPoly(l, b.pts)) || B.filter(b => wallDist(l, b.pts) < 12).sort((a, b) => wallDist(l, a.pts) - wallDist(l, b.pts))[0] || null
@@ -904,6 +945,16 @@ async function goTo(t, fromUser){
   };
   if (jm && jm !== PENDING){ useCity(jm); return; }
   if (jm === PENDING) jmP.then(m => { if (m && seq === loadSeq) useCity(m); });
+  if (city && city.noBlds && t.num){
+    const sp = await citySign(city, t).catch(() => null);
+    if (seq !== loadSeq) return;
+    if (sp){
+      // the city knows the number: go to its sign, and load the general map's buildings there if needed
+      t.lat = sp.lat; t.lng = sp.lng; t.exact = true; dest = {lat: sp.lat, lng: sp.lng}; placePin(t);
+      if (!store.centers.some(p => dist(p, t) < 60)) await loadArea(t);
+      if (seq !== loadSeq) return;
+    }
+  }
   const f = findBuilding(t); hitLabel = f.hit;
   if (f.b){
     showTarget([f.b], t.num || (f.hit && f.hit.num) || '', '');
